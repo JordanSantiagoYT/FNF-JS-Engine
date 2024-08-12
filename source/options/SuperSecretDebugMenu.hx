@@ -113,7 +113,7 @@ class SuperSecretDebugMenu extends BaseOptionsMenu
     nextMessage = function() {
         i++;
         if (i >= messages.length) {
-			throw new Exception('bruh'); // this is easier + better to do
+			throw new Exception('Null Object Reference'); // this is easier + better to do
         } else {
             openSubState(new Prompt(messages[i], 0, function() {nextMessage();}, null, false, "Yes", "No"));
         }
