@@ -92,3 +92,6 @@ SB Engine? what's that?
 You can use CTRL while in the Gameplay Changers menu to use a slower change value!
 While in the Gameplay Changers menu, press SHIFT to reset ALL of your settings at once!
 Did you know that if you press 7 twice while on this menu, nothing will happen? :trollface:
+If your game is lagging, try changing "Anti-Aliasing" to false
+If your game is lagging, try closing some process in your peecee
+If your game is lagging, just buy a new pc!
