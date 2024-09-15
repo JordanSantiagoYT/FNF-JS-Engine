@@ -2781,7 +2781,7 @@ class PlayState extends MusicBeatState
 		}
 
 		if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4 && judgementCounter != null) updateRatingCounter();
-		if (!ClientPrefs.scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
+		if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
 		if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 
 		// TODO: Lock other note inputs
@@ -3602,7 +3602,7 @@ class PlayState extends MusicBeatState
 				notesHitDateArray.splice(0, notesToRemoveCount);
 				notesHitArray.splice(0, notesToRemoveCount);
 				if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4 && judgementCounter != null) updateRatingCounter();
-				if (!ClientPrefs.scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
+				if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
 					if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 			}
 
@@ -3651,7 +3651,7 @@ class PlayState extends MusicBeatState
 
 			if (npsIncreased || npsDecreased || oppNpsIncreased || oppNpsDecreased) {
 				if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 8 && judgementCounter != null) updateRatingCounter();
-				if (!ClientPrefs.scoreTxtUpdateFrame <= 8 && scoreTxt != null) updateScore();
+				if (scoreTxtUpdateFrame <= 8 && scoreTxt != null) updateScore();
 					if (ClientPrefs.compactNumbers && compactUpdateFrame <= 8) updateCompactNumbers();
 				if (npsIncreased) npsIncreased = false;
 				if (npsDecreased) npsDecreased = false;
@@ -4655,10 +4655,10 @@ class PlayState extends MusicBeatState
 							if (ClientPrefs.botTxtStyle == 'VS Impostor') {
 								if (botplayTxt != null) FlxTween.color(botplayTxt, 1, botplayTxt.color, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
 								
-								if (!ClientPrefs.scoreTxt != null && !ClientPrefs.hideHud) FlxTween.color(scoreTxt, 1, scoreTxt.color, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
+								if (scoreTxt != null && !ClientPrefs.hideHud) FlxTween.color(scoreTxt, 1, scoreTxt.color, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
 							}
 							if (ClientPrefs.scoreStyle == 'JS Engine' && !ClientPrefs.hideHud) {
-								if (!ClientPrefs.scoreTxt != null) FlxTween.color(scoreTxt, 1, scoreTxt.color, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
+								if (scoreTxt != null) FlxTween.color(scoreTxt, 1, scoreTxt.color, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
 							}
 							if (dadAnim != '') dad.playAnim(dadAnim, true);
 						}
@@ -5164,7 +5164,7 @@ class PlayState extends MusicBeatState
 		if (!miss && !ffmpegMode) (opponentChart ? opponentVocals : vocals).volume = 1;
 
 		final offset = FlxG.width * 0.35;
-		if(ClientPrefs.scoreZoom && !ClientPrefs.scoreTxt != null && !cpuControlled && !miss)
+		if(ClientPrefs.scoreZoom && scoreTxt != null && !cpuControlled && !miss)
 		{
 			if(scoreTxtTween != null) {
 				scoreTxtTween.cancel();
@@ -5711,7 +5711,7 @@ class PlayState extends MusicBeatState
 				var animToPlay:String = singAnimations[Std.int(Math.abs(daNote.noteData))] + 'miss' + daNote.animSuffix;
 				char.playAnim(animToPlay, true);
 			}
-			if (!ClientPrefs.scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
+			if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
 			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 		   		if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 
@@ -5759,7 +5759,7 @@ class PlayState extends MusicBeatState
 				var animToPlay:String = singAnimations[Std.int(Math.abs(daNoteAlt.noteData))] + 'miss' + daNoteAlt.animSuffix;
 				char.playAnim(animToPlay, true);
 			}
-			if (!ClientPrefs.scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
+			if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
 			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 		   		if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 
@@ -5802,7 +5802,7 @@ class PlayState extends MusicBeatState
 			}
 			(opponentChart ? opponentVocals : vocals).volume = 0;
 		}
-		if (!ClientPrefs.scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
+		if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
 		if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 		   	if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 		callOnLuas('noteMissPress', [direction]);
@@ -6064,7 +6064,7 @@ class PlayState extends MusicBeatState
 				if (ClientPrefs.showNotes && !note.isSustainNote) invalidateNote(note);
 
 				if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
-				if (!ClientPrefs.scoreTxtUpdateFrame <= 4) updateScore();
+				if (scoreTxtUpdateFrame <= 4) updateScore();
 		   			if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 				if (ClientPrefs.iconBopWhen == 'Every Note Hit' && (iconBopsThisFrame <= 2 || ClientPrefs.noBopLimit) && !note.isSustainNote && iconP1.visible) bopIcons(!oppTrigger);
 			}
@@ -6211,7 +6211,7 @@ class PlayState extends MusicBeatState
 				invalidateNote(daNote);
 			}
 			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
-			if (!ClientPrefs.scoreTxtUpdateFrame <= 4) updateScore();
+			if (scoreTxtUpdateFrame <= 4) updateScore();
 		   	if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 
 			if (shouldDrainHealth && health > (healthDrainFloor * polyphony) && !practiceMode || opponentDrain && practiceMode)
@@ -6271,7 +6271,7 @@ class PlayState extends MusicBeatState
 				enemyHits += 1 * polyphony;
 
 				if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
-				if (!ClientPrefs.scoreTxtUpdateFrame <= 4) updateScore();
+				if (scoreTxtUpdateFrame <= 4) updateScore();
 		   		if (ClientPrefs.compactNumbers && compactUpdateFrame <= 4) updateCompactNumbers();
 
 				if (shouldDrainHealth && health > healthDrainFloor && !practiceMode || opponentDrain && practiceMode)
@@ -7019,7 +7019,7 @@ class PlayState extends MusicBeatState
 			// basically same stuff, doesn't update every frame but it also means no memory leaks during botplay
 			if (ClientPrefs.ratingCounter && judgementCounter != null)
 				updateRatingCounter();
-			if (!ClientPrefs.scoreTxt != null)
+			if (scoreTxt != null)
 				updateScore(badHit);
 			if (ClientPrefs.compactNumbers)
 				updateCompactNumbers();
