@@ -1497,7 +1497,6 @@ class PlayState extends MusicBeatState
 			boyfriendGroup.destroy();
 		}
 		if (ClientPrefs.scoreTxtSize > 0 && scoreTxt != null && !ClientPrefs.showcaseMode && !ClientPrefs.hideHud) scoreTxt.size = ClientPrefs.scoreTxtSize;
-		updateScore();
 
 		final ytWMPosition = switch(ClientPrefs.ytWatermarkPosition)
 		{
