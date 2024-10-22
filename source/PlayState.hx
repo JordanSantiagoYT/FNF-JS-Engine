@@ -6432,8 +6432,8 @@ class PlayState extends MusicBeatState
 		{
 			bopIcons();
 		}
-		iconP1.updateHitbox();
-		iconP2.updateHitbox();
+		//iconP1.updateHitbox();
+		//iconP2.updateHitbox();
 
 		if (ClientPrefs.charsAndBG) characterBopper(curBeat);
 		lastBeatHit = curBeat;
