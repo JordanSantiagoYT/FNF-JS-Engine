@@ -6,6 +6,8 @@ import flixel.util.FlxColor;
 import shaders.RGBPalette;
 import shaders.RGBPalette.RGBShaderReference;
 
+import objects.SustainSplash;
+
 using StringTools;
 
 typedef EventNote = {
@@ -32,6 +34,7 @@ typedef PreloadedChartNote = {
 	sustainLength:Float,
 	sustainScale:Float,
 	parentST:Float,
+	parentSL:Float,
 	hitHealth:Float,
 	missHealth:Float,
 	hitCausesMiss:Null<Bool>,
@@ -66,6 +69,7 @@ class Note extends FlxSprite
 	public var extraData:Map<String, Dynamic> = new Map<String, Dynamic>();
 
 	public var parentST:Float = 0;
+	public var parentSL:Float = 0;
 	public var strumTime:Float = 0;
 	public var mustPress:Bool = false;
 	public var doOppStuff:Bool = false;
@@ -82,6 +86,7 @@ class Note extends FlxSprite
 
 	public var sustainLength:Float = 0;
 	public var isSustainNote:Bool = false;
+	public var isSustainEnd:Bool = false;
 	public var noteType(default, set):String = null;
 
 	public var eventName:String = '';
@@ -115,6 +120,7 @@ class Note extends FlxSprite
 		b: -1,
 		a: 1
 	};
+	public var noteHoldSplash:SustainSplash;
 
 	// Lua shit
 	public var noteSplashDisabled:Bool = false;
@@ -603,9 +609,13 @@ class Note extends FlxSprite
 		doOppStuff = chartNoteData.oppNote;
 		gfNote = chartNoteData.gfNote;
 		isSustainNote = chartNoteData.isSustainNote;
+		isSustainEnd = chartNoteData.isSustainEnd;
 		sustainScale = chartNoteData.sustainScale;
 		lowPriority = chartNoteData.lowPriority;
-		if (isSustainNote) parentST = chartNoteData.parentST;
+		if (isSustainNote) {
+			parentST = chartNoteData.parentST;
+			parentSL = chartNoteData.parentSL;
+		}
 		
 		hitHealth = chartNoteData.hitHealth;
 		missHealth = chartNoteData.missHealth;

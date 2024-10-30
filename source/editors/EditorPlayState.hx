@@ -20,6 +20,7 @@ import flixel.util.FlxTimer;
 import flixel.input.keyboard.FlxKey;
 import openfl.events.KeyboardEvent;
 import Note.PreloadedChartNote;
+import objects.SustainSplash;
 
 import Character.CharacterFile;
 
@@ -33,6 +34,7 @@ class EditorPlayState extends MusicBeatState
 	public var strumLineNotes:FlxTypedGroup<StrumNote>;
 	public var opponentStrums:FlxTypedGroup<StrumNote>;
 	public var playerStrums:FlxTypedGroup<StrumNote>;
+	public var grpHoldSplashes:FlxTypedGroup<SustainSplash>;
 	public var grpNoteSplashes:FlxTypedGroup<NoteSplash>;
 
 	public var sustainNotes:NoteGroup;
@@ -110,6 +112,9 @@ class EditorPlayState extends MusicBeatState
 
 		notes = new NoteGroup();
 		add(notes);
+
+		grpHoldSplashes = new FlxTypedGroup<SustainSplash>((ClientPrefs.maxSplashLimit != 0 ? ClientPrefs.maxSplashLimit : 10000));
+		add(grpHoldSplashes);
 		
 		grpNoteSplashes = new FlxTypedGroup<NoteSplash>();
 		add(grpNoteSplashes);
@@ -117,6 +122,13 @@ class EditorPlayState extends MusicBeatState
 		var splash:NoteSplash = new NoteSplash(100, 100, 0);
 		grpNoteSplashes.add(splash);
 		splash.alpha = 0.0;
+
+		SustainSplash.startCrochet = Conductor.stepCrochet;
+		SustainSplash.frameRate = Math.floor(24 / 100 * PlayState.SONG.bpm);
+		var splash:SustainSplash = new SustainSplash();
+		grpHoldSplashes.add(splash);
+		splash.visible = true;
+		splash.alpha = 0.0001;
 
 		Paths.initDefaultSkin(PlayState.SONG.arrowSkin);
 
@@ -278,6 +290,7 @@ class EditorPlayState extends MusicBeatState
 								sustainLength: 0,
 								sustainScale: 1 / ratio,
 								parentST: swagNote.strumTime,
+								parentSL: swagNote.sustainLength,
 								hitHealth: 0.023,
 								missHealth: 0.0475,
 								wasHit: false,
@@ -754,6 +767,8 @@ class EditorPlayState extends MusicBeatState
 				}
 			}
 
+			if (ClientPrefs.noteSplashes && note.isSustainNote) spawnHoldSplashOnNote(note);
+
 			if (!note.isSustainNote) invalidateNote(note);
 
 			note.wasGoodHit = true;
@@ -981,6 +996,26 @@ class EditorPlayState extends MusicBeatState
 		}
 	}
 
+	public function spawnHoldSplashOnNote(note:Note, ?isDad:Bool = false) {
+		if (!ClientPrefs.noteSplashes || note == null)
+			return;
+
+		if (note != null) {
+			var strum:StrumNote = (isDad ? playerStrums : opponentStrums).members[note.noteData];
+			final susLength:Float = (!note.isSustainNote ? note.sustainLength : note.parentSL);
+			final tailLength:Int = Math.floor(susLength / Conductor.stepCrochet);
+
+			if(strum != null && tailLength != 0)
+				spawnHoldSplash(note);
+		}
+	}
+
+	public function spawnHoldSplash(note:Note) {
+		var end:Note = note;
+		var splash:SustainSplash = grpHoldSplashes.recycle(SustainSplash);
+		splash.setupSusSplash((note.mustPress ? playerStrums : opponentStrums).members[note.noteData], note, 1);
+		grpHoldSplashes.add(end.noteHoldSplash = splash);
+	}
 
 	// Note splash shit, duh
 	function spawnNoteSplashOnNote(note:Note) {

@@ -43,6 +43,7 @@ import vlc.MP4Handler;
 #end
 
 import Note;
+import objects.SustainSplash;
 
 using StringTools;
 
@@ -132,7 +133,7 @@ class PlayState extends MusicBeatState
 	public var healthDrainFloor:Float = 0.1;
 
 	var strumsHit:Array<Bool> = [false, false, false, false, false, false, false, false];
-	public var splashesPerFrame:Array<Int> = [0, 0];
+	public var splashesPerFrame:Array<Int> = [0, 0, 0, 0];
 
 	public var vocals:FlxSound;
 	public var opponentVocals:FlxSound;
@@ -169,6 +170,7 @@ class PlayState extends MusicBeatState
 	public var strumLineNotes:FlxTypedGroup<StrumNote>;
 	public var opponentStrums:FlxTypedGroup<StrumNote>;
 	public var playerStrums:FlxTypedGroup<StrumNote>;
+	public var grpHoldSplashes:FlxTypedGroup<SustainSplash>;
 	public var grpNoteSplashes:FlxTypedGroup<NoteSplash>;
 	public var laneunderlay:FlxSprite;
 	public var laneunderlayOpponent:FlxSprite;
@@ -590,6 +592,7 @@ class PlayState extends MusicBeatState
 		FlxG.cameras.reset(camGame);
 		FlxG.cameras.add(camHUD, false);
 		FlxG.cameras.add(camOther, false);
+		grpHoldSplashes = new FlxTypedGroup<SustainSplash>((ClientPrefs.maxSplashLimit != 0 ? ClientPrefs.maxSplashLimit : 10000));
 		grpNoteSplashes = new FlxTypedGroup<NoteSplash>((ClientPrefs.maxSplashLimit != 0 ? ClientPrefs.maxSplashLimit : 10000));
 
 		FlxG.cameras.setDefaultDrawTarget(camGame, true);
@@ -1172,6 +1175,7 @@ class PlayState extends MusicBeatState
 		notes.visible = sustainNotes.visible = ClientPrefs.showNotes; //that was easier than expected
 
 		add(grpNoteSplashes);
+		add(grpHoldSplashes);
 
 
 		if(ClientPrefs.timeBarType == 'Song Name' && ClientPrefs.timeBarStyle == 'VS Impostor')
@@ -1181,7 +1185,14 @@ class PlayState extends MusicBeatState
 
 		var splash:NoteSplash = new NoteSplash(100, 100, 0);
 		grpNoteSplashes.add(splash);
-		splash.alpha = 0.0;
+		splash.alpha = 0.0001;
+
+		SustainSplash.startCrochet = Conductor.stepCrochet;
+		SustainSplash.frameRate = Math.floor(24 / 100 * SONG.bpm);
+		var splash:SustainSplash = new SustainSplash();
+		grpHoldSplashes.add(splash);
+		splash.visible = true;
+		splash.alpha = 0.0001;
 
 		playerStrums = new FlxTypedGroup<StrumNote>();
 		opponentStrums = new FlxTypedGroup<StrumNote>();
@@ -1620,6 +1631,7 @@ class PlayState extends MusicBeatState
 		laneunderlay.cameras = [camHUD];
 		strumLineNotes.cameras = [camHUD];
 		grpNoteSplashes.cameras = [camHUD];
+		grpHoldSplashes.cameras = [camHUD];
 		sustainNotes.cameras = [camHUD];
 		notes.cameras = [camHUD];
 		healthBar.cameras = [camHUD];
@@ -3047,6 +3059,7 @@ class PlayState extends MusicBeatState
 								isSustainEnd: susNote == floorSus,
 								sustainScale: 1 / ratio,
 								parentST: swagNote.strumTime,
+								parentSL: swagNote.sustainLength,
 								hitHealth: 0.023,
 								missHealth: songNotes[3] != 'Hurt Note' ? 0.0475 : 0.1,
 								wasHit: false,
@@ -3620,7 +3633,8 @@ class PlayState extends MusicBeatState
 		if (charAnimsFrame > 0) charAnimsFrame = 0;
 		if (oppAnimsFrame > 0) oppAnimsFrame = 0;
 		strumsHit = [false, false, false, false, false, false, false, false];
-		if (splashesPerFrame[0] > 0 || splashesPerFrame[1] > 0) splashesPerFrame = [0, 0];
+		for (i in 0...splashesPerFrame.length)
+			if (splashesPerFrame[i] > 0) splashesPerFrame[i] = 0;
 
 		if (hitImagesFrame > 0) hitImagesFrame = 0;
 
@@ -5637,6 +5651,10 @@ class PlayState extends MusicBeatState
 				}
 			}
 
+			if (daNote.noteHoldSplash != null) {
+				daNote.noteHoldSplash.kill();
+			}
+
 			callOnLuas('noteMiss', [notes.members.indexOf(daNote), daNote.noteData, daNote.noteType, daNote.isSustainNote]);
 			if (ClientPrefs.missRating) popUpScore(daNote, true);
 		}
@@ -5961,6 +5979,7 @@ class PlayState extends MusicBeatState
 					camHUD.shake(playerChar.shakeIntensity / 2, playerChar.shakeDuration / playbackRate);
 				}
 				note.wasGoodHit = true;
+				if (ClientPrefs.noteSplashes && note.isSustainNote && splashesPerFrame[3] <= 4) spawnHoldSplashOnNote(note);
 				if (SONG.needsVoices && ClientPrefs.songLoading && !ffmpegMode)
 					if (opponentChart && opponentVocals != null && opponentVocals.volume != 1) opponentVocals.volume = 1;
 					else if (!opponentChart && vocals.volume != 1 || vocals.volume != 1) vocals.volume = 1;
@@ -6109,6 +6128,7 @@ class PlayState extends MusicBeatState
 			}
 			daNote.hitByOpponent = true;
 
+			if (ClientPrefs.oppNoteSplashes && daNote.isSustainNote && splashesPerFrame[2] <= 4) spawnHoldSplashOnNote(daNote, true);
 
 			if (!ClientPrefs.noHitFuncs) callOnLuas(!opponentChart ? 'opponentNoteHit' : 'goodNoteHit', [notes.members.indexOf(daNote), Math.abs(daNote.noteData), daNote.noteType, daNote.isSustainNote]);
 
@@ -6201,6 +6221,29 @@ class PlayState extends MusicBeatState
 	public function invalidateNote(note:Note):Void {
 		note.exists = note.wasGoodHit = note.hitByOpponent = note.tooLate = note.canBeHit = false; //apparently i have to do this, otherwise the game will still think the note should be hit
 		if (ClientPrefs.fastNoteSpawn) (note.isSustainNote ? sustainNotes : notes).pushToPool(note);
+	}
+
+	public function spawnHoldSplashOnNote(note:Note, ?isDad:Bool = false) {
+		if (!ClientPrefs.noteSplashes || note == null)
+			return;
+
+		splashesPerFrame[(isDad ? 2 : 3)] += 1;
+
+		if (note != null) {
+			var strum:StrumNote = (isDad ? playerStrums : opponentStrums).members[note.noteData];
+			final susLength:Float = (!note.isSustainNote ? note.sustainLength : note.parentSL);
+			final tailLength:Int = Math.floor(susLength / Conductor.stepCrochet);
+
+			if(strum != null && tailLength != 0)
+				spawnHoldSplash(note);
+		}
+	}
+
+	public function spawnHoldSplash(note:Note) {
+		var end:Note = note;
+		var splash:SustainSplash = grpHoldSplashes.recycle(SustainSplash);
+		splash.setupSusSplash((note.mustPress ? playerStrums : opponentStrums).members[note.noteData], note, playbackRate);
+		grpHoldSplashes.add(end.noteHoldSplash = splash);
 	}
 
 	public function spawnNoteSplashOnNote(isDad:Bool, note:Note, ?isGf:Bool = false) {

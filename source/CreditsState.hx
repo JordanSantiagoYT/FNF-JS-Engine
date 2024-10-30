@@ -93,6 +93,7 @@ class CreditsState extends MusicBeatState
 			['SomeGuyWhoLovesCoding',			'sgwlc',				'Rewrote the chart loading system and ported the new Rendering Mode to source',								'https://www.youtube.com/channel/UCMSusVA3DY-4EtiGP4zKAJA',			'FFBD40'],
 			['Betopia', 'nothing', 'Freeplay Search bar creator', 'https://www.youtube.com/channel/UCfjyz9xRhZiRbLMteQloVeg', 'FFFFFF'],
 			['CDEV Engine', 'cdev', 'Update Screen Creator', 'https://github.com/Core5570RYT/FNF-CDEV-Engine', '00427B'],
+			['NotMagniill', 'magniill', 'Code for the Sustain Note Splashes', 'https://github.com/notmagniill', 'FFBD40'],
 			[''],
 			['Psych Engine Team'],
 			['Shadow Mario',		'shadowmario',		'Main Programmer of Psych Engine',								'https://twitter.com/Shadow_Mario_',	'444444'],
