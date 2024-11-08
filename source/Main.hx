@@ -84,9 +84,10 @@ class Main extends Sprite {
         "\r\ni am a secret message",
         "this is garnet",
         "Error: Sorry i already have a girlfriend",
-        "did you know theres a total of 51 silly messages",
+        "did you know theres a total of 52 silly messages",
         "whoopsies looks like i forgot to fix this",
-        "Game used Crash. It's super effective!"
+        "Game used Crash. It's super effective!",
+		"OOH MY PC--- "
     ];
 
 	// You can pretty much ignore everything from here on - your code should go in your states.

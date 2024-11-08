@@ -39,6 +39,19 @@ class CoolUtil
 		'Erect',
 		'Nightmare'
 	];
+
+	public static var defaultDifficultiesPatoFull:Array<String> = [
+		'Auto', // I-IS THIS AN [[GEOMETRY DASH]] REFERENCE???
+		'Easy',
+		'Normal',
+		'Hard',
+		'Erect',
+		'Nightmare',
+		'Troll', // trolololo, trolololo
+		'Omega'
+	];
+
+	
 	public static var defaultDifficulty:String = 'Normal'; //The chart that has no suffix and starting difficulty on Freeplay/Story Mode
 
 	public static var defaultDifficultyThings:Array<String> = ['Normal', 'normal'];
@@ -101,6 +114,8 @@ class CoolUtil
 	}
 
 	public static function updateTheEngine():Void {
+		trace("updateTheEngine()");
+		
 		// Get the directory of the executable
 		var exePath = Sys.programPath();
 		var exeDir = haxe.io.Path.directory(exePath);
@@ -162,6 +177,45 @@ class CoolUtil
 		}
 		return tasklist.contains("obs64.exe") || tasklist.contains("obs32.exe");
 	}
+
+	public static function checkForBandicam():Bool
+		{
+			var fs:Bool = FlxG.fullscreen;
+			if (fs)
+			{
+				FlxG.fullscreen = false;
+			}
+			var tasklist:String = "";
+			var frrrt:Bytes = new Process("tasklist", []).stdout.readAll();
+			tasklist = frrrt.getString(0, frrrt.length);
+			if (fs)
+			{
+				FlxG.fullscreen = true;
+			}
+			return tasklist.contains("bdcam.exe") || tasklist.contains("bdfix.exe"); // honestamente eu não sei pq caralhos alguem iria desisnstalar o bandicam ENQUANTO joga
+		}
+
+	public static function checkForCheaters():Bool
+		{
+			// Dear cheaters, hope you die soon
+			// botplay exists for a reason
+			//				- PatoFlamejanteTV
+			var fs:Bool = FlxG.fullscreen;
+			if (fs)
+			{
+				FlxG.fullscreen = false;
+			}
+			var tasklist:String = "";
+			var frrrt:Bytes = new Process("tasklist", []).stdout.readAll();
+			tasklist = frrrt.getString(0, frrrt.length);
+			if (fs)
+			{
+				FlxG.fullscreen = true;
+			}
+			return tasklist.contains("cheatengine-x86_64.exe") || tasklist.contains("cheatengine-i386.exe") || tasklist.contains("CeleryEngine.exe") || tasklist.contains("cheatengine-x86_64-SSE4-AVX2"); // pls someone expand this list
+		}
+	
+
 
 	public static function getSongDuration(musicTime:Float, musicLength:Float, precision:Int = 0):String
 	{
@@ -351,7 +405,7 @@ class CoolUtil
 				case 6144: //why did i do this? idk tbh, it just funni
 					rgbShader.r = 0xFFFF6A00;
 					rgbShader.b = 0xFF652800;
-				default: // white/gray
+				default: // white/gray, fallback(?)
 					rgbShader.r = 0xFFFFFFFF;
 					rgbShader.b = 0xFF434343;
 			}
