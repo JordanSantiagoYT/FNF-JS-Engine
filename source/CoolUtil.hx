@@ -196,26 +196,58 @@ class CoolUtil
 		}
 
 	public static function checkForCheaters():Bool
+		// based on:
+		/*
+			https://github.com/LordNoteworthy/al-khaser/blob/master/al-khaser/AntiAnalysis/process.cpp
+		*/
 		{
 			// Dear cheaters, hope you die soon
-			// botplay exists for a reason
+			// botplay exists for a reason.
 			//				- PatoFlamejanteTV
-			var fs:Bool = FlxG.fullscreen;
-			if (fs)
-			{
-				FlxG.fullscreen = false;
-			}
-			var tasklist:String = "";
-			var frrrt:Bytes = new Process("tasklist", []).stdout.readAll();
-			tasklist = frrrt.getString(0, frrrt.length);
-			if (fs)
-			{
-				FlxG.fullscreen = true;
-			}
-			return tasklist.contains("cheatengine-x86_64.exe") || tasklist.contains("cheatengine-i386.exe") || tasklist.contains("CeleryEngine.exe") || tasklist.contains("cheatengine-x86_64-SSE4-AVX2"); // pls someone expand this list
-		}
-	
 
+		var fs:Bool = FlxG.fullscreen;
+
+		// Disable fullscreen temporarily if it's on
+		if (fs) {
+    		FlxG.fullscreen = false;
+		}
+
+		// Run tasklist command and capture its output
+		var tasklist:String = "";
+		var processOutput:Bytes = new Process("tasklist", []).stdout.readAll();
+		tasklist = processOutput.getString(0, processOutput.length);
+		
+		// Re-enable fullscreen if it was originally on
+		if (fs) {
+		    FlxG.fullscreen = true;
+		}
+		
+		// Define a list of process names to search for
+		var targetProcesses = [
+		    "ollydbg.exe", "ollyice.exe", "ProcessHacker.exe", "tcpview.exe",
+		    "autoruns.exe", "autorunsc.exe", "filemon.exe", "procmon.exe",
+		    "regmon.exe", "procexp.exe", "idaq.exe", "idaq64.exe",
+		    "ImmunityDebugger.exe", "Wireshark.exe", "dumpcap.exe",
+		    "HookExplorer.exe", "ImportREC.exe", "PETools.exe", "LordPE.exe",
+		    "SysInspector.exe", "proc_analyzer.exe", "sysAnalyzer.exe",
+		    "sniff_hit.exe", "windbg.exe", "joeboxcontrol.exe", "joeboxserver.exe",
+		    "ResourceHacker.exe", "x32dbg.exe", "x64dbg.exe", "Fiddler.exe",
+		    "httpdebugger.exe", "cheatengine-i386.exe", "cheatengine-x86_64.exe",
+		    "cheatengine-x86_64-SSE4-AVX2.exe", "frida-helper-32.exe",
+		    "frida-helper-64.exe"
+		];
+		
+		// Check if any of these processes are in the tasklist output
+		for each processName in targetProcesses do
+		    if tasklist.contains(processName) then
+		        return true
+		    end if
+		end for
+		
+		// If none of the processes are found, return false
+		return false
+		}
+	}
 
 	public static function getSongDuration(musicTime:Float, musicLength:Float, precision:Int = 0):String
 	{

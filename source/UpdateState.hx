@@ -262,7 +262,7 @@ class UpdateState extends MusicBeatState
 		// }
 		if (bytes == 0)
 		{
-			return "0B";
+			return "NULL";
 		}
 
 		var size_name:Array<String> = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];

@@ -509,11 +509,11 @@ class TitleState extends MusicBeatState
 				case 13:
 					deleteCoolText();
 				case 14:
-					addMoreText('Friday');
+					addMoreText('Freaky'); // linganguliguliguli wazaa lingangu lingangu
 				case 15:
-					addMoreText('Night');
+					addMoreText('Morning');
 				case 16:
-					addMoreText('Funkin');
+					addMoreText('Sadness');
 
 				case 17:
 					skipIntro();

@@ -253,7 +253,7 @@ class ChartingState extends MusicBeatState
 	public var hitsoundVol:Float = 1;
 
 	var autoSaveTimer:FlxTimer;
-	public var autoSaveLength:Float = 90; // 2 minutes
+	public var autoSaveLength:Float = 60; // 1 minute
 	override function create()
 	{
 		idleMusic = new EditingMusic();

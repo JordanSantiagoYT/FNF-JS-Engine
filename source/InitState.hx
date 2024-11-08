@@ -13,7 +13,7 @@ class InitState extends FlxState {
 
         // -- FLIXEL STUFF -- //
 
-        FlxG.game.focusLostFramerate = 60;
+        FlxG.game.focusLostFramerate = 1;
 		FlxG.sound.muteKeys = TitleState.muteKeys;
 		FlxG.sound.volumeDownKeys = TitleState.volumeDownKeys;
 		FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
