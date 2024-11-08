@@ -3,31 +3,38 @@
   <br>
   <a href="https://github.com/JordanSantiagoYT/FNF-JS-Engine"><img src="assets/exclude/images/jslol.png" alt="JSengine" width="150"></a>
   <br>
-  <b>JS Engine</b>
+  <b>Patos Engine</b>
   <br>
-  <i>(JordanSantiago engine)</i>
+  <i>(PatoFlamejanteTV engine)</i>
   <br>
 </h1>
 <h3 align="center">
-  <b>JS Engine is a heavily modified Psych Engine fork, with lower-end devices and more customization in mind.</b>
+  <b>Patos Engine is a heavily modified JS Engine fork, with customization and more control in mind.</b>
 </h3>
 
 <p align="center">
-<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/JordanSantiagoYT/FNF-JS-Engine">
-<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/JordanSantiagoYT/FNF-JS-Engine">
-<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/JordanSantiagoYT/FNF-JS-Engine">
+<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/PatoFlamejanteTV/FNF-Patos-Engine">
+<img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/PatoFlamejanteTV/FNF-Patos-Engine">
+<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/PatoFlamejanteTV/FNF-Patos-Engine">
 </p>
-
-README.md revamped by [Nael2xd](https://youtube.com/@nael2xd?si=axwJrY_8jdlXUwSm)
-
-_If you're looking for the Android/IOS version, [go here!](https://github.com/JordanSantiagoYT/FNF-JS-Engine/tree/mobile)_
 
 ## Welcome
 
-Welcome to JS Engine's github repo, where you can download the engine and make spammy charts or have fun with the engine.
+Welcome to Patos Engine's github repo, where you can download the engine and make spammy charts or have fun with the engine.
 
-This contains lots and lots of customizable and features built in to JS Engine, if you wanna see most of them listed, you can see it below this text
+This contains lots and lots of customizable and features built in to Patos Engine, if you wanna see most of them listed, you can see it below this text.
 
+## New features
+
+_(**WARNING:** some are not tested)_
+
+### Haxe
+
+- Bandicam and Cheat Engine detection.
+
+<details>
+  <summary><h2>OG JS Engine Credits and Stuff</h2></summary>
+  
 # Features/Performances in JS ENGINE
 
 **This fork has tons of features and performances features, most will be listed:**
