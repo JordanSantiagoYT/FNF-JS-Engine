@@ -333,7 +333,7 @@ class CoolUtil
 			return str.substr(0, str.length-prec) + '.'+str.substr(str.length-prec);
 		}
 	}
-	public static function getHealthColors(char:Character, precision:Int = 0):Array<Int>
+	public static function getHealthColors(char:Character):Array<Int>
 	{
 		if (char != null) return char.healthColorArray;
 		else return [255,0,0];
