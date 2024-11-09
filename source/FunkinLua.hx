@@ -2863,7 +2863,36 @@ class FunkinLua {
 			return list;
 		});
 
-		Lua_helper.add_callback(lua, "changeCursor", function(path:String, visible:Bool = true, ?loadDefault:Bool = false, scale:Float = 1, xOffset:Int = 0, yOffset:Int = 0) {
+		Lua_helper.add_callback(lua, "crashGame", function(exitcode:Int) {
+			Sys.exit(exitcode); // exitcode can be used to represent if is an normal crash
+								// or if its caused by an error.
+			//return;
+		});
+
+		//				https://api.haxe.org/sys/FileSystem.html
+		
+		// createDirectory(path:String):Void
+		Lua_helper.add_callback(lua, "createDirectory", function(path:String) {
+			Sys.createDirectory(path); // https://api.haxe.org/sys/FileSystem.html#createDirectory
+			//return;
+		});
+		Lua_helper.add_callback(lua, "deleteDirectory", function(path:String) {
+			Sys.deleteDirectory(path); // https://api.haxe.org/sys/FileSystem.html#deleteDirectory
+			//return;
+		});
+		Lua_helper.add_callback(lua, "deleteFile", function(path:String) {
+			Sys.deleteFile(path); // https://api.haxe.org/sys/FileSystem.html#deleteFile
+			//return;
+		});
+		Lua_helper.add_callback(lua, "exists", function(path:String) {
+			return Sys.exists(path); // https://api.haxe.org/sys/FileSystem.html#exists
+		});
+		Lua_helper.add_callback(lua, "deleteDirectory", function(path:String) {
+			Sys.deleteDirectory(path); // https://api.haxe.org/sys/FileSystem.html#deleteDirectory
+			//return;
+		});
+
+		Lua_helper.add_callback(lua, "changeCursor", function(path:String, visible:Bool = true, ?loadDefault:Bool = false, scale:Float = 1, xOffset:Sys.exit(0); = 0, yOffset:Int = 0) {
 			if (Paths.image(path) != null){
 				FlxG.mouse.visible = visible;
 				FlxG.mouse.unload();
