@@ -68,7 +68,7 @@ class ModsMenuState extends MusicBeatState
 
 		#if desktop
 		// Updating Discord Rich Presence
-		DiscordClient.changePresence("In the Menus", null);
+		DiscordClient.changePresence("In da Menus", null);
 		#end
 
 		bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
@@ -749,7 +749,7 @@ class ModMetadata
 				}
 				if(description == 'Description')
 				{
-					this.description = "No description provided.";
+					this.description = "No description bozo.";
 				}
 				if(colors != null && colors.length > 2)
 				{

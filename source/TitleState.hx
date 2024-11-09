@@ -509,12 +509,16 @@ class TitleState extends MusicBeatState
 				case 13:
 					deleteCoolText();
 				case 14:
-					addMoreText('Freaky'); // linganguliguliguli wazaa lingangu lingangu
+					addMoreText('Freaky'); // 👅
+					//FlxG.sound.play(Paths.sound('quack'), 0.4);
 				case 15:
 					addMoreText('Morning');
+					//FlxG.sound.play(Paths.sound('quack'), 0.6);
 				case 16:
 					addMoreText('Sadness');
-
+					FlxG.sound.play(Paths.sound('quack'), 0.6);
+					addMoreText('');
+					addMoreText('(quack)');
 				case 17:
 					skipIntro();
 			}
@@ -541,6 +545,7 @@ class TitleState extends MusicBeatState
 
 			remove(ngSpr);
 			remove(credGroup);
+			//FlxG.sound.play(Paths.sound('boom'), 0.6); WHY DOES THIS NOT WORK LFERGFERYIKGREFKGREKHJFGREHHJ
 			FlxG.camera.flash(FlxColor.WHITE, 4);
 			skippedIntro = true;
 		}
