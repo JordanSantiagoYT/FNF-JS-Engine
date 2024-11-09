@@ -32,11 +32,11 @@ _(**WARNING:** some are not tested)_
 
 - [x] Bandicam and Cheat Engine detection.
 - [x] Crash on miss.
-- [ ] PC/User-related settings and functions. (4th wall(?))
+- [x] PC/User-related settings and functions. (4th wall(?))
 
 ### Lua
 - [ ] More `.lua` examples.
-- [ ] PC/User-related settings and functions. (4th wall(?))
+- [x] PC/User-related settings and functions. (4th wall(?))
 
 <details>
   <summary><h2>OG JS Engine Credits and Stuff</h2></summary>
