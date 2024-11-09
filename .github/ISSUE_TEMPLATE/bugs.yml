@@ -5,7 +5,7 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: "Describe your bug here. If you are modding, try testing your bug in a clean version of the engine instead. Also, if you're using an older version of JSE, please try the latest version/action build. Also, be sure to check the pinned 'JS Engine: Known Issues' issue, to check if your issue hasn't already been found!"
+      label: "Describe your bug here. If you are modding, try testing your bug in a clean version of the engine instead. Also, if you're using an older version of JSE, please try the latest version/action build. Also, be sure to check the pinned 'Patos Engine: Known Issues' issue, to check if your issue hasn't already been found!"
     validations:
       required: true
 

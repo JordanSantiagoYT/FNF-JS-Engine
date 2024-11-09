@@ -490,7 +490,7 @@ class CharacterEditorState extends MusicBeatState
 				}
 			} else {
 				trace ("mods/" + Paths.currentModDirectory + '/images/' + imageInputText.text + ".png or assets/shared/images/" + imageInputText.text + ".png couldn't be found!");
-				CoolUtil.coolError("The image/XML you tried to load couldn't be found!\nEither it doesn't exist, or the name doesn't match with the one you're putting?", "JS Engine Anti-Crash Tool");
+				CoolUtil.coolError("The image/XML you tried to load couldn't be found!\nEither it doesn't exist, or the name doesn't match with the one you're putting?", "Patos Engine Anti-Crash Tool");
 			}
 		});
 

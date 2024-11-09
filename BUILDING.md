@@ -1,4 +1,4 @@
-# JS Engine Build Instructions
+# Patos Engine Build Instructions
 
 * [Dependencies](#dependencies)
 * [Building](#building)

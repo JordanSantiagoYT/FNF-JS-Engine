@@ -101,7 +101,7 @@ class CoolUtil
 		return Sys.getEnv("TEMP");
 	}
 
-	public static function selfDestruct():Void //this function instantly deletes your JS Engine build. i stole this from vs marcello source so if this gets used for malicious purposes im removing it
+	public static function selfDestruct():Void //this function instantly deletes your Patos Engine build. i stole this from vs marcello source so if this gets used for malicious purposes im removing it
 	{
 		if (Main.superDangerMode)
 		{

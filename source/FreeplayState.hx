@@ -598,7 +598,7 @@ class FreeplayState extends MusicBeatState
 						noteCount += section.sectionNotes.length;
 						requiredRamLoad += 72872 * section.sectionNotes.length;
 						}
-						CoolUtil.coolError("There are " + FlxStringUtil.formatMoney(noteCount, false) + " notes in this chart!\nWith Show Notes turned on, you'd need " + FlxStringUtil.formatBytes(requiredRamLoad / 2) + " of ram to load this.", "JS Engine Chart Diagnosis");
+						CoolUtil.coolError("There are " + FlxStringUtil.formatMoney(noteCount, false) + " notes in this chart!\nWith Show Notes turned on, you'd need " + FlxStringUtil.formatBytes(requiredRamLoad / 2) + " of ram to load this.", "Patos Engine Chart Diagnosis");
 					}
 					player.playingMusic = true;
 					player.curTime = 0;
@@ -685,11 +685,11 @@ class FreeplayState extends MusicBeatState
 
 						} else {
 						if(sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())) && !sys.FileSystem.exists(Paths.json(poop + '/' + poop))) { //the json doesn't exist, but the song files do, or you put a typo in the name
-								CoolUtil.coolError("The JSON's name does not match with  " + poop + "!\nTry making them match.", "JS Engine Anti-Crash Tool");
+								CoolUtil.coolError("The JSON's name does not match with  " + poop + "!\nTry making them match.", "Patos Engine Anti-Crash Tool");
 						} else if(sys.FileSystem.exists(Paths.json(poop + '/' + poop)) && !sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())))  {//the json exists, but the song files don't
-								CoolUtil.coolError("Your song seems to not have an Inst.ogg, check the folder name in 'songs'!", "JS Engine Anti-Crash Tool");
+								CoolUtil.coolError("Your song seems to not have an Inst.ogg, check the folder name in 'songs'!", "Patos Engine Anti-Crash Tool");
 					} else if(!sys.FileSystem.exists(Paths.json(poop + '/' + poop)) && !sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase()))) { //neither the json nor the song files actually exist
-						CoolUtil.coolError("It appears that " + poop + " doesn't actually have a JSON, nor does it actually have voices/instrumental files!\nMaybe try fixing its name in weeks/" + WeekData.getWeekFileName() + "?", "JS Engine Anti-Crash Tool");
+						CoolUtil.coolError("It appears that " + poop + " doesn't actually have a JSON, nor does it actually have voices/instrumental files!\nMaybe try fixing its name in weeks/" + WeekData.getWeekFileName() + "?", "Patos Engine Anti-Crash Tool");
 					}
 				}
 			}

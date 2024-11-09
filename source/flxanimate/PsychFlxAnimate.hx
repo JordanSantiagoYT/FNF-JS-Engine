@@ -53,13 +53,13 @@ class PsychFlxAnimate extends OriginalFlxAnimate
 				{
 					myData = haxe.Json.parse(myData);
 					isXml = false;
-					//trace('JSON parsed successfully!');
+					trace('JSON parsed successfully!');
 				}
 				catch(e)
 				{
 					myData = Xml.parse(myData);
 					isXml = true;
-					//trace('XML parsed successfully!');
+					trace('XML parsed successfully!');
 				}
 		}
 

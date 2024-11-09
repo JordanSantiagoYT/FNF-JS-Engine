@@ -31,8 +31,8 @@ class MiscSettingsSubState extends BaseOptionsMenu
 		title = 'Misc';
 		rpcTitle = 'Miscellaneous Settings Menu'; //for Discord Rich Presence
 
-		var option:Option = new Option('Use JS Engine Recharts', //Name
-			'If checked, the base game charts will use the JS Engine specific recharts.', //Description
+		var option:Option = new Option('Use Patos Engine Recharts', //Name
+			'If checked, the base game charts will use the Patos Engine specific recharts.', //Description
 			'JSEngineRecharts', //Save data variable name
 			'bool', //Variable type
 			false); //Default value

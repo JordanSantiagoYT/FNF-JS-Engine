@@ -950,7 +950,7 @@ class PlayState extends MusicBeatState
 				timeTxt.setFormat(Paths.font("vcr.ttf"), 18, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 				timeTxt.borderSize = 2;
 
-			case 'JS Engine':
+			case 'Patos Engine':
 				timeTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 				timeTxt.borderSize = 3;
 
@@ -1098,7 +1098,7 @@ class PlayState extends MusicBeatState
 				timeBarBG.screenCenter(X);
 				timeBar.createGradientBar([FlxColor.TRANSPARENT], [FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]), FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2])]);
 
-			case 'JS Engine':
+			case 'Patos Engine':
 				if (timeBarBG != null && timeBar != null){
 					timeBarBG.destroy();
 					timeBar.destroy();
@@ -1348,9 +1348,9 @@ class PlayState extends MusicBeatState
 		{
 			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | JSE " + MainMenuState.psychEngineJSVersion;
 			case 'Forever Engine': 
-				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion;
+				EngineWatermark.text = "Patos Engine v" + MainMenuState.psychEngineJSVersion;
 				EngineWatermark.x = FlxG.width - EngineWatermark.width - 5;
-			case 'JS Engine': 
+			case 'Patos Engine': 
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 + 50;
 				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion;
 			case 'Dave Engine':
@@ -1390,7 +1390,7 @@ class PlayState extends MusicBeatState
 		switch(style)
 		{
 			case 'Kade Engine', 'Leather Engine': //do nothing lmao
-			case 'JS Engine':
+			case 'Patos Engine':
 				scoreTxt.setFormat(Paths.font("vcr.ttf"), 18, FlxColor.fromRGB(dadColors[0], dadColors[1], dadColors[2]), CENTER, OUTLINE, FlxColor.BLACK);
 				scoreTxt.borderSize = 2;
 
@@ -1490,7 +1490,7 @@ class PlayState extends MusicBeatState
 			switch(botStyle)
 			{
 				case 'Vanilla': //Do nothing.
-				case 'JS Engine': 
+				case 'Patos Engine': 
 					botplayTxt.text = 'Botplay Mode';
 					botplayTxt.borderSize = 1.5;
 
@@ -2504,7 +2504,7 @@ class PlayState extends MusicBeatState
 			default: '|';
 		}
 		formattedScore = formatNumber(songScore);
-		if (ClientPrefs.scoreStyle == 'JS Engine') formattedScore = formatNumber(shownScore);
+		if (ClientPrefs.scoreStyle == 'Patos Engine') formattedScore = formatNumber(shownScore);
 		formattedSongMisses = formatNumber(songMisses);
 		formattedCombo = formatNumber(combo);
 		formattedNPS = formatNumber(nps);
@@ -2532,7 +2532,7 @@ class PlayState extends MusicBeatState
 			case "Forever Engine":
 				tempScore = 'Score: ' + formattedScore + ' $divider Accuracy: ' + Highscore.floorDecimal(ratingPercent * 100, 2) + '% ['  + fcString + ']' + ' $divider Combo Breaks: ' + formattedSongMisses + (ClientPrefs.showComboInfo ? ' $divider Combo: ' + formattedCombo : '') + npsString + ' $divider Rank: ' + ratingName;
 
-			case "Psych Engine", "JS Engine", "TGT V4":
+			case "Psych Engine", "Patos Engine", "TGT V4":
 				tempScore = 'Score: ' + formattedScore + ' $divider Misses: ' + formattedSongMisses  + (ClientPrefs.showComboInfo ? ' $divider Combo: ' + formattedCombo : '') + npsString + ' $divider Rating: ' + ratingName + (ratingName != '?' ? ' (${accuracy}) - $fcString' : '');
 
 			case "Leather Engine":
@@ -3539,7 +3539,7 @@ class PlayState extends MusicBeatState
 		if (hitImagesFrame > 0) hitImagesFrame = 0;
 
 		if (lerpingScore) updateScore();
-		if (shownScore != songScore && ClientPrefs.scoreStyle == 'JS Engine' && Math.abs(shownScore - songScore) >= 10) {
+		if (shownScore != songScore && ClientPrefs.scoreStyle == 'Patos Engine' && Math.abs(shownScore - songScore) >= 10) {
 			shownScore = FlxMath.lerp(shownScore, songScore, 0.2 / ((!ffmpegMode ? ClientPrefs.framerate : targetFPS) / 60));
 				lerpingScore = true; // Indicate that lerping is in progress
 		} else {
@@ -4527,7 +4527,7 @@ class PlayState extends MusicBeatState
 								
 								if (scoreTxt != null && !ClientPrefs.hideHud) FlxTween.color(scoreTxt, 1, scoreTxt.color, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
 							}
-							if (ClientPrefs.scoreStyle == 'JS Engine' && !ClientPrefs.hideHud) {
+							if (ClientPrefs.scoreStyle == 'Patos Engine' && !ClientPrefs.hideHud) {
 								if (scoreTxt != null) FlxTween.color(scoreTxt, 1, scoreTxt.color, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
 							}
 							if (dadAnim != '') dad.playAnim(dadAnim, true);

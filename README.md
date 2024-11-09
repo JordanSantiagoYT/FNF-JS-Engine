@@ -9,7 +9,7 @@
   <br>
 </h1>
 <h3 align="center">
-  <b>Patos Engine is a heavily modified JS Engine fork, with customization and more control in mind.</b>
+  <b>Patos Engine is a heavily modified Patos Engine fork, with customization and more control in mind.</b>
 </h3>
 
 <p align="center">
@@ -39,9 +39,9 @@ _(**WARNING:** some are not tested)_
 - [x] PC/User-related settings and functions. (4th wall(?))
 
 <details>
-  <summary><h2>OG JS Engine Credits and Stuff</h2></summary>
+  <summary><h2>OG Patos Engine Credits and Stuff</h2></summary>
   
-# Features/Performances in JS ENGINE
+# Features/Performances in Patos Engine
 
 **This fork has tons of features and performances features, most will be listed:**
 
@@ -55,7 +55,7 @@ _(**WARNING:** some are not tested)_
 - Built in Song Credits! (on chart editor)
 - Spam modules! (for the DnB fans)
 
-There is like lots and lots of stuff i've missed, but at least you would like those features built in **JS ENGINE**
+There is like lots and lots of stuff i've missed, but at least you would like those features built in **Patos Engine**
 
 # Screenshots
 
@@ -85,7 +85,7 @@ A: Report [here.](https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues). Als
 
 A: Send [here.](https://github.com/JordanSantiagoYT/FNF-JS-Engine/pulls).
 
-# Compiling JS Engine
+# Compiling Patos Engine
 
 Refer to [the Build Instructions](./BUILDING.md)
 
@@ -96,7 +96,7 @@ If graphics are all white and don't have color, run `haxelib git hxcpp https://g
 
 if you wish to disable things like *Lua Scripts* or *Video Cutscenes*, you can read over to `Project.xml`
 
-inside `Project.xml`, you will find several variables to customize JS Engine to your liking
+inside `Project.xml`, you will find several variables to customize Patos Engine to your liking
 
 to start you off, disabling Videos should be simple, simply Delete the line `"VIDEOS_ALLOWED"` or comment it out by wrapping the line in XML-like comments, like this `<!-- YOUR_LINE_HERE -->`
 

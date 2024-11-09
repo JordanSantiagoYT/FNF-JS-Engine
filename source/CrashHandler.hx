@@ -98,7 +98,7 @@ class CrashHandler
 		Sys.println("Crash dump saved in " + Path.normalize(path));
 		#end
 
-		CoolUtil.showPopUp(errorMessage, "Error! JS Engine v" + MainMenuState.psychEngineJSVersion + " (" + Main.__superCoolErrorMessagesArray[FlxG.random.int(0, Main.__superCoolErrorMessagesArray.length)] + ")");
+		CoolUtil.showPopUp(errorMessage, "Error! Patos Engine v" + MainMenuState.psychEngineJSVersion + " (" + Main.__superCoolErrorMessagesArray[FlxG.random.int(0, Main.__superCoolErrorMessagesArray.length)] + ")");
 
 		#if html5
 		if (flixel.FlxG.sound.music != null)

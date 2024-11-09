@@ -889,7 +889,7 @@ class ChartingState extends MusicBeatState
 	}
 
 		function songJsonPopup() { //you tried reloading the json, but it doesn't exist
-			CoolUtil.coolError("The engine failed to load the JSON! \nEither it doesn't exist, or the name doesn't match with the one you're putting?", "JS Engine Anti-Crash Tool");
+			CoolUtil.coolError("The engine failed to load the JSON! \nEither it doesn't exist, or the name doesn't match with the one you're putting?", "Patos Engine Anti-Crash Tool");
 		}
 
 	var gameOverCharacterInputText:FlxUIInputText;
