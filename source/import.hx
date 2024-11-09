@@ -16,6 +16,7 @@ import llua.Lua;
 
 #if flxanimate
 import flxanimate.*;
+import flxanimate.PsychFlxAnimate as FlxAnimate;
 #end
 
 //so that it doesn't bring up a "Type not found: Countdown"

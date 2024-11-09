@@ -24,3 +24,6 @@ pico-speaker
 bf-holding-gf
 pico-player
 tankman-player
+darnell
+nene
+pico-playable

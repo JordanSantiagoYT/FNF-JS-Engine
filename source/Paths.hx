@@ -81,7 +81,6 @@ class Paths
 	//Function that initializes the first note. This way, we can recycle the notes
 	public static function initDefaultSkin(?noteSkin:String, ?inEditor:Bool = false)
 	{
-		trace(noteSkin);
 		if (noteSkin.length > 0) defaultSkin = noteSkin;
 		else if (!PlayState.isPixelStage) defaultSkin = 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
 		else defaultSkin = 'noteskins/NOTE_assets';
@@ -197,7 +196,7 @@ class Paths
 		var mergedList:Array<String> = [];
 		var paths:Array<String> = directoriesWithFile(defaultDirectory, path);
 
-		var defaultPath:String = 'assets/$defaultDirectory' + path;
+		var defaultPath:String = defaultDirectory + path;
 		if(paths.contains(defaultPath))
 		{
 			paths.remove(defaultPath);
@@ -543,56 +542,58 @@ class Paths
 
 	//Loads images.
 	public static var currentTrackedAssets:Map<String, FlxGraphic> = [];
-	static public function image(key:String, ?library:String = null):FlxGraphic
+	static public function image(key:String, ?parentFolder:String = null):FlxGraphic
 	{
+		key = 'images/$key' + '.png';
 		var bitmap:BitmapData = null;
-		var file:String = null;
-
-		#if MODS_ALLOWED
-		file = modsImages(key);
-		if (currentTrackedAssets.exists(file))
+		if (currentTrackedAssets.exists(key))
 		{
-			localTrackedAssets.push(file);
-			return currentTrackedAssets.get(file);
+			localTrackedAssets.push(key);
+			return currentTrackedAssets.get(key);
 		}
-		else if (FileSystem.exists(file))
-			bitmap = BitmapData.fromFile(file);
-		else
-		#end
+		return cacheBitmap(key, parentFolder, bitmap);
+	}
+
+	public static function cacheBitmap(key:String, ?parentFolder:String = null, ?bitmap:BitmapData):FlxGraphic
+	{
+		if (bitmap == null)
 		{
-			file = getPath('images/$key.png', IMAGE, library);
-			if (currentTrackedAssets.exists(file))
-			{
-				localTrackedAssets.push(file);
-				return currentTrackedAssets.get(file);
-			}
-			else if (OpenFlAssets.exists(file, IMAGE))
+			var file:String = getPath(key, IMAGE, parentFolder, true);
+			#if MODS_ALLOWED
+			if (FileSystem.exists(file))
+				bitmap = BitmapData.fromFile(file);
+			else #end if (OpenFlAssets.exists(file, IMAGE))
 				bitmap = OpenFlAssets.getBitmapData(file);
-		}
 
-		if (bitmap != null)
-		{
-			localTrackedAssets.push(file);
-			if (ClientPrefs.cacheOnGPU)
+			if (bitmap == null)
 			{
-				var texture:RectangleTexture = FlxG.stage.context3D.createRectangleTexture(bitmap.width, bitmap.height, BGRA, true);
-				texture.uploadFromBitmapData(bitmap);
-				bitmap.image.data = null;
-				/*
-				bitmap.dispose();
-				bitmap.disposeImage();
-				*/
-				bitmap = BitmapData.fromTexture(texture);
+				trace('oh no its returning null NOOOO ($file)');
+				return null;
 			}
-			var newGraphic:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, file);
-			newGraphic.persist = true;
-			newGraphic.destroyOnNoUse = false;
-			currentTrackedAssets.set(file, newGraphic);
-			return newGraphic;
 		}
 
-		trace('oh no its returning null NOOOO ($file)');
-		return null;
+		if (ClientPrefs.cacheOnGPU && bitmap.image != null)
+		{
+			bitmap.lock();
+			if (bitmap.__texture == null)
+			{
+				bitmap.image.premultiplied = true;
+				bitmap.getTexture(FlxG.stage.context3D);
+			}
+			bitmap.getSurface();
+			bitmap.disposeImage();
+			bitmap.image.data = null;
+			bitmap.image = null;
+			bitmap.readable = true;
+		}
+
+		var graph:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, key);
+		graph.persist = true;
+		graph.destroyOnNoUse = false;
+
+		currentTrackedAssets.set(key, graph);
+		localTrackedAssets.push(key);
+		return graph;
 	}
 
 	static public function getTextFromFile(key:String, ?ignoreMods:Bool = false):String
@@ -657,34 +658,96 @@ class Paths
 		return false;
 	}
 
-	inline static public function getSparrowAtlas(key:String, ?library:String):FlxAtlasFrames
+	static public function getAtlas(key:String, ?parentFolder:String = null):FlxAtlasFrames
 	{
-		#if MODS_ALLOWED
-		var imageLoaded:FlxGraphic = image(key);
-		var xmlExists:Bool = false;
-		if(FileSystem.exists(modsXml(key))) {
-			xmlExists = true;
-		}
+		var useMod = false;
+		var imageLoaded:FlxGraphic = image(key, parentFolder);
 
-		return FlxAtlasFrames.fromSparrow((imageLoaded != null ? imageLoaded : image(key, library)), (xmlExists ? File.getContent(modsXml(key)) : file('images/$key.xml', library)));
+		var myXml:Dynamic = getPath('images/$key.xml', TEXT, parentFolder, true);
+		if(OpenFlAssets.exists(myXml) #if MODS_ALLOWED || (FileSystem.exists(myXml) && (useMod = true)) #end )
+		{
+			#if MODS_ALLOWED
+			return FlxAtlasFrames.fromSparrow(imageLoaded, (useMod ? File.getContent(myXml) : myXml));
+			#else
+			return FlxAtlasFrames.fromSparrow(imageLoaded, myXml);
+			#end
+		}
+		else
+		{
+			var myJson:Dynamic = getPath('images/$key.json', TEXT, parentFolder, true);
+			if(OpenFlAssets.exists(myJson) #if MODS_ALLOWED || (FileSystem.exists(myJson) && (useMod = true)) #end )
+			{
+				#if MODS_ALLOWED
+				return FlxAtlasFrames.fromTexturePackerJson(imageLoaded, (useMod ? File.getContent(myJson) : myJson));
+				#else
+				return FlxAtlasFrames.fromTexturePackerJson(imageLoaded, myJson);
+				#end
+			}
+		}
+		return getPackerAtlas(key, parentFolder);
+	}
+
+	static public function getMultiAtlas(keys:Array<String>, ?parentFolder:String = null):FlxAtlasFrames
+	{
+		
+		var parentFrames:FlxAtlasFrames = Paths.getAtlas(keys[0].trim());
+		if(keys.length > 1)
+		{
+			var original:FlxAtlasFrames = parentFrames;
+			parentFrames = new FlxAtlasFrames(parentFrames.parent);
+			parentFrames.addAtlas(original, true);
+			for (i in 1...keys.length)
+			{
+				var extraFrames:FlxAtlasFrames = Paths.getAtlas(keys[i].trim(), parentFolder);
+				if(extraFrames != null)
+					parentFrames.addAtlas(extraFrames, true);
+			}
+		}
+		return parentFrames;
+	}
+
+	inline static public function getSparrowAtlas(key:String, ?parentFolder:String = null):FlxAtlasFrames
+	{
+		var imageLoaded:FlxGraphic = image(key, parentFolder);
+		#if MODS_ALLOWED
+		var xmlExists:Bool = false;
+
+		var xml:String = modsXml(key);
+		if(FileSystem.exists(xml)) xmlExists = true;
+
+		return FlxAtlasFrames.fromSparrow(imageLoaded, (xmlExists ? File.getContent(xml) : getPath('images/$key' + '.xml', TEXT, parentFolder)));
 		#else
-		return FlxAtlasFrames.fromSparrow(image(key, library), file('images/$key.xml', library));
+		return FlxAtlasFrames.fromSparrow(imageLoaded, getPath('images/$key' + '.xml', TEXT, parentFolder));
 		#end
 	}
 
-
-	inline static public function getPackerAtlas(key:String, ?library:String)
+	inline static public function getPackerAtlas(key:String, ?parentFolder:String = null):FlxAtlasFrames
 	{
+		var imageLoaded:FlxGraphic = image(key, parentFolder);
 		#if MODS_ALLOWED
-		var imageLoaded:FlxGraphic = image(key);
 		var txtExists:Bool = false;
-		if(FileSystem.exists(modsTxt(key))) {
-			txtExists = true;
-		}
+		
+		var txt:String = modsTxt(key);
+		if(FileSystem.exists(txt)) txtExists = true;
 
-		return FlxAtlasFrames.fromSpriteSheetPacker((imageLoaded != null ? imageLoaded : image(key, library)), (txtExists ? File.getContent(modsTxt(key)) : file('images/$key.txt', library)));
+		return FlxAtlasFrames.fromSpriteSheetPacker(imageLoaded, (txtExists ? File.getContent(txt) : getPath('images/$key' + '.txt', TEXT, parentFolder)));
 		#else
-		return FlxAtlasFrames.fromSpriteSheetPacker(image(key, library), file('images/$key.txt', library));
+		return FlxAtlasFrames.fromSpriteSheetPacker(imageLoaded, getPath('images/$key' + '.txt', TEXT, parentFolder));
+		#end
+	}
+
+	inline static public function getAsepriteAtlas(key:String, ?parentFolder:String = null, ?allowGPU:Bool = true):FlxAtlasFrames
+	{
+		var imageLoaded:FlxGraphic = image(key, parentFolder);
+		#if MODS_ALLOWED
+		var jsonExists:Bool = false;
+
+		var json:String = modsImagesJson(key);
+		if(FileSystem.exists(json)) jsonExists = true;
+
+		return FlxAtlasFrames.fromTexturePackerJson(imageLoaded, (jsonExists ? File.getContent(json) : getPath('images/$key' + '.json', TEXT, parentFolder)));
+		#else
+		return FlxAtlasFrames.fromTexturePackerJson(imageLoaded, getPath('images/$key' + '.json', TEXT, parentFolder));
 		#end
 	}
 
@@ -783,6 +846,9 @@ class Paths
 	inline static public function modsTxt(key:String) {
 		return modFolders('images/' + key + '.txt');
 	}
+
+	inline static public function modsImagesJson(key:String)
+		return modFolders('images/' + key + '.json');
 
 	static public function modFolders(key:String) {
 		if(currentModDirectory != null && currentModDirectory.length > 0) {
@@ -894,21 +960,24 @@ class Paths
 
 				if(!changedAtlasJson)
 				{
-					spriteJson = getTextFromFile('images/$originalPath/spritemap$st.json');
-					if(spriteJson != null)
+					if (fileExists('images/$originalPath/spritemap$st.json', TEXT, false))
 					{
-						//trace('found Sprite Json');
-						changedImage = true;
-						changedAtlasJson = true;
-						folderOrImg = Paths.image('$originalPath/spritemap$st');
-						break;
+						spriteJson = getTextFromFile('images/$originalPath/spritemap$st.json');
+						if(spriteJson != null)
+						{
+							//trace('found Sprite Json');
+							changedImage = true;
+							changedAtlasJson = true;
+							folderOrImg = image('$originalPath/spritemap$st');
+							break;
+						}
 					}
 				}
-				else if(Paths.fileExists('images/$originalPath/spritemap$st.png', IMAGE))
+				else if(fileExists('images/$originalPath/spritemap$st.png', IMAGE))
 				{
 					//trace('found Sprite PNG');
 					changedImage = true;
-					folderOrImg = Paths.image('$originalPath/spritemap$st');
+					folderOrImg = image('$originalPath/spritemap$st');
 					break;
 				}
 			}
@@ -917,7 +986,7 @@ class Paths
 			{
 				//trace('Changing folderOrImg to FlxGraphic');
 				changedImage = true;
-				folderOrImg = Paths.image(originalPath);
+				folderOrImg = image(originalPath);
 			}
 
 			if(!changedAnimJson)

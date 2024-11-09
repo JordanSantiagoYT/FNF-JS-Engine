@@ -676,7 +676,7 @@ class Note extends FlxSprite
 		clipRect = null;
 		if (!mustPress) 
 		{
-			visible = !ClientPrefs.opponentStrums ? false : true;
+			visible = ClientPrefs.opponentStrums;
 			alpha = ClientPrefs.middleScroll ? ClientPrefs.oppNoteAlpha : 1;
 		}
 		else

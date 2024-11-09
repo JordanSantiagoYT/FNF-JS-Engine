@@ -22,7 +22,7 @@ For Haxe, you can get it from [the Haxe website](https://haxe.org/download/)
 
 ---
 
-**(Next step is Windows only, Mac users may skip this)**
+**(Next step is Windows only, _Mac & Linux users may skip this_)**
 
 After installing `git`, it is RECOMMENDED that you
 open up a command prompt window and type the following
@@ -92,7 +92,7 @@ where `<platform>` gets replaced with `windows`, `linux`, or `mac`
 ### "It's taking a while, should I be worried?"
 
 No, that is normal, when you compile flixel games for the first time, it usually takes around 5 to 10 minutes,
-it really depends on how powerful your hrdware is
+it really depends on how powerful your hardware is
 
 ### "I had an error saying that 'hxCodec' could not be found!"
 

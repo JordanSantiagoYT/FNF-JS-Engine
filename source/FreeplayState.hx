@@ -524,11 +524,7 @@ class FreeplayState extends MusicBeatState
 					Paths.currentModDirectory = songs[curSelected].folder;
 					var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
 					PlayState.SONG = Song.loadFromJson(poop, songs[curSelected].songName.toLowerCase());
-						if (CoolUtil.defaultSongs.contains(PlayState.SONG.song.toLowerCase()) && curDifficulty == 2 && ClientPrefs.JSEngineRecharts) {
-							PlayState.SONG = Song.loadFromJson(songs[curSelected].songName.toLowerCase() + '-jshard', songs[curSelected].songName.toLowerCase());
-						} else {
-					PlayState.SONG = Song.loadFromJson(poop, songs[curSelected].songName.toLowerCase());
-					}
+
 					var diff:String = (PlayState.SONG.specialAudioName.length > 1 ? PlayState.SONG.specialAudioName : CoolUtil.difficulties[curDifficulty]).toLowerCase();
 
 					if (PlayState.SONG.needsVoices)
@@ -658,28 +654,16 @@ class FreeplayState extends MusicBeatState
 				persistentUpdate = false;
 				var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
 				var poop:String = Highscore.formatSong(songLowercase, curDifficulty);
-				/*#if MODS_ALLOWED
-				if(!sys.FileSystem.exists(Paths.modsJson(songLowercase + '/' + poop)) && !sys.FileSystem.exists(Paths.json(songLowercase + '/' + poop))) {
-				#else
-				if(!OpenFlAssets.exists(Paths.json(songLowercase + '/' + poop))) {
-				#end
-					poop = songLowercase;
-					curDifficulty = 1;
-					trace('Couldnt find file');
-				}*/
+
 				trace(poop);
 
 				CoolUtil.currentDifficulty = CoolUtil.difficultyString();
 
 				if(sys.FileSystem.exists(Paths.modsJson(songLowercase + '/' + poop)) || sys.FileSystem.exists(Paths.json(songLowercase + '/' + poop)) || OpenFlAssets.exists(Paths.modsJson(songLowercase + '/' + poop)) || OpenFlAssets.exists(Paths.json(songLowercase + '/' + poop))) {
-						PlayState.SONG = Song.loadFromJson(poop, songLowercase);
-						if (CoolUtil.defaultSongs.contains(PlayState.SONG.song.toLowerCase()) && curDifficulty == 2 && ClientPrefs.JSEngineRecharts) {
-							PlayState.SONG = Song.loadFromJson(songs[curSelected].songName.toLowerCase() + '-jshard', songs[curSelected].songName.toLowerCase());
-							PlayState.storyDifficulty == 2;
-						} else {
-							PlayState.storyDifficulty = curDifficulty;
-						}
-				PlayState.isStoryMode = ClientPrefs.alwaysTriggerCutscene;
+				PlayState.SONG = Song.loadFromJson(poop, songLowercase);
+				PlayState.storyDifficulty = curDifficulty;
+
+				PlayState.isStoryMode = PlayState.wasOriginallyFreeplay = ClientPrefs.alwaysTriggerCutscene;
 
 				trace('CURRENT WEEK: ' + WeekData.getWeekFileName());
 				if(colorTween != null) {
@@ -881,10 +865,20 @@ class FreeplayState extends MusicBeatState
 			curDifficulty = 0;
 		}
 
+		if (Song.hasDifficulty(songs[curSelected].songName.toLowerCase(), 'jshard') && ClientPrefs.JSEngineRecharts)
+			CoolUtil.difficulties.push('jshard');
+
 		if (CoolUtil.defaultSongs.contains(songs[curSelected].songName.toLowerCase()) && Song.hasDifficulty(songs[curSelected].songName.toLowerCase(), 'erect'))
 		{
-			CoolUtil.difficulties = CoolUtil.defaultDifficultiesFull.copy();
-			curDifficulty = Math.round(Math.max(0, CoolUtil.defaultDifficultiesFull.indexOf(CoolUtil.defaultDifficulty)));
+			CoolUtil.difficulties.push('erect');
+			CoolUtil.difficulties.push('nightmare');
+		}
+
+		if (songs[curSelected].songName.toLowerCase() == 'darnell') 
+		{
+			CoolUtil.difficulties.push('bf'); 
+			if (ClientPrefs.JSEngineRecharts) 
+				CoolUtil.difficulties.push('jsbf');
 		}
 
 		var newPos:Int = CoolUtil.difficulties.indexOf(lastDifficultyName);

@@ -83,7 +83,7 @@ class StartupState extends MusicBeatState
 						vidSprite.playVideo(Paths.video('bambiStartup'), false, false);
 						vidSprite.finishCallback = function()
 						{
-							try { vidSprite.finishVideo(); }
+							try { vidSprite.dispose(); }
 							catch (e) {}
 							FlxG.switchState(TitleState.new);
 						};
@@ -102,7 +102,7 @@ class StartupState extends MusicBeatState
 						vidSprite.playVideo(Paths.video('broCopiedDenpa'), false, false);
 						vidSprite.finishCallback = function()
 						{
-							try { vidSprite.finishVideo(); }
+							try { vidSprite.dispose(); }
 							catch (e) {}
 							FlxG.switchState(TitleState.new);
 						};

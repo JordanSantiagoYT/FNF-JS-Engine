@@ -10,6 +10,10 @@ echo.
 echo what would you like to name your rendered video?
 set /p "renderName="
 
+echo.
+echo what is the framerate of your images/video?
+set /p "vidFPS="
+
 echo. 
 echo lastly, are you rendering your video in a lossless format? (y/n, default n, makes the renderer find pngs instead of jpgs)
 set /p "useLossless="
@@ -25,6 +29,6 @@ echo.
 echo Starting...
 echo.
 
-ffmpeg -r 60 -i "%~dp0%renderFolder%\%%07d.%fExt%" "%renderName%.mp4"
+ffmpeg -r %vidFPS% -i "%~dp0%renderFolder%\%%07d.%fExt%" "%renderName%.mp4"
 
 pause

@@ -282,7 +282,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			'scoreStyle',
 			'string',
 			'Psych Engine',
-			['Psych Engine', 'VS Impostor', 'Kade Engine', 'Forever Engine', 'TGT V4', 'Dave Engine', 'Doki Doki+', 'Leather Engine', 'JS Engine']);
+			['Psych Engine', 'VS Impostor', 'Kade Engine', 'Forever Engine', 'TGT V4', 'Dave Engine', 'Doki Doki+', 'Leather Engine', 'JS Engine', 'Vanilla']);
 		addOption(option);
 
 		var option:Option = new Option('Time Bar Style:',

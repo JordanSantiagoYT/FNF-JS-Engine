@@ -51,6 +51,7 @@ class StoryMenuState extends MusicBeatState
 		Paths.clearStoredMemory();
 
 		PlayState.isStoryMode = true;
+		PlayState.wasOriginallyFreeplay = false;
 		WeekData.reloadWeekFiles(true);
 
 		final accept:String = "ACCEPT";
@@ -328,25 +329,14 @@ class StoryMenuState extends MusicBeatState
 
 			PlayState.storyDifficulty = curDifficulty;
 
-			if (curWeek >= 0 && curWeek <= 7 && curDifficulty == 2 && ClientPrefs.JSEngineRecharts) {
-				PlayState.SONG = Song.loadFromJson(PlayState.storyPlaylist[0].toLowerCase() + '-jshard', PlayState.storyPlaylist[0].toLowerCase());
-				PlayState.campaignScore = 0;
-				PlayState.campaignMisses = 0;
-				new FlxTimer().start(1, function(tmr:FlxTimer)
-				{
-					LoadingState.loadAndSwitchState(new PlayState(), true);
-					FreeplayState.destroyFreeplayVocals();
-				});
-			} else {
-				PlayState.SONG = Song.loadFromJson(PlayState.storyPlaylist[0].toLowerCase() + diffic, PlayState.storyPlaylist[0].toLowerCase());
-				PlayState.campaignScore = 0;
-				PlayState.campaignMisses = 0;
-				new FlxTimer().start(1, function(tmr:FlxTimer)
-				{
-					LoadingState.loadAndSwitchState(new PlayState(), true);
-					FreeplayState.destroyFreeplayVocals();
-				});
-			}
+			PlayState.SONG = Song.loadFromJson(PlayState.storyPlaylist[0].toLowerCase() + diffic, PlayState.storyPlaylist[0].toLowerCase());
+			PlayState.campaignScore = 0;
+			PlayState.campaignMisses = 0;
+			new FlxTimer().start(1, function(tmr:FlxTimer)
+			{
+				LoadingState.loadAndSwitchState(new PlayState(), true);
+				FreeplayState.destroyFreeplayVocals();
+			});
 		} else {
 			FlxG.sound.play(Paths.sound('cancelMenu'));
 		}
@@ -463,6 +453,15 @@ class StoryMenuState extends MusicBeatState
 		{
 			curDifficulty = 0;
 		}
+
+		var hasJSRecharts:Bool = true;
+		
+		for (song in WeekData.getCurrentWeek().songs)
+			if (!Song.hasDifficulty(song[0].toLowerCase(), 'jshard'))
+			{ hasJSRecharts = false; break; }
+
+		if (hasJSRecharts && ClientPrefs.JSEngineRecharts)
+			CoolUtil.difficulties.push('jshard');
 
 		var newPos:Int = CoolUtil.difficulties.indexOf(lastDifficultyName);
 		//trace('Pos of ' + lastDifficultyName + ' is ' + newPos);

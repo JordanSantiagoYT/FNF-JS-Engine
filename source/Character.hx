@@ -1,6 +1,5 @@
 package;
 
-import animateatlas.AtlasFrameMaker;
 import flixel.tweens.FlxEase;
 import flixel.FlxG;
 import flixel.FlxSprite;
@@ -9,6 +8,7 @@ import flixel.animation.FlxBaseAnimation;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxSort;
+import flixel.util.FlxDestroyUtil;
 import flixel.math.FlxRect;
 import Section.SwagSection;
 #if MODS_ALLOWED
@@ -31,7 +31,6 @@ typedef CharacterFile = {
 	var position:Array<Float>;
 	var camera_position:Array<Float>;
 
-	var isPlayer:Null<Bool>;
 	var flip_x:Bool;
 	var no_antialiasing:Bool;
 	var healthbar_colors:Array<Int>;
@@ -47,6 +46,7 @@ typedef CharacterFile = {
 	var shake_screen:Bool;
 	var shake_intensity:Float;
 	var shake_duration:Float;
+	@:optional var _editor_isPlayer:Null<Bool>;
 }
 
 typedef AnimArray = {
@@ -105,6 +105,7 @@ class Character extends FlxSprite
 	public var jsonScale:Float = 1;
 	public var noAntialiasing:Bool = false;
 	public var originalFlipX:Bool = false;
+	public var editorIsPlayer:Null<Bool> = null;
 	public var healthColorArray:Array<Int> = [255, 0, 0];
 	public var winningColorArray:Array<Int> = [255, 0, 0];
 	public var losingColorArray:Array<Int> = [255, 0, 0];
@@ -141,130 +142,18 @@ class Character extends FlxSprite
 					path = Paths.getPreloadPath('characters/' + DEFAULT_CHARACTER + '.json'); //If a character couldn't be found, change him to BF just to prevent a crash
 				}
 
-				#if MODS_ALLOWED
-				var rawJson = File.getContent(path);
-				#else
-				var rawJson = Assets.getText(path);
-				#end
-
-				var json:CharacterFile = cast Json.parse(rawJson);
-				var spriteType = "sparrow";
-				//sparrow
-				//packer
-				//texture
-				#if MODS_ALLOWED
-				var modTxtToFind:String = Paths.modsTxt(json.image);
-				var txtToFind:String = Paths.getPath('images/' + json.image + '.txt', TEXT);
-				
-				//var modTextureToFind:String = Paths.modFolders("images/"+json.image);
-				//var textureToFind:String = Paths.getPath('images/' + json.image, new AssetType();
-				
-				if (FileSystem.exists(modTxtToFind) || FileSystem.exists(txtToFind) || Assets.exists(txtToFind))
-				#else
-				if (Assets.exists(Paths.getPath('images/' + json.image + '.txt', TEXT)))
-				#end
+				try
 				{
-					spriteType = "packer";
+					#if MODS_ALLOWED
+					loadCharacterFile(cast Json.parse(File.getContent(path)));
+					#else
+					loadCharacterFile(cast Json.parse(Assets.getText(path)));
+					#end
 				}
-				
-				#if MODS_ALLOWED
-				var modAnimToFind:String = Paths.modFolders('images/' + json.image + '/Animation.json');
-				var animToFind:String = Paths.getPath('images/' + json.image + '/Animation.json', TEXT);
-				
-				//var modTextureToFind:String = Paths.modFolders("images/"+json.image);
-				//var textureToFind:String = Paths.getPath('images/' + json.image, new AssetType();
-				
-				if (FileSystem.exists(modAnimToFind) || FileSystem.exists(animToFind) || Assets.exists(animToFind))
-				#else
-				if (Assets.exists(Paths.getPath('images/' + json.image + '/Animation.json', TEXT)))
-				#end
+				catch(e:Dynamic)
 				{
-					spriteType = "texture";
+					trace('Error loading character file of "$character": $e');
 				}
-
-				switch (spriteType){
-					
-					case "packer":
-						frames = Paths.getPackerAtlas(json.image);
-					
-					case "sparrow":
-						frames = Paths.getSparrowAtlas(json.image);
-					
-					case "texture":
-						frames = AtlasFrameMaker.construct(json.image);
-				}
-				imageFile = json.image;
-				noteskin = json.noteskin;
-
-				if(json.scale != 1) {
-					jsonScale = json.scale;
-					setGraphicSize(Std.int(width * jsonScale));
-					updateHitbox();
-				}
-
-				positionArray = json.position;
-				cameraPosition = json.camera_position;
-
-				healthIcon = json.healthicon;
-				singDuration = json.sing_duration;
-				flipX = !!json.flip_x;
-				if(json.no_antialiasing) {
-					antialiasing = false;
-					noAntialiasing = true;
-				}
-
-				if(Std.string(json.health_drain).length > 0) {
-					healthDrain = json.health_drain;
-				} else healthDrain = false;
-
-				if(Std.string(json.shake_screen).length > 0) {
-					shakeScreen = json.shake_screen;
-				} else shakeScreen = false;
-
-				drainAmount = json.drain_amount;
-				drainFloor = json.drain_floor;
-
-				shakeIntensity = (!Math.isNaN(json.shake_intensity) ? json.shake_intensity : 0.0075);
-				shakeDuration = (!Math.isNaN(json.shake_duration) ? json.shake_duration : 0.1);
-
-				vocalsFile = json.vocals_file != null ? json.vocals_file : '';
-
-				if(json.healthbar_colors != null && json.healthbar_colors.length > 2)
-					healthColorArray = json.healthbar_colors;
-
-				if(json.winning_colors != null && json.winning_colors.length > 2)
-					winningColorArray = json.winning_colors;
-				else winningColorArray = healthColorArray;
-
-				if(json.losing_colors != null && json.losing_colors.length > 2)
-					losingColorArray = json.losing_colors;
-				else losingColorArray = healthColorArray;
-
-				antialiasing = !noAntialiasing;
-				if(!ClientPrefs.globalAntialiasing) antialiasing = false;
-
-				animationsArray = json.animations;
-				if(animationsArray != null && animationsArray.length > 0) {
-					for (anim in animationsArray) {
-						var animAnim:String = '' + anim.anim;
-						var animName:String = '' + anim.name;
-						var animFps:Int = anim.fps;
-						var animLoop:Bool = !!anim.loop; //Bruh
-						var animIndices:Array<Int> = anim.indices;
-						if(animIndices != null && animIndices.length > 0) {
-							animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
-						} else {
-							animation.addByPrefix(animAnim, animName, animFps, animLoop);
-						}
-
-						if(anim.offsets != null && anim.offsets.length > 1) {
-							addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
-						}
-					}
-				} else {
-					quickAnimAdd('idle', 'BF idle dance');
-				}
-				//trace('Loaded file to character ' + curCharacter);
 		}
 		originalFlipX = flipX;
 
@@ -281,117 +170,255 @@ class Character extends FlxSprite
 				skipDance = true;
 				loadMappedAnims();
 				playAnim("shoot1");
+
+			case 'pico-blazin', 'darnell-blazin':
+				skipDance = true;
+		}
+	}
+
+	public function loadCharacterFile(json:CharacterFile)
+	{
+		isAnimateAtlas = false;
+		
+		#if flxanimate
+		var animToFind:String = Paths.getPath('images/' + json.image + '/Animation.json', TEXT);
+		if (#if MODS_ALLOWED FileSystem.exists(animToFind) || #end Assets.exists(animToFind))
+			isAnimateAtlas = true;
+		#end
+
+		scale.set(1, 1);
+		updateHitbox();
+
+		if(!isAnimateAtlas)
+		{
+			frames = Paths.getMultiAtlas(json.image.split(','));
+		}
+		#if flxanimate
+		else
+		{
+			atlas = new FlxAnimate();
+			atlas.showPivot = false;
+			try
+			{
+				Paths.loadAnimateAtlas(atlas, json.image);
+			}
+			catch(e:haxe.Exception)
+			{
+				FlxG.log.warn('Could not load atlas ${json.image}: $e');
+				trace(e.stack);
+			}
+		}
+		#end
+		imageFile = json.image;
+		noteskin = json.noteskin;
+
+		if(json.scale != 1) {
+			jsonScale = json.scale;
+			scale.set(jsonScale, jsonScale);
+			updateHitbox();
+		}
+
+		positionArray = json.position;
+		cameraPosition = json.camera_position;
+
+		healthIcon = json.healthicon;
+		singDuration = json.sing_duration;
+		flipX = !!json.flip_x;
+		if(json.no_antialiasing) {
+			antialiasing = false;
+			noAntialiasing = true;
+		}
+
+		if(Std.string(json.health_drain).length > 0) {
+			healthDrain = json.health_drain;
+		} else healthDrain = false;
+
+		if(Std.string(json.shake_screen).length > 0) {
+			shakeScreen = json.shake_screen;
+		} else shakeScreen = false;
+
+		drainAmount = json.drain_amount;
+		drainFloor = json.drain_floor;
+
+		shakeIntensity = (!Math.isNaN(json.shake_intensity) ? json.shake_intensity : 0.0075);
+		shakeDuration = (!Math.isNaN(json.shake_duration) ? json.shake_duration : 0.1);
+
+		vocalsFile = json.vocals_file != null ? json.vocals_file : '';
+		editorIsPlayer = json._editor_isPlayer;
+
+		if(json.healthbar_colors != null && json.healthbar_colors.length > 2)
+			healthColorArray = json.healthbar_colors;
+
+		if(json.winning_colors != null && json.winning_colors.length > 2)
+			winningColorArray = json.winning_colors;
+		else winningColorArray = healthColorArray;
+
+		if(json.losing_colors != null && json.losing_colors.length > 2)
+			losingColorArray = json.losing_colors;
+		else losingColorArray = healthColorArray;
+
+		antialiasing = !noAntialiasing;
+		if(!ClientPrefs.globalAntialiasing) antialiasing = false;
+
+		animationsArray = json.animations;
+		if(animationsArray != null && animationsArray.length > 0) {
+			for (anim in animationsArray) {
+				var animAnim:String = '' + anim.anim;
+				var animName:String = '' + anim.name;
+				var animFps:Int = anim.fps;
+				var animLoop:Bool = !!anim.loop; //Bruh
+				var animIndices:Array<Int> = anim.indices;
+
+				if(!isAnimateAtlas)
+				{
+					if(animIndices != null && animIndices.length > 0)
+						animation.addByIndices(animAnim, animName, animIndices, "", animFps, animLoop);
+					else
+						animation.addByPrefix(animAnim, animName, animFps, animLoop);
+				}
+				#if flxanimate
+				else
+				{
+					if(animIndices != null && animIndices.length > 0)
+						atlas.anim.addBySymbolIndices(animAnim, animName, animIndices, animFps, animLoop);
+					else
+						atlas.anim.addBySymbol(animAnim, animName, animFps, animLoop);
+				}
+				#end
+
+				if(anim.offsets != null && anim.offsets.length > 1) {
+					addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
+				}
+			}
+			#if flxanimate
+			if(isAnimateAtlas) copyAtlasValues();
+			#end
 		}
 	}
 
 	override function update(elapsed:Float)
 	{
 		if (ClientPrefs.ffmpegMode) elapsed = 1 / ClientPrefs.targetFPS;
-		if(!debugMode && animation.curAnim != null)
+
+		if(isAnimateAtlas) atlas.update(elapsed);
+
+		if(debugMode || (!isAnimateAtlas && animation.curAnim == null) || (isAnimateAtlas && atlas.anim.curSymbol == null))
 		{
-			if(heyTimer > 0)
-			{
-				heyTimer -= elapsed * PlayState.instance.playbackRate;
-				if(heyTimer <= 0)
-				{
-					var anim:String = getAnimationName();
-					if(specialAnim && (anim == 'hey' || anim == 'cheer'))
-					{
-						specialAnim = false;
-						dance();
-					}
-					heyTimer = 0;
-				}
-			} else if(specialAnim && isAnimationFinished())
-			{
-				specialAnim = false;
-				dance();
-			}
-			else if (getAnimationName().endsWith('miss') && isAnimationFinished())
-			{
-				dance();
-				finishAnimation();
-			}
-			
-			switch(curCharacter)
-			{
-				case 'pico-speaker':
-					if(animationNotes.length > 0 && Conductor.songPosition > animationNotes[0][0])
-					{
-						var noteData:Int = 1;
-						if(animationNotes[0][1] > 2) noteData = 3;
-
-						noteData += FlxG.random.int(0, 1);
-						playAnim('shoot' + noteData, true);
-						animationNotes.shift();
-					}
-					if(isAnimationFinished()) playAnim(animation.curAnim.name, false, false, animation.curAnim.frames.length - 3);
-			}
-
-			if (!isPlayer)
-			{
-				if (!PlayState.opponentChart || curCharacter.startsWith('gf')) {
-					if (getAnimationName().startsWith('sing')) holdTimer += elapsed;
-
-					if (holdTimer >= Conductor.stepCrochet * (0.0011 / (FlxG.sound.music != null ? FlxG.sound.music.pitch : 1)) * singDuration * (PlayState.instance != null ? PlayState.instance.singDurMult : 1))
-					{
-						dance();
-						holdTimer = 0;
-					}
-				} else {
-					if (animation.curAnim.name.startsWith('sing'))
-					{
-						holdTimer += elapsed;
-					}
-					else
-						holdTimer = 0;
-
-					if (getAnimationName().endsWith('miss') && isAnimationFinished() && !debugMode)
-						dance();
-				}
-			}
-
-			var name:String = getAnimationName();
-			if(isAnimationFinished() && animOffsets.exists('$name-loop'))
-				playAnim('$name-loop');
+			super.update(elapsed);
+			return;
 		}
+		if(heyTimer > 0)
+		{
+			heyTimer -= elapsed * PlayState.instance.playbackRate;
+			if(heyTimer <= 0)
+			{
+				var anim:String = getAnimationName();
+				if(specialAnim && (anim == 'hey' || anim == 'cheer'))
+				{
+					specialAnim = false;
+					dance();
+				}
+				heyTimer = 0;
+			}
+		} else if(specialAnim && isAnimationFinished())
+		{
+			specialAnim = false;
+			dance();
+		}
+		else if (getAnimationName().endsWith('miss') && isAnimationFinished())
+		{
+			dance();
+			finishAnimation();
+		}
+		
+		switch(curCharacter)
+		{
+			case 'pico-speaker':
+				if(animationNotes.length > 0 && Conductor.songPosition > animationNotes[0][0])
+				{
+					var noteData:Int = 1;
+					if(animationNotes[0][1] > 2) noteData = 3;
+
+					noteData += FlxG.random.int(0, 1);
+					playAnim('shoot' + noteData, true);
+					animationNotes.shift();
+				}
+				if(isAnimationFinished()) playAnim(animation.curAnim.name, false, false, animation.curAnim.frames.length - 3);
+		}
+
+		if (!isPlayer)
+		{
+			if (!PlayState.opponentChart || curCharacter.startsWith('gf')) {
+				if (getAnimationName().startsWith('sing')) holdTimer += elapsed;
+
+				if (holdTimer >= Conductor.stepCrochet * (0.0011 / (FlxG.sound.music != null ? FlxG.sound.music.pitch : 1)) * singDuration * (PlayState.instance != null ? PlayState.instance.singDurMult : 1))
+				{
+					dance();
+					holdTimer = 0;
+				}
+			} else {
+				if (getAnimationName().startsWith('sing'))
+				{
+					holdTimer += elapsed;
+				}
+				else
+					holdTimer = 0;
+
+				if (getAnimationName().endsWith('miss') && isAnimationFinished() && !debugMode)
+					dance();
+			}
+		}
+
+		var name:String = getAnimationName();
+		if(isAnimationFinished() && animOffsets.exists('$name-loop'))
+			playAnim('$name-loop');
+
 		super.update(elapsed);
 	}
 
 	inline public function isAnimationNull():Bool
-		return (animation.curAnim == null);
+		return !isAnimateAtlas ? (animation.curAnim == null) : (atlas.anim.curSymbol == null);
 
+	var _lastPlayedAnimation:String;
 	inline public function getAnimationName():String
 	{
-		var name:String = '';
-		@:privateAccess
-		if(!isAnimationNull()) name = animation.curAnim.name;
-		return (name != null) ? name : '';
+		return _lastPlayedAnimation;
 	}
 
 	public function isAnimationFinished():Bool
 	{
 		if(isAnimationNull()) return false;
-		return animation.curAnim.finished;
+		return !isAnimateAtlas ? animation.curAnim.finished : atlas.anim.finished;
 	}
 
 	public function finishAnimation():Void
 	{
 		if(isAnimationNull()) return;
 
-		animation.curAnim.finish();
+		if(!isAnimateAtlas) animation.curAnim.finish();
+		else atlas.anim.curFrame = atlas.anim.length - 1;
+	}
+
+	public function hasAnimation(anim:String):Bool
+	{
+		return animOffsets.exists(anim);
 	}
 
 	public var animPaused(get, set):Bool;
 	private function get_animPaused():Bool
 	{
 		if(isAnimationNull()) return false;
-		return animation.curAnim.paused;
+		return !isAnimateAtlas ? animation.curAnim.paused : atlas.anim.isPlaying;
 	}
 	private function set_animPaused(value:Bool):Bool
 	{
 		if(isAnimationNull()) return value;
-		animation.curAnim.paused = value;
+		if(!isAnimateAtlas) animation.curAnim.paused = value;
+		else
+		{
+			if(value) atlas.anim.pause();
+			else atlas.anim.resume();
+		} 
 
 		return value;
 	}
@@ -423,7 +450,17 @@ class Character extends FlxSprite
 	public function playAnim(AnimName:String, Force:Bool = false, Reversed:Bool = false, Frame:Int = 0):Void
 	{
 		specialAnim = false;
-		animation.play(AnimName, Force, Reversed, Frame);
+		if(!isAnimateAtlas)
+		{
+			animation.play(AnimName, Force, Reversed, Frame);
+		}
+		else
+		{
+			atlas.anim.play(AnimName, Force, Reversed, Frame);
+			atlas.update(0);
+		}
+
+		_lastPlayedAnimation = AnimName;
 
 		final daOffset = animOffsets.get(AnimName);
 		if (animOffsets.exists(AnimName))
@@ -500,6 +537,58 @@ class Character extends FlxSprite
 	{
 		animation.addByPrefix(name, anim, 24, false);
 	}
+
+	// Atlas support
+	// special thanks ne_eo for the references, you're the goat!!
+	public var isAnimateAtlas:Bool = false;
+	#if flxanimate
+	public var atlas:FlxAnimate;
+	public override function draw()
+	{
+		if(isAnimateAtlas)
+		{
+			copyAtlasValues();
+			atlas.draw();
+			return;
+		}
+		super.draw();
+	}
+
+	public function copyAtlasValues()
+	{
+		@:privateAccess
+		{
+			atlas.cameras = cameras;
+			atlas.scrollFactor = scrollFactor;
+			atlas.scale = scale;
+			atlas.offset = offset;
+			atlas.origin = origin;
+			atlas.x = x;
+			atlas.y = y;
+			atlas.angle = angle;
+			atlas.alpha = alpha;
+			atlas.visible = visible;
+			atlas.flipX = flipX;
+			atlas.flipY = flipY;
+			atlas.shader = shader;
+			atlas.antialiasing = antialiasing;
+			atlas.colorTransform = colorTransform;
+			atlas.color = color;
+		}
+	}
+
+	public override function destroy()
+	{
+		super.destroy();
+		destroyAtlas();
+	}
+
+	public function destroyAtlas()
+	{
+		if (atlas != null)
+			atlas = FlxDestroyUtil.destroy(atlas);
+	}
+	#end
 }
 
 class Boyfriend extends Character

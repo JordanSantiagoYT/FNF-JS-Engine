@@ -306,6 +306,8 @@ class Controls extends FlxActionSet
 	inline function get_RESET()
 		return _reset.check();
 
+	public static var instance:Controls;
+
 	#if (haxe >= "4.0.0")
 	public function new(name, scheme = None)
 	{

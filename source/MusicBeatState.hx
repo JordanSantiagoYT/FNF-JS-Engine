@@ -84,7 +84,7 @@ class MusicBeatState extends FlxUIState
 
 	override function update(elapsed:Float)
 	{
-		if (oldStep != curStep) oldStep = curStep;
+		oldStep = curStep;
 
 		updateCurStep();
 		updateBeat();
