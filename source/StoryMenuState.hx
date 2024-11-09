@@ -460,7 +460,7 @@ class StoryMenuState extends MusicBeatState
 			if (!Song.hasDifficulty(song[0].toLowerCase(), 'jshard'))
 			{ hasJSRecharts = false; break; }
 
-		if (hasJSRecharts && ClientPrefs.JSEngineRecharts)
+		if (hasJSRecharts && ClientPrefs.PatoEngineRecharts)
 			CoolUtil.difficulties.push('jshard');
 
 		var newPos:Int = CoolUtil.difficulties.indexOf(lastDifficultyName);

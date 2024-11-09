@@ -1,4 +1,4 @@
-Songs are rendered here! If you delete this folder there's a 99.99% chance that Rendering Mode won't work, even if you put FFmpeg.exe in the same folder as JSEngine.exe. 
+Songs are rendered here! If you delete this folder there's a 99.99% chance that Rendering Mode won't work, even if you put FFmpeg.exe in the same folder as PatoEngine.exe. 
 
 Frames captured by the ingame Renderer will go here. You'll need FFmpeg to convert them into MP4s! Don't worry about organizing the folders by song name too, the engine will do it automatically :)
 

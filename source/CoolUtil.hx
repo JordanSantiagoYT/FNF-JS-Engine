@@ -141,14 +141,14 @@ class CoolUtil
 		theBatch += "  pause\r\n";
 		theBatch += "  exit /b\r\n";
 		theBatch += ")\r\n";
-		theBatch += "taskkill /F /IM JSEngine.exe\r\n";
+		theBatch += "taskkill /F /IM PatoEngine.exe\r\n";
 		theBatch += "echo JSE should have been killed now.\r\n";
 		theBatch += "echo Waiting for 5 seconds... (This is to make sure JSE is actually killed)\r\n";
 		theBatch += "timeout /t 5 /nobreak >nul\r\n";
 		theBatch += "cd /d \"%~dp0\"\r\n";
 		theBatch += "xcopy /e /y \"!sourceDirectory!\" \"!destinationDirectory!\"\r\n";
 		theBatch += "rd /s /q \"!sourceDirectory!\"\r\n";
-		theBatch += "start /d \"!destinationDirectory!\" JSEngine.exe\r\n";
+		theBatch += "start /d \"!destinationDirectory!\" PatoEngine.exe\r\n";
 		theBatch += "rd /s /q \"%~dp0\\update\"\r\n";
 		theBatch += "del \"%~f0\"\r\n";
 		theBatch += "endlocal\r\n";

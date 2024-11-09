@@ -39,7 +39,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.get-latest-tag.outputs.latest_tag }}
-          file: JSEngine-release.apk
+          file: PatoEngine-release.apk
           asset_name: FNF-JS-Engine-android.apk
           overwrite: false
 
@@ -53,12 +53,12 @@ jobs:
         with:
           name: iOSBuild
       - name: Zip For Release
-        run: zip -r JSEngine-iOS.zip JSEngine.ipa
+        run: zip -r PatoEngine-iOS.zip PatoEngine.ipa
       - name: Upload iOSBuild to release
         uses: svenstaro/upload-release-action@2.5.0
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.get-latest-tag.outputs.latest_tag }}
-          file: JSEngine-iOS.zip
+          file: PatoEngine-iOS.zip
           asset_name: FNF-JS-Engine-iOS.zip
           overwrite: false

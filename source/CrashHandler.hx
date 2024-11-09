@@ -57,7 +57,7 @@ class CrashHandler
 		dateNow = dateNow.replace(" ", "_");
 		dateNow = dateNow.replace(":", "'");
 
-		path = "crash/" + "JSEngine_" + dateNow + ".log";
+		path = "crash/" + "PatoEngine_" + dateNow + ".log";
 
 		for(stackItem in stack) {
 			switch(stackItem) {

@@ -865,7 +865,7 @@ class FreeplayState extends MusicBeatState
 			curDifficulty = 0;
 		}
 
-		if (Song.hasDifficulty(songs[curSelected].songName.toLowerCase(), 'jshard') && ClientPrefs.JSEngineRecharts)
+		if (Song.hasDifficulty(songs[curSelected].songName.toLowerCase(), 'jshard') && ClientPrefs.PatoEngineRecharts)
 			CoolUtil.difficulties.push('jshard');
 
 		if (CoolUtil.defaultSongs.contains(songs[curSelected].songName.toLowerCase()) && Song.hasDifficulty(songs[curSelected].songName.toLowerCase(), 'erect'))
@@ -877,7 +877,7 @@ class FreeplayState extends MusicBeatState
 		if (songs[curSelected].songName.toLowerCase() == 'darnell') 
 		{
 			CoolUtil.difficulties.push('bf'); 
-			if (ClientPrefs.JSEngineRecharts) 
+			if (ClientPrefs.PatoEngineRecharts) 
 				CoolUtil.difficulties.push('jsbf');
 		}
 

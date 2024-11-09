@@ -55,7 +55,7 @@ jobs:
           cd export/release/ios/build/*-iphoneos
           mkdir Payload
           mv *.app Payload
-          zip -r JSEngine.ipa Payload
+          zip -r PatoEngine.ipa Payload
 
       - name: Upload Artifact (Android)
         if: startsWith(matrix.os, 'ubuntu')
