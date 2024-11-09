@@ -195,11 +195,9 @@ class CoolUtil
 			return tasklist.contains("bdcam.exe") || tasklist.contains("bdfix.exe"); // honestamente eu não sei pq caralhos alguem iria desisnstalar o bandicam ENQUANTO joga
 		}
 
-	public static function checkForCheaters():Bool
+	/*public static function checkForCheaters():Bool
 		// based on:
-		/*
 			https://github.com/LordNoteworthy/al-khaser/blob/master/al-khaser/AntiAnalysis/process.cpp
-		*/
 		{
 			// Dear cheaters, hope you die soon
 			// botplay exists for a reason.
@@ -247,7 +245,7 @@ class CoolUtil
 		// If none of the processes are found, return false
 		return false
 		}
-	}
+	}*/
 
 	public static function getSongDuration(musicTime:Float, musicLength:Float, precision:Int = 0):String
 	{

@@ -199,7 +199,8 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 		'randomspeed' => false,
 		'randomspeedmin' => 0.5,
 		'randomspeedmax' => 2,
-		'thetrollingever' => false
+		'thetrollingever' => false,
+		'crash' => false //crash on die, inspired on Universe Engine
 	];
 
 	//Gameplay Offset and Window stuff

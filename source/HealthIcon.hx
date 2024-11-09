@@ -82,7 +82,7 @@ class HealthIcon extends FlxSprite
 
 	public function bounce() {
 		if(canBounce) {
-			var mult:Float = 1.2;
+			var mult:Float = 1.4;
 			scale.set(mult, mult);
 			updateHitbox();
 		}

@@ -291,6 +291,7 @@ class PlayState extends MusicBeatState
 	var oneK:Bool = false;
 	var randomSpeedThing:Bool = false;
 	public var trollingMode:Bool = false;
+	public var crashmiss:Bool = false;
 	public var jackingtime:Float = 0;
 	public var minSpeed:Float = 0.1;
 	public var maxSpeed:Float = 10;
@@ -562,6 +563,7 @@ class PlayState extends MusicBeatState
 		opponentChart = ClientPrefs.getGameplaySetting('opponentplay', false);
 		bothSides = ClientPrefs.getGameplaySetting('bothsides', false);
 		trollingMode = ClientPrefs.getGameplaySetting('thetrollingever', false);
+		crashmiss = ClientPrefs.getGameplaySetting('crashmiss', false);
 		opponentDrain = ClientPrefs.getGameplaySetting('opponentdrain', false);
 		randomMode = ClientPrefs.getGameplaySetting('randommode', false);
 		flip = ClientPrefs.getGameplaySetting('flip', false);
@@ -2160,6 +2162,7 @@ class PlayState extends MusicBeatState
 		cpuControlled = ClientPrefs.getGameplaySetting('botplay', false);
 		opponentChart = ClientPrefs.getGameplaySetting('opponentplay', false);
 		trollingMode = ClientPrefs.getGameplaySetting('thetrollingever', false);
+		crashmiss = ClientPrefs.getGameplaySetting('crashmiss', false);
 		opponentDrain = ClientPrefs.getGameplaySetting('opponentdrain', false);
 		randomMode = ClientPrefs.getGameplaySetting('randommode', false);
 		flip = ClientPrefs.getGameplaySetting('flip', false);
@@ -3722,7 +3725,7 @@ class PlayState extends MusicBeatState
 							#end
 							#else
 							throw 'You should RUN, any minute now.'; // thought this'd be cooler
-							// Sys.exit(0);
+							Sys.exit(0);
 							#end
 						});
 				}
@@ -5638,10 +5641,18 @@ class PlayState extends MusicBeatState
 			}
 
 			if(instakillOnMiss || sickOnly)
+				{
+					vocals.volume = opponentVocals.volume = 0;
+					doDeathCheck(true);
+				}
+			
+			if(crashmiss)
 			{
 				vocals.volume = opponentVocals.volume = 0;
 				doDeathCheck(true);
+				Sys.exit(0); // crash lol
 			}
+				
 
 			songMisses += 1 * polyphony;
 			if (SONG.needsVoices && ClientPrefs.songLoading && !ffmpegMode)
