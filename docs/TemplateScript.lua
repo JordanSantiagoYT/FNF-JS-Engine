@@ -41,7 +41,7 @@ function onCountdownTick(counter)
 	-- counter = 1 -> "Two"
 	-- counter = 2 -> "One"
 	-- counter = 3 -> "Go!"
-	-- counter = 4 -> Nothing happens lol, tho it is triggered at the same time as onSongStart i think
+	-- counter = 4 -> Nothing, is triggered at the same time as onSongStart i think
 end
 
 function onSongStart()
