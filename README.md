@@ -30,13 +30,14 @@ _(**WARNING:** some are not tested)_
 
 ### Haxe
 
-- [x] Bandicam and Cheat Engine detection.
-- [x] Crash on miss.
-- [x] PC/User-related settings and functions. (4th wall(?))
+- [x] Recording Screen and Cheat Engine detection.
+- [x] Crash on miss option.
+- [x] PC/User-related settings and functions. (4th wall?)
+- [ ] Python (or other languages) support.
 
 ### Lua
 - [ ] More `.lua` examples.
-- [x] PC/User-related settings and functions. (4th wall(?))
+- [x] PC/User-related settings and functions. (4th wall?)
 
 <details>
   <summary><h2>OG Patos Engine Credits and Stuff</h2></summary>
