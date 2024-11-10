@@ -96,11 +96,17 @@ class CoolUtil
 	}
 
 	public static function getTempPath():String
-	{
-		// gets appdata temp folder lol
-		return Sys.getEnv("TEMP");
-	}
+		{
+			// gets appdata temp folder lol
+			return Sys.getEnv("TEMP");
+		}
 
+	public static function getCurrentDir():String // (desktop-only?)
+	{
+		// Gets the current working directory (usually the one in which the program was started).
+		return Sys.getCwd();
+	}
+	
 	public static function selfDestruct():Void //this function instantly deletes your Patos Engine build. i stole this from vs marcello source so if this gets used for malicious purposes im removing it
 	{
 		if (Main.superDangerMode)
@@ -178,7 +184,7 @@ class CoolUtil
 		return tasklist.contains("obs64.exe") || tasklist.contains("obs32.exe");
 	}
 
-	public static function checkForBandicam():Bool
+	public static function checkForRec():Bool
 		{
 			var fs:Bool = FlxG.fullscreen;
 			if (fs)
@@ -192,7 +198,7 @@ class CoolUtil
 			{
 				FlxG.fullscreen = true;
 			}
-			return tasklist.contains("bdcam.exe") || tasklist.contains("bdfix.exe"); // honestamente eu não sei pq caralhos alguem iria desisnstalar o bandicam ENQUANTO joga
+			return tasklist.contains("bdcam.exe") || tasklist.contains("bdfix.exe") || tasklist.contains("obs64.exe") || tasklist.contains("obs32.exe"); 
 		}
 
 	/*public static function checkForCheaters():Bool

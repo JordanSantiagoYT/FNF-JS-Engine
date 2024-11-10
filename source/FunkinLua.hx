@@ -865,7 +865,7 @@ class FunkinLua {
 					{
 						if(luaInstance.scriptName == cervix)
 						{
-							//luaTrace('The script "' + cervix + '" is already running!');
+							luaTrace('The script "' + cervix + '" is already running!');
 
 								PlayState.instance.luaArray.remove(luaInstance);
 							return;
@@ -2868,6 +2868,23 @@ class FunkinLua {
 								// or if its caused by an error.
 			//return;
 		});
+
+		Lua_helper.add_callback(lua, "getUsername", function() {
+			return CoolUtil.getUsername();
+		});
+		
+		Lua_helper.add_callback(lua, "getUserPath", function() {
+			return CoolUtil.getUserPath();
+		});
+		
+		Lua_helper.add_callback(lua, "getTempPath", function() {
+			return CoolUtil.getTempPath();
+		});
+		
+		Lua_helper.add_callback(lua, "getCurrentDir", function() {
+			return CoolUtil.getCurrentDir();
+		});
+		
 
 		//				https://api.haxe.org/sys/FileSystem.html
 		

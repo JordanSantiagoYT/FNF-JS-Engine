@@ -143,6 +143,8 @@ class Main extends Sprite {
 
 		FlxG.autoPause = false;
 
+		trace("Current dir: " + Sys.getCwd());
+
 		#if linux
 		var icon = Image.fromFile("icon.png");
 		Lib.current.stage.window.setIcon(icon);

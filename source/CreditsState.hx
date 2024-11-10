@@ -83,7 +83,10 @@ class CreditsState extends MusicBeatState
 		#end
 
 		var pisspoop:Array<Array<String>> = [ //Name - Icon name - Description - Link - BG Color
-			['Patos Engine People'],
+			['Patos Engine'],
+			['PatoFlamejanteTV',			'pato',				'Made everything on Patos Engine\nquack',								'https://www.youtube.com/@patoflamejantetv_ofc',			'FF9300'],
+			[''],
+			['Js Engine'],
 			['Jordan Santiago',			'jor',				'Coded everything into Patos Engine',								'https://twitter.com/JordansTweetsYT',			'FF9300'],
 			[''],
 			['Other Special Thanks'],
