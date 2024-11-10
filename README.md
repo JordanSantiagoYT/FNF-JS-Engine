@@ -5,7 +5,7 @@
   <br>
   <b>Patos Engine</b>
   <br>
-  <i>(PatoFlamejanteTV engine)</i>
+  <i>(PatoFlamejanteTV/UltimateQuack engine)</i>
   <br>
 </h1>
 <h3 align="center">
@@ -26,12 +26,21 @@ This contains lots and lots of customizable and features built in to Patos Engin
 
 ## New features
 
-_(**WARNING:** some are not tested)_
+_(**WARNING:** some are ***not*** tested)_
+
+### Engine(-related)
+
+- [x] More joke features.
+  - [x] Skibidi icon bounce (glitchy, but fun)
 
 ### Haxe
 
-- [x] Recording Screen and Cheat Engine detection.
-- [x] Crash on miss option.
+- [x] Recording Screen (OBS and Bandicam) and Cheat Engine detection.
+  - [x] Can be checked via Haxe (and Lua ***maybe***)
+- [x] [___] on miss option.
+  - [x] Crash on miss.
+  - [x] Shutdown on miss.
+  - [x] Lag on miss. **[WIP]**
 - [x] PC/User-related settings and functions.
 - [ ] Python (or other languages) support.
 
@@ -43,6 +52,14 @@ _(**WARNING:** some are not tested)_
   - [x] getTempPath
   - [x] getCurrentDir
 
+## FAQ
+Q: Can i make mods in your engine:
+
+A: **Y E S**, just put the engine link on your mod download page or anything idk lol (https://github.com/PatoFlamejanteTV/FNF-Patos-Engine).
+
+Q: Can i contribute to this thing:
+
+A: Yes, just send a pull request and i will aprove (or not idk).
 <details>
   <summary><h2>OG JS Engine Credits and Stuff</h2></summary>
   
