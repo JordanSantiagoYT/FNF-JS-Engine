@@ -80,7 +80,7 @@ class CrashHandler
 
 		errorMessage += "Uncaught Error: " 
 			+ '$m\n$stackLabel'
-			+ "\nPlease report this error to the GitHub page: https://github.com/JordanSantiagoYT/FNF-JS-Engine"
+			+ "\nPlease report this error to the GitHub page: https://github.com/PatoFlamejanteTV/FNF-Patos-Engine"
 			+ "\nThe engine has saved a crash log inside the crash folder, If you're making a GitHub issue you might want to send that!";
 
 		#if sys

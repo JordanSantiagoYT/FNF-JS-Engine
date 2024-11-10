@@ -56,6 +56,7 @@
 		<library name="week6"         preload="true" />
 		<library name="week7"         preload="true" />
 		<library name="weekend1"      preload="true" />
+		<library name="copypastas"    preload="true" />
 	</section>
 	
 	<section if="NO_PRELOAD_ALL">
@@ -68,6 +69,7 @@
 		<library name="week6"         preload="false" />
 		<library name="week7"         preload="false" />
 		<library name="weekend1"      preload="false" />
+		<library name="copypastas"    preload="false" />
 	</section>
 	
 	<assets path="assets/videos"        library="videos"        if="VIDEOS_ALLOWED"/>

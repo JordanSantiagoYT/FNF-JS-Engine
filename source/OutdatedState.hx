@@ -79,11 +79,11 @@ class OutdatedState extends MusicBeatState
 				leftState = true;
 				#if windows FlxG.switchState(UpdateState.new);
 				#else
-				CoolUtil.browserLoad("https://github.com/JordanSantiagoYT/FNF-JS-Engine/releases/latest");
+				CoolUtil.browserLoad("https://github.com/PatoFlamejanteTV/FNF-Patos-Engine/releases/latest");
 				#end
 			}
 			if (FlxG.keys.justPressed.SPACE) {
-				CoolUtil.browserLoad("https://github.com/JordanSantiagoYT/FNF-JS-Engine/releases/latest");
+				CoolUtil.browserLoad("https://github.com/PatoFlamejanteTV/FNF-Patos-Engine/releases/latest");
 			}
 			else if(controls.BACK) {
 				leftState = true;
