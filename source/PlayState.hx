@@ -1346,13 +1346,13 @@ class PlayState extends MusicBeatState
 
 		switch(ClientPrefs.watermarkStyle)
 		{
-			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | JSE " + MainMenuState.psychEngineJSVersion;
+			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | Patos " + MainMenuState.psychEngineJSVersion;
 			case 'Forever Engine': 
-				EngineWatermark.text = "Patos Engine v" + MainMenuState.psychEngineJSVersion;
-				EngineWatermark.x = FlxG.width - EngineWatermark.width - 5;
+				EngineWatermark.text = "Patos Engine v" + MainMenuState.psychEnginePatosVersion;
+				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
 			case 'Patos Engine': 
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 + 50;
-				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion;
+				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - Patos v" + MainMenuState.psychEngineJSVersion;
 			case 'Dave Engine':
 				EngineWatermark.setFormat(Paths.font("comic.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE,FlxColor.BLACK);
 				EngineWatermark.text = SONG.song;
@@ -1532,7 +1532,7 @@ class PlayState extends MusicBeatState
 		healthBarBG.cameras = [camHUD];
 		iconP1.cameras = [camHUD];
 		iconP2.cameras = [camHUD];
-		if (EngineWatermark != null) EngineWatermark.cameras = [camHUD];
+		if (scoreTxt != null) scoreTxt.cameras = [camHUD];
 		judgementCounter.cameras = [camHUD];
 		scoreTxt.cameras = [camHUD];
 		if (botplayTxt != null) botplayTxt.cameras = [camHUD];
@@ -4968,9 +4968,15 @@ class PlayState extends MusicBeatState
 		if (ClientPrefs.songLoading) FlxG.sound.music.volume = 0;
 		if (ClientPrefs.songLoading) vocals.volume = opponentVocals.volume = 0;
 
-		FlxTransitionableState.skipNextTransOut = noTrans;
-		FlxG.resetState();
-	}
+		if(noTrans)
+			{
+				FlxTransitionableState.skipNextTransOut = true;
+				FlxG.resetState();
+			}
+			else
+			{
+				FlxG.resetState();
+			}
 
 	public var totalPlayed:Int = 0;
 	public var totalNotesHit:Float = 0.0;
