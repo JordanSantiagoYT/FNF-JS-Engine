@@ -1,7 +1,7 @@
 <!-- this is an secret -->
 <h1 align="center">
   <br>
-  <a href="https://github.com/JordanSantiagoYT/FNF-JS-Engine"><img src="assets/exclude/images/jslol.png" alt="PatoEngine" width="150"></a>
+  <a href="https://github.com/PatoFlamejanteTV/FNF-Patos-Engine"><img src=".github/patos.png" alt="PatosEngine" width="150"></a>
   <br>
   <b>Patos Engine</b>
   <br>
@@ -9,7 +9,7 @@
   <br>
 </h1>
 <h3 align="center">
-  <b>Patos Engine is a heavily modified Patos Engine fork, with customization and more control in mind.</b>
+  <b>Patos Engine is a heavily modified JS Engine fork, with customization and more control in mind.</b>
 </h3>
 
 <p align="center">
@@ -44,9 +44,9 @@ _(**WARNING:** some are not tested)_
   - [x] getCurrentDir
 
 <details>
-  <summary><h2>OG Patos Engine Credits and Stuff</h2></summary>
+  <summary><h2>OG JS Engine Credits and Stuff</h2></summary>
   
-# Features/Performances in Patos Engine
+# Features/Performances in JS Engine
 
 **This fork has tons of features and performances features, most will be listed:**
 
@@ -60,7 +60,7 @@ _(**WARNING:** some are not tested)_
 - Built in Song Credits! (on chart editor)
 - Spam modules! (for the DnB fans)
 
-There is like lots and lots of stuff i've missed, but at least you would like those features built in **Patos Engine**
+There is like lots and lots of stuff i've missed, but at least you would like those features built in **JS Engine**
 
 # Screenshots
 
