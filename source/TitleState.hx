@@ -513,11 +513,8 @@ class TitleState extends MusicBeatState
 				case 15:
 					addMoreText('Morning');
 				case 16:
+					//quack.play();					
 					addMoreText('Sadness');
-					var quack:FlxSound;
-					quack = new FlxSound().loadEmbedded(Paths.sound('quack'));
-					quack.volume = FlxG.sound.volume;
-					quack.play();
 					addMoreText('');
 					addMoreText('(quack)');
 				case 17:
