@@ -510,13 +510,14 @@ class TitleState extends MusicBeatState
 					deleteCoolText();
 				case 14:
 					addMoreText('Freaky'); // 👅
-					//FlxG.sound.play(Paths.sound('quack'), 0.4);
 				case 15:
 					addMoreText('Morning');
-					//FlxG.sound.play(Paths.sound('quack'), 0.6);
 				case 16:
 					addMoreText('Sadness');
-					FlxG.sound.play(Paths.sound('quack'), 0.6);
+					var quack:FlxSound;
+					quack = new FlxSound().loadEmbedded(Paths.sound('quack'));
+					quack.volume = FlxG.sound.volume;
+					quack.play();
 					addMoreText('');
 					addMoreText('(quack)');
 				case 17:

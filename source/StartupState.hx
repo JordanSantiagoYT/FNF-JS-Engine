@@ -23,7 +23,7 @@ class StartupState extends MusicBeatState
 
 	override public function create():Void
 	{
-		#if VIDEOS_ALLOWED maxIntros += 2; #end
+		#if VIDEOS_ALLOWED maxIntros += 3; #end
 		var theIntro:Int = FlxG.random.int(0, maxIntros);
 		FlxTransitionableState.skipNextTransIn = true;
 		FlxTransitionableState.skipNextTransOut = true;
@@ -96,6 +96,30 @@ class StartupState extends MusicBeatState
 						#end
 					#end
 				case 5:
+					#if VIDEOS_ALLOWED
+						var boom:FlxSound;
+						boom = new FlxSound().loadEmbedded(Paths.sound('boom'));
+						boom.volume = FlxG.sound.volume;
+						boom.play();
+						var vidSprite = new MP4Handler(); // it plays but it doesn't show???
+						#if (hxCodec < "3.0.0")
+						vidSprite.playVideo(Paths.video('lingangu'), false, false);
+						
+						vidSprite.finishCallback = function()
+						{
+							try { vidSprite.dispose(); }
+							catch (e) {}
+							FlxG.switchState(TitleState.new);
+						};
+						#else
+						vidSprite.play(Paths.video('lingangu'));
+						vidSprite.onEndReached.add(function(){
+							vidSprite.dispose();
+							FlxG.switchState(TitleState.new);
+						});
+						#end
+					#end
+				case 6:
 					#if VIDEOS_ALLOWED
 						var vidSprite = new MP4Handler(); // it plays but it doesn't show???
 						#if (hxCodec < "3.0.0")

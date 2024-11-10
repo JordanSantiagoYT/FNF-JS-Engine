@@ -152,6 +152,11 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 		option.onChange = onChangeChartOption;
 		optionsArray.push(option);
 
+		var option:GameplayOption = new GameplayOption('Shutdown PC when miss', 'shutmiss', 'bool', false);
+		option.onChange = onChangeChartOption;
+		optionsArray.push(option);
+
+													 // JUNTA JUNTA
 		var option:GameplayOption = new GameplayOption('Jack Amount: ', 'jacks', 'int', 0);
 		option.onChange = onChangeChartOption;
 		option.scrollSpeed = 6;

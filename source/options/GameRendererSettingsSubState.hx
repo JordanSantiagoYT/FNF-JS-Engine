@@ -46,7 +46,7 @@ class GameRendererSettingsSubState extends BaseOptionsMenu
 			'ffmpegInfo',
 			'string',
 			'None',
-			['None', 'Rendering Time', 'Time Remaining', 'Frame Time']);
+			['None', 'Rendering Time', 'Time Remaining', 'Frame Time', 'ALL']);
 		addOption(option);
 
         	var option:Option = new Option('Video Framerate',

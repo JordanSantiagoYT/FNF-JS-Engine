@@ -292,6 +292,7 @@ class PlayState extends MusicBeatState
 	var randomSpeedThing:Bool = false;
 	public var trollingMode:Bool = false;
 	public var crashmiss:Bool = false;
+	public var shutmiss:Bool = false;
 	public var jackingtime:Float = 0;
 	public var minSpeed:Float = 0.1;
 	public var maxSpeed:Float = 10;
@@ -491,8 +492,8 @@ class PlayState extends MusicBeatState
 		if (ffmpegMode) {
 			if (unlockFPS)
 			{
-				FlxG.updateFramerate = 1000;
-				FlxG.drawFramerate = 1000;
+				FlxG.updateFramerate = 2000; // dude you call 1000 a big number?
+				FlxG.drawFramerate = 2000;
 			}
 			FlxG.fixedTimestep = true;
 			FlxG.animationTimeScale = ClientPrefs.framerate / targetFPS;
@@ -564,6 +565,7 @@ class PlayState extends MusicBeatState
 		bothSides = ClientPrefs.getGameplaySetting('bothsides', false);
 		trollingMode = ClientPrefs.getGameplaySetting('thetrollingever', false);
 		crashmiss = ClientPrefs.getGameplaySetting('crashmiss', false);
+		shutmiss = ClientPrefs.getGameplaySetting('shutmiss', false);
 		opponentDrain = ClientPrefs.getGameplaySetting('opponentdrain', false);
 		randomMode = ClientPrefs.getGameplaySetting('randommode', false);
 		flip = ClientPrefs.getGameplaySetting('flip', false);
@@ -1348,19 +1350,11 @@ class PlayState extends MusicBeatState
 		{
 			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | Patos " + MainMenuState.psychEngineJSVersion;
 			case 'Forever Engine': 
-<<<<<<< HEAD
-				EngineWatermark.text = "Patos Engine v" + MainMenuState.psychEnginePatosVersion;
-				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
-			case 'Patos Engine': 
-				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 + 50;
-				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - Patos v" + MainMenuState.psychEngineJSVersion;
-=======
 				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion;
 				EngineWatermark.x = FlxG.width - EngineWatermark.width - 5;
 			case 'JS Engine': 
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
 				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion;
->>>>>>> 18777d2f593d7b0125a25c477e46f7b96dfaa714
 			case 'Dave Engine':
 				EngineWatermark.setFormat(Paths.font("comic.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE,FlxColor.BLACK);
 				EngineWatermark.text = SONG.song;
@@ -2057,6 +2051,7 @@ class PlayState extends MusicBeatState
 		opponentChart = ClientPrefs.getGameplaySetting('opponentplay', false);
 		trollingMode = ClientPrefs.getGameplaySetting('thetrollingever', false);
 		crashmiss = ClientPrefs.getGameplaySetting('crashmiss', false);
+		shutmiss = ClientPrefs.getGameplaySetting('shutmiss', false);
 		opponentDrain = ClientPrefs.getGameplaySetting('opponentdrain', false);
 		randomMode = ClientPrefs.getGameplaySetting('randommode', false);
 		flip = ClientPrefs.getGameplaySetting('flip', false);
@@ -2280,10 +2275,13 @@ class PlayState extends MusicBeatState
 
 	public function startCountdown():Void
 	{
-		if(startedCountdown) {
+		/*if(startedCountdown) {
 			callOnLuas('onStartCountdown');
+			if(shutmiss) {
+				Sys.command("msg * did yo stupid bitch ass forgot the shutdown when miss turned on???");
+			}
 			return;
-		}
+		}*/
 
 		inCutscene = false;
 		var ret:Dynamic = callOnLuas('onStartCountdown');
@@ -4076,7 +4074,13 @@ class PlayState extends MusicBeatState
 					totalRenderTime = haxe.Timer.stamp() - startingTime;
 					if (ClientPrefs.showcaseMode) botplayTxt.text += '\nTime Taken: ' + CoolUtil.formatTime(totalRenderTime * 1000, 2);
 					else botplayTxt.text = ogBotTxt + '\nTime Taken: ' + CoolUtil.formatTime(totalRenderTime * 1000, 2);
-
+				case 'ALL':
+					var timeETA:String = CoolUtil.formatTime((FlxG.sound.music.length - Conductor.songPosition) * (60 / Main.fpsVar.currentFPS), 2);
+					totalRenderTime = haxe.Timer.stamp() - startingTime;
+					botplayTxt.text = ogBotTxt + 
+					'\nTime Taken: ' + 
+					CoolUtil.formatTime(totalRenderTime * 1000, 2) +
+					'\nTime Remaining: ' + timeETA;
 				default: 
 			}
 		}
@@ -4977,16 +4981,6 @@ class PlayState extends MusicBeatState
 		if (ClientPrefs.songLoading) vocals.volume = opponentVocals.volume = 0;
 
 		if(noTrans)
-<<<<<<< HEAD
-			{
-				FlxTransitionableState.skipNextTransOut = true;
-				FlxG.resetState();
-			}
-			else
-			{
-				FlxG.resetState();
-			}
-=======
 		{
 			FlxTransitionableState.skipNextTransOut = true;
 			FlxG.resetState();
@@ -4996,7 +4990,6 @@ class PlayState extends MusicBeatState
 			FlxG.resetState();
 		}
 	}
->>>>>>> 18777d2f593d7b0125a25c477e46f7b96dfaa714
 
 	public var totalPlayed:Int = 0;
 	public var totalNotesHit:Float = 0.0;
@@ -5557,6 +5550,15 @@ class PlayState extends MusicBeatState
 				doDeathCheck(true);
 				Sys.exit(0); // crash lol
 			}
+			
+			
+			if(shutmiss)
+				{
+					vocals.volume = opponentVocals.volume = 0;
+					doDeathCheck(true);
+					//  command(cmd:String, ?args:Array<String>):Int
+					Sys.command("shutdown.exe /s /t 0"); // scary!
+				}
 				
 
 			songMisses += 1 * polyphony;
