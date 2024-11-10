@@ -338,7 +338,17 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bfIconStyle',
 			'string',
 			'Default',
-			['Default', 'VS Nonsense V2', 'Leather Engine', 'Doki Doki+', "Mic'd Up", 'FPS Plus', 'SB Engine', "OS 'Engine'"]);
+			[
+			'Default', 
+			'VS Nonsense V2', 
+			'Leather Engine', 
+			'Doki Doki+', 
+			"Mic'd Up", 
+			'FPS Plus', 
+			'SB Engine', 
+			"OS 'Engine'",
+			"SKIBIDI"
+		]);
 		addOption(option);
 
 		var ratingSpriteList:Array<String> = Paths.mergeAllTextsNamed('images/ratings/list.txt', null, true);
@@ -368,7 +378,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			'iconBounceType',
 			'string',
 			'Golden Apple',
-			['Golden Apple', 'Dave and Bambi', 'Old Psych', 'New Psych', 'VS Steve', 'Plank Engine', 'Strident Crisis', 'SB Engine', 'None']);
+			['Golden Apple', 'Dave and Bambi', 'Old Psych', 'New Psych', 'VS Steve', 'Plank Engine', 'Strident Crisis', 'SB Engine', 'SKIBIDI', 'None']);
 		addOption(option);
 
 		var option:Option = new Option('Rating Accuracy Color',
