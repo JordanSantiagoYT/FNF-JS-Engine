@@ -1348,11 +1348,19 @@ class PlayState extends MusicBeatState
 		{
 			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | Patos " + MainMenuState.psychEngineJSVersion;
 			case 'Forever Engine': 
+<<<<<<< HEAD
 				EngineWatermark.text = "Patos Engine v" + MainMenuState.psychEnginePatosVersion;
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
 			case 'Patos Engine': 
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 + 50;
 				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - Patos v" + MainMenuState.psychEngineJSVersion;
+=======
+				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion;
+				EngineWatermark.x = FlxG.width - EngineWatermark.width - 5;
+			case 'JS Engine': 
+				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
+				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion;
+>>>>>>> 18777d2f593d7b0125a25c477e46f7b96dfaa714
 			case 'Dave Engine':
 				EngineWatermark.setFormat(Paths.font("comic.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE,FlxColor.BLACK);
 				EngineWatermark.text = SONG.song;
@@ -1534,7 +1542,7 @@ class PlayState extends MusicBeatState
 		iconP2.cameras = [camHUD];
 		if (scoreTxt != null) scoreTxt.cameras = [camHUD];
 		judgementCounter.cameras = [camHUD];
-		scoreTxt.cameras = [camHUD];
+		if (scoreTxt != null) scoreTxt.cameras = [camHUD];
 		if (botplayTxt != null) botplayTxt.cameras = [camHUD];
 		timeBar.cameras = [camHUD];
 		timeBarBG.cameras = [camHUD];
@@ -4969,6 +4977,7 @@ class PlayState extends MusicBeatState
 		if (ClientPrefs.songLoading) vocals.volume = opponentVocals.volume = 0;
 
 		if(noTrans)
+<<<<<<< HEAD
 			{
 				FlxTransitionableState.skipNextTransOut = true;
 				FlxG.resetState();
@@ -4977,6 +4986,17 @@ class PlayState extends MusicBeatState
 			{
 				FlxG.resetState();
 			}
+=======
+		{
+			FlxTransitionableState.skipNextTransOut = true;
+			FlxG.resetState();
+		}
+		else
+		{
+			FlxG.resetState();
+		}
+	}
+>>>>>>> 18777d2f593d7b0125a25c477e46f7b96dfaa714
 
 	public var totalPlayed:Int = 0;
 	public var totalNotesHit:Float = 0.0;
