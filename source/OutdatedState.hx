@@ -57,6 +57,7 @@ class OutdatedState extends MusicBeatState
 		warnText.screenCenter(X);
 		add(warnText);
 
+<<<<<<< HEAD
 		changelog = new FlxText(100, warnText.y + warnText.height + 20, 1080, currChanges, 16);
 		changelog.setFormat(Paths.font("vcr.ttf"), Std.int(16), FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(changelog);
@@ -68,6 +69,11 @@ class OutdatedState extends MusicBeatState
 			updateText.y = 710 - updateText.height;
 			updateText.x = 10;
 		add(updateText);
+=======
+                #if android
+                addVirtualPad(NONE, A_B);
+                #end
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 	}
 
 	override function update(elapsed:Float)

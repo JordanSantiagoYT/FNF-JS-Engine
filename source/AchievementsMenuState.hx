@@ -125,6 +125,7 @@ class AchievementsMenuState extends MusicBeatState
 		descText.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE, CENTER);
 		descText.scrollFactor.set();
 
+<<<<<<< HEAD
 		progressBarBG = new AttachedSprite('healthBar');
 		progressBarBG.screenCenter(X);
 		progressBarBG.y = descText.y + 52;
@@ -147,6 +148,12 @@ class AchievementsMenuState extends MusicBeatState
 			add(i);
 		
 		_changeSelection();
+=======
+                #if android
+	        addVirtualPad(UP_DOWN, B);
+                #end
+
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		super.create();
 
 		FlxG.camera.follow(camFollow, null, 9);

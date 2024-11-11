@@ -592,6 +592,13 @@ class ChartingState extends MusicBeatState
 
 		updateGrid();
 
+<<<<<<< HEAD
+=======
+                #if android
+		addVirtualPad(FULL, A_B_X_Y);
+		#end
+
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		super.create();
 	}
 
@@ -658,7 +665,11 @@ class ChartingState extends MusicBeatState
 			var songName:String = Paths.formatToSongPath(_song.song);
 			var file:String = Paths.songEvents(songName, diff);
 			#if sys
+<<<<<<< HEAD
 			if (FileSystem.exists(Paths.json(file)) || FileSystem.exists(Paths.modsJson(file)))
+=======
+			if (#if MODS_ALLOWED FileSystem.exists(Paths.modsJson(songName + '/events')) || #end FileSystem.exists(SUtil.getPath() + file))
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 			#else
 			if (OpenFlAssets.exists(file))
 			#end
@@ -715,15 +726,19 @@ class ChartingState extends MusicBeatState
 		stepperSpeed.name = 'song_speed';
 		blockPressWhileTypingOnStepper.push(stepperSpeed);
 		#if MODS_ALLOWED
+<<<<<<< HEAD
 		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Paths.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
 		for(mod in Paths.getGlobalMods())
 			directories.push(Paths.mods(mod + '/characters/'));
+=======
+		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Paths.currentModDirectory + '/characters/'), SUtil.getPath() + Paths.getPreloadPath('characters/')];
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		#else
 		var directories:Array<String> = [Paths.getPreloadPath('characters/')];
 		#end
 
 		var tempMap:Map<String, Bool> = new Map<String, Bool>();
-		var characters:Array<String> = CoolUtil.coolTextFile(Paths.txt('characterList'));
+		var characters:Array<String> = CoolUtil.coolTextFile(SUtil.getPath() + Paths.txt('characterList'));
 		for (i in 0...characters.length) {
 			tempMap.set(characters[i], true);
 		}
@@ -774,15 +789,19 @@ class ChartingState extends MusicBeatState
 		blockPressWhileScrolling.push(player2DropDown);
 
 		#if MODS_ALLOWED
+<<<<<<< HEAD
 		var directories:Array<String> = [Paths.mods('stages/'), Paths.mods(Paths.currentModDirectory + '/stages/'), Paths.getPreloadPath('stages/')];
 		for(mod in Paths.getGlobalMods())
 			directories.push(Paths.mods(mod + '/stages/'));
+=======
+		var directories:Array<String> = [Paths.mods('stages/'), Paths.mods(Paths.currentModDirectory + '/stages/'), SUtil.getPath() + Paths.getPreloadPath('stages/')];
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		#else
 		var directories:Array<String> = [Paths.getPreloadPath('stages/')];
 		#end
 
 		tempMap.clear();
-		var stageFile:Array<String> = CoolUtil.coolTextFile(Paths.txt('stageList'));
+		var stageFile:Array<String> = CoolUtil.coolTextFile(SUtil.getPath() + Paths.txt('stageList'));
 		var stages:Array<String> = [];
 		for (i in 0...stageFile.length) { //Prevent duplicates
 			var stageToCheck:String = stageFile[i];
@@ -830,10 +849,12 @@ class ChartingState extends MusicBeatState
 		var skin = PlayState.SONG.arrowSkin;
 		if(skin == null) skin = '';
 		noteSkinInputText = new FlxUIInputText(player2DropDown.x, player2DropDown.y + 50, 150, skin, 8);
+		noteSkinInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 		blockPressWhileTypingOn.push(noteSkinInputText);
 		noteSkinInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 
 		noteSplashesInputText = new FlxUIInputText(noteSkinInputText.x, noteSkinInputText.y + 35, 150, _song.splashSkin, 8);
+		noteSplashesInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 		blockPressWhileTypingOn.push(noteSplashesInputText);
 		noteSplashesInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 
@@ -1464,6 +1485,7 @@ class ChartingState extends MusicBeatState
 		blockPressWhileTypingOnStepper.push(stepperSusLength);
 
 		strumTimeInputText = new FlxUIInputText(10, 65, 180, "0");
+		strumTimeInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 		tab_group_note.add(strumTimeInputText);
 		blockPressWhileTypingOn.push(strumTimeInputText);
 
@@ -1805,12 +1827,14 @@ class ChartingState extends MusicBeatState
 		var text:FlxText = new FlxText(20, 90, 0, "Value 1:");
 		tab_group_event.add(text);
 		value1InputText = new FlxUIInputText(20, 110, 100, "");
+		value1InputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 		blockPressWhileTypingOn.push(value1InputText);
 		value1InputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 
 		var text:FlxText = new FlxText(20, 130, 0, "Value 2:");
 		tab_group_event.add(text);
 		value2InputText = new FlxUIInputText(20, 150, 100, "");
+		value2InputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 		blockPressWhileTypingOn.push(value2InputText);
 		value2InputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 
@@ -1946,10 +1970,15 @@ class ChartingState extends MusicBeatState
 	var metronomeStepper:FlxUINumericStepper;
 	var metronomeOffsetStepper:FlxUINumericStepper;
 	var disableAutoScrolling:FlxUICheckBox;
+<<<<<<< HEAD
 	var lilBuddiesBox:FlxUICheckBox;
 	var saveUndoCheck:FlxUICheckBox;
 	var soundEffectsCheck:FlxUICheckBox;
 	var idleMusicCheck:FlxUICheckBox;
+=======
+	var waveformEnabled:FlxUICheckBox;
+	var waveformUseInstrumental:FlxUICheckBox;
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 	var instVolume:FlxUINumericStepper;
 	var voicesVolume:FlxUINumericStepper;
 	var voicesOppVolume:FlxUINumericStepper;
@@ -1957,6 +1986,7 @@ class ChartingState extends MusicBeatState
 	function addChartingUI() {
 		var tab_group_chart = new FlxUI(null, UI_box);
 		tab_group_chart.name = 'Charting';
+<<<<<<< HEAD
 
 		#if desktop
 		if (FlxG.save.data.chart_waveformInst == null) FlxG.save.data.chart_waveformInst = false;
@@ -1970,6 +2000,13 @@ class ChartingState extends MusicBeatState
 		waveformUseInstrumental = new FlxUICheckBox(10, 90, null, null, "Waveform\n(Instrumental)", 85);
 		waveformUseInstrumental.checked = FlxG.save.data.chart_waveformInst;
 		waveformUseInstrumental.callback = function()
+=======
+		
+		waveformEnabled = new FlxUICheckBox(10, 90, null, null, "Visible Waveform", 100);
+		if (FlxG.save.data.chart_waveform == null) FlxG.save.data.chart_waveform = false;
+		waveformEnabled.checked = FlxG.save.data.chart_waveform;
+		waveformEnabled.callback = function()
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		{
 			waveformUseVoices.checked = false;
 			waveformUseOppVoices.checked = false;
@@ -2002,7 +2039,6 @@ class ChartingState extends MusicBeatState
 			FlxG.save.data.chart_waveformOppVoices = waveformUseOppVoices.checked;
 			updateWaveform();
 		};
-		#end
 
 		check_mute_inst = new FlxUICheckBox(10, 280, null, null, "Mute Instrumental (in editor)", 100);
 		check_mute_inst.checked = false;
@@ -2199,6 +2235,7 @@ class ChartingState extends MusicBeatState
 		tab_group_chart.add(disableAutoScrolling);
 		tab_group_chart.add(metronomeStepper);
 		tab_group_chart.add(metronomeOffsetStepper);
+<<<<<<< HEAD
 		#if desktop
 		tab_group_chart.add(waveformUseInstrumental);
 		tab_group_chart.add(waveformUseVoices);
@@ -2208,6 +2245,10 @@ class ChartingState extends MusicBeatState
 		tab_group_chart.add(soundEffectsCheck);
 		tab_group_chart.add(saveUndoCheck);
 		tab_group_chart.add(idleMusicCheck);
+=======
+		tab_group_chart.add(waveformEnabled);
+		tab_group_chart.add(waveformUseInstrumental);
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		tab_group_chart.add(instVolume);
 		tab_group_chart.add(voicesVolume);
 		tab_group_chart.add(voicesOppVolume);
@@ -2662,7 +2703,7 @@ class ChartingState extends MusicBeatState
 
 		if (!blockInput)
 		{
-			if (FlxG.keys.justPressed.ESCAPE)
+			if (FlxG.keys.justPressed.ESCAPE #if android || FlxG.android.justReleased.BACK #end)
 			{
 				autosaveSong();
 				FlxG.sound.music.pause();
@@ -2671,7 +2712,7 @@ class ChartingState extends MusicBeatState
 				if (idleMusic != null && idleMusic.music != null) idleMusic.destroy();
 				FlxG.sound.music.onComplete = null; //So that it doesn't crash when you reach the end
 			}
-			if (FlxG.keys.justPressed.ENTER)
+			if (FlxG.keys.justPressed.ENTER #if android || _virtualpad.buttonA.justPressed #end)
 			{
 				if (CoolUtil.getNoteAmount(_song) <= 1000000) autosaveSong();
 				FlxG.mouse.visible = false;
@@ -2697,12 +2738,25 @@ class ChartingState extends MusicBeatState
 				{
 					changeNoteSustain(-Conductor.stepCrochet);
 				}
+<<<<<<< HEAD
 				if (FlxG.keys.pressed.CONTROL && FlxG.mouse.wheel < 0) {
 					changeNoteSustain(Conductor.stepCrochet);
 				}
 				if (FlxG.keys.pressed.CONTROL && FlxG.mouse.wheel > 0) {
 					changeNoteSustain(-Conductor.stepCrochet);
 				}
+=======
+			}
+			
+			
+			if (FlxG.keys.justPressed.BACKSPACE #if android || _virtualpad.buttonB.justPressed #end) {
+				//if(onMasterEditor) {
+					MusicBeatState.switchState(new editors.MasterEditorMenu());
+					FlxG.sound.playMusic(Paths.music('freakyMenu'));
+				//}
+				FlxG.mouse.visible = false;
+				return;
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 			}
 
 
@@ -2787,7 +2841,7 @@ class ChartingState extends MusicBeatState
 				}
 			}
 
-			if (FlxG.keys.justPressed.SPACE)
+			if (FlxG.keys.justPressed.SPACE #if android || _virtualpad.buttonX.justPressed #end)
 			{
 				if (FlxG.sound.music.playing)
 				{
@@ -2867,7 +2921,15 @@ class ChartingState extends MusicBeatState
 				pauseAndSetVocalsTime();
 			}
 
+<<<<<<< HEAD
 			if (FlxG.keys.pressed.W || FlxG.keys.pressed.S)
+=======
+			//ARROW VORTEX SHIT NO DEADASS
+			
+			
+			
+			if (FlxG.keys.pressed.W || FlxG.keys.pressed.S #if android || _virtualpad.buttonUp.pressed || _virtualpad.buttonDown.pressed #end)
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 			{
 				if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
 				resetBuddies();
@@ -2880,7 +2942,7 @@ class ChartingState extends MusicBeatState
 
 				var daTime:Float = 700 * FlxG.elapsed * holdingShift;
 
-				if (FlxG.keys.pressed.W)
+				if (FlxG.keys.pressed.W #if android || _virtualpad.buttonUp.pressed #end)
 				{
 					FlxG.sound.music.time -= daTime;
 				}
@@ -2912,8 +2974,13 @@ class ChartingState extends MusicBeatState
 			}
 
 			var style = currentType;
+<<<<<<< HEAD
 
 			if (FlxG.keys.pressed.SHIFT){
+=======
+			
+			if (FlxG.keys.pressed.SHIFT #if android || _virtualpad.buttonY.pressed #end){
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 				style = 3;
 			}
 
@@ -2921,6 +2988,7 @@ class ChartingState extends MusicBeatState
 
 			//AWW YOU MADE IT SEXY <3333 THX SHADMAR
 
+<<<<<<< HEAD
 			if(!blockInput && !FlxG.keys.pressed.CONTROL){
 				if(FlxG.keys.justPressed.RIGHT){
 					curQuant++;
@@ -2928,6 +2996,66 @@ class ChartingState extends MusicBeatState
 						curQuant = 0;
 
 					quantization = quantizations[curQuant];
+=======
+			if(controlArray.contains(true))
+			{
+				for (i in 0...controlArray.length)
+				{
+					if(controlArray[i])
+						doANoteThing(conductorTime, i, style);
+				}
+			}
+			
+			
+				var datimess = [];
+				
+				var daTime:Float = (Conductor.stepCrochet*quants[curQuant]);//WHY DID I ROUND BEFORE THIS IS A FLOAT???
+				var cuquant = Std.int(32/quants[curQuant]);
+				for (i in 0...cuquant){
+					datimess.push(sectionStartTime() + daTime * i);
+				}
+			
+			if (FlxG.keys.justPressed.LEFT #if android || _virtualpad.buttonLeft.justPressed #end)
+			{
+				--curQuant;
+				if (curQuant < 0) curQuant = 0;
+				
+				daquantspot *=  Std.int(32/quants[curQuant]);
+			}
+			if (FlxG.keys.justPressed.RIGHT #if android || _virtualpad.buttonRight.justPressed #end)
+			{
+				curQuant ++;
+				if (curQuant > quants.length-1) curQuant = quants.length-1;
+				daquantspot *=  Std.int(32/quants[curQuant]);
+			}
+			quant.animation.play('q', true, false, curQuant);
+			var feces:Float;
+			if (FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN #if android || _virtualpad.buttonUp.justPressed || _virtualpad.buttonDown.justPressed #end)
+			{
+				FlxG.sound.music.pause();
+
+				
+				updateCurStep();
+				//FlxG.sound.music.time = (Math.round(curStep/quants[curQuant])*quants[curQuant]) * Conductor.stepCrochet;
+				
+					//(Math.floor((curStep+quants[curQuant]*1.5/(quants[curQuant]/2))/quants[curQuant])*quants[curQuant]) * Conductor.stepCrochet;//snap into quantization
+				if (FlxG.keys.pressed.UP #if android || _virtualpad.buttonUp.pressed #end)
+				{
+					
+					//var tosnapto = 0.00;
+					var foundaspot = false;
+					var i = datimess.length-1;//backwards for loop 
+					while (i > -1){
+						if (Math.ceil(FlxG.sound.music.time) >= Math.ceil(datimess[i]) && !foundaspot){
+							foundaspot = true;
+							FlxG.sound.music.time = datimess[i];
+						}
+						--i;
+					}
+					//FlxG.sound.music.time = tosnapto;
+					//FlxG.sound.music.time -= daTime;
+					 feces = FlxG.sound.music.time - daTime;
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 				}
 
 				if(FlxG.keys.justPressed.LEFT){
@@ -3005,9 +3133,10 @@ class ChartingState extends MusicBeatState
 				}
 			}
 			var shiftThing:Int = 1;
-			if (FlxG.keys.pressed.SHIFT)
+			if (FlxG.keys.pressed.SHIFT #if android || _virtualpad.buttonY.pressed #end)
 				shiftThing = 4;
 
+<<<<<<< HEAD
 			if (FlxG.keys.justPressed.D) {
 				if (_song.notes[curSec + shiftThing] == null)
 				{
@@ -3018,6 +3147,12 @@ class ChartingState extends MusicBeatState
 				}
 			if (FlxG.keys.justPressed.A) {
 				if(curSec <= 0) {
+=======
+			if (FlxG.keys.justPressed.RIGHT #if android || _virtualpad.buttonRight.justPressed #end && !vortex|| FlxG.keys.justPressed.D #if android || _virtualpad.buttonRight.justPressed #end)
+				changeSection(curSection + shiftThing);
+			if (FlxG.keys.justPressed.LEFT #if android || _virtualpad.buttonLeft.justPressed #end && !vortex|| FlxG.keys.justPressed.A #if android || _virtualpad.buttonLeft.justPressed #end) {
+				if(curSection <= 0) {
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 					changeSection(_song.notes.length-1);
 				} else {
 					changeSection(curSec - shiftThing);
@@ -3191,11 +3326,14 @@ class ChartingState extends MusicBeatState
 			gridBG = FlxGridOverlay.create(GRID_SIZE, GRID_SIZE, GRID_SIZE * 9, Std.int(GRID_SIZE * getSectionBeats() * 4 * zoomList[curZoom]));
 		else gridBG = new FlxSprite().makeGraphic(Std.int(GRID_SIZE * 9), Std.int(GRID_SIZE * getSectionBeats() * 4 * zoomList[curZoom]), 0xffe7e6e6);
 
+<<<<<<< HEAD
 		#if desktop
 		if(FlxG.save.data.chart_waveformInst || FlxG.save.data.chart_waveformVoices || FlxG.save.data.chart_waveformOppVoices) {
+=======
+		if(waveformEnabled != null) {
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 			updateWaveform();
 		}
-		#end
 
 		var leHeight:Int = Std.int(gridBG.height);
 		var foundNextSec:Bool = false;
@@ -3252,7 +3390,6 @@ class ChartingState extends MusicBeatState
 
 	var lastWaveformHeight:Int = 0;
 	function updateWaveform() {
-		#if desktop
 		if(waveformPrinted) {
 			var width:Int = Std.int(GRID_SIZE * 8);
 			var height:Int = Std.int(gridBG.height);
@@ -3445,11 +3582,15 @@ class ChartingState extends MusicBeatState
 			rows++;
 			if(gotIndex > steps) break;
 		}
+<<<<<<< HEAD
 
 		return array;
 		#else
 		return [[[0], [0]], [[0], [0]]];
 		#end
+=======
+		waveformPrinted = true;
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 	}
 
 	function changeNoteSustain(value:Float):Void
@@ -3606,7 +3747,7 @@ class ChartingState extends MusicBeatState
 		#if MODS_ALLOWED
 		var path:String = Paths.modFolders(characterPath);
 		if (!FileSystem.exists(path)) {
-			path = Paths.getPreloadPath(characterPath);
+			path = SUtil.getPath() + Paths.getPreloadPath(characterPath);
 		}
 
 		if (!FileSystem.exists(path))
@@ -3615,8 +3756,12 @@ class ChartingState extends MusicBeatState
 		if (!OpenFlAssets.exists(path))
 		#end
 		{
+<<<<<<< HEAD
 			path = Paths.getPreloadPath('characters/' + Character.DEFAULT_CHARACTER + '.json'); //If a character couldn't be found, change him to BF just to prevent a crash
 			characterFailed = true;
+=======
+			path = SUtil.getPath() + Paths.getPreloadPath('characters/' + Character.DEFAULT_CHARACTER + '.json'); //If a character couldn't be found, change him to BF just to prevent a crash
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		}
 
 		#if MODS_ALLOWED
@@ -4256,16 +4401,24 @@ class ChartingState extends MusicBeatState
 
 		if ((data != null) && (data.length > 0))
 		{
+                        #if android
+                        SUtil.saveContent(Paths.formatToSongPath(_song.song), ".json", data.trim());
+                        #else
 			_file = new FileReference();
 			_file.addEventListener(Event.COMPLETE, onSaveComplete);
 			_file.addEventListener(Event.CANCEL, onSaveCancel);
 			_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
+<<<<<<< HEAD
 			var gamingName:String = Paths.formatToSongPath(_song.song);
 
 			if (difficulty.toLowerCase() != 'normal')
 				gamingName = gamingName + '-' + Paths.formatToSongPath(difficulty);
 
 			_file.save(data.trim(), gamingName + ".json");
+=======
+			_file.save(data.trim(), Paths.formatToSongPath(_song.song) + ".json");
+                        #end
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		}
 			cpp.vm.Gc.enable(true);
 		if (unsavedChanges) unsavedChanges = false;
@@ -4290,11 +4443,15 @@ class ChartingState extends MusicBeatState
 
 		if ((data != null) && (data.length > 0))
 		{
+                        #if android
+                        SUtil.saveContent("events", ".json", data.trim());
+                        #else
 			_file = new FileReference();
 			_file.addEventListener(Event.COMPLETE, onSaveComplete);
 			_file.addEventListener(Event.CANCEL, onSaveCancel);
 			_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
 			_file.save(data.trim(), "events.json");
+                        #end
 		}
 	}
 

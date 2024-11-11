@@ -128,8 +128,20 @@ class OptionsState extends MusicBeatState
 		selectorRight.cameras = [subCamera];
 		add(selectorRight);
 
+		#if android
+		var tipText:FlxText = new FlxText(10, FlxG.height - 24, 0, 'Press C to Go In Android Controls Menu', 16);
+		tipText.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		tipText.borderSize = 2;
+		tipText.scrollFactor.set();
+		add(tipText);
+		#end
+
 		changeSelection();
 		ClientPrefs.saveSettings();
+
+                #if android
+		addVirtualPad(UP_DOWN, A_B_C);
+                #end
 
 		super.create();
 	}
@@ -152,6 +164,7 @@ class OptionsState extends MusicBeatState
 		var lerpVal:Float = CoolUtil.clamp(elapsed * 7.5, 0, 1);
 		camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 
+<<<<<<< HEAD
 		if (controls.BACK && !isEnteringKonamiCode) {
 			FlxG.sound.play(Paths.sound('cancelMenu'));
 			if(PauseSubState.inPause)
@@ -186,6 +199,23 @@ class OptionsState extends MusicBeatState
                 }
             }
         }
+=======
+		if (controls.ACCEPT) {
+			#if android
+			removeVirtualPad();
+			#end
+			openSelectedSubstate(options[curSelected]);
+		}
+
+		#if android
+		if (_virtualpad.buttonC.justPressed) {
+			#if android
+			removeVirtualPad();
+			#end
+			MusicBeatState.switchState(new android.AndroidControlsMenu());
+		}
+		#end
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 	}
 	
 	function changeSelection(change:Int = 0) {
@@ -217,6 +247,7 @@ class OptionsState extends MusicBeatState
 		}
 		FlxG.sound.play(Paths.sound('scrollMenu'));
 	}
+<<<<<<< HEAD
 function checkKonamiCode():Bool {
     if (konamiCode[konamiIndex].justPressed) {
         konamiIndex++;
@@ -232,3 +263,6 @@ function checkKonamiCode():Bool {
     return false;
 }
 }
+=======
+}
+>>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
