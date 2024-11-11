@@ -178,19 +178,9 @@ class EditorPlayState extends MusicBeatState
 			FlxG.stage.addEventListener(KeyboardEvent.KEY_UP, onKeyRelease);
 		}
 
-<<<<<<< HEAD
 		Paths.initNote(4, PlayState.SONG.arrowSkin);
 		Paths.initDefaultSkin(PlayState.SONG.arrowSkin);
 		cachePopUpScore();
-=======
-                #if android
-                addAndroidControls();
-                #end
-
-                #if android
-                androidc.visible = true;
-                #end
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 
 		super.create();
 	}
@@ -375,23 +365,16 @@ class EditorPlayState extends MusicBeatState
 	public var spawnTime:Float = 2000;
 	public var notesAddedCount:Int = 0;
 	override function update(elapsed:Float) {
-		if (FlxG.keys.justPressed.ESCAPE #if android || FlxG.android.justReleased.BACK #end)
+		if (FlxG.keys.justPressed.ESCAPE)
 		{
 			FlxG.sound.music.pause();
 			vocals.pause();
-<<<<<<< HEAD
 			opponentVocals.pause();
 			LoadingState.loadAndSwitchState(editors.ChartingState.new);
 		}
 		if (FlxG.keys.justPressed.SIX)
 		{
 			cpuControlled = !cpuControlled;
-=======
-                        #if android
-                        androidc.visible = false;
-                        #end
-			LoadingState.loadAndSwitchState(new editors.ChartingState());
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		}
 
 		if (startingSong) {

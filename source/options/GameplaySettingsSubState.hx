@@ -35,7 +35,7 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 			'Check this if you want to play with\na controller instead of using your Keyboard.',
 			'controllerMode',
 			'bool',
-			#if android true #else false #end);
+			false);
 		addOption(option);
 
 		//I'd suggest using "Downscroll" as an example for making your own option since it is the simplest here
@@ -273,7 +273,6 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 
 		super();
 	}
-<<<<<<< HEAD
 
 	function onChangeHitsoundVolume()
 	{
@@ -283,6 +282,3 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		}
 	}
 }
-=======
-}
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
