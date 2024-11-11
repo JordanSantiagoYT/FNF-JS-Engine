@@ -82,3 +82,26 @@ jobs:
         file: build.zip
         asset_name: FNF-JS-Engine-macOS.zip
         overwrite: false
+
+  release-android:
+    name: Release androidBuild
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Android artifact
+      uses: actions/download-artifact@main
+      with:
+        path: build
+        name: macBuild
+    - name: Compress build
+      run: |
+        sudo apt-get install p7zip-full
+        7z a -tzip build.zip -w ./build/.
+    - name: Upload androidBuild to release
+      uses: svenstaro/upload-release-action@2.5.0
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}
+        file: build.zip
+        asset_name: FNF-JS-Engine-android.zip
+        overwrite: false
