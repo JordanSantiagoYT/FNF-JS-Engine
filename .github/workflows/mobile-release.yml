@@ -40,7 +40,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.get-latest-tag.outputs.latest_tag }}
           file: PatoEngine-release.apk
-          asset_name: FNF-JS-Engine-android.apk
+          asset_name: FNF-PatosEngine-android.apk
           overwrite: false
 
   release-ios:
@@ -60,5 +60,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ needs.get-latest-tag.outputs.latest_tag }}
           file: PatoEngine-iOS.zip
-          asset_name: FNF-JS-Engine-iOS.zip
+          asset_name: FNF-PatosEngine-iOS.zip
           overwrite: false
