@@ -8,5 +8,7 @@ sex + weed, 0.6943
 FUNNY, 0.7
 Skibidi, 0.8
 Fanum Tax, 0.9
+OHIO MASTER, 0.98
+OHIO COCK, 0.99
 GYATT!, 1
 SUPER, DUPER GYATT!, 1

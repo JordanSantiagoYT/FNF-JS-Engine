@@ -81,3 +81,19 @@ medodecordas self promote--watch?v=dQw4w9WgXcQ
 ezhalt says--olha a bombaaa
 stevan--love cats
 skibidi--gyatt
+vai--catnap
+brrr--skibididop
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+i--cummed
+my name is--who
+my name is--what
+[Error]--fuck
+Updates were rejected--because the tip of your current branch is behind
+error:--failed to push some refs
+fatal:--Exiting because of an unresolved conflict.
+hint:--Fix them up in the work tree, and then use 'git add/rm <file>'
+error:--Merging is not possible because you have unmerged files.
+error:--you need to resolve your current index first
+CONFLICT (content):--Merge conflict in assets/preload/data/funnyTips.txt
+Auto-merging--assets/preload/data/funnyTips.txt
+Uncaught--Error:
