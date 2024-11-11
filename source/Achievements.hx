@@ -326,11 +326,7 @@ class Achievements {
 		});
 		Lua_helper.add_callback(lua, "achievementExists", function(name:String) return achievements.exists(name));
 	}
-<<<<<<< HEAD
 	#end
 	#end
 }
 #end
-=======
-}
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12

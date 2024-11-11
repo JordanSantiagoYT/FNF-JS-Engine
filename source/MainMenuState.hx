@@ -189,10 +189,6 @@ class MainMenuState extends MusicBeatState
 		changeItem();
 		tipTextStartScrolling();
 
-                #if android
-                addVirtualPad(UP_DOWN, A_B_E);
-                #end
-
 		super.create();
 	}
 
@@ -336,19 +332,11 @@ class MainMenuState extends MusicBeatState
 					});
 				}
 			}
-<<<<<<< HEAD
 		#if (desktop)
 		else if (FlxG.keys.anyJustPressed(debugKeys)) {
 			FlxG.switchState(MasterEditorMenu.new);
 		}
 		#end
-=======
-			else if (FlxG.keys.anyJustPressed(debugKeys) #if android || _virtualpad.buttonE.justPressed #end)
-			{
-				selectedSomethin = true;
-				MusicBeatState.switchState(new MasterEditorMenu());
-			}
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 		}
 
 		super.update(elapsed);

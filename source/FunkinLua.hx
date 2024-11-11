@@ -61,14 +61,9 @@ import DiscordClient;
 using StringTools;
 
 class FunkinLua {
-<<<<<<< HEAD
 	public static var Function_Stop:Dynamic = "##PSYCHLUA_FUNCTIONSTOP";
 	public static var Function_Continue:Dynamic = "##PSYCHLUA_FUNCTIONCONTINUE";
 	public static var Function_StopLua:Dynamic = "##PSYCHLUA_FUNCTIONSTOPLUA";
-=======
-	public static var Function_Stop:Dynamic = #if android "Function_Stop" #else 1 #end;
-	public static var Function_Continue:Dynamic = #if android "Function_Continue" #else 0 #end;
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 
 	//public var errorHandler:String->Void;
 	#if LUA_ALLOWED
@@ -93,7 +88,6 @@ class FunkinLua {
 		trace('Lua version: ' + Lua.version());
 		trace("LuaJIT version: " + Lua.versionJIT());
 
-<<<<<<< HEAD
 		//LuaL.dostring(lua, CLENSE);
 		try{
 			var result:Int = scriptCode != null ? LuaL.dostring(lua, scriptCode) : LuaL.dofile(lua, script);
@@ -110,19 +104,6 @@ class FunkinLua {
 			}
 		} catch(e:Dynamic) {
 			trace(e);
-=======
-		LuaL.dostring(lua, CLENSE);
-		var result:Dynamic = LuaL.dofile(lua, script);
-		var resultStr:String = Lua.tostring(lua, result);
-		if(resultStr != null && result != 0) {
-			#if (windows || android)
-			lime.app.Application.current.window.alert(resultStr, 'Error on lua script!');
-			#else
-			luaTrace('Error loading lua script: "$script"\n' + resultStr,true,false);
-			#end
-			trace('Error on .LUA script! ' + resultStr);
-			lua = null;
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 			return;
 		}
 		scriptName = script;
@@ -541,7 +522,6 @@ class FunkinLua {
 			{
 				cervix = Paths.modFolders(cervix);
 				doPush = true;
-<<<<<<< HEAD
 			}
 			else if(FileSystem.exists(cervix))
 			{
@@ -549,10 +529,6 @@ class FunkinLua {
 			}
 			else {
 				cervix = Paths.getPreloadPath(cervix);
-=======
-			} else {
-				cervix = SUtil.getPath() + Paths.getPreloadPath(cervix);
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 				if(FileSystem.exists(cervix)) {
 					doPush = true;
 				}
@@ -890,30 +866,6 @@ class FunkinLua {
 						if(luaInstance.scriptName == cervix)
 						{
 							luaTrace('The script "' + cervix + '" is already running!');
-<<<<<<< HEAD
-=======
-							return;
-						}
-					}
-				}
-				PlayState.instance.luaArray.push(new FunkinLua(cervix)); 
-				return;
-			}
-			luaTrace("Script doesn't exist!");
-		});
-		Lua_helper.add_callback(lua, "removeLuaScript", function(luaFile:String, ?ignoreAlreadyRunning:Bool = false) { //would be dope asf. 
-			var cervix = luaFile + ".lua";
-			var doPush = false;
-			if(FileSystem.exists(Paths.modFolders(cervix))) {
-				cervix = Paths.modFolders(cervix);
-				doPush = true;
-			} else {
-				cervix = SUtil.getPath() + Paths.getPreloadPath(cervix);
-				if(FileSystem.exists(cervix)) {
-					doPush = true;
-				}
-			}
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 
 								PlayState.instance.luaArray.remove(luaInstance);
 							return;
@@ -2216,20 +2168,12 @@ class FunkinLua {
 			return FlxG.random.bool(chance);
 		});
 		Lua_helper.add_callback(lua, "startDialogue", function(dialogueFile:String, music:String = null) {
-<<<<<<< HEAD
 			var path:String;
 			#if MODS_ALLOWED
 			path = Paths.modsJson(Paths.formatToSongPath(PlayState.SONG.song) + '/' + dialogueFile);
 			if(!FileSystem.exists(path))
 			#end
 				path = Paths.json(Paths.formatToSongPath(PlayState.SONG.song) + '/' + dialogueFile);
-=======
-			var path:String = Paths.modsJson(Paths.formatToSongPath(PlayState.SONG.song) + '/' + dialogueFile);
-			if(!FileSystem.exists(path)) {
-				path = SUtil.getPath() + Paths.json(Paths.formatToSongPath(PlayState.SONG.song) + '/' + dialogueFile);
-			}
-			luaTrace('Trying to load dialogue: ' + path);
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 
 			luaTrace('startDialogue: Trying to load dialogue: ' + path);
 
@@ -3524,18 +3468,6 @@ class FunkinLua {
 	{
 		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
 	}
-<<<<<<< HEAD
-=======
-
-	static inline var CLENSE:String = "
-	os.execute = nil;
-	os.exit = nil;
-	package.loaded.os.execute = nil;
-	package.loaded.os.exit = nil;
-	process = nil;
-	package.loaded.process = nil;
-	"; // Fuck this, I can't figure out linc_lua, so I'mma set everything in Lua itself - Super
->>>>>>> 56408d79b62ab5eeb99ee5ff647a960e5afe1f12
 }
 
 class ModchartSprite extends FlxSprite
