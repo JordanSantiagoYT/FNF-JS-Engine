@@ -31,7 +31,7 @@ _(**WARNING:** some are ***not*** tested)_
 ### Engine(-related)
 
 - [x] More joke features.
-  - [x] Skibidi icon bounce (glitchy, but fun)
+  - [x] SKIBIDI icon bounce (glitchy, but fun)
 
 ### Haxe
 
