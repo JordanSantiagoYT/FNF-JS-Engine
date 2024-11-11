@@ -2,3 +2,6 @@
 * text=auto
 
 *.md linguist-detectable=true
+
+# testing
+*.hx merge=union
