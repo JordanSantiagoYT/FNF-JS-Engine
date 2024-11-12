@@ -7,4 +7,5 @@ curl -# -O https://download.visualstudio.microsoft.com/download/pr/3105fcfe-e771
 vs_Community.exe --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows10SDK.19041 -p
 del vs_Community.exe
 echo Finished.
+msg * Finished.
 pause
