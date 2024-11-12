@@ -60,6 +60,13 @@ A: **Y E S**, just put the engine link on your mod download page or anything idk
 Q: Can i contribute to this thing:
 
 A: Yes, just send a pull request and i will aprove (or not idk).
+
+## Screenshots
+
+![image](https://github.com/user-attachments/assets/5dd4051f-956c-4eb2-bfe9-12cb23c7314d)
+
+![image](https://github.com/user-attachments/assets/243c58f1-1552-42b2-b732-ddbe16ce11ef)
+
 <details>
   <summary><h2>OG JS Engine Credits and Stuff</h2></summary>
   
