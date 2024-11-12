@@ -25,7 +25,16 @@ jobs:
 
       - name: Verify Haxe installation
         run: haxe --version
-
+        
+      - name: Compile hxcpp
+        run: |
+          cd ~/haxelib/hxcpp/git/tools/run
+          haxe compile.hxml
+          cd ..
+          cd ./hxcpp
+          haxe compile.hxml
+          cd ../..
+          
       - name: Install Checkstyle
         run: haxelib install checkstyle
 
