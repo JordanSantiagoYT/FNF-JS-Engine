@@ -23,7 +23,7 @@ class StartupState extends MusicBeatState
 
 	override public function create():Void
 	{
-		#if VIDEOS_ALLOWED maxIntros += 3; #end
+		#if VIDEOS_ALLOWED maxIntros += 5; #end
 		var theIntro:Int = FlxG.random.int(0, maxIntros);
 		FlxTransitionableState.skipNextTransIn = true;
 		FlxTransitionableState.skipNextTransOut = true;
@@ -48,11 +48,25 @@ class StartupState extends MusicBeatState
 		new FlxTimer().start(0.1, function(tmr:FlxTimer) {
 			switch (theIntro) {
 				case 0:
-					FlxG.sound.play(Paths.sound('startup', 'splash'));
-					logo.scale.set(0.1,0.1);
-					logo.updateHitbox();
-					logo.screenCenter();
-					FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 0.95, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone()});
+					
+				#if VIDEOS_ALLOWED
+				var vidSprite = new MP4Handler(); // it plays but it doesn't show???
+				#if (hxCodec < "3.0.0")
+				vidSprite.playVideo(Paths.video('cat'), false, false);
+				vidSprite.finishCallback = function()
+				{
+					try { vidSprite.dispose(); }
+					catch (e) {}
+					FlxG.switchState(TitleState.new);
+				};
+				#else
+				vidSprite.play(Paths.video('cat'));
+				vidSprite.onEndReached.add(function(){
+					vidSprite.dispose();
+					FlxG.switchState(TitleState.new);
+				});
+				#end
+			#end
 				case 1:
 					FlxG.sound.play(Paths.sound('startup', 'splash'));
 					FlxG.sound.play(Paths.sound('FIREINTHEHOLE', 'splash'));
@@ -138,6 +152,52 @@ class StartupState extends MusicBeatState
 						});
 						#end
 					#end
+
+
+
+						case 7:
+							#if VIDEOS_ALLOWED
+								var vidSprite = new MP4Handler(); // it plays but it doesn't show???
+								#if (hxCodec < "3.0.0")
+								vidSprite.playVideo(Paths.video('goofy-aaah1'), false, false);
+								vidSprite.finishCallback = function()
+								{
+									try { vidSprite.dispose(); }
+									catch (e) {}
+									FlxG.switchState(TitleState.new);
+								};
+								#else
+								vidSprite.play(Paths.video('goofy-aaah1'));
+								vidSprite.onEndReached.add(function(){
+									vidSprite.dispose();
+									FlxG.switchState(TitleState.new);
+								});
+								#end
+							#end
+
+							
+				case 8:
+					#if VIDEOS_ALLOWED
+						var vidSprite = new MP4Handler(); // it plays but it doesn't show???
+						#if (hxCodec < "3.0.0")
+						vidSprite.playVideo(Paths.video('goofy-aaah2'), false, false);
+						vidSprite.finishCallback = function()
+						{
+							try { vidSprite.dispose(); }
+							catch (e) {}
+							FlxG.switchState(TitleState.new);
+						};
+						#else
+						vidSprite.play(Paths.video('goofy-aaah2'));
+						vidSprite.onEndReached.add(function(){
+							vidSprite.dispose();
+							FlxG.switchState(TitleState.new);
+						});
+						#end
+					#end
+					
+							
+						
 			}
 		});
 
