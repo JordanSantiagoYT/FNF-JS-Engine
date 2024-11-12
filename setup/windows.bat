@@ -21,4 +21,5 @@ haxelib git grig.audio https://gitlab.com/haxe-grig/grig.audio.git cbf91e2180fd2
 haxelib git hxdiscord_rpc https://github.com/MAJigsaw77/hxdiscord_rpc
 @echo off
 echo Finished!
+msg * Finished!
 pause
