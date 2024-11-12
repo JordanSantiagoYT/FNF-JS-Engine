@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Haxe environment
-        uses: HaxeFoundation/setup-haxe@v1
+        uses: haxefoundation/setup-haxe@v1  # Correct capitalization
         with:
           haxe-version: "4.2.5"  # Specify the Haxe version you want to use
 
