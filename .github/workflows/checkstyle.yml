@@ -14,12 +14,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Haxe
+      - name: Install Haxelib
         run: |
-          sudo add-apt-repository -y ppa:haxe/releases
-          sudo apt-get update
-          sudo apt-get install -y haxe=4.2.5*
-        shell: bash
+          sudo apt-get install libvlc-dev
+          sudo apt-get install libvlccore-dev
+          haxelib setup ~/haxelib
+          haxelib install hxcpp > /dev/null --quiet
+          chmod +x ./setup/unix.sh
+          sh ./setup/unix.sh
 
       - name: Verify Haxe installation
         run: haxe --version
