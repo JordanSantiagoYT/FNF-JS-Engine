@@ -2,7 +2,7 @@
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="Friday Night Funkin': Patos Engine" file="PatoEngine" packageName="com.PatoFlamejanteTV.PatoEngine" package="com.PatoFlamejanteTV.PatoEngine" main="Main" version="0.0.1" company="PatoFlamejanteTV" />
+	<app title="Friday Night Funkin': Patos Engine" file="PatoEngine" packageName="com.PatoFlamejanteTV.PatoEngine" package="com.PatoFlamejanteTV.PatoEngine" main="Main" version="0.0.2" company="PatoFlamejanteTV" />
 	<app preloader="flixel.system.FlxPreloader" />
 
 	<!-- ____________________________ Window Settings ___________________________ -->
