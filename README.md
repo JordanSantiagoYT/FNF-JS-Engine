@@ -40,7 +40,7 @@ _(**WARNING:** some are ***not*** tested)_
 - [x] [___] on miss option.
   - [x] Crash on miss.
   - [x] Shutdown on miss.
-  - [x] (***EXTREME***)Lag on miss. **[WIP]**
+  - [x] (***EXTREME***) Lag on miss. **[WIP]**
 - [x] PC/User-related settings and functions.
 - [ ] Python (or other languages) support.
 
