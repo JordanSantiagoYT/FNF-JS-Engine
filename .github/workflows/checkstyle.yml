@@ -1,0 +1,27 @@
+name: Haxe Checkstyle
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checkstyle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Haxe environment
+        uses: HaxeFoundation/setup-haxe@v1
+        with:
+          haxe-version: "4.2.5"  # Specify the Haxe version you want to use
+
+      - name: Install Checkstyle
+        run: haxelib install checkstyle
+
+      - name: Run Checkstyle
+        run: haxelib run checkstyle src/
+        # Replace `src/` with the path to the folder you want to check
