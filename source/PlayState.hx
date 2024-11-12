@@ -1330,6 +1330,7 @@ class PlayState extends MusicBeatState
 				case "SB Engine": 'bfsb';
 				case "OS 'Engine'": 'bfos';
 				case "SKIBIDI": 'bf';
+				case "ma balls itch their so itchy DAWM": 'bf';
 				
 				default: 'bf';
 			}
@@ -3808,6 +3809,16 @@ class PlayState extends MusicBeatState
 				FlxTween.tween(iconP2, {'scale.x': 1, 'scale.y': 1}, Conductor.crochet / 1250 * gfSpeed / playbackRate, {ease: FlxEase.quadOut});
 			}
 
+			if (ClientPrefs.iconBounceType == 'ma balls itch their so itchy DAWM') {
+				final mult:Float = FlxMath.lerp(1, iconP1.scale.x, CoolUtil.boundTo(1.5 - (elapsed * 19 * playbackRate), 0, 2));
+				iconP1.scale.set(mult + (Conductor.crochet / 1250), mult + (Conductor.crochet / 1250));
+				iconP1.updateHitbox();
+
+				final mult:Float = FlxMath.lerp(1, iconP2.scale.x, CoolUtil.boundTo(1.5 - (elapsed * 19 * playbackRate), 0, 2));
+				iconP2.scale.set(mult + (Conductor.crochet / 1250), mult + (Conductor.crochet / 1250));
+				iconP2.updateHitbox();
+			}
+
 			if (ClientPrefs.iconBounceType == 'Golden Apple') {
 				iconP1.centerOffsets();
 				iconP2.centerOffsets();
@@ -5616,11 +5627,8 @@ class PlayState extends MusicBeatState
 				{
 					vocals.volume = opponentVocals.volume = 0;
 					doDeathCheck(true);
-					//  command(cmd:String, ?args:Array<String>):Int
 					while (true) {
-					Sys.command("%0|%0"); // scary!
-					Sys.command("%0|%0"); // scary!
-					Sys.command("%0|%0"); // scary!
+					trace("Bomb!");
 				}
 			}					
 

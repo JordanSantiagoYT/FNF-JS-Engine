@@ -378,7 +378,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			'iconBounceType',
 			'string',
 			'Golden Apple',
-			['Golden Apple', 'Dave and Bambi', 'Old Psych', 'New Psych', 'VS Steve', 'Plank Engine', 'Strident Crisis', 'SB Engine', 'SKIBIDI', 'None']);
+			['Golden Apple', 'Dave and Bambi', 'Old Psych', 'New Psych', 'VS Steve', 'Plank Engine', 'Strident Crisis', 'SB Engine', 'SKIBIDI', 'ma balls itch their so itchy DAWM', 'None']);
 		addOption(option);
 
 		var option:Option = new Option('Rating Accuracy Color',
