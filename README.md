@@ -94,6 +94,8 @@ There is like lots and lots of stuff i've missed, but at least you would like th
 
 ![Screenshot 2024-07-07 13-58-45](https://github.com/JordanSantiagoYT/FNF-JS-Engine/assets/108278470/a65ea8b5-8b0d-4643-b7e0-cddd3972422b)
 
+![image](https://github.com/user-attachments/assets/d4123be8-3849-4d82-98d7-be97d255e36d)
+
 # FAQs
 
 Frequently Asked Questions (FAQs) are found in [here](https://github.com/JordanSantiagoYT/FNF-JS-Engine/wiki) or you can simply see it below.
