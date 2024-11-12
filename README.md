@@ -1,7 +1,7 @@
 <!-- this is an secret -->
 <h1 align="center">
   <br>
-  <a href="https://github.com/PatoFlamejanteTV/FNF-Patos-Engine"><img src=".github/patos.png" alt="PatosEngine" width="150"></a>
+  <a href="https://github.com/PatoFlamejanteTV/FNF-Patos-Engine"><img src="https://github.com/PatoFlamejanteTV/FNF-Patos-Engine/raw/main/.github/patos.png" alt="PatosEngine" width="150"></a>
   <br>
   <b>Patos Engine</b>
   <br>
