@@ -3810,13 +3810,10 @@ class PlayState extends MusicBeatState
 			}
 
 			if (ClientPrefs.iconBounceType == 'ma balls itch their so itchy DAWM') {
-				final mult:Float = FlxMath.lerp(1, iconP1.scale.x, CoolUtil.boundTo(1.5 - (elapsed * 19 * playbackRate), 0, 2));
-				iconP1.scale.set(mult + (Conductor.crochet / 1250), mult + (Conductor.crochet / 1250));
-				iconP1.updateHitbox();
+				final funnyBeat = (Conductor.songPosition / 1000) * (Conductor.bpm / 60);
 
-				final mult:Float = FlxMath.lerp(1, iconP2.scale.x, CoolUtil.boundTo(1.5 - (elapsed * 19 * playbackRate), 0, 2));
-				iconP2.scale.set(mult + (Conductor.crochet / 1250), mult + (Conductor.crochet / 1250));
-				iconP2.updateHitbox();
+				iconP1.offset.y = Math.abs(Math.sin(funnyBeat * Math.PI))  * 16 - 4;
+				iconP2.offset.y = Math.abs(Math.cos(funnyBeat * Math.PI))  * 16 - 4;
 			}
 
 			if (ClientPrefs.iconBounceType == 'Golden Apple') {
