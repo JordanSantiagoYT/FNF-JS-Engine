@@ -1,0 +1,6 @@
+{
+	"name": "Mod Name",
+	"description": "Mod description",
+	"restart":false,
+	"color": [170, 0, 255]
+}
