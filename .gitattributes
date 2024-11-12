@@ -4,4 +4,4 @@
 *.md linguist-detectable=true
 
 # testing
-*.hx merge=union
+#*.hx merge=union
