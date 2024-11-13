@@ -200,7 +200,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 		'randomspeedmin' => 0.5,
 		'randomspeedmax' => 2,
 		'thetrollingever' => false,
-		'crash' => false //crash on die, inspired on Universe Engine
+		'crash' => false, //crash on die, inspired on Universe Engine
 		'sonichit' => false //More speed on note hit
 	];
 
