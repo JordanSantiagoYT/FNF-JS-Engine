@@ -46,27 +46,27 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 
 		var option:GameplayOption = new GameplayOption('Scroll Speed', 'scrollspeed', 'float', 1);
 		option.scrollSpeed = 2.0;
-		option.minValue = 0.35;
+		//option.minValue = 0.35;
 		option.changeValue = 0.05;
 		option.slowChangeVal = 0.01;
 		option.decimals = 2;
 		if (goption.getValue() != "constant")
 		{
 			option.displayFormat = '%vX';
-			option.maxValue = 128;
+			//option.maxValue = 128;
 		}
 		else
 		{
 			option.displayFormat = "%v";
-			option.maxValue = 1024;
+			//option.maxValue = 1024;
 		}
 		optionsArray.push(option);
 
 		#if !html5
 		var option:GameplayOption = new GameplayOption('Playback Rate', 'songspeed', 'float', 1);
 		option.scrollSpeed = 3;
-		option.minValue = 0.01;
-		option.maxValue = 100;
+		//option.minValue = 0.01;
+		//option.maxValue = 100;
 		option.changeValue = 0.05;
 		option.slowChangeVal = 0.01;
 		option.displayFormat = '%vX';
@@ -76,8 +76,8 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 
 		var option:GameplayOption = new GameplayOption('Health Gain Multiplier', 'healthgain', 'float', 1);
 		option.scrollSpeed = 5;
-		option.minValue = -1;
-		option.maxValue = 50;
+		//option.minValue = -1;
+		//option.maxValue = 50;
 		option.changeValue = 0.1;
 		option.slowChangeVal = 0.01;
 		option.decimals = 3;
@@ -86,8 +86,8 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 
 		var option:GameplayOption = new GameplayOption('Health Loss Multiplier', 'healthloss', 'float', 1);
 		option.scrollSpeed = 2.5;
-		option.minValue = -1;
-		option.maxValue = 50;
+		//option.minValue = -1;
+		//option.maxValue = 50;
 		option.changeValue = 0.1;
 		option.slowChangeVal = 0.01;
 		option.decimals = 3;
@@ -121,8 +121,8 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 
 		var option:GameplayOption = new GameplayOption('Health Drain Level: ', 'drainlevel', 'float', 1);
 		option.scrollSpeed = 2;
-		option.minValue = -1;
-		option.maxValue = 10;
+		//option.minValue = -1;
+		//option.maxValue = 10;
 		option.changeValue = 0.1;
 		option.slowChangeVal = 0.01;
 		option.displayFormat = '%vX';
@@ -164,8 +164,8 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 		var option:GameplayOption = new GameplayOption('Jack Amount: ', 'jacks', 'int', 0);
 		option.onChange = onChangeChartOption;
 		option.scrollSpeed = 6;
-		option.minValue = 0;
-		option.maxValue = 100;
+		//option.minValue = 0;
+		//option.maxValue = 100;
 		option.changeValue = 1;
 		option.slowChangeVal = 1;
 		option.displayFormat = '%v';
@@ -177,8 +177,8 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 
 		var option:GameplayOption = new GameplayOption('Minimum Speed', 'randomspeedmin', 'float', 0.5);
 		option.scrollSpeed = 0.5;
-		option.minValue = 0.1;
-		option.maxValue = 1;
+		//option.minValue = 0.1;
+		//option.maxValue = 1;
 		option.changeValue = 0.05;
 		option.slowChangeVal = 0.01;
 		option.displayFormat = '%v';
@@ -187,8 +187,8 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 
 		var option:GameplayOption = new GameplayOption('Max Speed', 'randomspeedmax', 'float', 2);
 		option.scrollSpeed = 0.5;
-		option.minValue = 1;
-		option.maxValue = 10;
+		//option.minValue = 1;
+		//option.maxValue = 10;
 		option.changeValue = 0.05;
 		option.slowChangeVal = 0.01;
 		option.displayFormat = '%v';
