@@ -198,6 +198,17 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 		var option:GameplayOption = new GameplayOption('Troll Mode', 'thetrollingever', 'bool', false);
 		option.onChange = onChangeChartOption;
 		optionsArray.push(option);
+		
+		var option:GameplayOption = new GameplayOption('Add More Speed On Note Hit', 'sonichit', 'float', 2);
+		option.scrollSpeed = 0.5;
+		//option.minValue = 1;
+		//option.maxValue = 10;
+		option.changeValue = 0.05;
+		option.slowChangeVal = 0.01;
+		option.displayFormat = '%v';
+		option.decimals = 2;
+		optionsArray.push(option);
+
 	}
 
 	public function getOptionByName(name:String)
@@ -605,8 +616,8 @@ class GameplayOption
 			case 'percent':
 				displayFormat = '%v%';
 				changeValue = 0.01;
-				minValue = 0;
-				maxValue = 1;
+				minValue = 0; // not sure if im gonna edit
+				maxValue = 1; // these two vars just for "no limits" on mix/max
 				scrollSpeed = 0.5;
 				decimals = 2;
 		}
@@ -657,7 +668,7 @@ class GameplayOption
 			case 'int' | 'float' | 'percent' | 'string': newValue = type;
 			case 'integer': newValue = 'int';
 			case 'str': newValue = 'string';
-			case 'fl': newValue = 'float';
+			case 'fl': newValue = 'float'; // FL STUDIO REFERENCE?!?!?!!?
 		}
 		type = newValue;
 		return type;
