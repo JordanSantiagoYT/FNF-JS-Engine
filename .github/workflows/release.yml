@@ -92,7 +92,7 @@ jobs:
       uses: actions/download-artifact@main
       with:
         path: build
-        name: macBuild
+        name: androidBuild
     - name: Compress build
       run: |
         sudo apt-get install p7zip-full
