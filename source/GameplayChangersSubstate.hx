@@ -198,7 +198,7 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 		var option:GameplayOption = new GameplayOption('Troll Mode', 'thetrollingever', 'bool', false);
 		option.onChange = onChangeChartOption;
 		optionsArray.push(option);
-		
+		/*
 		var option:GameplayOption = new GameplayOption('Add More Speed On Note Hit', 'sonichit', 'float', 2);
 		option.scrollSpeed = 0.5;
 		//option.minValue = 1;
@@ -208,7 +208,7 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 		option.displayFormat = '%v';
 		option.decimals = 2;
 		optionsArray.push(option);
-
+*/
 	}
 
 	public function getOptionByName(name:String)

@@ -201,6 +201,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 		'randomspeedmax' => 2,
 		'thetrollingever' => false,
 		'crash' => false //crash on die, inspired on Universe Engine
+		'sonichit' => false //More speed on note hit
 	];
 
 	//Gameplay Offset and Window stuff

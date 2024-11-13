@@ -5829,6 +5829,10 @@ class PlayState extends MusicBeatState
 				{
 					hitsound.play(true);
 					hitsound.pitch = playbackRate;
+
+					/*if(sonichit) {
+						ClientPreft.scrollspeed++
+					}*/
 					if (FileSystem.exists('assets/shared/images/' + hitsoundImageToLoad + '.png') || FileSystem.exists(Paths.modFolders('images/' + hitsoundImageToLoad + '.png')) && hitImagesFrame < 4)
 					{
 						hitImagesFrame++;
