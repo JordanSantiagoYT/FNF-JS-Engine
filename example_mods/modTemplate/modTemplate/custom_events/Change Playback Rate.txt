@@ -1,0 +1,4 @@
+change playback rate..
+simple
+
+value1 = rate

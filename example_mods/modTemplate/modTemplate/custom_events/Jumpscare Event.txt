@@ -1,0 +1,5 @@
+Jumpscare Event.. Cus Yes
+
+
+Value 1 = imagename (images/)
+Value 2 = sound (sounds/)

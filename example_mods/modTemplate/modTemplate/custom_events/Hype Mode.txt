@@ -1,0 +1,8 @@
+wNo need to put in value, just trigger this event and it'll
+turn it on by itself.
+
+to turn it off, trigger this event again
+and it'll turn off.
+
+Event Coded by uwenalil
+Images and Original code from An Ammar

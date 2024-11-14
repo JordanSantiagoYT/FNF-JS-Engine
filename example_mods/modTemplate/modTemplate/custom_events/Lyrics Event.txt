@@ -1,0 +1,5 @@
+-- TEXT --
+Value 1 = Dad / BF or dad / bf
+Value 2 = Lyrics / Text
+
+Coded by uwenalil

@@ -1,0 +1,2 @@
+Value 1: How far you want the camera to zoom
+Value 2: How long it takes for the camera to fully zoom
