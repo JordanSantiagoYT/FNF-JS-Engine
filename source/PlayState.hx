@@ -327,8 +327,6 @@ class PlayState extends MusicBeatState
 	public var judgeCountUpdateFrame:Int = 0;
 	public var popUpsFrame:Int = 0;
 	public var missRecalcsPerFrame:Int = 0;
-	public var charAnimsFrame:Int = 0;
-	public var oppAnimsFrame:Int = 0;
 	public var hitImagesFrame:Int = 0;
 
 	var notesHitArray:Array<Float> = [];
@@ -3574,8 +3572,6 @@ class PlayState extends MusicBeatState
 		if (iconBopsThisFrame > 0) iconBopsThisFrame = 0;
 		if (popUpsFrame > 0) popUpsFrame = 0;
 		if (missRecalcsPerFrame > 0) missRecalcsPerFrame = 0;
-		if (charAnimsFrame > 0) charAnimsFrame = 0;
-		if (oppAnimsFrame > 0) oppAnimsFrame = 0;
 		strumsHit = [false, false, false, false, false, false, false, false];
 		for (i in 0...splashesPerFrame.length)
 			if (splashesPerFrame[i] > 0) splashesPerFrame[i] = 0;
@@ -5096,28 +5092,11 @@ class PlayState extends MusicBeatState
 	final offset = FlxG.width * 0.35;
 	var daRating:Rating = null;
 	var noteDiff = 0.0;
-	private function popUpScore(note:Note = null, ?miss:Bool = false):Void
+
+	function judgeNote(note:Note = null, ?miss:Bool = false)
 	{
-		popUpsFrame += 1;
-
-		if(ClientPrefs.scoreZoom && scoreTxt != null && !cpuControlled && !miss)
-		{
-			if(scoreTxtTween != null) {
-				scoreTxtTween.cancel();
-			}
-			scoreTxt.scale.x = 1.075;
-			scoreTxt.scale.y = 1.075;
-			scoreTxtTween = FlxTween.tween(scoreTxt.scale, {x: 1, y: 1}, 0.2, {
-				onComplete: function(twn:FlxTween) {
-					scoreTxtTween = null;
-				}
-			});
-		}
-
-		if (!miss && !ffmpegMode) (opponentChart ? opponentVocals : vocals).volume = 1;
-
+		if (note == null) return;
 		if (daRating == null) daRating = ratingsData[0]; //because it likes being stupid
-		
 		if (!cpuControlled)
 		{
 			noteDiff = Math.abs(note.strumTime - Conductor.songPosition + ClientPrefs.ratingOffset) / playbackRate;
@@ -5138,22 +5117,10 @@ class PlayState extends MusicBeatState
 				if(!note.ratingDisabled) daRating.increase();
 			}
 			note.rating = daRating.name;
-
-			if (daRating.name == 'shit' && ClientPrefs.shitGivesMiss && ClientPrefs.ratingIntensity == 'Normal') noteMiss(note);
-			if (noteDiff > ClientPrefs.goodWindow && ClientPrefs.shitGivesMiss && ClientPrefs.ratingIntensity == 'Harsh')
-			{
-				noteMiss(note);
-			}
-			if (noteDiff > ClientPrefs.sickWindow && ClientPrefs.shitGivesMiss && ClientPrefs.ratingIntensity == 'Very Harsh')
-			{
-				noteMiss(note);
-			}
 		}
 
 		if(daRating.noteSplash && !note.noteSplashDisabled && !miss && splashesPerFrame[1] <= 4)
-		{
-			spawnNoteSplashOnNote(false, note, note.gfNote);
-		}
+			spawnNoteSplashOnNote(false, note);
 
 		if(!practiceMode && !miss) {
 			songScore += daRating.score * polyphony;
@@ -5166,6 +5133,32 @@ class PlayState extends MusicBeatState
 				}
 			}
 		}
+
+		if (daRating.name == 'shit' && ClientPrefs.shitGivesMiss && ClientPrefs.ratingIntensity == 'Normal') noteMiss(note);
+		if (noteDiff > ClientPrefs.goodWindow && ClientPrefs.shitGivesMiss && ClientPrefs.ratingIntensity == 'Harsh') noteMiss(note);
+		if (noteDiff > ClientPrefs.sickWindow && ClientPrefs.shitGivesMiss && ClientPrefs.ratingIntensity == 'Very Harsh')noteMiss(note);
+	}
+	private function popUpScore(note:Note = null, ?miss:Bool = false):Void
+	{
+		popUpsFrame += 1;
+
+		if(ClientPrefs.scoreZoom && scoreTxt != null && !cpuControlled && !miss)
+		{
+			if(scoreTxtTween != null) {
+				scoreTxtTween.cancel();
+			}
+			scoreTxt.scale.x = 1.075;
+			scoreTxt.scale.y = 1.075;
+			scoreTxtTween = FlxTween.tween(scoreTxt.scale, {x: 1, y: 1}, 0.2, {
+				onComplete: function(twn:FlxTween) {
+					scoreTxtTween = null;
+				}
+			});
+		}
+
+		if (!miss && !ffmpegMode) (opponentChart ? opponentVocals : vocals).volume = 1;
+		
+		judgeNote(note, miss);
 
 		if (popUpsFrame <= 3)
 		{
@@ -5761,11 +5754,11 @@ class PlayState extends MusicBeatState
 					if (!daNote.isSustainNote) {
 						enemyHits += 1 * polyphony;
 						if (ClientPrefs.showNPS) {
-							inline oppNotesHitArray.push(1 * polyphony);
-							inline oppNotesHitDateArray.push(Conductor.songPosition);
+							oppNotesHitArray.push(1 * polyphony);
+							oppNotesHitDateArray.push(Conductor.songPosition);
 						}
-						invalidateNote(daNote);
 					}
+					invalidateNote(daNote);
 				}
 			}
 
@@ -5777,11 +5770,11 @@ class PlayState extends MusicBeatState
 						if (!daNote.isSustainNote) {
 							totalNotesPlayed += 1 * polyphony;
 							if (ClientPrefs.showNPS) {
-								inline notesHitArray.push(1 * polyphony);
-								inline notesHitDateArray.push(Conductor.songPosition);
+								notesHitArray.push(1 * polyphony);
+								notesHitDateArray.push(Conductor.songPosition);
 							}
-							invalidateNote(daNote);
 						}
+						invalidateNote(daNote);
 					}
 				}
 			}
@@ -5813,216 +5806,171 @@ class PlayState extends MusicBeatState
 	var oppTrigger:Bool = false;
 	var doGf:Bool = false;
 	var playerChar = null;
+	var canPlay = true;
+	var holdAnim:String = '';
+	var animToPlay:String = 'singLEFT';
+	var animCheck:String = 'hey';
 	function goodNoteHit(note:Note, noteAlt:PreloadedChartNote = null):Void
 	{
 		if (note != null)
 		{
 			if (opponentChart || bothSides && note.doOppStuff) {
-				if (Paths.formatToSongPath(SONG.song) != 'tutorial' && !camZooming)
+				if (songName != 'tutorial' && !camZooming)
 					camZooming = true;
 			}
-			if (!note.wasGoodHit)
+			if(!ffmpegMode && (note.wasGoodHit || cpuControlled && note.ignoreNote)) return;
+
+			if (ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled && !note.isSustainNote)
 			{
-				if(!ffmpegMode && cpuControlled && (note.ignoreNote || note.hitCausesMiss)) return;
-
-				if (ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled && !note.isSustainNote)
+				hitsound.play(true);
+				hitsound.pitch = playbackRate;
+				if (FileSystem.exists('assets/shared/images/' + hitsoundImageToLoad + '.png') || FileSystem.exists(Paths.modFolders('images/' + hitsoundImageToLoad + '.png')) && hitImagesFrame < 4)
 				{
-					hitsound.play(true);
-					hitsound.pitch = playbackRate;
-
-					/*if(sonichit) {
-						ClientPreft.scrollspeed+= 0.01
-					}*/
-					if (FileSystem.exists('assets/shared/images/' + hitsoundImageToLoad + '.png') || FileSystem.exists(Paths.modFolders('images/' + hitsoundImageToLoad + '.png')) && hitImagesFrame < 4)
-					{
-						hitImagesFrame++;
-						hitsoundImage = new FlxSprite().loadGraphic(Paths.image(hitsoundImageToLoad));
-						hitsoundImage.antialiasing = ClientPrefs.globalAntialiasing;
-						hitsoundImage.scrollFactor.set();
-						hitsoundImage.setGraphicSize(Std.int(hitsoundImage.width / FlxG.camera.zoom));
-						hitsoundImage.updateHitbox();
-						hitsoundImage.screenCenter();
-						hitsoundImage.alpha = 1;
-						hitsoundImage.cameras = [camGame];
-						add(hitsoundImage);
-						FlxTween.tween(hitsoundImage, {alpha: 0}, 1 / (SONG.bpm/100) / playbackRate, {
-							onComplete: function(tween:FlxTween)
-							{
-								hitsoundImage.destroy();
-							}
-						});
-					}
-				}
-
-				if(note.hitCausesMiss) {
-					noteMiss(note);
-					if(!note.noteSplashDisabled && !note.isSustainNote && splashesPerFrame[1] <= 4) {
-						spawnNoteSplashOnNote(false, note, note.gfNote);
-					}
-
-					if(!note.noMissAnimation)
-					{
-						switch(note.noteType) {
-							case 'Hurt Note': //Hurt note
-								if(boyfriend.animation.getByName('hurt') != null) {
-									boyfriend.playAnim('hurt', true);
-									boyfriend.specialAnim = true;
-								}
+					hitImagesFrame++;
+					hitsoundImage = new FlxSprite().loadGraphic(Paths.image(hitsoundImageToLoad));
+					hitsoundImage.antialiasing = ClientPrefs.globalAntialiasing;
+					hitsoundImage.scrollFactor.set();
+					hitsoundImage.setGraphicSize(Std.int(hitsoundImage.width / FlxG.camera.zoom));
+					hitsoundImage.updateHitbox();
+					hitsoundImage.screenCenter();
+					hitsoundImage.alpha = 1;
+					hitsoundImage.cameras = [camGame];
+					add(hitsoundImage);
+					FlxTween.tween(hitsoundImage, {alpha: 0}, 1 / (SONG.bpm/100) / playbackRate, {
+						onComplete: function(tween:FlxTween)
+						{
+							hitsoundImage.destroy();
 						}
-					}
-
-					note.wasGoodHit = true;
-					if (!note.isSustainNote) invalidateNote(note);
-					return;
+					});
 				}
+			}
 
+			if(!note.hitCausesMiss) {
+				if (!note.isSustainNote)
+				{
 					if (combo < 0) combo = 0;
 					if (polyphony > 1 && !note.isSustainNote) totalNotes += polyphony - 1;
-				if (!note.isSustainNote && !cpuControlled)
-				{
+					missCombo = 0;
 					combo += 1 * polyphony;
 					totalNotesPlayed += 1 * polyphony;
-					missCombo = 0;
 					if (ClientPrefs.showNPS) { //i dont think we should be pushing to 2 arrays at the same time but oh well
-						inline notesHitArray.push(1 * polyphony);
-						inline notesHitDateArray.push(Conductor.songPosition);
+						notesHitArray.push(1 * polyphony);
+						notesHitDateArray.push(Conductor.songPosition);
 					}
 					if (!ClientPrefs.lessBotLag) popUpScore(note);
-					else
-					{
-						final noteDiff:Float = Math.abs(note.strumTime - Conductor.songPosition + ClientPrefs.ratingOffset) / playbackRate;
-						final daRating:Rating = Conductor.judgeNote(note, noteDiff);
-
-						totalNotesHit += daRating.ratingMod;
-						note.ratingMod = daRating.ratingMod;
-						if(!note.ratingDisabled) daRating.increase();
-						note.rating = daRating.name;
-						songScore += daRating.score * polyphony;
-						totalPlayed++;
-						if(daRating.noteSplash && !note.noteSplashDisabled && ClientPrefs.noteSplashes && splashesPerFrame[1] <= 4)
-						{
-							spawnNoteSplashOnNote(false, note, note.gfNote);
-						}
-						RecalculateRating();
-					}
-				}
-				if (!note.isSustainNote && cpuControlled)
-				{
-					combo += 1 * polyphony;
-					totalNotesPlayed += 1 * polyphony;
-					if (ClientPrefs.showNPS) {
-						inline notesHitArray.push(1 * polyphony);
-						inline notesHitDateArray.push(Conductor.songPosition);
-					}
-					if (ClientPrefs.lessBotLag)
-					{
-						songScore += (ClientPrefs.noMarvJudge ? 350 : 500) * polyphony;
-						if(!note.noteSplashDisabled && !note.isSustainNote && ClientPrefs.noteSplashes && splashesPerFrame[1] <= 4) {
-							spawnNoteSplashOnNote(false, note, note.gfNote);
-						}
-					}
-					else popUpScore(note);
+					else judgeNote(note);
+					maxCombo = Math.max(maxCombo, combo);
 				}
 
-				if (combo > maxCombo)
-					maxCombo = combo;
-
-				if (missCombo != 0) missCombo = 0;
+				if (!usingBotEnergy) health += note.hitHealth * healthGain * polyphony;
 
 				if (bothSides) oppTrigger = bothSides && note.doOppStuff;
 				else if (opponentChart && !oppTrigger) oppTrigger = true;
 				doGf = note.gfNote;
 
-				if (!usingBotEnergy) {
-					health += note.hitHealth * healthGain * polyphony;
-				}
-				if(!note.noAnimation && ClientPrefs.charsAndBG && (!oppTrigger ? charAnimsFrame : oppAnimsFrame) < 4 && (!note.isSustainNote || ClientPrefs.oldSusStyle && note.isSustainNote)) {
-					if (!oppTrigger) charAnimsFrame += 1;
-					else oppAnimsFrame += 1;
-					final animToPlay:String = singAnimations[Std.int(Math.abs(note.noteData))];
+				if(!note.noAnimation && ClientPrefs.charsAndBG) {
+					animToPlay = singAnimations[Std.int(Math.abs(note.noteData))];
 
 					playerChar = (doGf ? gf : (!oppTrigger ? boyfriend : dad));
-					if (ClientPrefs.cameraPanning) inline camPanRoutine(animToPlay, (!oppTrigger ? 'bf' : 'oppt'));
+					animCheck = (playerChar != gf ? 'hey' : 'cheer');
+
+					if (ClientPrefs.cameraPanning) camPanRoutine(animToPlay, (!oppTrigger ? 'bf' : 'oppt'));
 					if (playerChar != null)
 					{
-						playerChar.holdTimer = 0;
-						inline playerChar.playAnim(animToPlay + note.animSuffix, true);
+						canPlay = (!note.isSustainNote || ClientPrefs.oldSusStyle && note.isSustainNote);
+						if(note.isSustainNote)
+						{
+							holdAnim = animToPlay + '-hold';
+							if(playerChar.animation.exists(holdAnim)) animToPlay = holdAnim;
+							if(playerChar.getAnimationName() == holdAnim || playerChar.getAnimationName() == holdAnim + '-loop')
+								canPlay = false;
+						}
 
-						if(note.noteType == 'Hey!') {
-							playerChar = !doGf ? !oppTrigger ? boyfriend : dad : gf;
-							if(playerChar.animOffsets.exists('hey')) {
-								playerChar.playAnim('hey', true);
+						if(canPlay) playerChar.playAnim(animToPlay, true);
+						playerChar.holdTimer = 0;
+
+						if(note.noteType == 'Hey!')
+						{
+							if(playerChar.hasAnimation(animCheck))
+							{
+								playerChar.playAnim(animCheck, true);
 								playerChar.specialAnim = true;
 								playerChar.heyTimer = 0.6;
 							}
-
-							if(gf != null && gf.animOffsets.exists('cheer')) {
-								gf.playAnim('cheer', true);
-								gf.specialAnim = true;
-								gf.heyTimer = 0.6;
-							}
 						}
 					}
-				}
-				else if (note.isSustainNote && !ClientPrefs.oldSusStyle && charAnimsFrame < 4)
-				{
-					charAnimsFrame += 1;
-					playerChar = (note.gfNote ? gf : (!oppTrigger ? boyfriend : dad));
-					if (playerChar != null) playerChar.holdTimer = 0;
 				}
 
 				if((cpuControlled || usingBotEnergy && strumsHeld[note.noteData]) && ClientPrefs.botLightStrum && !strumsHit[(note.noteData % 4) + 4]) {
 					strumsHit[(note.noteData % 4) + 4] = true;
 
 					if(playerStrums.members[note.noteData] != null) {
-						if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader) {
-							inline playerStrums.members[note.noteData].playAnim('confirm', true, note.rgbShader.r, note.rgbShader.g, note.rgbShader.b);
-						} else {
-							inline playerStrums.members[note.noteData].playAnim('confirm', true);
-						}
+						if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader)
+							playerStrums.members[note.noteData].playAnim('confirm', true, note.rgbShader.r, note.rgbShader.g, note.rgbShader.b);
+						else
+							playerStrums.members[note.noteData].playAnim('confirm', true);
+
 						playerStrums.members[note.noteData].resetAnim = calculateResetTime();
 					}
 				} else if (ClientPrefs.playerLightStrum && !cpuControlled) {
 					final spr = playerStrums.members[note.noteData];
 					if(spr != null)
 					{
-						if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader) {
-							inline spr.playAnim('confirm', true, note.rgbShader.r, note.rgbShader.g, note.rgbShader.b);
-						} else {
-							inline spr.playAnim('confirm', true);
-						}
+						if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader)
+							spr.playAnim('confirm', true, note.rgbShader.r, note.rgbShader.g, note.rgbShader.b);
+						else
+							spr.playAnim('confirm', true);
+					}
+				}
+			}
+			else
+			{
+				if(!note.noMissAnimation)
+				{
+					playerChar = boyfriend;
+					switch(note.noteType)
+					{
+						case 'Hurt Note':
+							if(playerChar.hasAnimation('hurt'))
+							{
+								playerChar.playAnim('hurt', true);
+								playerChar.specialAnim = true;
+							}
 					}
 				}
 
-				if (playerChar != null && playerChar.shakeScreen)
-				{
-					camGame.shake(playerChar.shakeIntensity, playerChar.shakeDuration / playbackRate);
-					camHUD.shake(playerChar.shakeIntensity / 2, playerChar.shakeDuration / playbackRate);
-				}
-				note.wasGoodHit = true;
-				if (ClientPrefs.noteSplashes && note.isSustainNote && splashesPerFrame[3] <= 4) spawnHoldSplashOnNote(note);
-				if (SONG.needsVoices && ClientPrefs.songLoading && !ffmpegMode)
-					if (opponentChart && opponentVocals != null && opponentVocals.volume != 1) opponentVocals.volume = 1;
-					else if (!opponentChart && vocals.volume != 1 || vocals.volume != 1) vocals.volume = 1;
-
-				if (!notesBeingHit && usingBotEnergy)
-				{
-					notesBeingHit = true;
-					hitResetTimer = 0.3 / playbackRate;
-				}
-
-				if (!ClientPrefs.noHitFuncs) 
-				{
-					callOnLuas((oppTrigger ? 'opponentNoteHit' : 'goodNoteHit'), [notes.members.indexOf(note), Math.abs(note.noteData), note.noteType, note.isSustainNote]);
-					stagesFunc(function(stage:BaseStage) (oppTrigger ? stage.opponentNoteHit(note) : stage.goodNoteHit(note)));
-				}
-
-				if (!note.isSustainNote) invalidateNote(note);
-
-				if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
-				if (scoreTxtUpdateFrame <= 4) updateScore();
-				if (ClientPrefs.iconBopWhen == 'Every Note Hit' && (iconBopsThisFrame <= 2 || ClientPrefs.noBopLimit) && !note.isSustainNote && iconP1.visible) bopIcons(!oppTrigger);
+				noteMiss(note);
+				if(!note.noteSplashData.disabled && !note.isSustainNote) spawnNoteSplashOnNote(false, note);
 			}
+
+			if (playerChar != null && playerChar.shakeScreen)
+			{
+				camGame.shake(playerChar.shakeIntensity, playerChar.shakeDuration / playbackRate);
+				camHUD.shake(playerChar.shakeIntensity / 2, playerChar.shakeDuration / playbackRate);
+			}
+			note.wasGoodHit = true;
+			if (ClientPrefs.noteSplashes && note.isSustainNote && splashesPerFrame[3] <= 4) spawnHoldSplashOnNote(note);
+			if (SONG.needsVoices && ClientPrefs.songLoading && !ffmpegMode)
+				if (opponentChart && opponentVocals != null && opponentVocals.volume != 1) opponentVocals.volume = 1;
+				else if (!opponentChart && vocals.volume != 1 || vocals.volume != 1) vocals.volume = 1;
+
+			if (!notesBeingHit && usingBotEnergy)
+			{
+				notesBeingHit = true;
+				hitResetTimer = 0.3 / playbackRate;
+			}
+
+			if (!ClientPrefs.noHitFuncs) 
+			{
+				callOnLuas((oppTrigger ? 'opponentNoteHit' : 'goodNoteHit'), [notes.members.indexOf(note), Math.abs(note.noteData), note.noteType, note.isSustainNote]);
+				stagesFunc(function(stage:BaseStage) (oppTrigger ? stage.opponentNoteHit(note) : stage.goodNoteHit(note)));
+			}
+
+			if (!note.isSustainNote) invalidateNote(note);
+
+			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
+			if (scoreTxtUpdateFrame <= 4) updateScore();
+			if (ClientPrefs.iconBopWhen == 'Every Note Hit' && (iconBopsThisFrame <= 2 || ClientPrefs.noBopLimit) && !note.isSustainNote && iconP1.visible) bopIcons(!oppTrigger);
 			return;
 		}
 		if (noteAlt != null)
@@ -6031,50 +5979,32 @@ class PlayState extends MusicBeatState
 			if(noteAlt.noteType == 'Hey!')
 			{
 				playerChar = !noteAlt.gfNote ? oppTrigger ? dad : boyfriend : gf;
-				if (playerChar.animOffsets.exists('hey')) {
+				if (playerChar.hasAnimation('hey')) {
 					playerChar.playAnim('hey', true);
 					playerChar.specialAnim = true;
 					playerChar.heyTimer = 0.6;
 				}
 			}
-			if(!noteAlt.noAnimation && ClientPrefs.charsAndBG && (!oppTrigger ? charAnimsFrame : oppAnimsFrame) < 4) {
-				if (!oppTrigger) charAnimsFrame += 1;
-					else oppAnimsFrame += 1;
-				if (noteAlt.gfNote)
+			if(!noteAlt.noAnimation && ClientPrefs.charsAndBG) {
+				playerChar = !noteAlt.gfNote ? oppTrigger ? dad : boyfriend : gf;
+				if (playerChar != null)
 				{
-					inline gf.playAnim(singAnimations[(noteAlt.noteData)] + noteAlt.animSuffix, true);
-					gf.holdTimer = 0;
-				}
-				if (!noteAlt.gfNote && !oppTrigger)
-				{
-					inline boyfriend.playAnim(singAnimations[(noteAlt.noteData)] + noteAlt.animSuffix, true);
-					boyfriend.holdTimer = 0;
-				}
-				if (!noteAlt.gfNote && oppTrigger)
-				{
-					inline dad.playAnim(singAnimations[(noteAlt.noteData)] + noteAlt.animSuffix, true);
-					dad.holdTimer = 0;
+					playerChar.playAnim(singAnimations[(noteAlt.noteData)] + noteAlt.animSuffix, true);
+					playerChar.holdTimer = 0;
 				}
 			}
 			if(cpuControlled && !ClientPrefs.showNotes) {
 				if (ClientPrefs.botLightStrum && !strumsHit[(noteAlt.noteData % 4) + 4])
 				{
 					strumsHit[(noteAlt.noteData % 4) + 4] = true;
-					inline playerStrums.members[noteAlt.noteData].playAnim('confirm', true);
+					playerStrums.members[noteAlt.noteData].playAnim('confirm', true);
 					playerStrums.members[noteAlt.noteData].resetAnim = calculateResetTime();
 				}
 			}
 			if (!noteAlt.isSustainNote && cpuControlled)
 			{
 				combo += 1 * polyphony;
-				if (!ClientPrefs.noMarvJudge)
-				{
-					songScore += 500 * polyphony;
-				}
-				else if (ClientPrefs.noMarvJudge)
-				{
-					songScore += 350 * polyphony;
-				}
+				songScore += (ClientPrefs.noMarvJudge ? 350 : 500) * polyphony;
 				totalNotesPlayed += 1 * polyphony;
 				if (ClientPrefs.showNPS) { //i dont think we should be pushing to 2 arrays at the same time but oh well
 					notesHitArray.push(1 * polyphony);
@@ -6095,60 +6025,77 @@ class PlayState extends MusicBeatState
 	{
 		if (daNote != null)
 		{
-			if (!opponentChart) {
-				if (Paths.formatToSongPath(SONG.song) != 'tutorial' && !camZooming)
-					camZooming = true;
+			if (!opponentChart && songName != 'tutorial' && !camZooming)
+				camZooming = true;
+
+			if (!daNote.isSustainNote)
+			{
+				if (ClientPrefs.showNPS) { //i dont think we should be pushing to 2 arrays at the same time but oh well
+					oppNotesHitArray.push(1 * polyphony);
+					oppNotesHitDateArray.push(Conductor.songPosition);
+				}
+				enemyHits += 1 * polyphony;
+				invalidateNote(daNote);
 			}
 
 			if(daNote.noteType == 'Hey!')
 			{
 				oppChar = !daNote.gfNote ? !opponentChart ? dad : boyfriend : gf;
-				if (oppChar.animOffsets.exists('hey')) {
+				if (oppChar.hasAnimation('hey')) {
 					oppChar.playAnim('hey', true);
 					oppChar.specialAnim = true;
 					oppChar.heyTimer = 0.6;
 				}
-			} else if(!daNote.noAnimation && oppAnimsFrame < 4 && ClientPrefs.charsAndBG && (!daNote.isSustainNote || ClientPrefs.oldSusStyle && daNote.isSustainNote)) {
-				oppAnimsFrame += 1;
+			} else if(!daNote.noAnimation && ClientPrefs.charsAndBG) {
+				oppChar = !daNote.gfNote ? !opponentChart ? dad : boyfriend : gf;
+				animToPlay = singAnimations[Std.int(Math.abs(daNote.noteData))];
 
-				final animToPlay:String = singAnimations[Std.int(Math.abs(daNote.noteData))] + daNote.animSuffix;
-				gfTrigger = daNote.gfNote;
-				oppChar = (gfTrigger ? gf : (!opponentChart ? dad : boyfriend));
+				if (ClientPrefs.cameraPanning) inline camPanRoutine(animToPlay, (!opponentChart ? 'dad' : 'bf'));
 
 				if (oppChar != null)
 				{
-					inline oppChar.playAnim(animToPlay, true);
+					canPlay = (!daNote.isSustainNote || ClientPrefs.oldSusStyle && daNote.isSustainNote);
+					if(daNote.isSustainNote)
+					{
+						holdAnim = animToPlay + '-hold';
+						if(oppChar.animation.exists(holdAnim)) animToPlay = holdAnim;
+						if(oppChar.getAnimationName() == holdAnim || oppChar.getAnimationName() == holdAnim + '-loop')
+							canPlay = false;
+					}
+
+					if(canPlay) oppChar.playAnim(animToPlay, true);
 					oppChar.holdTimer = 0;
-					if (ClientPrefs.cameraPanning) inline camPanRoutine(animToPlay, (!opponentChart ? 'dad' : 'bf'));
 				}
 			}
-			else if (daNote.isSustainNote && !ClientPrefs.oldSusStyle && oppAnimsFrame < 4)
+
+			if (!daNote.isSustainNote)
 			{
-				oppAnimsFrame += 1;
-				oppChar = (daNote.gfNote ? gf : (opponentChart ? boyfriend : dad));
-				if (oppChar != null) oppChar.holdTimer = 0;
+				if (ClientPrefs.showNPS) { //i dont think we should be pushing to 2 arrays at the same time but oh well
+					oppNotesHitArray.push(1 * polyphony);
+					oppNotesHitDateArray.push(Conductor.songPosition);
+				}
+				enemyHits += 1 * polyphony;
+				invalidateNote(daNote);
 			}
 
 			if(ClientPrefs.oppNoteSplashes && !daNote.isSustainNote && splashesPerFrame[0] <= 4)
-			{
-				spawnNoteSplashOnNote(true, daNote, daNote.gfNote);
-			}
+				spawnNoteSplashOnNote(true, daNote);
 
 			if (SONG.needsVoices && !ffmpegMode)
 				if (!opponentChart && opponentVocals != null && opponentVocals.volume != 1) opponentVocals.volume = 1;
 				else if (opponentChart && vocals.volume != 1 || vocals.volume != 1) vocals.volume = 1;
 
-				if (polyphony > 1 && !daNote.isSustainNote) opponentNoteTotal += polyphony - 1;
+			if (polyphony > 1 && !daNote.isSustainNote) opponentNoteTotal += polyphony - 1;
 
 			if (ClientPrefs.opponentLightStrum && !strumsHit[daNote.noteData % 4])
 			{
 				strumsHit[daNote.noteData % 4] = true;
 
-				if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader) {
-					inline opponentStrums.members[daNote.noteData].playAnim('confirm', true, daNote.rgbShader.r, daNote.rgbShader.g, daNote.rgbShader.b);
-				} else {
-					inline opponentStrums.members[daNote.noteData].playAnim('confirm', true);
-				}
+				if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader)
+					opponentStrums.members[daNote.noteData].playAnim('confirm', true, daNote.rgbShader.r, daNote.rgbShader.g, daNote.rgbShader.b);
+				else
+					opponentStrums.members[daNote.noteData].playAnim('confirm', true);
+
 				opponentStrums.members[daNote.noteData].resetAnim = calculateResetTime();
 			}
 			daNote.hitByOpponent = true;
@@ -6159,16 +6106,6 @@ class PlayState extends MusicBeatState
 			{
 				callOnLuas((!opponentChart ? 'opponentNoteHit' : 'goodNoteHit'), [notes.members.indexOf(daNote), Math.abs(daNote.noteData), daNote.noteType, daNote.isSustainNote]);
 				stagesFunc(function(stage:BaseStage) (!opponentChart ? stage.opponentNoteHit(daNote) : stage.goodNoteHit(daNote)));
-			}
-
-			if (!daNote.isSustainNote)
-			{
-				if (ClientPrefs.showNPS) { //i dont think we should be pushing to 2 arrays at the same time but oh well
-					inline oppNotesHitArray.push(1 * polyphony);
-					inline oppNotesHitDateArray.push(Conductor.songPosition);
-				}
-				enemyHits += 1 * polyphony;
-				invalidateNote(daNote);
 			}
 
 			if (shouldDrainHealth && health > (healthDrainFloor * polyphony) && !practiceMode || opponentDrain && practiceMode)
@@ -6182,6 +6119,7 @@ class PlayState extends MusicBeatState
 			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 			if (scoreTxtUpdateFrame <= 4) updateScore();
 			if (ClientPrefs.iconBopWhen == 'Every Note Hit' && (iconBopsThisFrame <= 2 || ClientPrefs.noBopLimit) && !daNote.isSustainNote && iconP2.visible) bopIcons(opponentChart);
+			return;
 		}
 		if (noteAlt != null)
 		{
@@ -6194,27 +6132,26 @@ class PlayState extends MusicBeatState
 					oppChar.heyTimer = 0.6;
 				}
 			}
-			if(!noteAlt.noAnimation && ClientPrefs.charsAndBG && oppAnimsFrame < 4) {
-				oppAnimsFrame += 1;
+			if(!noteAlt.noAnimation && ClientPrefs.charsAndBG) {
 				oppChar = !noteAlt.gfNote ? !opponentChart ? dad : boyfriend : gf;
-				final animToPlay:String = singAnimations[Std.int(Math.abs(noteAlt.noteData))] + noteAlt.animSuffix;
+				animToPlay = singAnimations[Std.int(Math.abs(noteAlt.noteData))] + noteAlt.animSuffix;
 				if (oppChar != null)
 				{
-					inline oppChar.playAnim(animToPlay, true);
+					oppChar.playAnim(animToPlay, true);
 					oppChar.holdTimer = 0;
 				}
 			}
 			if (ClientPrefs.opponentLightStrum && !strumsHit[noteAlt.noteData % 4] && !ClientPrefs.showNotes)
 			{
 				strumsHit[noteAlt.noteData % 4] = true;
-				inline opponentStrums.members[noteAlt.noteData].playAnim('confirm', true);
+				opponentStrums.members[noteAlt.noteData].playAnim('confirm', true);
 				opponentStrums.members[noteAlt.noteData].resetAnim = calculateResetTime();
 			}
 			if (!noteAlt.isSustainNote)
 			{
 				if (ClientPrefs.showNPS) { //i dont think we should be pushing to 2 arrays at the same time but oh well
-					inline oppNotesHitArray.push(1 * polyphony);
-					inline oppNotesHitDateArray.push(Conductor.songPosition);
+					oppNotesHitArray.push(1 * polyphony);
+					oppNotesHitDateArray.push(Conductor.songPosition);
 				}
 				enemyHits += 1 * polyphony;
 
@@ -6235,10 +6172,11 @@ class PlayState extends MusicBeatState
 				if (!opponentChart && opponentVocals != null && opponentVocals.volume != 1) opponentVocals.volume = 1;
 				else if (opponentChart && vocals.volume != 1 || vocals.volume != 1) vocals.volume = 1;
 		}
+		return;
 	}
 
 	public function invalidateNote(note:Note):Void {
-		note.exists = note.wasGoodHit = note.hitByOpponent = note.tooLate = note.canBeHit = false; //apparently i have to do this, otherwise the game will still think the note should be hit
+		note.exists = note.wasGoodHit = note.hitByOpponent = note.tooLate = note.canBeHit = false;
 		if (ClientPrefs.fastNoteSpawn) (note.isSustainNote ? sustainNotes : notes).pushToPool(note);
 	}
 
@@ -6265,7 +6203,7 @@ class PlayState extends MusicBeatState
 		grpHoldSplashes.add(end.noteHoldSplash = splash);
 	}
 
-	public function spawnNoteSplashOnNote(isDad:Bool, note:Note, ?isGf:Bool = false) {
+	public function spawnNoteSplashOnNote(isDad:Bool, note:Note) {
 		if(ClientPrefs.noteSplashes && note != null) {
 			splashesPerFrame[(isDad ? 0 : 1)] += 1;
 			final strum:StrumNote = !isDad ? playerStrums.members[note.noteData] : opponentStrums.members[note.noteData];
