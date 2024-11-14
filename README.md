@@ -66,8 +66,6 @@ A: Yes, just send a pull request and i will aprove (or not idk).
 
 ## Screenshots
 
-![image](https://github.com/user-attachments/assets/5dd4051f-956c-4eb2-bfe9-12cb23c7314d)
-
 ![image](https://github.com/user-attachments/assets/243c58f1-1552-42b2-b732-ddbe16ce11ef)
 
 ![image](https://github.com/user-attachments/assets/060cb74c-ebf3-4c08-837e-2ae1ca53933e)
