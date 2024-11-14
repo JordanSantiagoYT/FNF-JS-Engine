@@ -43,6 +43,7 @@ _(**WARNING:** some are ***not*** tested)_
   - [x] (***EXTREME***) Lag on miss. **[WIP]**
 - [x] PC/User-related settings and functions.
 - [ ] Python (or other languages) support.
+- [ ] Batchfile fully support.
 
 ### Lua
 - [ ] More `.lua` examples.
@@ -51,6 +52,8 @@ _(**WARNING:** some are ***not*** tested)_
   - [x] getUserPath
   - [x] getTempPath
   - [x] getCurrentDir
+  - [ ] writeTxt
+  - [ ] notepadOpenTxt
 
 ## FAQ
 Q: Can i make mods in your engine:
