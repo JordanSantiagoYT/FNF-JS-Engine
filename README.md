@@ -30,30 +30,30 @@ _(**WARNING:** some are ***not*** tested)_
 
 ### Engine(-related)
 
-- [x] More joke features.
-  - [x] SKIBIDI icon bounce (glitchy, but fun)
+- [x]  More joke features.
+  - [x]  SKIBIDI icon bounce (glitchy, but fun)
 
 ### Haxe
 
-- [x] Recording Screen (OBS and Bandicam) and Cheat Engine detection.
-  - [x] Can be checked via Haxe (and Lua ***maybe***)
-- [x] [___] on miss option.
-  - [x] Crash on miss.
-  - [x] Shutdown on miss.
-  - [x] (***EXTREME***) Lag on miss. **[WIP]**
-- [x] PC/User-related settings and functions.
-- [ ] `Python` (or other languages) support.
-- [ ] `Batchfile` fully support.
+- [x]  Recording Screen (OBS and Bandicam) and Cheat Engine detection.
+  - [x]  Can be checked via Haxe (and Lua ***maybe***)
+- [x]  [___] on miss option.
+  - [x]  Crash on miss.
+  - [x]  Shutdown on miss.
+  - [x]  (***EXTREME***) Lag on miss. **[WIP]**
+- [x]  PC/User-related settings and functions.
+- [ ]  `Python` (or other languages) support.
+- [ ]  `Batchfile` fully support.
 
 ### Lua
-- [ ] More `.lua` examples.
-- [x] PC/User-related settings and functions. (4th wall?)
-  - [x] `getUsername`
-  - [x] `getUserPath`
-  - [x] `getTempPath`
-  - [x] `getCurrentDir`
-  - [ ] `writeTxt`
-  - [ ] `notepadOpenTxt`
+- [ ]  More `.lua` examples.
+- [x]  PC/User-related settings and functions. (4th wall?)
+  - [x]  `getUsername`
+  - [x]  `getUserPath`
+  - [x]  `getTempPath`
+  - [x]  `getCurrentDir`
+  - [ ]  `writeTxt`
+  - [ ]  `notepadOpenTxt`
 
 ## FAQ
 Q: Can i make mods in your engine:
