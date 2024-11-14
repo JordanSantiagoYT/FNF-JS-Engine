@@ -1,4 +1,4 @@
-:: https://github.com/PatoFlamejanteTV/ImaturidadePlusPlus/blob/main/coisaslegal/message.bat
+:: Original from: https://github.com/PatoFlamejanteTV/ImaturidadePlusPlus/blob/main/coisaslegal/message.bat
 :: MessageBox System, make (mainly) for ImaturidadePlusPlus
 :: By: PatoFlamejanteTV, made ONLY by me
 :: ----------------------------------------------------------------------------------

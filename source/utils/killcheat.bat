@@ -1,4 +1,4 @@
-:: https://github.com/PatoFlamejanteTV/ImaturidadePlusPlus/blob/main/coisaslegal/byebyecheaters.bat
+:: Original from: https://github.com/PatoFlamejanteTV/ImaturidadePlusPlus/blob/main/coisaslegal/byebyecheaters.bat
 
 @Echo off
 :: PatoFlamejanteTV's Anti Cheat
