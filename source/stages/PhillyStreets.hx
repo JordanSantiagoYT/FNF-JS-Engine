@@ -154,7 +154,7 @@ class PhillyStreets extends BaseStage
 				case 'darnell':
 					if(!seenCutscene) setStartCallback(videoCutscene.bind('darnellCutscene'));
 				case '2hot':
-					setEndCallback(function()
+					/*setEndCallback(function()
 					{
 						game.endingSong = true;
 						game.inCutscene = true;
@@ -162,7 +162,7 @@ class PhillyStreets extends BaseStage
 						FlxG.camera.visible = false;
 						game.camHUD.visible = false;
 						game.startVideo('2hotCutscene');
-					});
+					});*/
 			}
 		}
 	}

@@ -11,8 +11,10 @@ echo what would you like to name your rendered video?
 set /p "renderName="
 
 echo.
-echo what is the framerate of your images/video?
+echo what is the framerate of your images/video? (defaults to 60)
 set /p "vidFPS="
+
+if "%vidFPS%"=="" set "vidFPS=60"
 
 echo. 
 echo lastly, are you rendering your video in a lossless format? (y/n, default n, makes the renderer find pngs instead of jpgs)

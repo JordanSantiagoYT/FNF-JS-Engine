@@ -95,5 +95,5 @@ Did you know that if you press 7 twice while on this menu, nothing will happen? 
 If your game is lagging, try changing "Anti-Aliasing" to false
 If your game is lagging, try closing some process in your peecee
 If your game is lagging, just buy a new pc!
-Jordan when added buldi JSE 1.38.0 Jordan
+Jordan when added buldi JSE 1.39.0 Jordan
 JS Engine is mentioned in the Funkipedia Mods Wiki exactly 7 times.

@@ -98,7 +98,7 @@ class PhillyBlazin extends BaseStage
 			switch (songName)
 			{
 				case 'blazin':
-					setEndCallback(function()
+					/*setEndCallback(function()
 					{
 						game.endingSong = true;
 						game.inCutscene = true;
@@ -107,7 +107,7 @@ class PhillyBlazin extends BaseStage
 						FlxG.camera.visible = false;
 						game.camHUD.visible = false;
 						game.startVideo('blazinCutscene');
-					});
+					});*/
 			}
 		}
 	}

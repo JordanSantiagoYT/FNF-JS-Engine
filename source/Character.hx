@@ -229,13 +229,8 @@ class Character extends FlxSprite
 			noAntialiasing = true;
 		}
 
-		if(Std.string(json.health_drain).length > 0) {
-			healthDrain = json.health_drain;
-		} else healthDrain = false;
-
-		if(Std.string(json.shake_screen).length > 0) {
+		healthDrain = json.health_drain;
 			shakeScreen = json.shake_screen;
-		} else shakeScreen = false;
 
 		drainAmount = json.drain_amount;
 		drainFloor = json.drain_floor;
