@@ -262,7 +262,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 		// credits to my friend sanco
 		for (field in Type.getClassFields(ClientPrefs))
 		{
-			if (Type.typeof(Reflect.field(ClientPrefs, field)) != TFunction)
+			if (!Reflect.isFunction(Reflect.field(ClientPrefs, field))) //(Type.typeof(Reflect.field(ClientPrefs, field)) != TFunction)
 			{
 				if (!importantMap.get("saveBlackList").contains(field))
 					Reflect.setField(FlxG.save.data, field, Reflect.field(ClientPrefs, field));
