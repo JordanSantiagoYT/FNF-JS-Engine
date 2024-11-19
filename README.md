@@ -55,6 +55,10 @@ _(**WARNING:** some are ***not*** tested)_
   - [ ] writeTxt
   - [ ] notepadOpenTxt
 
+### Lime-related
+- [ ] Support exporting/building to...
+  - [ ] Flash
+
 ## FAQ
 Q: Can i make mods in your engine:
 

@@ -15,8 +15,10 @@ import flixel.graphics.FlxGraphic;
 import flixel.graphics.frames.FlxFramesCollection;
 import flixel.graphics.frames.FlxFrame;
 import flixel.util.FlxColor;
+#if !flash
 import sys.FileSystem;
 import sys.io.File;
+#end
 
 using StringTools;
 class AtlasFrameMaker extends FlxFramesCollection
