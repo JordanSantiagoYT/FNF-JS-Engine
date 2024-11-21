@@ -115,7 +115,6 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var ratingPopups:Bool = true;
 	public static var comboPopups:Bool = true;
 	public static var showMS:Bool = false;
-	public static var songLoading:Bool = true;
 	public static var noSpawnFunc:Bool = false;
 	public static var noHitFuncs:Bool = false;
 	public static var noSkipFuncs:Bool = false;

@@ -207,32 +207,29 @@ class EditorPlayState extends MusicBeatState
 		var boyfriendVocals:String = loadCharacterFile(PlayState.SONG.player1).vocals_file;
 		var dadVocals:String = loadCharacterFile(PlayState.SONG.player2).vocals_file;
 
-		if (ClientPrefs.songLoading)
+		vocals = new FlxSound();
+		opponentVocals = new FlxSound();
+		try
 		{
-			vocals = new FlxSound();
-			opponentVocals = new FlxSound();
-			try
+			if (songData.needsVoices)
 			{
-				if (songData.needsVoices)
-				{
-					var playerVocals = Paths.voices(songData.song, diff, (boyfriendVocals == null || boyfriendVocals.length < 1) ? 'Player' : boyfriendVocals);
-					vocals.loadEmbedded(playerVocals != null ? playerVocals : Paths.voices(songData.song, diff));
-					
-					var oppVocals = Paths.voices(songData.song, diff, (dadVocals == null || dadVocals.length < 1) ? 'Opponent' : dadVocals);
-					if(oppVocals != null) opponentVocals.loadEmbedded(oppVocals);
-				}
+				var playerVocals = Paths.voices(songData.song, diff, (boyfriendVocals == null || boyfriendVocals.length < 1) ? 'Player' : boyfriendVocals);
+				vocals.loadEmbedded(playerVocals != null ? playerVocals : Paths.voices(songData.song, diff));
+				
+				var oppVocals = Paths.voices(songData.song, diff, (dadVocals == null || dadVocals.length < 1) ? 'Opponent' : dadVocals);
+				if(oppVocals != null) opponentVocals.loadEmbedded(oppVocals);
 			}
-			catch(e:Dynamic) {}
-
-			vocals.volume = 0;
-			opponentVocals.volume = 0;
-
-			FlxG.sound.list.add(vocals);
-			FlxG.sound.list.add(opponentVocals);
-			inst = new FlxSound().loadEmbedded(Paths.inst(songData.song, diff));
-			FlxG.sound.list.add(inst);
-			FlxG.sound.music.volume = 0;
 		}
+		catch(e:Dynamic) {}
+
+		vocals.volume = 0;
+		opponentVocals.volume = 0;
+
+		FlxG.sound.list.add(vocals);
+		FlxG.sound.list.add(opponentVocals);
+		inst = new FlxSound().loadEmbedded(Paths.inst(songData.song, diff));
+		FlxG.sound.list.add(inst);
+		FlxG.sound.music.volume = 0;
 
 		var currentBPMLol:Float = Conductor.bpm;
 		for (section in songData.notes) {

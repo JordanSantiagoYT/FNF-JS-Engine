@@ -64,13 +64,6 @@ class OptimizationSubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 		
-		var option:Option = new Option('Load Songs',
-			"If unchecked, PlayState songs won't be loaded.\n(Breaks a few of the Visuals & UI things, so be careful!)",
-			'songLoading',
-			'bool',
-			true);
-		addOption(option);
-		
 		var option:Option = new Option('Disable onSpawnNote Lua Calls',
 			"If checked, the game will not call onSpawnNote when a note is spawned.\nIf you have a script that uses that, maybe leave it on.",
 			'noSpawnFunc',

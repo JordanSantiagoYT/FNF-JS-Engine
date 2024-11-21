@@ -2552,28 +2552,25 @@ class PlayState extends MusicBeatState
 	{
 		if(time < 0) time = 0;
 
-		if (ClientPrefs.songLoading)
+		FlxG.sound.music.pause();
+		pauseVocals();
+
+		FlxG.sound.music.time = time;
+		FlxG.sound.music.play();
+		FlxG.sound.music.pitch = playbackRate;
+		if (ffmpegMode) FlxG.sound.music.volume = 0;
+
+		if (Conductor.songPosition <= vocals.length)
 		{
-			FlxG.sound.music.pause();
-			pauseVocals();
-
-			FlxG.sound.music.time = time;
-			FlxG.sound.music.play();
-			FlxG.sound.music.pitch = playbackRate;
-			if (ffmpegMode) FlxG.sound.music.volume = 0;
-
-			if (Conductor.songPosition <= vocals.length)
-			{
-				setVocalsTime(time);
-				#if FLX_PITCH
-				vocals.pitch = playbackRate;
-				opponentVocals.pitch = playbackRate;
-				#end
-			}
-			vocals.play();
-			opponentVocals.play();
-			if (ffmpegMode) vocals.volume = opponentVocals.volume = 0;
+			setVocalsTime(time);
+			#if FLX_PITCH
+			vocals.pitch = playbackRate;
+			opponentVocals.pitch = playbackRate;
+			#end
 		}
+		vocals.play();
+		opponentVocals.play();
+		if (ffmpegMode) vocals.volume = opponentVocals.volume = 0;
 		Conductor.songPosition = time;
 		songTime = time;
 		clearNotesBefore(time);
@@ -2594,25 +2591,22 @@ class PlayState extends MusicBeatState
 	{
 		startingSong = false;
 
-		if (ClientPrefs.songLoading)
-		{
-			var diff:String = (SONG.specialAudioName.length > 1 ? SONG.specialAudioName : CoolUtil.difficultyString()).toLowerCase();
-			@:privateAccess
-			if (!ffmpegMode) {
-				FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, diff), 1, false);
-				FlxG.sound.music.onComplete = finishSong.bind();
-			} else {
-				FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, diff), 0, false);
-				vocals.volume = 0;
-				opponentVocals.play();
-			}
-			if (!ffmpegMode && (!trollingMode || SONG.song.toLowerCase() != 'anti-cheat-song'))
-				FlxG.sound.music.onComplete = finishSong.bind();
-				FlxG.sound.music.pitch = playbackRate;
-			vocals.play();
+		var diff:String = (SONG.specialAudioName.length > 1 ? SONG.specialAudioName : CoolUtil.difficultyString()).toLowerCase();
+		@:privateAccess
+		if (!ffmpegMode) {
+			FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, diff), 1, false);
+			FlxG.sound.music.onComplete = finishSong.bind();
+		} else {
+			FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, diff), 0, false);
+			vocals.volume = 0;
 			opponentVocals.play();
-			vocals.pitch = opponentVocals.pitch = playbackRate;
 		}
+		if (!ffmpegMode && (!trollingMode || SONG.song.toLowerCase() != 'anti-cheat-song'))
+			FlxG.sound.music.onComplete = finishSong.bind();
+			FlxG.sound.music.pitch = playbackRate;
+		vocals.play();
+		opponentVocals.play();
+		vocals.pitch = opponentVocals.pitch = playbackRate;
 
 		if(startOnTime > 0)
 		{
@@ -2622,11 +2616,8 @@ class PlayState extends MusicBeatState
 
 		if(paused) {
 			//trace('Oopsie doopsie! Paused sound');
-			if (ClientPrefs.songLoading)
-			{
-				FlxG.sound.music.pause();
-				pauseVocals();
-			}
+			FlxG.sound.music.pause();
+			pauseVocals();
 		}
 		curTime = Conductor.songPosition - ClientPrefs.noteOffset;
 		songPercent = (curTime / songLength);
@@ -2634,8 +2625,8 @@ class PlayState extends MusicBeatState
 		stagesFunc(function(stage:BaseStage) stage.startSong());
 
 		// Song duration in a float, useful for the time left feature
-		if (ClientPrefs.lengthIntro && ClientPrefs.songLoading) FlxTween.tween(this, {songLength: FlxG.sound.music.length}, 1, {ease: FlxEase.expoOut});
-		if (!ClientPrefs.lengthIntro && ClientPrefs.songLoading) songLength = FlxG.sound.music.length; //so that the timer won't just appear as 0
+		if (ClientPrefs.lengthIntro) FlxTween.tween(this, {songLength: FlxG.sound.music.length}, 1, {ease: FlxEase.expoOut});
+		if (!ClientPrefs.lengthIntro) songLength = FlxG.sound.music.length; //so that the timer won't just appear as 0
 		if (ClientPrefs.timeBarType != 'Disabled') {
 		timeBar.scale.x = 0.01;
 		timeBarBG.scale.x = 0.01;
@@ -2692,8 +2683,8 @@ class PlayState extends MusicBeatState
 			if (ting2 != 0)
 				songSpeed = ogSongSpeed / playbackRate;
 
-			if (ClientPrefs.songLoading) setVocalsTime(Conductor.songPosition);
-			if (ClientPrefs.songLoading && !ffmpegMode) resyncVocals();
+			setVocalsTime(Conductor.songPosition);
+			if (!ffmpegMode) resyncVocals();
 		}});
 	}
 
@@ -2729,28 +2720,25 @@ class PlayState extends MusicBeatState
 		if (SONG.windowName != null && SONG.windowName != '')
 			MusicBeatState.windowNamePrefix = SONG.windowName;
 
-		if (ClientPrefs.songLoading)
+		vocals = new FlxSound();
+		opponentVocals = new FlxSound();
+		try
 		{
-			vocals = new FlxSound();
-			opponentVocals = new FlxSound();
-			try
+			if (SONG.needsVoices)
 			{
-				if (SONG.needsVoices)
-				{
-					var playerVocals = Paths.voices(curSong, diff, (boyfriend.vocalsFile == null || boyfriend.vocalsFile.length < 1) ? 'Player' : boyfriend.vocalsFile);
-					vocals.loadEmbedded(playerVocals != null ? playerVocals : Paths.voices(curSong, diff));
-					
-					var oppVocals = Paths.voices(curSong, diff, (dad.vocalsFile == null || dad.vocalsFile.length < 1) ? 'Opponent' : dad.vocalsFile);
-					if(oppVocals != null) opponentVocals.loadEmbedded(oppVocals);
-				}
+				var playerVocals = Paths.voices(curSong, diff, (boyfriend.vocalsFile == null || boyfriend.vocalsFile.length < 1) ? 'Player' : boyfriend.vocalsFile);
+				vocals.loadEmbedded(playerVocals != null ? playerVocals : Paths.voices(curSong, diff));
+				
+				var oppVocals = Paths.voices(curSong, diff, (dad.vocalsFile == null || dad.vocalsFile.length < 1) ? 'Opponent' : dad.vocalsFile);
+				if(oppVocals != null) opponentVocals.loadEmbedded(oppVocals);
 			}
-			catch(e) {}
-
-			vocals.pitch = opponentVocals.pitch = playbackRate;
-			FlxG.sound.list.add(vocals);
-			FlxG.sound.list.add(opponentVocals);
-			FlxG.sound.list.add(new FlxSound().loadEmbedded(Paths.inst(PlayState.SONG.song, diff)));
 		}
+		catch(e) {}
+
+		vocals.pitch = opponentVocals.pitch = playbackRate;
+		FlxG.sound.list.add(vocals);
+		FlxG.sound.list.add(opponentVocals);
+		FlxG.sound.list.add(new FlxSound().loadEmbedded(Paths.inst(PlayState.SONG.song, diff)));
 
 		final noteData:Array<SwagSection> = SONG.notes;
 
@@ -3125,7 +3113,7 @@ class PlayState extends MusicBeatState
 			if (!isStoryMode && !skipArrowStartTween)
 			{
 				babyArrow.alpha = 0;
-				FlxTween.tween(babyArrow, {alpha: targetAlpha}, 1/(SONG.bpm/240) / playbackRate, {ease: FlxEase.circOut, startDelay: 0.5 + (0.2 * i) / (SONG.bpm/240) / playbackRate});
+				FlxTween.tween(babyArrow, {alpha: targetAlpha}, 1/(Conductor.bpm/240) / playbackRate, {ease: FlxEase.circOut, startDelay: 0.5 + (0.2 * i) / (Conductor.bpm/240) / playbackRate});
 			}
 			else
 			{
@@ -3178,10 +3166,8 @@ class PlayState extends MusicBeatState
 		{
 			if (FlxG.sound.music != null)
 			{
-				if (ClientPrefs.songLoading) {
-					FlxG.sound.music.pause();
-					pauseVocals();
-				}
+				FlxG.sound.music.pause();
+				pauseVocals();
 			}
 			FlxTimer.globalManager.forEach(function(tmr:FlxTimer) if(!tmr.finished) tmr.active = false);
 			FlxTween.globalManager.forEach(function(twn:FlxTween) if(!twn.finished) twn.active = false);
@@ -3973,7 +3959,7 @@ class PlayState extends MusicBeatState
 		if(!endingSong && !startingSong) {
 			if (FlxG.keys.justPressed.ONE) {
 				KillNotes();
-				if (ClientPrefs.songLoading) FlxG.sound.music.onComplete();
+				FlxG.sound.music.onComplete();
 			}
 			if(FlxG.keys.justPressed.TWO) { //Go 10 seconds into the future :O
 				setSongTime(Conductor.songPosition + 10000);
@@ -4077,7 +4063,7 @@ class PlayState extends MusicBeatState
 		persistentDraw = true;
 		paused = true;
 
-		if(FlxG.sound.music != null && ClientPrefs.songLoading) {
+		if(FlxG.sound.music != null) {
 			FlxG.sound.music.pause();
 			pauseVocals();
 		}
@@ -4155,12 +4141,9 @@ class PlayState extends MusicBeatState
 
 				paused = true;
 
-				if (ClientPrefs.songLoading) 
-				{
-					vocals.stop();
-					opponentVocals.stop();
-					FlxG.sound.music.stop();
-				}
+				vocals.stop();
+				opponentVocals.stop();
+				FlxG.sound.music.stop();
 
 				persistentUpdate = false;
 				persistentDraw = false;
@@ -4362,9 +4345,9 @@ class PlayState extends MusicBeatState
 				fakelength *= (Math.isNaN(fakelength) ? 1 : 1000); //don't multiply if value1 is null, but do if value1 is not null
 				var doTween:Bool = value2 == "true" ? true : false;
 				if (Math.isNaN(fakelength))
-					if (ClientPrefs.songLoading) fakelength = FlxG.sound.music.length;
+					fakelength = FlxG.sound.music.length;
 				if (doTween = true) FlxTween.tween(this, {songLength: fakelength}, 1, {ease: FlxEase.expoOut});
-				if (doTween = true && ClientPrefs.songLoading && (Math.isNaN(fakelength))) FlxTween.tween(this, {songLength: FlxG.sound.music.length}, 1, {ease: FlxEase.expoOut});
+				if (doTween = true && (Math.isNaN(fakelength))) FlxTween.tween(this, {songLength: FlxG.sound.music.length}, 1, {ease: FlxEase.expoOut});
 				songLength = fakelength;
 
 			case 'Add Camera Zoom':
@@ -4765,10 +4748,8 @@ class PlayState extends MusicBeatState
 	{
 		if (!trollingMode && SONG.song.toLowerCase() != 'anti-cheat-song') {
 			updateTime = false;
-			if (ClientPrefs.songLoading) {
-				FlxG.sound.music.volume = 0;
-				vocals.volume = opponentVocals.volume = 0;
-			}
+			FlxG.sound.music.volume = 0;
+			vocals.volume = opponentVocals.volume = 0;
 			FlxG.mouse.unload(); // just in case you changed it beforehand
 			pauseVocals();
 			if(!ffmpegMode){
@@ -4961,8 +4942,8 @@ class PlayState extends MusicBeatState
 	{
 		if (process != null) stopRender();
 		PlayState.instance.paused = true; // For lua
-		if (ClientPrefs.songLoading) FlxG.sound.music.volume = 0;
-		if (ClientPrefs.songLoading) vocals.volume = opponentVocals.volume = 0;
+		FlxG.sound.music.volume = 0;
+		vocals.volume = opponentVocals.volume = 0;
 
 		if(noTrans)
 		{
@@ -5255,7 +5236,7 @@ class PlayState extends MusicBeatState
 			{
 				//more accurate hit time for the ratings?
 				var lastTime:Float = Conductor.songPosition;
-				if (ClientPrefs.songLoading) Conductor.songPosition = FlxG.sound.music.time;
+				Conductor.songPosition = FlxG.sound.music.time;
 
 				var canMiss:Bool = !ClientPrefs.ghostTapping;
 
@@ -5472,7 +5453,7 @@ class PlayState extends MusicBeatState
 			}
 
 			songMisses += 1 * polyphony;
-			if (SONG.needsVoices && ClientPrefs.songLoading && !ffmpegMode)
+			if (SONG.needsVoices && !ffmpegMode)
 				if (opponentChart && opponentVocals != null && opponentVocals.volume != 0) opponentVocals.volume = 0;
 				else if (!opponentChart && vocals.volume != 0 || vocals.volume != 0) vocals.volume = 0;
 			if(!practiceMode) songScore -= 10 * Std.int(polyphony);
@@ -5799,7 +5780,7 @@ class PlayState extends MusicBeatState
 			}
 			note.wasGoodHit = true;
 			if (ClientPrefs.noteSplashes && note.isSustainNote && splashesPerFrame[3] <= 4) spawnHoldSplashOnNote(note);
-			if (SONG.needsVoices && ClientPrefs.songLoading && !ffmpegMode)
+			if (SONG.needsVoices && !ffmpegMode)
 				if (opponentChart && opponentVocals != null && opponentVocals.volume != 1) opponentVocals.volume = 1;
 				else if (!opponentChart && vocals.volume != 1 || vocals.volume != 1) vocals.volume = 1;
 
@@ -5863,7 +5844,7 @@ class PlayState extends MusicBeatState
 			}
 			if (!ClientPrefs.noSkipFuncs) callOnLuas((oppTrigger ? 'opponentNoteSkip' : 'goodNoteSkip'), [null, Math.abs(noteAlt.noteData), noteAlt.noteType, noteAlt.isSustainNote]);
 			health += noteAlt.hitHealth * healthGain * polyphony;
-			if (ClientPrefs.songLoading && !ffmpegMode) (opponentChart ? opponentVocals : vocals).volume = 1;
+			if (!ffmpegMode) (opponentChart ? opponentVocals : vocals).volume = 1;
 		}
 		return;
 	}
@@ -6207,7 +6188,7 @@ class PlayState extends MusicBeatState
 					cameraSpeed = 1;
 			}
 		}
-		if (!ffmpegMode && ClientPrefs.songLoading && playbackRate < 256) //much better resync code, doesn't just resync every step!!
+		if (!ffmpegMode && playbackRate < 256) //much better resync code, doesn't just resync every step!!
 		{
 			var timeSub:Float = Conductor.songPosition - Conductor.offset;
 			var syncTime:Float = 20 * playbackRate;
