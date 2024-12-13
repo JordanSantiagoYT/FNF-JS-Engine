@@ -96,8 +96,6 @@ class StartupState extends MusicBeatState
 						playVideo('oops');
 					case 1:
 						playVideo('haxe');
-					case 2:
-						playVideo('fuck');
 				}
 			}
 		});

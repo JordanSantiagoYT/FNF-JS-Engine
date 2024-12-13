@@ -4,6 +4,7 @@ import flixel.FlxG;
 import flixel.FlxState;
 import model.objects.flixel.Flixel;
 import flixel.text.FlxText;
+import flx3D.Flx3DUtil;
 import flixel.util.FlxDestroyUtil;
 
 class BenchmarkState extends FlxState
