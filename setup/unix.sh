@@ -12,7 +12,7 @@ haxelib install flixel-tools
 haxelib install flixel-ui	
 haxelib install hscript
 haxelib install hxcpp-debug-server
-haxelib install away3d
+haxelib git away3d https://github.com/moxie-coder/away3d
 haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp/
 haxelib git hxCodec https://github.com/polybiusproxy/hxCodec
 haxelib git flxanimate https://github.com/Dot-Stuff/flxanimate 768740a56b26aa0c072720e0d1236b94afe68e3e
