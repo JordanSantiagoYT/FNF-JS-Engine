@@ -33,7 +33,7 @@ jobs:
 
       - uses: krdlab/setup-haxe@master
         with:
-          haxe-version: 4.3.4
+          haxe-version: 4.3.6
       - name: Restore Previous Cache
         id: cache-build-linux-restore
         uses: actions/cache/restore@main
@@ -112,7 +112,7 @@ jobs:
 
       - uses: krdlab/setup-haxe@master
         with:
-          haxe-version: 4.3.4
+          haxe-version: 4.3.6
       - name: Restore Previous Cache
         id: cache-build-windows-restore
         uses: actions/cache/restore@main
@@ -188,7 +188,7 @@ jobs:
 
       - uses: krdlab/setup-haxe@master
         with:
-          haxe-version: 4.3.4
+          haxe-version: 4.3.6
       - name: Restore Previous Cache
         id: cache-build-macos-restore
         uses: actions/cache/restore@main

@@ -54,6 +54,13 @@ class SuperSecretDebugMenu extends BaseOptionsMenu
 			false);
 		addOption(option);
 
+		var option:Option = new Option('No Wheatley Space RNG',
+			"If checked, makes the RNG Wheatley Space easter egg play every time.",
+			'wheatleySpace',
+			'bool',
+			false);
+		addOption(option);
+
 		var option:Option = new Option('Crash the Engine',
 			"Select this to crash the engine.",
 			'crashEngine',

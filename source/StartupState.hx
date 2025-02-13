@@ -34,6 +34,9 @@ class StartupState extends MusicBeatState
 			function onVideoEnd()
 			{
 				FlxG.switchState(TitleState.new);
+				vidSprite?.destroy();
+				if (vidSprite != null)
+					vidSprite = null;
 			}
 			vidSprite.finishCallback = (callback != null) ? callback.bind() : onVideoEnd;
 			vidSprite.onSkip = (callback != null) ? callback.bind() : onVideoEnd;
@@ -110,53 +113,59 @@ class StartupState extends MusicBeatState
 		#if debug // for testing purposes
 			startVideo('broCopiedDenpa', 'splash');
 		#else
+		final debugShit = true;
 		final theIntro:Int = FlxG.random.int(0, maxIntros);
-		switch (theIntro) {
-			case 0:
-				FlxG.sound.play(Paths.sound('startup', 'splash'));
-				logo.scale.set(0.1,0.1);
-				logo.updateHitbox();
-				logo.screenCenter();
-				FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 0.95, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone()});
-			case 1:
-				FlxG.sound.play(Paths.sound('startup', 'splash'));
-				FlxG.sound.play(Paths.sound('FIREINTHEHOLE', 'splash'));
-				logo.loadGraphic(Paths.image('lobotomy', 'splash'));
-				logo.scale.set(0.1,0.1);
-				logo.updateHitbox();
-				logo.screenCenter();
-				FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 1.35, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone()});
-			case 2:
-				FlxG.sound.play(Paths.sound('screwedEngine', 'splash'));
-				logo.loadGraphic(Paths.image('ScrewedLogo', 'splash'));
-				logo.scale.set(0.1,0.1);
-				logo.updateHitbox();
-				logo.screenCenter();
-				FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 1.35, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone(0.6)});
-			case 3:
-				// secret muaahahhahhahaahha
-				FlxG.sound.play(Paths.sound('tada', 'splash'));
-				logo.loadGraphic(Paths.image('JavaScriptLogo', 'splash'));
-				logo.scale.set(0.1,0.1);
-				logo.updateHitbox();
-				logo.screenCenter();
-				FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 1.35, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone(0.6)});
-			case 4:
-				startVideo('bambiStartup', 'splash');
-			case 5:
-				startVideo('broCopiedDenpa', 'splash');
-			case 6:
-				if (canChristmas)
-				{
-					FlxG.sound.play(Paths.sound('JollySanta', 'splash'));
-					logo.loadGraphic(Paths.image('JollySantaLogo', 'splash'));
+		if (debugShit)
+			startVideo('bambiStartup', 'splash'); // shit was crashing & I don't feel like making debug builds :P
+		else
+		{
+			switch (theIntro) {
+				case 0:
+					FlxG.sound.play(Paths.sound('startup', 'splash'));
 					logo.scale.set(0.1,0.1);
 					logo.updateHitbox();
 					logo.screenCenter();
-					FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 2, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone(1.5)});
-				} 
-				else 
-					doIntro();
+					FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 0.95, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone()});
+				case 1:
+					FlxG.sound.play(Paths.sound('startup', 'splash'));
+					FlxG.sound.play(Paths.sound('FIREINTHEHOLE', 'splash'));
+					logo.loadGraphic(Paths.image('lobotomy', 'splash'));
+					logo.scale.set(0.1,0.1);
+					logo.updateHitbox();
+					logo.screenCenter();
+					FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 1.35, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone()});
+				case 2:
+					FlxG.sound.play(Paths.sound('screwedEngine', 'splash'));
+					logo.loadGraphic(Paths.image('ScrewedLogo', 'splash'));
+					logo.scale.set(0.1,0.1);
+					logo.updateHitbox();
+					logo.screenCenter();
+					FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 1.35, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone(0.6)});
+				case 3:
+					// secret muaahahhahhahaahha
+					FlxG.sound.play(Paths.sound('tada', 'splash'));
+					logo.loadGraphic(Paths.image('JavaScriptLogo', 'splash'));
+					logo.scale.set(0.1,0.1);
+					logo.updateHitbox();
+					logo.screenCenter();
+					FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 1.35, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone(0.6)});
+				case 4:
+					startVideo('bambiStartup', 'splash');
+				case 5:
+					startVideo('broCopiedDenpa', 'splash');
+				case 6:
+					if (canChristmas)
+					{
+						FlxG.sound.play(Paths.sound('JollySanta', 'splash'));
+						logo.loadGraphic(Paths.image('JollySantaLogo', 'splash'));
+						logo.scale.set(0.1,0.1);
+						logo.updateHitbox();
+						logo.screenCenter();
+						FlxTween.tween(logo, {alpha: 1, "scale.x": 1, "scale.y": 1}, 2, {ease: FlxEase.expoOut, onComplete: _ -> onIntroDone(1.5)});
+					} 
+					else 
+						doIntro();
+			}
 		}
 		#end
 	}

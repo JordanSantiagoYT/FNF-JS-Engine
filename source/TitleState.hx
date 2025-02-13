@@ -31,6 +31,10 @@ import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import openfl.Assets;
 
+#if VIDEOS_ALLOWED
+import VideoSprite;
+#end
+
 using StringTools;
 typedef TitleData =
 {
@@ -54,6 +58,8 @@ class TitleState extends MusicBeatState
 	public static var initialized:Bool = false;
 
 	public static var sarcasmEgg:String;
+	public var inCutscene:Bool = false;
+	var canPause:Bool = true;
 
 	final sarcasmKeys:Array<String> = [
 		'ANNOUNCER'
@@ -184,11 +190,60 @@ class TitleState extends MusicBeatState
 	var titleText:FlxSprite;
 	var swagShader:ColorSwap = null;
 
+
+	/***************/
+    /*    VIDEO    */
+	/***************/
+	public var vidSprite:VideoSprite = null;
+	private function startVideo(name:String, ?library:String = null, ?callback:Void->Void = null, canSkip:Bool = true, loop:Bool = false, playOnLoad:Bool = true)
+	{
+		#if VIDEOS_ALLOWED
+		var foundFile:Bool = false;
+		var fileName:String = Paths.video(name, library);
+
+		#if sys
+		if (FileSystem.exists(fileName))
+		#else
+		if (OpenFlAssets.exists(fileName))
+		#end
+		foundFile = true;
+
+		if (foundFile)
+		{
+			vidSprite = new VideoSprite(fileName, false, canSkip, loop);
+
+			// Finish callback
+			function onVideoEnd()
+			{
+				Sys.exit(0);
+			}
+			vidSprite.finishCallback = (callback != null) ? callback.bind() : onVideoEnd;
+			vidSprite.onSkip = (callback != null) ? callback.bind() : onVideoEnd;
+			insert(0, vidSprite);
+
+			if (playOnLoad)
+				vidSprite.videoSprite.play();
+			return vidSprite;
+		}
+		else {
+			FlxG.log.error("Video not found: " + fileName);
+			new FlxTimer().start(0.1, function(tmr:FlxTimer) {
+				throw 'Is anyone there?';
+			});
+		}
+		#else
+		FlxG.log.warn('Platform not supported!');
+		new FlxTimer().start(0.1, function(tmr:FlxTimer) {
+			throw 'Is anyone there?';
+		});
+		#end
+		return null;
+	}
 	function startIntro()
 	{
 		if (!initialized)
 		{
-			if(FlxG.sound.music == null) {
+			if(FlxG.sound.music == null && ClientPrefs.daMenuMusic != 'None') {
 				FlxG.sound.playMusic(Paths.music('freakyMenu-' + ClientPrefs.daMenuMusic), 0);
 			}
 		}
@@ -365,6 +420,8 @@ class TitleState extends MusicBeatState
 			throw 'Crash test';
 		*/
 
+
+		
 		sarcasmKeysBuffer += KeyboardFunctions.keypressToString();
 		if (sarcasmKeysBuffer.length >= 32)
 			sarcasmKeysBuffer = sarcasmKeysBuffer.substring(1);
@@ -380,6 +437,20 @@ class TitleState extends MusicBeatState
 						FlxG.sound.play(Paths.sound('sarcasmComplete'));
 						trace('Were you talking about Portal 2?');
 						sarcasmKeysBuffer = '';
+
+		                var randomVar:Int = 0;
+						if (!ClientPrefs.wheatleySpace) randomVar = Std.random(15);
+			            if (ClientPrefs.wheatleySpace) randomVar = 8;
+		                trace(randomVar);
+	                	if (randomVar == 8)
+		                {
+			                trace('Hello? Anyone in there? Hello?...');
+							#if VIDEOS_ALLOWED
+							startVideo('alone');
+							#else 
+							throw 'Is anyone there?';
+							#end
+		                }
 				}
 			}
 		}
@@ -496,9 +567,10 @@ class TitleState extends MusicBeatState
 			switch (sickBeats)
 			{
 				case 1:
-					FlxG.sound.playMusic(Paths.music('freakyMenu-' + ClientPrefs.daMenuMusic), 0);
+					if (ClientPrefs.daMenuMusic != 'None')
+						FlxG.sound.playMusic(Paths.music('freakyMenu-' + ClientPrefs.daMenuMusic), 0);
 
-					FlxG.sound.music.fadeIn(4, 0, 0.7);
+					FlxG.sound.music?.fadeIn(4, 0, 0.7);
 				case 2:
 					#if PSYCH_WATERMARKS
 					createCoolText(['JS Engine by'], 15);

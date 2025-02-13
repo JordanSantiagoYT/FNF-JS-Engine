@@ -639,8 +639,17 @@ class VisualsUISubState extends BaseOptionsMenu
 	var menuMusicChanged:Bool = false;
 	function onChangeMenuMusic()
 	{
-			if (ClientPrefs.daMenuMusic != 'Default') FlxG.sound.playMusic(Paths.music('freakyMenu-' + ClientPrefs.daMenuMusic));
-			if (ClientPrefs.daMenuMusic == 'Default') FlxG.sound.playMusic(Paths.music('freakyMenu'));
+		var museTween:FlxTween = null;
+
+		if (ClientPrefs.daMenuMusic != 'Default') 
+			FlxG.sound.playMusic(Paths.music('freakyMenu-' + ClientPrefs.daMenuMusic));
+		else if (ClientPrefs.daMenuMusic != 'None')
+			FlxG.sound.playMusic(Paths.music('freakyMenu'));
+		else{
+			// FlxG.music.stop();
+			museTween = FlxTween.tween(FlxG.sound.music, {volume: 0}, 2, {onComplete: function(tween) tween.destroy()});
+		}
+		
 		menuMusicChanged = true;
 	}
 

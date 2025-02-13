@@ -53,7 +53,7 @@ class MiscSettingsSubState extends BaseOptionsMenu
 		addOption(option);
 
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
-		
+
 		super();
 	}
 }
