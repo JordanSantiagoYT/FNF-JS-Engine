@@ -61,6 +61,7 @@ body:
       options:
         - Lua
         - Source
+        - Not an modding
     validations:
       required: true
 
