@@ -161,13 +161,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
-		var option:Option = new Option('Showcase Mode',
-			'If checked, hides all the UI elements except for the time bar and notes\nand enables Botplay.',
-			'showcaseMode',
-			'bool',
-			false);
-		addOption(option);
-
 		var option:Option = new Option('Showcase Style: ',
 			"In what format would you like your showcase?",
 			'showcaseST',
