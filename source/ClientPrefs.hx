@@ -53,6 +53,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var noteColorStyle:String = 'Normal';
 	public static var enableColorShader:Bool = true;
 	public static var iconBopWhen:String = 'Every Beat';
+	public static var strumsAreFuckingOffset:Bool = false;
 	public static var cameraPanning:Bool = true;
 	public static var panIntensity:Float = 1;
 	public static var rateNameStuff:String = 'Quotes';
