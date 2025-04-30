@@ -2223,6 +2223,13 @@ class PlayState extends MusicBeatState
 				setOnLuas('defaultPlayerStrumY' + i, playerStrums.members[i].y);
 			}
 
+			if (ClientPrefs.strumsAreFuckingOffset) {
+				for (i in 0...opponentStrums.length) {
+					playerStrums.members[i].x -= 55;
+					opponentStrums.members[i].x -= 55;
+				}
+			}
+
 			startedCountdown = true;
 			Conductor.songPosition = -Conductor.crochet * 5;
 			setOnLuas('startedCountdown', true);
