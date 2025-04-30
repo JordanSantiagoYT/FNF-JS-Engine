@@ -154,6 +154,9 @@ class VisualsUISubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
+		var option:Option = new Option('Strums Offset', 'If checked, offsets the strums like in Kade Engine.', 'strumsAreFuckingOffset', 'bool', false);
+	        addOption(option);
+
 		var option:Option = new Option('Show Rendered Notes',
 			'If checked, the game will show how many notes are currently rendered on screen.',
 			'showRendered',
