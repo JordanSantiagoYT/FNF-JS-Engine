@@ -48,12 +48,13 @@ _(**WARNING:** some are ***not*** tested)_
 ### Lua
 - [ ]  More `.lua` examples.
 - [x]  PC/User-related settings and functions. (4th wall?)
-  - [x]  `getUsername`
-  - [x]  `getUserPath`
-  - [x]  `getTempPath`
-  - [x]  `getCurrentDir`
-  - [ ]  `writeTxt`
-  - [ ]  `notepadOpenTxt`
+  - [x]  `getUsername()`
+  - [x]  `getUserPath()`
+  - [x]  `getTempPath()`
+  - [x]  `getCurrentDir()`
+  - [ ]  `writeTxt(name: str, contents: str)`
+  - [ ]  `notepadOpenTxt(name: str)`
+  - [ ]  `openURL(name: str)` _(Opens an URL in the system browser, universal for all OSes (Linux, Windows, macOS, etc.))_
 
 ### Lime-related
 - [ ] Support exporting/building to...
