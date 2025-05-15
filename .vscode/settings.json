@@ -1,0 +1,24 @@
+{
+  "files.associations": {
+    "*.hxp": "haxe",
+    "*.hscript": "haxe",
+    "*.haxe": "haxe",
+    "*.hxs": "haxe",
+    "*.hxc": "haxe"
+  },
+
+  "search.exclude": {
+    "export/**/*.*": true
+  },
+  "[haxe]": {
+    "editor.formatOnSave": false,
+    "editor.formatOnSaveMode": "modifications",
+    "editor.formatOnPaste": false,
+    "editor.codeActionsOnSave": {
+      "source.sortImports": "explicit"
+    },
+    "editor.defaultFormatter": "nadako.vshaxe",
+    "editor.tabSize": 2
+  },
+  "haxe.enableExtendedIndentation": true
+}
