@@ -10,6 +10,16 @@
   "search.exclude": {
     "export/**/*.*": true
   },
+
+  // Automatically enforce Linux style line endings.
+  "files.eol": "\n",
+
+  "haxe.displayPort": "auto",
+  "haxe.enableCompilationServer": true,
+  "haxe.enableServerView": true,
+  "haxe.displayServer": {
+    "arguments": ["-v"]
+  },
   "[haxe]": {
     "editor.formatOnSave": false,
     "editor.formatOnSaveMode": "modifications",
@@ -20,5 +30,121 @@
     "editor.defaultFormatter": "nadako.vshaxe",
     "editor.tabSize": 2
   },
-  "haxe.enableExtendedIndentation": true
+
+  "[json]": {
+    // Automatically keep JSON files formatted.
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "haxecheckstyle.sourceFolders": ["src", "source"],
+  "haxecheckstyle.externalSourceRoots": [],
+  "haxecheckstyle.configurationFile": "checkstyle.json",
+  "haxecheckstyle.codeSimilarityBufferSize": 100,
+
+  "[jsonc]": {
+    // Automatically keep JSONC files formatted.
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prettier.tabWidth": 2,
+
+  "[lua]": {
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true
+    },
+    "editor.tabCompletion": "on",
+    "editor.quickSuggestionsDelay": 1,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.tabWidth": 2
+  },
+
+  // XML formatting style configuration
+  "xml.format.enabled": true,
+  "xml.format.legacy": false,
+  "xml.format.emptyElements": "collapse",
+  "xml.preferences.quoteStyle": "double",
+  "xml.format.enforceQuoteStyle": "preferred",
+  "xml.format.preserveAttributeLineBreaks": false,
+  "xml.format.preservedNewlines": 0,
+  "xml.format.splitAttributes": false,
+  "xml.format.joinCDATALines": true,
+  "xml.format.preserveEmptyContent": false,
+  "xml.format.joinCommentLines": false,
+  "xml.format.joinContentLines": false,
+  "xml.format.spaceBeforeEmptyCloseTag": true,
+  "xml.format.xsiSchemaLocationSplit": "onPair",
+  "xml.format.splitAttributesIndentSize": 2,
+  "xml.format.closingBracketNewLine": false,
+  "xml.format.preserveSpace": [
+    "xsl:text",
+    "xsl:comment",
+    "xsl:processing-instruction",
+    "literallayout",
+    "programlisting",
+    "screen",
+    "synopsis",
+    "pre",
+    "xd:pre"
+  ],
+  "xml.format.maxLineWidth": 0,
+  "xml.format.grammarAwareFormatting": true,
+
+  // Generic file formatting style configuration
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": false,
+  "files.trimTrailingWhitespace": true,
+
+  // Automatically detect indentation.
+  "editor.detectIndentation": true,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+
+  "lime.targetConfigurations": [
+    {
+      "label": "Windows / Debug (Official build)",
+      "target": "windows",
+      "args": ["-debug", "-DofficialBuild"]
+    }
+  ],
+
+  "lime.buildTypes": [
+    {
+      "label": "Debug",
+      "args": ["-debug"]
+    },
+    {
+      "label": "Debug (Tracy)",
+      "args": ["-debug", "-DFEATURE_DEBUG_TRACY"]
+    },
+    {
+      "label": "Debug (Tracy, official build)",
+      "args": ["-debug", "-DFEATURE_DEBUG_TRACY", "-DofficialBuild"]
+    },
+    {
+      "label": "Release",
+      "args": ["-release"]
+    },
+    {
+      "label": "Release (official build)",
+      "args": ["-release", "-DofficialBuild"]
+    },
+    {
+      "label": "Release (Tracy, official build)",
+      "args": ["-release", "-DofficialBuild", "-DFEATURE_DEBUG_TRACY"]
+    }
+  ],
+  "haxe.enableExtendedIndentation": true,
+  "cmake.configureOnOpen": false,
+  "coverage-gutters.coverageFileNames": [
+    "lcov.info",
+    "cov.xml",
+    "coverage.xml",
+    "jacoco.xml",
+    "coverage.cobertura.xml"
+  ]
 }
