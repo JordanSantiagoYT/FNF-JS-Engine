@@ -118,13 +118,9 @@
       "args": ["-debug"]
     },
     {
-      "label": "Debug (Tracy)",
-      "args": ["-debug", "-DFEATURE_DEBUG_TRACY"]
-    },
-    {
-      "label": "Debug (Tracy, official build)",
-      "args": ["-debug", "-DFEATURE_DEBUG_TRACY", "-DofficialBuild"]
-    },
+      "label": "Debug (official build)",
+      "args": ["-debug", "-DofficialBuild"]
+    }
     {
       "label": "Release",
       "args": ["-release"]
@@ -132,10 +128,6 @@
     {
       "label": "Release (official build)",
       "args": ["-release", "-DofficialBuild"]
-    },
-    {
-      "label": "Release (Tracy, official build)",
-      "args": ["-release", "-DofficialBuild", "-DFEATURE_DEBUG_TRACY"]
     }
   ],
   "haxe.enableExtendedIndentation": true,
