@@ -56,14 +56,14 @@ class OptimizationSubState extends BaseOptionsMenu
 			'bool',
 			true);
 		addOption(option);
-		
+
 		var option:Option = new Option('Show MS Popup',
 			"If checked, hitting a note will also show how late/early you hit it.",
 			'showMS',
 			'bool',
 			false);
 		addOption(option);
-		
+
 		var option:Option = new Option('Disable onSpawnNote Lua Calls',
 			"If checked, the game will not call onSpawnNote when a note is spawned.\nIf you have a script that uses that, maybe leave it on.",
 			'noSpawnFunc',
@@ -92,15 +92,8 @@ class OptimizationSubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
-		var option:Option = new Option('Fast Note Spawning',
-			"If checked, the game will use a faster type of note recycling.\n(HEAVILY WIP, SO USE AT YOUR OWN RISK!)",
-			'fastNoteSpawn',
-			'bool',
-			false);
-		addOption(option);
-
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
-		
+
 		super();
 	}
 }

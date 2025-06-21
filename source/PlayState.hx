@@ -142,8 +142,8 @@ class PlayState extends MusicBeatState
 
 	var tankmanAscend:Bool = false; // funni (2021 nostalgia oh my god)
 
-	public var notes:NoteGroup;
-	public var sustainNotes:NoteGroup;
+	public var notes:FlxTypedGroup<Note>;
+	public var sustainNotes:FlxTypedGroup<Note>;
 	public var killNotes:Array<Note> = [];
 	public var unspawnNotes:Array<PreloadedChartNote> = [];
 	public var unspawnNotesCopy:Array<PreloadedChartNote> = [];
@@ -1132,13 +1132,13 @@ class PlayState extends MusicBeatState
 
 		energyBarBG.cameras = energyBar.cameras = energyTxt.cameras = [camHUD];
 
-		sustainNotes = new NoteGroup();
+		sustainNotes = new FlxTypedGroup<Note>();
 		add(sustainNotes);
 
 		strumLineNotes = new FlxTypedGroup<StrumNote>();
 		add(strumLineNotes);
 
-		notes = new NoteGroup();
+		notes = new FlxTypedGroup<Note>();
 		add(notes);
 		notes.visible = sustainNotes.visible = ClientPrefs.showNotes; //that was easier than expected
 
@@ -5519,16 +5519,8 @@ class PlayState extends MusicBeatState
 			if (ClientPrefs.showNotes || !ClientPrefs.showNotes && !cpuControlled)
 			{
 				while (targetNote.strumTime - Conductor.songPosition < (NOTE_SPAWN_TIME / targetNote.multSpeed)) {
-					if (ClientPrefs.fastNoteSpawn) {
-						spawnedNote = (targetNote.isSustainNote ? sustainNotes : notes).recycle(Note);
-						if (spawnedNote == null) {
-							spawnedNote = new Note();
-							(targetNote.isSustainNote ? sustainNotes : notes).add(spawnedNote);
-						}
-					} else {
-						spawnedNote = new Note();
-						(targetNote.isSustainNote ? sustainNotes : notes).add(spawnedNote);
-					}
+					spawnedNote = new Note();
+					(targetNote.isSustainNote ? sustainNotes : notes).add(spawnedNote);
 					spawnedNote.setupNoteData(targetNote);
 
 					if (!ClientPrefs.noSpawnFunc) callOnLuas('onSpawnNote', [(!spawnedNote.isSustainNote ? notes.members.indexOf(spawnedNote) : sustainNotes.members.indexOf(spawnedNote)), targetNote.noteData, targetNote.noteType, targetNote.isSustainNote]);
@@ -5947,25 +5939,12 @@ class PlayState extends MusicBeatState
 	}
 
 	public function invalidateNote(note:Note):Void {
-		if (ClientPrefs.fastNoteSpawn){
-			note.exists = note.wasGoodHit = note.hitByOpponent = note.tooLate = note.canBeHit = false;
-			(note.isSustainNote ? sustainNotes : notes).pushToPool(note);
-		}
-		else {
-			/*
-			notes.remove(note, true);
-			note.kill();
-			note.destroy();
-			*/
-			if (!killNotes.contains(note))
-				killNotes.push(note);
-		}
+		if (!killNotes.contains(note))
+			killNotes.push(note);
 	}
 
 	public function destroyNotes():Void
 	{
-		if (ClientPrefs.fastNoteSpawn) return;
-
 		final iterator:Iterator<Note> = killNotes.iterator();
 
 		while (iterator.hasNext())

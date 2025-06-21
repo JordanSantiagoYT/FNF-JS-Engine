@@ -57,7 +57,7 @@ typedef NoteSplashData = {
 
 /**
  * The note object used as a data structure to spawn and manage notes during gameplay.
- * 
+ *
  * If you want to make a custom note type, you should search for: "function set_noteType"
 **/
 
@@ -103,7 +103,7 @@ class Note extends FlxSprite
 
 	public static final SUSTAIN_SIZE:Int = 44;
 	public static final swagWidth:Float = 160 * 0.7;
-	
+
 	public static final colArray:Array<String> = ['purple', 'blue', 'green', 'red'];
 	public static var defaultNoteSkin(default, never):String = 'noteskins/NOTE_assets';
 
@@ -157,7 +157,7 @@ class Note extends FlxSprite
 	public var useRGBShader(default, set):Bool = true;
 
 	private function set_useRGBShader(value:Bool):Bool {
-		if (useRGBShader != value) 
+		if (useRGBShader != value)
 		{
 			useRGBShader = value;
 			if (rgbShader != null) rgbShader.enabled = value;
@@ -178,7 +178,7 @@ class Note extends FlxSprite
 
 			antialiasing = ClientPrefs.globalAntialiasing;
 
-			if (!changeSize) 
+			if (!changeSize)
 			{
 				changeSize = true;
 				setGraphicSize(Std.int(width * 0.7));
@@ -386,7 +386,7 @@ class Note extends FlxSprite
 
 		if(animName != null)
 			animation.play(animName, true);
-			
+
 		if(inEditor) {
 			setGraphicSize(editors.ChartingState.GRID_SIZE, editors.ChartingState.GRID_SIZE);
 			updateHitbox();
@@ -404,7 +404,7 @@ class Note extends FlxSprite
 	override function update(elapsed:Float)
 	{
 		if (Type.getClassName(Type.getClass(FlxG.state)) == 'PlayState' && PlayState.instance.cpuControlled) return;
-		
+
 		super.update(elapsed);
 
 		if (mustPress)
@@ -436,19 +436,19 @@ class Note extends FlxSprite
 
 	inline public function followStrum(strum:StrumNote, songSpeed:Float = 1):Void
 	{
-		if (isSustainNote) 
+		if (isSustainNote)
 		{
 			flipY = ClientPrefs.downScroll;
 			scale.set(0.7, animation != null && animation.curAnim != null && animation.curAnim.name.endsWith('end') ? 1 : Conductor.stepCrochet * 0.0105 * (songSpeed * multSpeed) * sustainScale);
 
-			if (PlayState.isPixelStage) 
+			if (PlayState.isPixelStage)
 			{
 				scale.y *= PlayState.daPixelZoom * 1.20;
 				scale.x *= PlayState.daPixelZoom;
 			}
 			updateHitbox();
 		}
-			
+
 		distance = (0.45 * (Conductor.songPosition - strumTime) * songSpeed * multSpeed);
 		if (!ClientPrefs.downScroll) distance *= -1;
 
@@ -511,7 +511,7 @@ class Note extends FlxSprite
 			clipRect = swagRect;
 		}
 	}
-	
+
 	@:noCompletion
 	override function set_clipRect(rect:FlxRect):FlxRect
 	{
@@ -544,7 +544,7 @@ class Note extends FlxSprite
 			rgbShader.r = superCoolColor;
 			rgbShader.g = FlxColor.WHITE;
 			rgbShader.b = superCoolColor.getDarkened(0.7);
-			
+
 			case 'Quant-Based':
 			CoolUtil.checkNoteQuant(this, (!isSustainNote ? strumTime : parentST), rgbShader);
 
@@ -564,7 +564,7 @@ class Note extends FlxSprite
 			else defaultRGB();
 
 			default:
-			
+
 		}
 		if (noteType == 'Hurt Note' && rgbShader != null)
 		{
@@ -587,18 +587,19 @@ class Note extends FlxSprite
 	}
 
 	// this is used for note recycling
+	// or was before I removed the option, now it's just kept for reasons
 	var firstOffX = false;
 	var shouldCenterOffsets:Bool = true;
-	public function setupNoteData(chartNoteData:PreloadedChartNote):Void 
+	public function setupNoteData(chartNoteData:PreloadedChartNote):Void
 	{
 		wasGoodHit = hitByOpponent = tooLate = canBeHit = false; // Don't make an update call of this for the note group
 
-		if (chartNoteData.noteskin.length > 0 && chartNoteData.noteskin != '' && chartNoteData.noteskin != texture) 
+		if (chartNoteData.noteskin.length > 0 && chartNoteData.noteskin != '' && chartNoteData.noteskin != texture)
 		{
 			texture = 'noteskins/' + chartNoteData.noteskin;
 			useRGBShader = false;
 		}
-		if (chartNoteData.texture.length > 0 && chartNoteData.texture != texture) 
+		if (chartNoteData.texture.length > 0 && chartNoteData.texture != texture)
 		{
 			texture = chartNoteData.texture;
 			shouldCenterOffsets = false;
@@ -625,7 +626,7 @@ class Note extends FlxSprite
 			parentST = chartNoteData.parentST;
 			parentSL = chartNoteData.parentSL;
 		}
-		
+
 		hitHealth = chartNoteData.hitHealth;
 		missHealth = chartNoteData.missHealth;
 		hitCausesMiss = chartNoteData.hitCausesMiss;
@@ -651,14 +652,14 @@ class Note extends FlxSprite
 		if (PlayState.isPixelStage)
 		{
 			@:privateAccess reloadNote(texture);
-			if (isSustainNote && !firstOffX) 
+			if (isSustainNote && !firstOffX)
 			{
 				firstOffX = true;
 				offsetX += 30;
 			}
 		}
 
-		if (!changeSize && !PlayState.isPixelStage) 
+		if (!changeSize && !PlayState.isPixelStage)
 		{
 			changeSize = true;
 			setGraphicSize(Std.int(width * 0.7));
@@ -674,7 +675,7 @@ class Note extends FlxSprite
 
 			if (!PlayState.isPixelStage)
 				sustainScale = Note.SUSTAIN_SIZE / frameHeight;
-				
+
 			updateHitbox();
 		}
 		else {
@@ -690,7 +691,7 @@ class Note extends FlxSprite
 		angle = 0;
 
 		clipRect = null;
-		if (!mustPress) 
+		if (!mustPress)
 		{
 			visible = ClientPrefs.opponentStrums;
 			alpha = ClientPrefs.middleScroll ? ClientPrefs.oppNoteAlpha : 1;
