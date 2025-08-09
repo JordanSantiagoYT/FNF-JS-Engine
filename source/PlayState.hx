@@ -4,11 +4,10 @@ import Achievements;
 import Character.Boyfriend;
 import Conductor.Rating;
 import DialogueBoxPsych;
-import FunkinLua;
 import Note.EventNote;
 import Note.PreloadedChartNote;
 import Note;
-import Section.SwagSection;
+import Section.SwagSection;	
 import Shaders;
 import Song.SwagSong;
 import StageData;
@@ -20,9 +19,11 @@ import flixel.util.FlxSort;
 import lime.system.System;
 import objects.*;
 import openfl.events.KeyboardEvent;
+#if SHADERS_ALLOWED
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
+#end
 import utils.*;
 
 
@@ -52,7 +53,6 @@ class PlayState extends MusicBeatState
 	public var boyfriendMap:Map<String, Boyfriend> = new Map();
 	public var dadMap:Map<String, Character> = new Map();
 	public var gfMap:Map<String, Character> = new Map();
-	public var variables:Map<String, Dynamic> = new Map();
 	public var modchartTweens:Map<String, FlxTween> = new Map<String, FlxTween>();
 	public var modchartSprites:Map<String, ModchartSprite> = new Map<String, ModchartSprite>();
 	public var modchartTimers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
@@ -372,8 +372,10 @@ class PlayState extends MusicBeatState
 	var boyfriendIdled:Bool = false;
 
 	// Lua shit
+	#if LUA_ALLOWED
 	public var luaArray:Array<FunkinLua> = [];
 	private var luaDebugGroup:FlxTypedGroup<DebugLuaText>;
+	#end
 	public var introSoundsSuffix:String = '';
 
 	// Debug buttons
@@ -719,7 +721,7 @@ class PlayState extends MusicBeatState
 				{
 					if(file.endsWith('.lua') && !filesPushed.contains(file))
 					{
-						luaArray.push(new FunkinLua(folder + file));
+						new FunkinLua(folder + file);
 						filesPushed.push(file);
 					}
 				}
@@ -1540,7 +1542,7 @@ class PlayState extends MusicBeatState
 				{
 					if(file.endsWith('.lua') && !filesPushed.contains(file))
 					{
-						luaArray.push(new FunkinLua(folder + file));
+						new FunkinLua(folder + file);
 						filesPushed.push(file);
 					}
 				}
@@ -1589,13 +1591,13 @@ class PlayState extends MusicBeatState
 		startingTime = haxe.Timer.stamp();
 	}
 
-	#if ( sys)
+	#if (SHADERS_ALLOWED)
 	public var runtimeShaders:Map<String, Array<String>> = new Map<String, Array<String>>();
 	public function createRuntimeShader(shaderName:String):ErrorHandledRuntimeShader
 	{
 		if(!ClientPrefs.shaders) return new ErrorHandledRuntimeShader(shaderName);
 
-		#if (MODS_ALLOWED && sys)
+		#if (MODS_ALLOWED && SHADERS_ALLOWED)
 		if(!runtimeShaders.exists(shaderName) && !initLuaShader(shaderName))
 		{
 			FlxG.log.warn('Shader $shaderName is missing!');
@@ -1707,7 +1709,7 @@ class PlayState extends MusicBeatState
 
 	public function addTextToDebug(text:String, color:FlxColor) {
 		#if LUA_ALLOWED
-		var newText:FunkinLua.DebugLuaText = luaDebugGroup.recycle(DebugLuaText);
+		var newText:DebugLuaText = luaDebugGroup.recycle(DebugLuaText);
 		newText.text = text;
 		newText.color = color;
 		newText.disableTime = 6;
@@ -1798,12 +1800,15 @@ class PlayState extends MusicBeatState
 			{
 				if(script.scriptName == luaFile) return;
 			}
-			luaArray.push(new FunkinLua(luaFile));
+			if(doPush) new FunkinLua(luaFile);
 		}
 		#end
 	}
 
 	public function addShaderToCamera(cam:String,effect:Dynamic){//STOLE FROM ANDROMEDA	// actually i got it from old psych engine
+		#if SHADERS_ALLOWED
+		if (!ClientPrefs.shaders)
+			return;
 		switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud':
 				camHUDShaders.push(effect);
@@ -1836,9 +1841,13 @@ class PlayState extends MusicBeatState
 					Reflect.setProperty(OBJ,"shader", effect.shader);
 				}
 		}
+		#end
   }
 
   public function removeShaderFromCamera(cam:String,effect:ShaderEffect){
+	#if SHADERS_ALLOWED
+	if (!ClientPrefs.shaders)
+		return;
 	switch(cam.toLowerCase()) {
 		case 'camhud' | 'hud':
 			camHUDShaders.remove(effect);
@@ -1864,8 +1873,12 @@ class PlayState extends MusicBeatState
 				Reflect.setProperty(OBJ,"shader", null);
 			}
 		}
+	#end
   }
   public function clearShaderFromCamera(cam:String){
+	#if SHADERS_ALLOWED
+	if (!ClientPrefs.shaders)
+		return;
 	switch(cam.toLowerCase()) {
 		case 'camhud' | 'hud':
 			camHUDShaders = [];
@@ -1884,9 +1897,10 @@ class PlayState extends MusicBeatState
 			var newCamEffects:Array<BitmapFilter>=[];
 			camGame.filters = newCamEffects;
 	}
+	#end
   }
 
-	public function getLuaObject(tag:String, text:Bool=true):FlxSprite {
+	public function getLuaObject(tag:String, text:Bool=true):Dynamic {
 		if(modchartSprites.exists(tag)) return modchartSprites.get(tag);
 		if(text && modchartTexts.exists(tag)) return modchartTexts.get(tag);
 		if(variables.exists(tag)) return variables.get(tag);
@@ -4356,14 +4370,14 @@ class PlayState extends MusicBeatState
 			}
 
 			case 'Rainbow Eyesore':
-				#if linux
-				#if LUA_ALLOWED
+				#if (linux && LUA_ALLOWED)
 				addTextToDebug('Rainbow shader does not work on Linux right now!', FlxColor.RED);
-				#else
+				return;
+				#elseif linux
 				trace('Rainbow shader does not work on Linux right now!');
-				#end
 				return;
 				#end
+				#if SHADERS_ALLOWED
 				if(ClientPrefs.flashing && ClientPrefs.shaders) {
 					var timeRainbow:Int = Std.parseInt(value1);
 					var speedRainbow:Float = Std.parseFloat(value2);
@@ -4377,6 +4391,7 @@ class PlayState extends MusicBeatState
 					screenshader.shader.uampmul.value[0] = 1;
 					screenshader.Enabled = true;
 				}
+				#end
 			case 'Popup':
 				var title:String = (value1);
 				var message:String = (value2);
@@ -5933,17 +5948,23 @@ class PlayState extends MusicBeatState
 	}
 
 	override function destroy() {
+		#if LUA_ALLOWED
 		for (lua in luaArray) {
 			lua.call('onDestroy', []);
 			lua.stop();
 		}
 		luaArray = [];
+		FunkinLua.customFunctions.clear();
+		FunkinLua.registeredFunctions.clear();
+		#end
 
 		if (camFollow != null) camFollow.put();
 
-		#if hscript
+		/*
+		#if HSCRIPT_ALLOWED
 		if(FunkinLua.hscript != null) FunkinLua.hscript = null;
 		#end
+		*/
 
 		stagesFunc(function(stage:BaseStage) stage.destroy());
 

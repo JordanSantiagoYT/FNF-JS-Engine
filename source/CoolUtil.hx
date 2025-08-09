@@ -7,10 +7,6 @@ import lime.app.Application;
 import shaders.RGBPalette.RGBShaderReference;
 import utils.CoolSystemStuff;
 
-#if sys
-#else
-#end
-
 class CoolUtil
 {
 	public static var defaultDifficulties:Array<String> = ['Easy', 'Normal', 'Hard'];
@@ -81,6 +77,28 @@ class CoolUtil
 		var m:Float = Math.fround(f * snap);
 		// trace(snap); yo why does it trace the snap
 		return (m / snap);
+	}
+
+	public static function isVersionNewer(versionA:String, versionB:String):Bool {
+		var partsA = versionA.split(".").map(Std.parseInt);
+		var partsB = versionB.split(".").map(Std.parseInt);
+
+		// Pad shorter version with zeros (e.g. "1.2" becomes "1.2.0")
+		while (partsA.length < partsB.length) partsA.push(0);
+		while (partsB.length < partsA.length) partsB.push(0);
+
+		for (i in 0...partsA.length) {
+			if (partsA[i] > partsB[i]){
+				trace("versionA is greater!");
+				return true;	
+			}
+			if (partsA[i] < partsB[i]){
+				trace("versionA is less!");
+				return false;
+			}
+		}
+
+		return false; // Equal versions
 	}
 
 	#if desktop
@@ -479,7 +497,7 @@ class CoolUtil
 
 	inline public static function boundTo(value:Float, min:Float, max:Float):Float
 	{
-		return Math.max(min, Math.min(max, value));
+		return clamp(value, min, max);
 	}
 
 	inline public static function clamp(value:Float, min:Float, max:Float):Float
@@ -605,12 +623,7 @@ class CoolUtil
 
 	public static function numberArray(max:Int, ?min = 0):Array<Int>
 	{
-		var dumbArray:Array<Int> = [];
-		for (i in min...max)
-		{
-			dumbArray.push(i);
-		}
-		return dumbArray;
+		return [for (i in min...max) i];
 	}
 
 	public static function browserLoad(site:String)

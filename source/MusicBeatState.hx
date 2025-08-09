@@ -40,8 +40,12 @@ class MusicBeatState extends FlxUIState
 		Application.current.window.title = windowNamePrefix + windowNameSuffix + windowNameSuffix2;
 		return value;
 	}
-
-	override public function new() {
+	public var variables:Map<String, Dynamic> = new Map<String, Dynamic>();
+	public static function getVariables()
+		return getState().variables;
+	
+	// this is just because FlxUIState has arguments in it's constructor
+	public function new() {
 		super();
 	}
 

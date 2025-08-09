@@ -82,17 +82,17 @@ class TitleState extends MusicBeatState
 
 			http.onData = function (data:String)
 			{
-    				var versionEndIndex:Int = data.indexOf(';');
-    				returnedData[0] = data.substring(0, versionEndIndex);
+				var versionEndIndex:Int = data.indexOf(';');
+				returnedData[0] = data.substring(0, versionEndIndex);
 
-    				// Extract the changelog after the version number
-    				returnedData[1] = data.substring(versionEndIndex + 1, data.length);
+				// Extract the changelog after the version number
+				returnedData[1] = data.substring(versionEndIndex + 1, data.length);
 				updateVersion = returnedData[0];
 				final curVersion:String = MainMenuState.psychEngineJSVersion.trim();
 				final cleanVersion:String = curVersion.split(" (")[0]; // Removes everything after " ("
 				trace(cleanVersion);
 				trace('version online: ' + updateVersion + ', your version: ' + cleanVersion);
-				if(updateVersion != cleanVersion) {
+				if(updateVersion != cleanVersion && CoolUtil.isVersionNewer(updateVersion, cleanVersion)) {
 					trace('versions arent matching!');
 					OutdatedState.currChanges = returnedData[1];
 					mustUpdate = true;
@@ -101,6 +101,8 @@ class TitleState extends MusicBeatState
 				if(updateVersion == curVersion) {
 					trace('the versions match!');
 				}
+				else
+					trace('$updateVersion is less than $cleanVersion. Skipping update as it\'s likely an dev version');
 			}
 
 			http.onError = function (error) {

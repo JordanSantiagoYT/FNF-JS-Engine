@@ -10,6 +10,12 @@ import sys.io.*;
 #if LUA_ALLOWED
 import llua.*;
 import llua.Lua;
+import psychlua.*;
+#else
+import psychlua.FunkinLua; // TODO: test and seperate this into LuaUtils
+// import psychlua.LuaUtils;
+import psychlua.HScript;
+// import psychlua.ScriptHandler;
 #end
 
 #if flxanimate

@@ -31,8 +31,10 @@
 
 	<!-- PSYCH ENGINE CUSTOMIZATION -->
 	<define name="MODS_ALLOWED" if="desktop || mobile" unless="web" />
-	<define name="LUA_ALLOWED" if="desktop || mobile" unless="web" />
+	<define name="LUA_ALLOWED" if="desktop || mobile" unless="web || hl" />
+	<define name="HSCRIPT_ALLOWED" if="desktop || mobile || web" />
 	<define name="ACHIEVEMENTS_ALLOWED" />
+	<define name="SHADERS_ALLOWED" unless="flash"/>
 	<define name="APRIL_FOOLS" /> <!-- DELETE THIS TO REMOVE THE APRIL FOOLS START UP, WHICH ONLY HAPPENS ONLY ON APRIL 1st -->
 	<define name="VIDEOS_ALLOWED" if="desktop || mobile" unless="32bits || web"/>
 	<define name="PSYCH_WATERMARKS"/> <!-- DELETE THIS TO REMOVE WATERMARKS/DEV NAMES ON TITLE SCREEN -->
