@@ -1,6 +1,6 @@
 <!-- this is an secret -->
 # NOTE
-THIS NOT THE JS ENGINE BASE REPO. THIS BRANCH IS MADE BY [HomuHomu833](https://github.com/HomuHomu833) AND ALL CREDITS GOES TO HER.
+This is not the JS Engine base repo. This branch is discontinued.
 <h1 align="center">
   <br>
   <a href="https://github.com/JordanSantiagoYT/FNF-JS-Engine"><img src="/art/iconOG.png" alt="JSengine" width="150"></a>
