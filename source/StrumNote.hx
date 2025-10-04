@@ -16,6 +16,16 @@ class StrumNote extends FlxSprite
 	public var player:Int;
 	public var ogNoteskin:String = null;
 
+	/**
+	 * How long the hold note animation has been playing after a note is pressed.
+	 */
+	public var confirmHoldTimer:Float = -1;
+	
+	/**
+	 * How long to continue the hold note animation after a note is pressed.
+	 */
+	static final CONFIRM_HOLD_TIME:Float = 0.1;
+	
 	public var texture(default, set):String = null;
 	private function set_texture(value:String):String {
 		if(texture != value) {
@@ -57,6 +67,9 @@ class StrumNote extends FlxSprite
 
 		var customSkin:String = skin + Note.getNoteSkinPostfix();
 		if(Paths.fileExists('images/$customSkin.png', IMAGE)) skin = customSkin;
+
+		this.animation.onFrameChange.add(onAnimationFrame);
+		this.animation.onFinish.add(onAnimationFinished);
 
 		texture = skin; //Load texture and anims
 		ogNoteskin = skin;
@@ -151,15 +164,21 @@ class StrumNote extends FlxSprite
 	}
 
 	override function update(elapsed:Float) {
-		if (ClientPrefs.ffmpegMode) elapsed = 1 / ClientPrefs.targetFPS;
-		if(resetAnim > 0) {
-			resetAnim -= elapsed;
-			if(resetAnim <= 0) {
+		super.update(elapsed);
+
+		centerOrigin();
+
+		if (confirmHoldTimer >= 0)
+		{
+			confirmHoldTimer += elapsed;
+
+			// Ensure the opponent (and BOTPLAY) stops holding the key after a certain amount of time.
+			if (confirmHoldTimer >= CONFIRM_HOLD_TIME)
+			{
+				confirmHoldTimer = -1;
 				playAnim('static');
-				resetAnim = 0;
 			}
 		}
-		super.update(elapsed);
 	}
 
 	public function playAnim(anim:String, ?force:Bool = false, ?r:FlxColor, ?g:FlxColor, ?b:FlxColor) {
