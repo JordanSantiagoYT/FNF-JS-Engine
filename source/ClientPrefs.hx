@@ -26,6 +26,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var missSoundShit:Bool = false;
 
 	//Visuals & UI
+	// i'm going to clean up the ui because i can't tell what's happening when i play jse
 	public static var noteSkin:String = 'Default';
 	public static var splashType:String = 'Default';
 	public static var noteSplashes:Bool = true;
@@ -46,8 +47,8 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var enableColorShader:Bool = true;
 	public static var iconBopWhen:String = 'Every Beat';
 	public static var rateNameStuff:String = 'Quotes';
-	public static var timeBarType:String = 'Time Left';
-	public static var scoreStyle:String = 'Psych Engine';
+	public static var timeBarType:String = 'Disabled';
+	public static var scoreStyle:String = 'Vanilla';
 	public static var timeBarStyle:String = 'Vanilla';
 	public static var healthBarStyle:String = 'Vanilla';
 	public static var watermarkStyle:String = 'Vanilla';
@@ -61,7 +62,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var smoothHealth:Bool = true;
 	public static var smoothHPBug:Bool = false;
 	public static var noBopLimit:Bool = false;
-	public static var ogHPColor:Bool = false;
+	public static var ogHPColor:Bool = true;
 	public static var flashing:Bool = true;
 	public static var camZooms:Bool = true;
 	public static var ratingCounter:Bool = false;
@@ -380,3 +381,4 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 		return copiedArray;
 	}
 }
+
