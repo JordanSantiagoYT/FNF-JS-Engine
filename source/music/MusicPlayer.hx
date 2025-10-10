@@ -83,10 +83,7 @@ class MusicPlayer extends FlxGroup
 	{
 		super.update(elapsed);
 
-		if (!playingMusic)
-		{
-			return;
-		}
+		if (!playingMusic) return;
 
 		if (playing && !wasPlaying)
 			songTxt.text = 'PLAYING: ' + instance.songs[FreeplayState.curSelected].songName;
