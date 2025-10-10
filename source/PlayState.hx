@@ -1268,15 +1268,29 @@ class PlayState extends MusicBeatState
 		EngineWatermark.text = SONG.song;
 		add(EngineWatermark);
 
+		// Special text for debug builds.
 		switch(ClientPrefs.watermarkStyle)
 		{
-			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | JSE " + MainMenuState.psychEngineJSVersion;
+			case 'Vanilla':
+				#if debug
+				EngineWatermark.text = "JSE " + MainMenuState.psychEngineJSVersion + "|" + Constants.VERSION_SUFFIX;
+				#else
+				EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | JSE " + MainMenuState.psychEngineJSVersion;
+				#end
 			case 'Forever Engine':
+				#if debug
+				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion + "|" + Constants.VERSION_SUFFIX;
+				#else
 				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion;
+				#end
 				EngineWatermark.x = FlxG.width - EngineWatermark.width - 5;
 			case 'JS Engine':
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
+				#if debug
+				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion + "|" + Constants.VERSION_SUFFIX;
+				#else
 				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion;
+				#end
 			case 'Dave Engine':
 				EngineWatermark.setFormat(Paths.font("comic.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE,FlxColor.BLACK);
 				EngineWatermark.text = SONG.song;
