@@ -180,7 +180,7 @@ class EditorPlayState extends MusicBeatState
 		Conductor.changeBPM(PlayState.SONG.bpm);
 
 		if (PlayState.SONG.windowName != null && PlayState.SONG.windowName != '')
-			MusicBeatState.windowNamePrefix = PlayState.SONG.windowName;
+			Constants.TITLE = PlayState.SONG.windowName;
 
 		var songData = PlayState.SONG;
 

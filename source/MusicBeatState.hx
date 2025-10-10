@@ -1,5 +1,6 @@
 package;
 
+import Constants;
 import backend.PsychCamera;
 import flixel.addons.ui.FlxUIState;
 import lime.app.Application;
@@ -27,17 +28,19 @@ class MusicBeatState extends FlxUIState
 
 	public static var windowNameSuffix(default, set):String = "";
 	public static var windowNameSuffix2(default, set):String = ""; //changes to "Outdated!" if the version of the engine is outdated
+
+	@:deprecated("windowNamePrefix is deprecated, use Constants.TITLE instead")
 	public static var windowNamePrefix:String = "Friday Night Funkin': JS Engine";
 
 	// better then updating it all the time which can cause memory leaks
 	static function set_windowNameSuffix(value:String){
 		windowNameSuffix = value;
-		Application.current.window.title = windowNamePrefix + windowNameSuffix + windowNameSuffix2;
+		Application.current.window.title = Constants.TITLE + windowNameSuffix + windowNameSuffix2;
 		return value;
 	}
 	static function set_windowNameSuffix2(value:String){
 		windowNameSuffix2 = value;
-		Application.current.window.title = windowNamePrefix + windowNameSuffix + windowNameSuffix2;
+		Application.current.window.title = Constants.TITLE + windowNameSuffix + windowNameSuffix2;
 		return value;
 	}
 	public var variables:Map<String, Dynamic> = new Map<String, Dynamic>();
@@ -61,10 +64,10 @@ class MusicBeatState extends FlxUIState
 		}
 		FlxTransitionableState.skipNextTransOut = false;
 
-		try {windowNamePrefix = Assets.getText(Paths.txt("windowTitleBase", "preload"));}
+		try {Constants.TITLE = Assets.getText(Paths.txt("windowTitleBase", "preload"));}
 		catch(e) {}
 
-		Application.current.window.title = windowNamePrefix + windowNameSuffix + windowNameSuffix2;
+		Application.current.window.title = Constants.TITLE + windowNameSuffix + windowNameSuffix2;
 	}
 
 	public function initPsychCamera():PsychCamera

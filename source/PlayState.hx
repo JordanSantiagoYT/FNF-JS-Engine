@@ -3,6 +3,7 @@ package;
 import Achievements;
 import Character.Boyfriend;
 import Conductor.Rating;
+import Constants;
 import DialogueBoxPsych;
 import Note.EventNote;
 import Note.PreloadedChartNote;
@@ -2586,7 +2587,7 @@ class PlayState extends MusicBeatState
 		var diff:String = (SONG.specialAudioName.length > 1 ? SONG.specialAudioName : CoolUtil.difficultyString()).toLowerCase();
 
 		if (SONG.windowName != null && SONG.windowName != '')
-			MusicBeatState.windowNamePrefix = SONG.windowName;
+			Constants.TITLE = SONG.windowName;
 
 		vocals = new FlxSound();
 		opponentVocals = new FlxSound();
@@ -5937,7 +5938,7 @@ class PlayState extends MusicBeatState
 		KillNotes();
 		unspawnNotes = [];
 		eventNotes = [];
-		MusicBeatState.windowNamePrefix = Assets.getText(Paths.txt("windowTitleBase", "preload"));
+		Constants.TITLE = Assets.getText(Paths.txt("windowTitleBase", "preload"));
 		if(ffmpegMode) {
 			if (FlxG.fixedTimestep) {
 				FlxG.fixedTimestep = false;
