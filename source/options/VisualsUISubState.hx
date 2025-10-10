@@ -76,6 +76,9 @@ class VisualsUISubState extends BaseOptionsMenu
 			true);
 		addOption(option);
 
+		var option:Option = new Option('Note HOLD Splashes', "If checked, holding notes won't show those blobs.", 'noteHoldSplashes', 'bool', true);
+		addOption(option);
+
 		var option:Option = new Option('Show NPS',
 			'If checked, the game will show your current NPS.',
 			'showNPS',
@@ -298,7 +301,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			'iconBounceType',
 			'string',
 			'Golden Apple',
-			['Golden Apple', 'Dave and Bambi', 'Old Psych', 'New Psych', 'VS Steve', 'Plank Engine', 'Strident Crisis', 'None']);
+			['Vanilla', 'Golden Apple', 'Dave and Bambi', 'Old Psych', 'New Psych', 'VS Steve', 'Plank Engine', 'Strident Crisis', 'None']);
 		addOption(option);
 
 		var option:Option = new Option('Health Tweening',

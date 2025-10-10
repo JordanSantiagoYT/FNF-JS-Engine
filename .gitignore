@@ -6,8 +6,10 @@ art/build_x64-officialrelease.bat
 art/test_x64-debug-officialrelease.bat
 
 ### VS Code
-export/*
+build/*
 .vscode/*
+# because the thing
+source/flixel/animation/*
 .haxelib/
 *.code-workspace
 # Local history which shouldn't be shared.
@@ -21,3 +23,6 @@ export/*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# build time sux!1!!!
+.build_time

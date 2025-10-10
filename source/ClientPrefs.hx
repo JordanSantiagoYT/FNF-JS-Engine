@@ -29,6 +29,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var noteSkin:String = 'Default';
 	public static var splashType:String = 'Default';
 	public static var noteSplashes:Bool = true;
+	public static var noteHoldSplashes:Bool = true; // i personally think there should be a option for this.
 	public static var oppNoteSplashes:Bool = true;
 	public static var showNPS:Bool = true;
 	public static var showComboInfo:Bool = true;
@@ -59,7 +60,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var iconBounceType:String = 'New Psych';
 	public static var smoothHealth:Bool = true;
 	public static var smoothHPBug:Bool = false;
-	public static var ogHPColor:Bool = false;
+	public static var ogHPColor:Bool = true;
 	public static var flashing:Bool = true;
 	public static var camZooms:Bool = true;
 	public static var ratingCounter:Bool = false;
