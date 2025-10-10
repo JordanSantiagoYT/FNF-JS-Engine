@@ -6,7 +6,7 @@ art/build_x64-officialrelease.bat
 art/test_x64-debug-officialrelease.bat
 
 ### VS Code
-export/*
+build/*
 .vscode/*
 .haxelib/
 *.code-workspace
@@ -21,3 +21,6 @@ export/*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# build time sux!1!!!
+.build_time

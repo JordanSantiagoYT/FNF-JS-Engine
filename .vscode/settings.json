@@ -7,6 +7,8 @@
     "*.hxc": "haxe"
   },
 
+  "errorLens.enabledDiagnosticLevels": ["error", "warning"],
+
   "search.exclude": {
     "export/**/*.*": true
   },
@@ -37,6 +39,9 @@
     "editor.formatOnPaste": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+
+  // makes it much easier to see what the fuck is erroring out
+  //"errorLens.enabledDiagnosticLevels": "true",
 
   "haxecheckstyle.sourceFolders": ["src", "source"],
   "haxecheckstyle.externalSourceRoots": [],
@@ -120,7 +125,7 @@
     {
       "label": "Debug (official build)",
       "args": ["-debug", "-DofficialBuild"]
-    }
+    },
     {
       "label": "Release",
       "args": ["-release"]

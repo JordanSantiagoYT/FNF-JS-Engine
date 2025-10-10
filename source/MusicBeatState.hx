@@ -43,7 +43,7 @@ class MusicBeatState extends FlxUIState
 	public var variables:Map<String, Dynamic> = new Map<String, Dynamic>();
 	public static function getVariables()
 		return getState().variables;
-	
+
 	// this is just because FlxUIState has arguments in it's constructor
 	public function new() {
 		super();

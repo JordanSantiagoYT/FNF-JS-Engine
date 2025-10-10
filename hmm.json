@@ -22,6 +22,11 @@
       "url": "https://github.com/JS-Engine-things/flixel-JS-Engine"
     },
     {
+      "name": "hxp",
+      "type": "haxelib",
+      "version": null
+    },
+    {
       "name": "flixel-addons",
       "type": "haxelib",
       "version": "3.2.3"

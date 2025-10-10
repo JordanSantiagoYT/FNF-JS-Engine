@@ -132,6 +132,7 @@
 
 	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED" />
 	<!-- openfls folder dialog is an pain in the ass -->
+	<!-- ur a pain in the ass -->
 	<haxelib name="hxnativefiledialog" if="cpp" unless="hl || neko"/>
 	<haxelib name="flxanimate"/>
 

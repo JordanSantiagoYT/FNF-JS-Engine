@@ -13,6 +13,7 @@ haxelib install flixel-addons 3.2.3 --quiet
 haxelib install flixel-tools 1.5.1 --quiet
 haxelib install flixel-ui 2.6.0 --quiet
 haxelib install hscript --quiet
+haxelib install hxp --quiet
 haxelib install hxcpp-debug-server --quiet
 haxelib git away3d https://github.com/moxie-coder/away3d --quiet
 haxelib git tjson https://github.com/moxie-coder/tjson --quiet
