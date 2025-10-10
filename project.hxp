@@ -523,7 +523,7 @@ class Project extends HXProject
 		var shouldPreloadArt = false;
 		//addAsset("art/readme.txt", "do NOT readme.txt", "art", shouldEmbedArt);
 		//addAsset("CHANGELOG.md", "changelog.txt", "/", shouldEmbedArt);
-		// addAssetPath("mods", null, "default", ["*"], exclude, shouldEmbed);
+		addAssetPath("example_mods", "mods", "default", ["*"], exclude, shouldEmbed); //lololololoolollo
 	}
 
 	/**

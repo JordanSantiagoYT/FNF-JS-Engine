@@ -8,6 +8,8 @@ art/test_x64-debug-officialrelease.bat
 ### VS Code
 build/*
 .vscode/*
+# because the thing
+source/flixel/animation/*
 .haxelib/
 *.code-workspace
 # Local history which shouldn't be shared.
