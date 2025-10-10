@@ -368,6 +368,7 @@ class Project extends HXProject
 		setHaxedef("hscriptPos");
 		if (!isDebug()) setHaxedef("no-deprecation-warnings");
 		setHaxedef("LINC_LUA_RELATIVE_DYNAMIC_LIB"); // DISABLE THIS IF ISSUES ARE FOUND!
+		setHaxedef("FLX_NO_FOCUS_LOST_SCREEN"); // I FORGOT LMAFOAOO
 
 		// setHaxedef("NO_PRECOMPILED_HEADERS");
 
