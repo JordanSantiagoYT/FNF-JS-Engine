@@ -3,6 +3,7 @@ package;
 import Achievements;
 import Character.Boyfriend;
 import Conductor.Rating;
+import Constants;
 import DialogueBoxPsych;
 import Note.EventNote;
 import Note.PreloadedChartNote;
@@ -1267,15 +1268,29 @@ class PlayState extends MusicBeatState
 		EngineWatermark.text = SONG.song;
 		add(EngineWatermark);
 
+		// Special text for debug builds.
 		switch(ClientPrefs.watermarkStyle)
 		{
-			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | JSE " + MainMenuState.psychEngineJSVersion;
+			case 'Vanilla':
+				#if debug
+				EngineWatermark.text = "JSE " + MainMenuState.psychEngineJSVersion + "|" + Constants.VERSION_SUFFIX;
+				#else
+				EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | JSE " + MainMenuState.psychEngineJSVersion;
+				#end
 			case 'Forever Engine':
+				#if debug
+				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion + "|" + Constants.VERSION_SUFFIX;
+				#else
 				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion;
+				#end
 				EngineWatermark.x = FlxG.width - EngineWatermark.width - 5;
 			case 'JS Engine':
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
+				#if debug
+				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion + "|" + Constants.VERSION_SUFFIX;
+				#else
 				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion;
+				#end
 			case 'Dave Engine':
 				EngineWatermark.setFormat(Paths.font("comic.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE,FlxColor.BLACK);
 				EngineWatermark.text = SONG.song;
@@ -1426,7 +1441,8 @@ class PlayState extends MusicBeatState
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
-		botplayTxt.visible = cpuControlled && !ClientPrefs.showcaseMode;
+		botplayTxt.visible = cpuControlled && !ClientPrefs.showcaseMode && ClientPrefs.scoreStyle != "Vanilla";
+    botplayTxt.x -= 55; //???
 		add(botplayTxt);
 		if (ClientPrefs.downScroll)
 			botplayTxt.y = timeBarBG.y - 78;
@@ -2163,6 +2179,12 @@ class PlayState extends MusicBeatState
 				setOnLuas('defaultPlayerStrumY' + i, playerStrums.members[i].y);
 			}
 
+			for (i in 0...opponentStrums.length)
+			{
+				playerStrums.members[i].x -= 55;
+				opponentStrums.members[i].x -= 55;
+			}
+
 			startedCountdown = true;
 			Conductor.songPosition = -Conductor.crochet * 5;
 			setOnLuas('startedCountdown', true);
@@ -2378,10 +2400,11 @@ class PlayState extends MusicBeatState
 
 		botText = cpuControlled && ClientPrefs.botWatermark ? ' $divider Botplay Mode' : '';
 
-		if (cpuControlled && ClientPrefs.botWatermark)
+		if (cpuControlled && ClientPrefs.botWatermark && ClientPrefs.scoreStyle == 'Psych Engine' || ClientPrefs.scoreStyle == 'JS Engine' || ClientPrefs.scoreStyle == 'TGT V4')
 			tempScore = 'Bot Score: ' + formattedScore + (comboInfo ? ' $divider Bot Combo: ' + formattedCombo : '') + npsString + botText;
+		else tempScore = 'Score: ' + formattedScore;
 
-		else switch (ClientPrefs.scoreStyle)
+		switch (ClientPrefs.scoreStyle)
 		{
 			case 'Kade Engine', 'Doki Doki+':
 				tempScore = 'Score: ' + formattedScore + missString + (comboInfo ? ' $divider Combo: ' + formattedCombo : '') + npsString + ' $divider Accuracy: ' + accuracy + ' $divider (' + fcString + ') ' + ratingName;
@@ -2402,7 +2425,8 @@ class PlayState extends MusicBeatState
 				tempScore = 'Score: ' + formattedScore + missString + (comboInfo ? ' $divider Combo: ' + formattedCombo : '') + npsString + ' $divider Accuracy: $accuracy ['  + fcString + ']';
 
 			case 'Vanilla':
-				tempScore = 'Score: ' + formattedScore;
+				if (cpuControlled) tempScore = 'Bot Play Enabled';
+				else tempScore = 'Score: ' + formattedScore;
 		}
 
 		scoreTxt.text = '${tempScore}\n';
@@ -2577,7 +2601,7 @@ class PlayState extends MusicBeatState
 		var diff:String = (SONG.specialAudioName.length > 1 ? SONG.specialAudioName : CoolUtil.difficultyString()).toLowerCase();
 
 		if (SONG.windowName != null && SONG.windowName != '')
-			MusicBeatState.windowNamePrefix = SONG.windowName;
+			Constants.TITLE = SONG.windowName;
 
 		vocals = new FlxSound();
 		opponentVocals = new FlxSound();
@@ -3745,9 +3769,10 @@ class PlayState extends MusicBeatState
 		takenTime = haxe.Timer.stamp();
 	}
 
-	// Health icon updaters
+	// Health icon updaters, makes them lerp back down / literally teleport to it's default size LMFAO
 	public dynamic function updateIconsScale(elapsed:Float)
 	{
+		// approved by avie :thumbs_up:
 		switch (ClientPrefs.iconBounceType) {
 			case 'Old Psych':
 				for (i in [iconP1, iconP2])
@@ -3758,6 +3783,10 @@ class PlayState extends MusicBeatState
 				for (i in [iconP1, iconP2])
 					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, 0.50 / playbackRate)),
 					Std.int(FlxMath.lerp(i.frameHeight, i.height, 0.50 / playbackRate)));
+
+			case 'Vanilla':
+				for (i in [iconP1, iconP2])
+					i.setGraphicSize(Std.int(MathUtil.coolLerp(i.width, 150, 0.15)));
 
 			case 'Dave and Bambi':
 				for (i in [iconP1, iconP2])
@@ -4013,7 +4042,7 @@ class PlayState extends MusicBeatState
 			{
 				var string1:String = (value1.length > 1 ? value1 : SONG.song);
 				var string2:String = (value2.length > 1 ? value2 : SONG.songCredit);
-				
+
 				var creditsPopup:CreditsPopUp = new CreditsPopUp(FlxG.width, 200, string1, string2);
 				creditsPopup.camera = camHUD;
 				creditsPopup.scrollFactor.set();
@@ -5617,7 +5646,7 @@ class PlayState extends MusicBeatState
 				camHUD.shake(playerChar.shakeIntensity / 2, playerChar.shakeDuration / playbackRate);
 			}
 			note.wasGoodHit = true;
-			if (!ClientPrefs.lessBotLag && ClientPrefs.noteSplashes && note.isSustainNote && splashesPerFrame[3] <= 4) spawnHoldSplashOnNote(note);
+			if (!ClientPrefs.lessBotLag && note.isSustainNote && splashesPerFrame[3] <= 4 && ClientPrefs.noteHoldSplashes) spawnHoldSplashOnNote(note);
 			if (SONG.needsVoices && !ffmpegMode)
 				if (opponentChart && opponentVocals != null && opponentVocals.volume != 1) opponentVocals.volume = 1;
 				else if (!opponentChart && vocals.volume != 1 || vocals.volume != 1) vocals.volume = 1;
@@ -5758,7 +5787,7 @@ class PlayState extends MusicBeatState
 			}
 			daNote.hitByOpponent = true;
 
-			if (ClientPrefs.oppNoteSplashes && daNote.isSustainNote && splashesPerFrame[2] <= 4) spawnHoldSplashOnNote(daNote, true);
+			if (daNote.isSustainNote && splashesPerFrame[2] <= 4 && ClientPrefs.noteHoldSplashes) spawnHoldSplashOnNote(daNote, true);
 
 			if (!ClientPrefs.noHitFuncs)
 			{
@@ -5854,7 +5883,7 @@ class PlayState extends MusicBeatState
 	}
 
 	public function spawnHoldSplashOnNote(note:Note, ?isDad:Bool = false) {
-		if (!ClientPrefs.noteSplashes || note == null)
+		if (!ClientPrefs.noteHoldSplashes || note == null)
 			return;
 
 		splashesPerFrame[(isDad ? 2 : 3)] += 1;
@@ -5923,7 +5952,7 @@ class PlayState extends MusicBeatState
 		KillNotes();
 		unspawnNotes = [];
 		eventNotes = [];
-		MusicBeatState.windowNamePrefix = Assets.getText(Paths.txt("windowTitleBase", "preload"));
+		Constants.TITLE = Assets.getText(Paths.txt("windowTitleBase", "preload"));
 		if(ffmpegMode) {
 			if (FlxG.fixedTimestep) {
 				FlxG.fixedTimestep = false;
@@ -6174,6 +6203,9 @@ class PlayState extends MusicBeatState
 				for (i in [iconP1, iconP2])
 					i.setGraphicSize(Std.int(i.width + 30));
 
+			case 'Vanilla':
+				for (i in [iconP1, iconP2])
+					i.setGraphicSize(Std.int(i.width + 30));
 			case 'Strident Crisis':
 				final funny:Float = (healthBar.percent * 0.01) + 0.01;
 
