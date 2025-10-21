@@ -21,7 +21,7 @@ class MusicBeatState extends FlxUIState
 	public static var camBeat:FlxCamera;
 
 	inline function get_controls():Controls
-		return PlayerSettings.player1.controls;
+		return Controls.instance;
 
 	var _psychCameraInitialized:Bool = false;
 

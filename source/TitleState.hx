@@ -32,10 +32,6 @@ typedef TitleData =
 }
 class TitleState extends MusicBeatState
 {
-	public static var muteKeys:Array<FlxKey> = [FlxKey.ZERO];
-	public static var volumeDownKeys:Array<FlxKey> = [FlxKey.NUMPADMINUS, FlxKey.MINUS];
-	public static var volumeUpKeys:Array<FlxKey> = [FlxKey.NUMPADPLUS, FlxKey.PLUS];
-
 	public static var initialized:Bool = false;
 
 	public var inCutscene:Bool = false;
@@ -74,7 +70,7 @@ class TitleState extends MusicBeatState
 		swagShader = new ColorSwap();
 		super.create();
 
-		#if (CHECK_FOR_UPDATES)
+		#if CHECK_FOR_UPDATES
 		if(ClientPrefs.checkForUpdates && !closedState && !Main.askedToUpdate) {
 			trace('checking for update');
 			var http = new haxe.Http("https://raw.githubusercontent.com/JordanSantiagoYT/FNF-JS-Engine/main/THECHANGELOG.md");
