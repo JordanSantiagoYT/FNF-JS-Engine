@@ -268,7 +268,6 @@ class PlayState extends MusicBeatState
 	public var botplaySine:Float = 0;
 	public var botplayTxt:FlxText;
 	public var renderedTxt:FlxText;
-	public var ytWatermark:FlxText;
 
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
@@ -1382,25 +1381,6 @@ class PlayState extends MusicBeatState
 			dadGroup.destroy();
 			boyfriendGroup.destroy();
 		}
-
-		final ytWMPosition = switch(ClientPrefs.ytWatermarkPosition)
-		{
-			case 'Top': FlxG.height * 0.2;
-			case 'Middle': FlxG.height / 2;
-			case 'Bottom': FlxG.height * 0.8;
-			default: FlxG.height / 2;
-		}
-
-		final path:String = Paths.txt("ytWatermarkInfo", "preload");
-		final ytWatermarkText:String = Assets.exists(path) ? Assets.getText(path) : '';
-		ytWatermark = new FlxText(0, ytWMPosition, FlxG.width, ytWatermarkText, 40);
-		ytWatermark.setFormat(Paths.font("vcr.ttf"), 25, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		ytWatermark.scrollFactor.set();
-		ytWatermark.borderSize = 1.25;
-		ytWatermark.alpha = 0.5;
-		ytWatermark.cameras = [camOther];
-		ytWatermark.visible = ClientPrefs.ytWatermarkPosition != 'Hidden';
-		add(ytWatermark);
 
 		renderedTxt = new FlxText(0, healthBarBG.y - 50, FlxG.width, "", 32);
 		renderedTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);

@@ -247,14 +247,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			['Vanilla', 'JS Engine', 'Dave Engine', 'Doki Doki+', 'TGT V4', 'VS Impostor', 'Hide']);
 		addOption(option);
 
-		var option:Option = new Option('YT Watermark Position:',
-			"Where do you want your YouTube watermark to be?",
-			'ytWatermarkPosition',
-			'string',
-			'Hidden',
-			['Top', 'Middle', 'Bottom', 'Hidden']);
-		addOption(option);
-
 		var option:Option = new Option('Strum Light Up Style:',
 			"How would you like the strum animations to play when lit up? \nNote: Turn on 'Light Opponent/Botplay Strums' to see this in action!",
 			'strumLitStyle',
