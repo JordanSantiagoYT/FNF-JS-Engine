@@ -870,7 +870,7 @@ class ChartingState extends MusicBeatState
             // Kinda stupid but it works
             openSubState(new Prompt('This action will clear current progress.\n\nProceed?', 0, function() {
                 try {
-				  var wrapper: SwagSong = Song.parseJSON(f);
+				  var wrapper:SwagSong = Song.parseJSON(f);
 				  if (wrapper.song == null) {
 					CoolUtil.coolError(
 					  "Failed to load JSON – not a valid chart.json.",
@@ -878,29 +878,10 @@ class ChartingState extends MusicBeatState
 					);
 					return;
 				  }
-
-				  // 2) Compute where our backup should live
-				  var songPath = Paths.formatToSongPath(wrapper.song);
-				  var backupPath = Paths.getBackupFilePath(songPath, "backup");
-
-				  // 3) Ensure the directory exists
-				  var backupDir = haxe.io.Path.directory(backupPath);
-				if (!FileSystem.exists(backupDir) && !FileSystem.isDirectory(backupDir))
-				  FileSystem.createDirectory(backupDir);
-
-				  // 4) If there's already a backup, rename it so we don’t overwrite
-				  if (FileSystem.exists(backupPath)) {
-					FileSystem.rename(backupPath, backupPath + "~");
-				  }
-
-				  // 5) Write out the backup file
-				  File.saveContent(backupPath, f);
-
-				  // 6) Immediately use the object you already loaded
+				  
 				  PlayState.SONG = wrapper;
 				  CoolUtil.currentDifficulty = "backup";
 
-				  // 7) Kick off the state reset
 				  FlxG.resetState();
 
                 } catch(e) {
