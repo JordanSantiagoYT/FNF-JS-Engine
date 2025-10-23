@@ -42,7 +42,7 @@ class CreditsPopUp extends FlxSpriteGroup
 			bg.antialiasing = headingPath.antiAliasing;
 			curHeading = headingPath;
 		}
-		createHeadingText(title + "\nComposed by" + ' ' + songCreator + (!ClientPrefs.ratingCounter ? '\nNote Count: ${FlxStringUtil.formatMoney(PlayState.instance.totalNotes, false)} / ${FlxStringUtil.formatMoney(PlayState.instance.opponentNoteTotal, false)}' : ''));
+		createHeadingText(title + "\nComposed by" + ' ' + songCreator);
 		funnyIcon = new FlxSprite(0, 0).loadGraphic(Paths.image('songCreators/$songCreatorIcon'));
 		funnyIcon.visible = PlayState.SONG.songCreditIcon.length > 0;
 		rescaleIcon();

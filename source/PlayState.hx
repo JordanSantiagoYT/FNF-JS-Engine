@@ -228,7 +228,6 @@ class PlayState extends MusicBeatState
 
 	public var fcStrings:Array<String> = ['No Play', 'PFC', 'SFC', 'GFC', 'BFC', 'FC', 'SDCB', 'Clear', 'TDCB', 'QDCB'];
 	public var hitStrings:Array<String> = ['Perfect!!!', 'Sick!!', 'Good!', 'Bad.', 'Shit.', 'Miss..'];
-	public var judgeCountStrings:Array<String> = ['Perfects', 'Sicks', 'Goods', 'Bads', 'Shits', 'Misses'];
 
 	var charChangeTimes:Array<Float> = [];
 	var charChangeNames:Array<String> = [];
@@ -280,7 +279,6 @@ class PlayState extends MusicBeatState
 
 	//ok moxie this doesn't cause memory leaks
 	public var scoreTxtUpdateFrame:Int = 0;
-	public var judgeCountUpdateFrame:Int = 0;
 	public var popUpsFrame:Int = 0;
 	public var missRecalcsPerFrame:Int = 0;
 	public var hitImagesFrame:Int = 0;
@@ -321,9 +319,7 @@ class PlayState extends MusicBeatState
 	var timeTxt:FlxText;
 
 	var hitTxt:FlxText;
-
 	var scoreTxtTween:FlxTween;
-	var judgementCounter:FlxText;
 
 	public static var campaignScore:Float = 0;
 	public static var campaignMisses:Int = 0;
@@ -396,7 +392,6 @@ class PlayState extends MusicBeatState
 	var formattedMaxNPS:String;
 	var formattedOppNPS:String;
 	var formattedMaxOppNPS:String;
-	var formattedEnemyHits:String;
 	var npsString:String;
 	var accuracy:String;
 	var fcString:String;
@@ -1393,14 +1388,6 @@ class PlayState extends MusicBeatState
 		if (ClientPrefs.scoreStyle == 'VS Impostor') renderedTxt.y = healthBar.y + (ClientPrefs.downScroll ? 100 : -100);
 		add(renderedTxt);
 
-		judgementCounter = new FlxText(0, FlxG.height / 2 - 80, 0, "", 20);
-		judgementCounter.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		judgementCounter.borderSize = 2;
-		judgementCounter.scrollFactor.set();
-		judgementCounter.visible = ClientPrefs.ratingCounter && !ClientPrefs.showcaseMode;
-		add(judgementCounter);
-		if (ClientPrefs.ratingCounter) updateRatingCounter();
-
 		//create default botplay text
 		botplayTxt = new FlxText(400, timeBarBG.y + 55, FlxG.width - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
@@ -1458,7 +1445,6 @@ class PlayState extends MusicBeatState
 		iconP1.cameras = [camHUD];
 		iconP2.cameras = [camHUD];
 		if (EngineWatermark != null) EngineWatermark.cameras = [camHUD];
-		judgementCounter.cameras = [camHUD];
 		if (scoreTxt != null) scoreTxt.cameras = [camHUD];
 		if (botplayTxt != null) botplayTxt.cameras = [camHUD];
 		timeBar.cameras = [camHUD];
@@ -2475,7 +2461,6 @@ class PlayState extends MusicBeatState
 			FlxTween.tween(timeTxt, {alpha: 1}, 0.5, {ease: FlxEase.circOut});
 		}
 
-		if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4 && judgementCounter != null) updateRatingCounter();
 		if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
 
 		// TODO: Lock other note inputs
@@ -3209,10 +3194,8 @@ class PlayState extends MusicBeatState
 		callOnLuas('onUpdate', [elapsed]);
 		super.update(elapsed);
 
-		if (tankmanAscend && curStep > 895 && curStep < 1151)
-		{
-			camGame.zoom = 0.8;
-		}
+		if (tankmanAscend && curStep > 895 && curStep < 1151) camGame.zoom = 0.8;
+
 		if (healthBar.percent >= 80 && !winning)
 		{
 			winning = true;
@@ -3294,7 +3277,6 @@ class PlayState extends MusicBeatState
 				maxNPS = nps;
 			}
 
-			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 8 && judgementCounter != null) updateRatingCounter();
 			if (scoreTxtUpdateFrame <= 8 && scoreTxt != null) updateScore();
 		}
 
@@ -3307,7 +3289,6 @@ class PlayState extends MusicBeatState
 		+ '\nVideo Speedup: ' + Math.abs(playbackRate / playbackRate / playbackRate) + 'x';
 		}
 
-		if (judgeCountUpdateFrame > 0) judgeCountUpdateFrame = 0;
 		if (scoreTxtUpdateFrame > 0) scoreTxtUpdateFrame = 0;
 		if (popUpsFrame > 0) popUpsFrame = 0;
 		if (missRecalcsPerFrame > 0) missRecalcsPerFrame = 0;
@@ -4783,9 +4764,6 @@ class PlayState extends MusicBeatState
 
 		if (Paths.fileExists('images/${normalRating}' + 'fcStrings.txt', TEXT))
 			fcStrings = Paths.mergeAllTextsNamed('images/${normalRating}' + 'fcStrings.txt', null, false);
-
-		if (Paths.fileExists('images/${normalRating}' + 'judgeCountStrings.txt', TEXT))
-			judgeCountStrings = Paths.mergeAllTextsNamed('images/${normalRating}' + 'judgeCountStrings.txt', null, false);
 	}
 
 	var rating:Popup = null;
@@ -5271,7 +5249,6 @@ class PlayState extends MusicBeatState
 				char.playAnim(animToPlay, true);
 			}
 			if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
-			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 
 			daNote.tooLate = true;
 
@@ -5324,7 +5301,6 @@ class PlayState extends MusicBeatState
 				char.playAnim(animToPlay, true);
 			}
 			if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
-			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 
 			callOnLuas('noteMiss', [null, daNoteAlt.noteData, daNoteAlt.noteType, daNoteAlt.isSustainNote]);
 		}
@@ -5366,7 +5342,6 @@ class PlayState extends MusicBeatState
 			(opponentChart ? opponentVocals : vocals).volume = 0;
 		}
 		if (scoreTxtUpdateFrame <= 4 && scoreTxt != null) updateScore();
-		if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 
 		stagesFunc(function(stage:BaseStage) stage.noteMissPress(direction));
 		callOnLuas('noteMissPress', [direction]);
@@ -5615,8 +5590,6 @@ class PlayState extends MusicBeatState
 			}
 
 			if (!note.isSustainNote) invalidateNote(note);
-
-			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 			if (scoreTxtUpdateFrame <= 4) updateScore();
 			return;
 		}
@@ -5754,7 +5727,6 @@ class PlayState extends MusicBeatState
 				camGame.shake(oppChar.shakeIntensity, oppChar.shakeDuration / playbackRate);
 				camHUD.shake(oppChar.shakeIntensity / 2, oppChar.shakeDuration / playbackRate);
 			}
-			if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 			if (scoreTxtUpdateFrame <= 4) updateScore();
 			return;
 		}
@@ -5792,7 +5764,6 @@ class PlayState extends MusicBeatState
 				}
 				enemyHits += 1 * polyphonyOppo;
 
-				if (ClientPrefs.ratingCounter && judgeCountUpdateFrame <= 4) updateRatingCounter();
 				if (scoreTxtUpdateFrame <= 4) updateScore();
 
 				if (shouldDrainHealth && health > healthDrainFloor && !practiceMode || opponentDrain && practiceMode)
@@ -5939,20 +5910,14 @@ class PlayState extends MusicBeatState
 				case 896:
 					{
 						if (!opponentChart) {
-						opponentStrums.forEachAlive(function(daNote:FlxSprite)
-						{
-							FlxTween.tween(daNote, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						});
+								opponentStrums.forEachAlive(function(daNote:FlxSprite)
+								{
+									FlxTween.tween(daNote, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
+								});
+							}
+						for (i in [EngineWatermark, timeBarBG, timeTxt, timeBarBG, scoreTxt, healthBarBG, healthBar, iconP1, iconP2]) {
+							if (i != null) FlxTween.tween(i, {alpha: 0}, 0.5, {ease: FlxEase.expoOut});
 						}
-						if (EngineWatermark != null) FlxTween.tween(EngineWatermark, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(timeBar, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(judgementCounter, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(scoreTxt, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(healthBar, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(healthBarBG, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(iconP1, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(iconP2, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(timeTxt, {alpha: 0}, 0.5, {ease: FlxEase.expoOut,});
 						dad.velocity.y = -35;
 					}
 				case 906:
@@ -6001,19 +5966,13 @@ class PlayState extends MusicBeatState
 				case 1152:
 					{
 						FlxG.camera.flash(FlxColor.WHITE, 1);
+						for (i in [EngineWatermark, timeBarBG, timeTxt, timeBarBG, scoreTxt, healthBarBG, healthBar, iconP1, iconP2]) {
+							if (i != null) FlxTween.tween(i, {alpha: 1}, 0.5, {ease: FlxEase.expoOut});
+						}
 						opponentStrums.forEachAlive(function(daNote:FlxSprite)
 						{
 							FlxTween.tween(daNote, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
 						});
-						if (EngineWatermark != null) FlxTween.tween(EngineWatermark, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(timeBar, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(judgementCounter, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(healthBar, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(healthBarBG, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(scoreTxt, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(iconP1, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(iconP2, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
-						FlxTween.tween(timeTxt, {alpha: 1}, 0.5, {ease: FlxEase.expoOut,});
 						dad.x = 100;
 						dad.y = 280;
 						boyfriend.x = 810;
@@ -6302,25 +6261,6 @@ class PlayState extends MusicBeatState
 		}
 	}
 
-	public function updateRatingCounter() {
-		judgeCountUpdateFrame++;
-		if (!judgementCounter.visible) return;
-
-		formattedSongMisses = formatNumber(songMisses);
-		formattedCombo = formatNumber(combo);
-		formattedMaxCombo = formatNumber(maxCombo);
-		formattedNPS = formatNumber(nps);
-		formattedMaxNPS = formatNumber(maxNPS);
-		formattedOppNPS = formatNumber(oppNPS);
-		formattedMaxOppNPS = formatNumber(maxOppNPS);
-		formattedEnemyHits = formatNumber(enemyHits);
-
-		final hittingStuff = (!ClientPrefs.lessBotLag && ClientPrefs.showComboInfo && !cpuControlled ? 'Combo: $formattedCombo/${formattedMaxCombo}\n' : '') + 'Hits: ' + formatNumber(totalNotesPlayed) + ' / ' + formatNumber(totalNotes) + ' (' + FlxMath.roundDecimal((totalNotesPlayed/totalNotes) * 100, 2) + '%)';
-		final ratingCountString = (!cpuControlled || cpuControlled && !ClientPrefs.lessBotLag ? '\n' + (!ClientPrefs.noMarvJudge ? judgeCountStrings[0] + ': $perfects \n' : '') + judgeCountStrings[1] + ': $sicks \n' + judgeCountStrings[2] + ': $goods \n' + judgeCountStrings[3] + ': $bads \n' + judgeCountStrings[4] + ': $shits \n' + judgeCountStrings[5] + ': $formattedSongMisses ' : '');
-		judgementCounter.text = hittingStuff + ratingCountString;
-		judgementCounter.text += (ClientPrefs.showNPS ? '\nNPS: ' + formattedNPS + '/' + formattedMaxNPS : '');
-	}
-
 	public var ratingName:String = '?';
 	public var ratingString:String;
 	public var ratingPercent:Float;
@@ -6402,8 +6342,6 @@ class PlayState extends MusicBeatState
 			}
 
 			// basically same stuff, doesn't update every frame but it also means no memory leaks during botplay
-			if (ClientPrefs.ratingCounter && judgementCounter != null)
-				updateRatingCounter();
 			if (scoreTxt != null)
 				updateScore(badHit);
 		}

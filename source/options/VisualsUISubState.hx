@@ -328,13 +328,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			true);
 		addOption(option);
 
-		var option:Option = new Option('Rating Counter',
-			"If checked, you can see how many Sicks, Goods, Bads, etc you've hit on the left.",
-			'ratingCounter',
-			'bool',
-			false);
-		addOption(option);
-
 		var option:Option = new Option('Show Notes',
 			"If unchecked, the notes will be invisible. You can still play them though!",
 			'showNotes',

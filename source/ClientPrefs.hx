@@ -61,7 +61,6 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var ogHPColor:Bool = false;
 	public static var flashing:Bool = true;
 	public static var camZooms:Bool = true;
-	public static var ratingCounter:Bool = false;
 	public static var showNotes:Bool = true;
 	public static var scoreZoom:Bool = true;
 	public static var healthBarAlpha:Float = 1;
