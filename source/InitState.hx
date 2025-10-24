@@ -6,6 +6,10 @@ import flixel.FlxState;
  * Handles initialization of variables when first opening the game.
 **/
 class InitState extends FlxState {
+	public static var muteKeys:Array<FlxKey> = [FlxKey.ZERO];
+	public static var volumeDownKeys:Array<FlxKey> = [FlxKey.NUMPADMINUS, FlxKey.MINUS];
+	public static var volumeUpKeys:Array<FlxKey> = [FlxKey.NUMPADPLUS, FlxKey.PLUS];
+
     override function create():Void {
         super.create();
 
@@ -22,6 +26,8 @@ class InitState extends FlxState {
         // -- SETTINGS -- //
 
 		FlxG.save.bind('funkin', CoolUtil.getSavePath());
+		
+		Controls.instance = new Controls();
 
 		#if (flixel >= "5.0.0")
 		trace('save status: ${FlxG.save.status}');
@@ -29,9 +35,7 @@ class InitState extends FlxState {
 
 		FlxG.fixedTimestep = false;
 
-		PlayerSettings.init();
-
-        // ClientPrefs.loadDefaultKeys();
+        ClientPrefs.loadDefaultStuff();
 		ClientPrefs.loadPrefs();
 
         /*
@@ -39,6 +43,7 @@ class InitState extends FlxState {
         Achievements.init();
         #end
         */
+		#if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
 
         // -- MODS -- //
 
