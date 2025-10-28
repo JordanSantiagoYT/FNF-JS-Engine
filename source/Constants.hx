@@ -45,4 +45,13 @@ class Constants
    * Color for the preloader site lock link
    */
   public static final COLOR_PRELOADER_LOCK_LINK:FlxColor = 0xEEB211;
+
+  /**
+   * Each step of the preloader has to be on screen at least this long.
+   *
+   * 0 = The preloader immediately moves to the next step when it's ready.
+   * 1 = The preloader waits for 1 second before moving to the next step.
+   *     The progress bare is automatically rescaled to match.
+   */
+  public static final PRELOADER_MIN_STAGE_TIME:Float = 0.1;
 }
