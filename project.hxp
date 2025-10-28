@@ -79,14 +79,14 @@ class Project extends HXProject
 	static final COMPANY:String = "JordanSantiago";
 
 	/**
-	 * Path to the Haxe script run before building the game.
-	 */
-	static final PREBUILD_HX:String = "art/Prebuild.hx";
+   * Path to the Haxe script run before building the game.
+   */
+  static final PREBUILD_HX:String = "source/Prebuild.hx";
 
-	/**
-	 * Path to the Haxe script run after building the game.
-	 */
-	static final POSTBUILD_HX:String = "art/Postbuild.hx";
+  /**
+   * Path to the Haxe script run after building the game.
+   */
+  static final POSTBUILD_HX:String = "source/Postbuild.hx";
 
 	/**
 	 * Asset path globs to always exclude from asset libraries.
