@@ -79,10 +79,7 @@ class StageData {
 			rawJson = Assets.getText(path);
 		}
 		#end
-		else
-		{
-			return null;
-		}
+		else { return null; }
 		return cast Json.parse(rawJson);
 	}
 }
