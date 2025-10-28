@@ -22,6 +22,7 @@ haxelib git grig.audio https://github.com/JS-Engine-things/grig.audio --quiet
 haxelib git hxdiscord_rpc https://github.com/MAJigsaw77/hxdiscord_rpc --quiet --skip-dependencies
 haxelib git hxvlc https://github.com/JS-Engine-things/hxvlc --quiet --skip-dependencies
 haxelib git hxnativefiledialog https://github.com/MAJigsaw77/hxnativefiledialog --quiet --skip-dependencies
+haxelib install hxp
 @echo off
 echo Finished!
 pause
