@@ -7,6 +7,24 @@ package;
 class Constants
 {
   /**
+	 * Preloader sitelock.
+	 * Matching is done by `FlxStringUtil.getDomain`, so any URL on the domain will work.
+	 * The first link in this list is the one users will be redirected to if they try to access the game from a different URL.
+	 */
+	public static final SITE_LOCK:Array<String> = [
+		"https://github.com/JordanSantiagoYT/FNF-JS-Engine/releases/latest", // GitHub, baybee!
+		FlxBasePreloader.LOCAL // localhost for dev stuff
+	];
+
+	/**
+	 * LANGUAGE
+	 */
+	// ==============================
+	public static final SITE_LOCK_TITLE:String = "You Loser!";
+
+	public static final SITE_LOCK_DESC:String = "Go play JS Engine on here:";
+
+  /**
    * The base colors used by notes.
    */
   public static var COLOR_NOTES:Array<FlxColor> = [
