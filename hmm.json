@@ -37,6 +37,11 @@
       "version": "2.6.0"
     },
     {
+      "name": "hxp",
+      "type": "haxelib",
+      "version": null
+    },
+    {
       "name": "hxcpp",
       "type": "git",
       "dir": null,
