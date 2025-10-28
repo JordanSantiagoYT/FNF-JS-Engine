@@ -7,7 +7,6 @@ package;
 class Constants
 {
   /**
-   *
    * The base colors used by notes.
    */
   public static var COLOR_NOTES:Array<FlxColor> = [
