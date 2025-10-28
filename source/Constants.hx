@@ -1,5 +1,8 @@
 package;
 
+import flixel.system.FlxBasePreloader;
+import flixel.util.FlxColor;
+
 /**
  * A store of unchanging, globally relevant values.
  */
