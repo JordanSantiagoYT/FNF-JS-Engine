@@ -392,13 +392,6 @@ class Project extends HXProject
 		// Disable the built in pause screen when unfocusing the game.
 		// setHaxedef("FLX_NO_FOCUS_LOST_SCREEN");
 
-		if (isRelease())
-		{
-			// Improve performance on Nape
-			// TODO: Do we even use Nape?
-			setHaxedef("NAPE_RELEASE_BUILD");
-		}
-
 		// Cleaner looking compiler errors.
 		// setHaxedef("message.reporting", "pretty");
 
