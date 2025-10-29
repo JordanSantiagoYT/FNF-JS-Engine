@@ -59,7 +59,7 @@ class Project extends HXProject
 	 * The fully qualified class path for the game's preloader.
 	 * Particularly important on HTML5 but we use it on all platforms.
 	 */
-	static final PRELOADER:String = "preloader.FunkinPreloader";
+	static final PRELOADER:String = "flixel.system.FlxPreloader";
 
 	/**
 	 * A package name used for identifying the app on various app stores.
@@ -172,19 +172,13 @@ class Project extends HXProject
 	 */
 	function configureApp()
 	{
-		if (!officialBuild.isEnabled(this))
-			this.meta.title = "Friday Night Funkin'";
-		else
-			this.meta.title = TITLE;
+		this.meta.title = TITLE;
 		this.meta.version = VERSION;
 		this.meta.packageName = PACKAGE_NAME;
 		this.meta.company = COMPANY;
 
 		this.app.main = MAIN_CLASS;
-		if (!officialBuild.isEnabled(this))
-			this.app.file = "Funkin";
-		else
-			this.app.file = EXECUTABLE_NAME;
+		this.app.file = EXECUTABLE_NAME;
 		this.app.preloader = PRELOADER;
 
 		// Tell Lime where to look for the game's source code.
@@ -192,8 +186,8 @@ class Project extends HXProject
 		this.sources.push(SOURCE_DIR);
 
 		// Tell Lime to run some prebuild and postbuild scripts.
-		this.preBuildCallbacks.push(buildHaxeCLICommand(PREBUILD_HX));
-		this.postBuildCallbacks.push(buildHaxeCLICommand(POSTBUILD_HX));
+		// this.preBuildCallbacks.push(buildHaxeCLICommand(PREBUILD_HX));
+		// this.postBuildCallbacks.push(buildHaxeCLICommand(POSTBUILD_HX));
 
 		// Configure the window.
 		// Automatically configure FPS.
@@ -537,20 +531,10 @@ class Project extends HXProject
 	 */
 	function configureIcons()
 	{
-		if (!officialBuild.isEnabled(this))
-		{
-			addIcon("art/icon16OG.png", 16);
-			addIcon("art/icon32OG.png", 32);
-			addIcon("art/icon64OG.png", 64);
-			addIcon("art/iconOGOld.png");
-		}
-		else
-		{
-			addIcon("art/icon16.png", 16);
-			addIcon("art/icon32.png", 32);
-			addIcon("art/icon64.png", 64);
-			addIcon("art/iconOG.png");
-		}
+		addIcon("art/icon16.png", 16);
+		addIcon("art/icon32.png", 32);
+		addIcon("art/icon64.png", 64);
+		addIcon("art/iconOG.png");
 	}
 
 	//
