@@ -142,6 +142,14 @@ class Project extends HXProject
 	{
 		super();
 
+		setenv('HAXEPATH', './'); // Fixes an issue for haxelibs that use native C++ files until Haxe 5 releases.
+
+		haxe.Log.trace = (v:Dynamic, ?info:haxe.PosInfos) ->
+		{
+			if (!isDisplay())
+				Sys.println(v);
+		};
+
 		flair();
 		configureApp();
 
@@ -156,10 +164,10 @@ class Project extends HXProject
 
 	function flair()
 	{
-		info("Friday Night Funkin'");
+		info("Friday Night Funkin': JS Engine");
 		info("Initializing build...");
 
-		info("Target Version: " + ENGINE_VERSION);
+		// info("Target Version: " + ENGINE_VERSION);
 		info("Git Branch:     " + getGitBranch());
 		info("Git Commit:     " + getGitCommit());
 		info("Git Modified?   " + getGitModified());
@@ -531,10 +539,9 @@ class Project extends HXProject
 	 */
 	function configureIcons()
 	{
-		addIcon("art/icon16.png", 16);
-		addIcon("art/icon32.png", 32);
-		addIcon("art/icon64.png", 64);
-		addIcon("art/iconOG.png");
+		for (size in [16, 32, 64])
+			addIcon('icons/icon${size}.png', size);
+		addIcon("icons/iconOG.png");
 	}
 
 	//
