@@ -2550,10 +2550,10 @@ class PlayState extends MusicBeatState
 		{
 			if (SONG.needsVoices)
 			{
-				var playerVocals = Paths.voices(curSong, diff, (boyfriend.vocalsFile == null || boyfriend.vocalsFile.length < 1) ? 'Player' : boyfriend.vocalsFile);
+				var playerVocals = Paths.voices(curSong, diff, (boyfriend.vocalsFile == null || boyfriend.vocalsFile.length < 1) ? "Player" : boyfriend.vocalsFile);
 				vocals.loadEmbedded(playerVocals != null ? playerVocals : Paths.voices(curSong, diff));
 
-				var oppVocals = Paths.voices(curSong, diff, (dad.vocalsFile == null || dad.vocalsFile.length < 1) ? 'Opponent' : dad.vocalsFile);
+				var oppVocals = Paths.voices(curSong, diff, (dad.vocalsFile == null || dad.vocalsFile.length < 1) ? "Opponent" : dad.vocalsFile);
 				if(oppVocals != null) opponentVocals.loadEmbedded(oppVocals);
 			}
 		}
@@ -2624,10 +2624,19 @@ class PlayState extends MusicBeatState
 		var currentMultiplier:Float = 1;
 		var gottaHitNote:Bool = false;
 		var swagNote:PreloadedChartNote;
+		var ghostNotesCleared:Int = 0;
+		// TODO: Optimize and clean up this mess, maybe split into functions
+		// this is absolute spaghetti code
 		for (section in noteData) {
 			if (section.changeBPM) currentBPMLol = section.bpm;
 
-			for (songNotes in section.sectionNotes) {
+			for (i in 0...section.sectionNotes.length)
+			{
+				final songNotes:Array<Dynamic> = section.sectionNotes[i];
+
+				if (songNotes[1] == -1)
+					continue;
+
 				if (songNotes[0] >= startingPoint + offsetStart) {
 					final daStrumTime:Float = songNotes[0];
 					var daNoteData:Int = 0;
@@ -2694,7 +2703,7 @@ class PlayState extends MusicBeatState
 						multiChangeEvents[1].shift();
 					}
 
-					swagNote = cast {
+					swagNote = {
 						strumTime: daStrumTime,
 						noteData: daNoteData,
 						mustPress: bothSides || gottaHitNote,
@@ -2728,9 +2737,9 @@ class PlayState extends MusicBeatState
 					unspawnNotes.push(swagNote);
 
 					if (jackingtime > 0) {
-						for (i in 0...Std.int(jackingtime)) {
-							final jackNote:PreloadedChartNote = cast {
-								strumTime: swagNote.strumTime + (15000 / SONG.bpm) * (i + 1),
+						for (j in 0...Std.int(jackingtime)) {
+							final jackNote:PreloadedChartNote = {
+								strumTime: swagNote.strumTime + (15000 / SONG.bpm) * (j + 1),
 								noteData: swagNote.noteData,
 								mustPress: swagNote.mustPress,
 								oppNote: swagNote.oppNote,
@@ -2761,8 +2770,7 @@ class PlayState extends MusicBeatState
 					final roundSus:Int = Math.round(swagNote.sustainLength / stepCrochet);
 					if (roundSus > 0) {
 						for (susNote in 0...roundSus + 1) {
-
-							final sustainNote:PreloadedChartNote = cast {
+							final sustainNote:PreloadedChartNote = {
 								strumTime: daStrumTime + (stepCrochet * susNote),
 								noteData: daNoteData,
 								mustPress: bothSides || gottaHitNote,
@@ -2791,7 +2799,7 @@ class PlayState extends MusicBeatState
 				} else {
 					final gottaHitNote:Bool = ((songNotes[1] < 4 && !opponentChart)
 						|| (songNotes[1] > 3 && opponentChart) ? section.mustHitSection : !section.mustHitSection);
-					if ((bothSides || gottaHitNote) && !songNotes.hitCausesMiss) {
+					if ((bothSides || gottaHitNote) && songNotes[3] != 'Hurt Note') {
 						totalNotes += 1;
 						combo += 1;
 						totalNotesPlayed += 1;
@@ -2804,7 +2812,9 @@ class PlayState extends MusicBeatState
 			}
 			sectionsLoaded += 1;
 			notesLoadedRN += section.sectionNotes.length;
+			#if debug
 			Sys.print('\rSection $sectionsLoaded loaded! (' + notesLoadedRN + ' notes)');
+			#end
 		}
 
 		bfNoteskin = boyfriend.noteskin;
@@ -2819,7 +2829,7 @@ class PlayState extends MusicBeatState
 					if (ClientPrefs.enableColorShader) note.updateRGBColors();
 				}
 		}
-
+		// trace('["${SONG.song.toUpperCase()}" CHART INFO]: Ghost Notes Cleared: $ghostNotesCleared');
 		unspawnNotes.sort(sortByTime);
 		eventNotes.sort(sortByTime);
 		generatedMusic = true;
@@ -3974,7 +3984,7 @@ class PlayState extends MusicBeatState
 			{
 				var string1:String = (value1.length > 1 ? value1 : SONG.song);
 				var string2:String = (value2.length > 1 ? value2 : SONG.songCredit);
-				
+
 				var creditsPopup:CreditsPopUp = new CreditsPopUp(FlxG.width, 200, string1, string2);
 				creditsPopup.camera = camHUD;
 				creditsPopup.scrollFactor.set();
@@ -6480,4 +6490,3 @@ class PlayState extends MusicBeatState
 		FlxG.autoPause = ClientPrefs.autoPause;
 	}
 }
-

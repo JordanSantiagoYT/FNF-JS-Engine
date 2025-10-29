@@ -12,34 +12,42 @@ typedef EventNote = {
 	value2:String
 }
 
-typedef PreloadedChartNote = {
-	strumTime:Float,
-	noteData:Int,
-	mustPress:Bool,
-	oppNote:Bool,
-	noteType:String,
-	animSuffix:String,
-	noteskin:String,
-	texture:String,
-	noAnimation:Bool,
-	noMissAnimation:Bool,
-	gfNote:Bool,
-	isSustainNote:Bool,
-	isSustainEnd:Bool,
-	sustainLength:Float,
-	parentST:Float,
-	parentSL:Float,
-	hitHealth:Float,
-	missHealth:Float,
-	hitCausesMiss:Null<Bool>,
-	wasHit:Bool,
-	multSpeed:Float,
-	multAlpha:Float,
-	noteDensity:Float,
-	ignoreNote:Bool,
-	blockHit:Bool,
-	lowPriority:Bool
+@:structInit class PreloadedChartNote {
+	public var strumTime:Float = 0;
+	public var noteData:Int = 0;
+	public var mustPress:Bool = false;
+	public var oppNote:Bool = false;
+	public var noteType:String = "";
+	public var animSuffix:String = "";
+	public var noteskin:String = "";
+	public var texture:String = "";
+	public var noAnimation:Bool = false;
+	public var noMissAnimation:Bool = false;
+	public var gfNote:Bool = false;
+	public var isSustainNote:Bool = false;
+	public var isSustainEnd:Bool = false;
+	public var sustainLength:Float = 0;
+	public var parentST:Float = 0;
+	public var parentSL:Float = 0;
+	public var hitHealth:Float = 0;
+	public var missHealth:Float = 0;
+	public var hitCausesMiss:Null<Bool> = null;
+	public var wasHit:Bool = false;
+	public var multSpeed:Float = 1;
+	public var multAlpha:Float = 1;
+	public var noteDensity:Float = 1;
+	public var ignoreNote:Bool = false;
+	public var blockHit:Bool = false;
+	public var lowPriority:Bool = false;
+	
+	public function dispose() {
+		// will be cleared by the GC later
+		for (field in Reflect.fields(this)) {
+			Reflect.setField(this, field, null);
+		}
+	}
 }
+
 
 typedef NoteSplashData = {
 	disabled:Bool,
