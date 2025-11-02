@@ -8,8 +8,8 @@ import sys.io.*;
 #end
 
 #if LUA_ALLOWED
-import llua.*;
-import llua.Lua;
+import hxluajit.*;
+import hxluajit.Types;
 import psychlua.*;
 #else
 import psychlua.FunkinLua; // TODO: test and seperate this into LuaUtils

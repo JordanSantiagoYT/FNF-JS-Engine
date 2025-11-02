@@ -95,7 +95,7 @@ class HScript
 			#if HSCRIPT_ALLOWED
 			for (script in PlayState.instance.luaArray)
 				if(script != null && script.lua != null && !script.closed)
-					Lua_helper.add_callback(script.lua, name, func);
+					Convert.addCallback(script.lua, name, func);
 			#end
 			FunkinLua.customFunctions.set(name, func);
 		});

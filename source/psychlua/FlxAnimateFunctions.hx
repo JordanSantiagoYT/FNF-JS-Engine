@@ -2,13 +2,17 @@ package psychlua;
 
 import openfl.utils.Assets;
 
+#if LUA_ALLOWED
+import psychlua.FunkinLua.State;
+#end
+
 #if (LUA_ALLOWED && flxanimate)
 class FlxAnimateFunctions
 {
 	public static function implement(funk:FunkinLua)
 	{
 		final lua:State = funk.lua;
-		Lua_helper.add_callback(lua, "makeFlxAnimateSprite", function(tag:String, ?x:Float = 0, ?y:Float = 0, ?loadFolder:String = null) {
+		Convert.addCallback(lua, "makeFlxAnimateSprite", function(tag:String, ?x:Float = 0, ?y:Float = 0, ?loadFolder:String = null) {
 			tag = tag.replace('.', '');
 			var lastSprite = MusicBeatState.getVariables().get(tag);
 			if(lastSprite != null)
@@ -24,12 +28,12 @@ class FlxAnimateFunctions
 			mySprite.active = true;
 		});
 
-		Lua_helper.add_callback(lua, "loadAnimateAtlas", function(tag:String, folderOrImg:String, ?spriteJson:String = null, ?animationJson:String = null) {
+		Convert.addCallback(lua, "loadAnimateAtlas", function(tag:String, folderOrImg:String, ?spriteJson:String = null, ?animationJson:String = null) {
 			var spr:FlxAnimate = MusicBeatState.getVariables().get(tag);
 			if(spr != null) Paths.loadAnimateAtlas(spr, folderOrImg, spriteJson, animationJson);
 		});
 		
-		Lua_helper.add_callback(lua, "addAnimationBySymbol", function(tag:String, name:String, symbol:String, ?framerate:Float = 24, ?loop:Bool = false, ?matX:Float = 0, ?matY:Float = 0)
+		Convert.addCallback(lua, "addAnimationBySymbol", function(tag:String, name:String, symbol:String, ?framerate:Float = 24, ?loop:Bool = false, ?matX:Float = 0, ?matY:Float = 0)
 		{
 			var obj:FlxAnimate = cast MusicBeatState.getVariables().get(tag);
 			if(obj == null) return false;
@@ -44,7 +48,7 @@ class FlxAnimateFunctions
 			return true;
 		});
 
-		Lua_helper.add_callback(lua, "addAnimationBySymbolIndices", function(tag:String, name:String, symbol:String, ?indices:Any = null, ?framerate:Float = 24, ?loop:Bool = false, ?matX:Float = 0, ?matY:Float = 0)
+		Convert.addCallback(lua, "addAnimationBySymbolIndices", function(tag:String, name:String, symbol:String, ?indices:Any = null, ?framerate:Float = 24, ?loop:Bool = false, ?matX:Float = 0, ?matY:Float = 0)
 		{
 			var obj:FlxAnimate = cast MusicBeatState.getVariables().get(tag);
 			if(obj == null) return false;

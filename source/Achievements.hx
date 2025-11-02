@@ -3,6 +3,9 @@ import flixel.FlxCamera;
 #if ACHIEVEMENTS_ALLOWED
 import haxe.Exception;
 import objects.AchievementPopup;
+#if LUA_ALLOWED
+import psychlua.FunkinLua.State;
+#end
 
 typedef Achievement =
 {
@@ -261,7 +264,7 @@ class Achievements {
 	#if LUA_ALLOWED
 	public static function addLuaCallbacks(lua:State)
 	{
-		Lua_helper.add_callback(lua, "getAchievementScore", function(name:String):Float
+		Convert.addCallback(lua, "getAchievementScore", function(name:String):Float
 		{
 			if(!achievements.exists(name))
 			{
@@ -270,7 +273,7 @@ class Achievements {
 			}
 			return getScore(name);
 		});
-		Lua_helper.add_callback(lua, "setAchievementScore", function(name:String, ?value:Float = 1, ?saveIfNotUnlocked:Bool = true):Float
+		Convert.addCallback(lua, "setAchievementScore", function(name:String, ?value:Float = 1, ?saveIfNotUnlocked:Bool = true):Float
 		{
 			if(!achievements.exists(name))
 			{
@@ -279,7 +282,7 @@ class Achievements {
 			}
 			return setScore(name, value, saveIfNotUnlocked);
 		});
-		Lua_helper.add_callback(lua, "addAchievementScore", function(name:String, ?value:Float = 1, ?saveIfNotUnlocked:Bool = true):Float
+		Convert.addCallback(lua, "addAchievementScore", function(name:String, ?value:Float = 1, ?saveIfNotUnlocked:Bool = true):Float
 		{
 			if(!achievements.exists(name))
 			{
@@ -288,7 +291,7 @@ class Achievements {
 			}
 			return addScore(name, value, saveIfNotUnlocked);
 		});
-		Lua_helper.add_callback(lua, "unlockAchievement", function(name:String):Dynamic
+		Convert.addCallback(lua, "unlockAchievement", function(name:String):Dynamic
 		{
 			if(!achievements.exists(name))
 			{
@@ -297,7 +300,7 @@ class Achievements {
 			}
 			return unlock(name);
 		});
-		Lua_helper.add_callback(lua, "isAchievementUnlocked", function(name:String):Dynamic
+		Convert.addCallback(lua, "isAchievementUnlocked", function(name:String):Dynamic
 		{
 			if(!achievements.exists(name))
 			{
@@ -306,7 +309,7 @@ class Achievements {
 			}
 			return isUnlocked(name);
 		});
-		Lua_helper.add_callback(lua, "achievementExists", function(name:String) return achievements.exists(name));
+		Convert.addCallback(lua, "achievementExists", function(name:String) return achievements.exists(name));
 	}
 	#end
 	#end

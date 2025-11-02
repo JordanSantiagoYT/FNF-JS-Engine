@@ -211,7 +211,7 @@ class FunkinLua {
 
 		for (name => func in customFunctions) {
 			if (func != null)
-				Lua_helper.add_callback(lua, name, func);
+				Convert.addCallback(lua, name, func);
 		}
 
 		// shader shit
@@ -605,11 +605,11 @@ class FunkinLua {
 					if(luaInstance.scriptName == cervix)
 					{
 						Lua.getglobal(luaInstance.lua, global);
-						if(Lua.isnumber(luaInstance.lua,-1)){
+						if(Lua.isnumber(luaInstance.lua,-1) == 1){
 							Lua.pushnumber(lua, Lua.tonumber(luaInstance.lua, -1));
-						}else if(Lua.isstring(luaInstance.lua,-1)){
+						}else if(Lua.isstring(luaInstance.lua,-1) == 1){
 							Lua.pushstring(lua, Lua.tostring(luaInstance.lua, -1));
-						}else if(Lua.isboolean(luaInstance.lua,-1)){
+						}else if(Lua.isboolean(luaInstance.lua,-1) == 1){
 							Lua.pushboolean(lua, Lua.toboolean(luaInstance.lua, -1));
 						}else{
 							Lua.pushnil(lua);
@@ -2259,7 +2259,7 @@ class FunkinLua {
 		});
 		for (name => func in registeredFunctions) {
 			if (func != null)
-				Lua_helper.add_callback(lua, name, func);
+				Convert.addCallback(lua, name, func);
 		}
 		#if ACHIEVEMENTS_ALLOWED Achievements.addLuaCallbacks(lua); #end
 		#if HSCRIPT_ALLOWED HScript.implement(this); #end
@@ -2890,7 +2890,7 @@ class FunkinLua {
 	public function addLocalCallback(name:String, myFunction:Dynamic)
 	{
 		callbacks.set(name, myFunction);
-		Lua_helper.add_callback(lua, name, null); // just so that it gets called
+		Convert.addCallback(lua, name, null); // just so that it gets called
 	}
 
 	public static function registerFunction(name:String, func:Dynamic):Void
@@ -3185,8 +3185,8 @@ class FunkinLua {
 			Lua.getglobal(lua, func);
 			var type:Int = Lua.type(lua, -1);
 
-			if (type != Lua.LUA_TFUNCTION) {
-				if (type > Lua.LUA_TNIL)
+			if (type != Lua.TFUNCTION) {
+				if (type > Lua.TNIL)
 					LuaUtils.luaTrace(lua, "ERROR (" + func + "): attempt to call a " + typeToString(type) + " value", false, false, FlxColor.RED);
 
 				Lua.pop(lua, 1);
@@ -3197,7 +3197,7 @@ class FunkinLua {
 			var status:Int = Lua.pcall(lua, args.length, 1, 0);
 
 			// Checks if it's not successful, then show a error.
-			if (status != Lua.LUA_OK) {
+			if (status != Lua.OK) {
 				var error:String = LuaUtils.getErrorMessage(lua, status);
 				LuaUtils.luaTrace(lua, "ERROR (" + func + "): " + error, false, false, FlxColor.RED);
 				return Function_Continue;
@@ -3266,16 +3266,24 @@ class FunkinLua {
 		return coverMeInPiss;
 	}
 
-	function typeToString(type:Int):String {
+	public static function typeToString(type:Int):String
+	{
 		#if LUA_ALLOWED
-		switch(type) {
-			case Lua.LUA_TBOOLEAN: return "boolean";
-			case Lua.LUA_TNUMBER: return "number";
-			case Lua.LUA_TSTRING: return "string";
-			case Lua.LUA_TTABLE: return "table";
-			case Lua.LUA_TFUNCTION: return "function";
+		switch (type)
+		{
+			case type if (type == Lua.TBOOLEAN):
+				return "boolean";
+			case type if (type == Lua.TNUMBER):
+				return "number";
+			case type if (type == Lua.TSTRING):
+				return "string";
+			case type if (type == Lua.TTABLE):
+				return "table";
+			case type if (type == Lua.TFUNCTION):
+				return "function";
+			case type if (type <= Lua.TNIL):
+				return "nil";
 		}
-		if (type <= Lua.LUA_TNIL) return "nil";
 		#end
 		return "unknown";
 	}
@@ -3287,7 +3295,7 @@ class FunkinLua {
 
 		if (Reflect.isFunction(data)) {
 			// Bind as a callable Lua function
-			Lua_helper.add_callback(lua, variable, data);
+			Convert.addCallback(lua, variable, data);
 			return;
 		}
 
@@ -3317,4 +3325,5 @@ class FunkinLua {
 		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
 	}
 }
+typedef State = cpp.RawPointer<Lua_State>;
 // hi guys, my name is "secret"!
