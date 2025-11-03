@@ -15,11 +15,9 @@ class Convert
 {
 	public static function addCallback(l:State, name:String, func:Dynamic)
 	{
-		// PsychLua expects the function to be null for local callbacks, too lazy to do something about that
-		if (Type.typeof(func) != TFunction || func == null)
-			return;
-
-		callbacks.set(name, func);
+	    // PsychLua expects the function to be null for local callbacks so if func is not TFunction we don't add the callback here
+	    if (Type.typeof(func) == TFunction)
+			callbacks.set(name, func);
 
         Lua.pushstring(l, name);
         Lua.pushcclosure(l, cpp.Callable.fromStaticFunction(handleCallback), 1);
