@@ -379,9 +379,6 @@ class PlayState extends MusicBeatState
 
 	public var songName:String;
 
-	//cam panning
-	var moveCamTo:HaxeVector<Float> = new HaxeVector(2);
-
 	var theListBotplay:Array<String> = [];
 
 	var formattedScore:String;
@@ -3225,7 +3222,7 @@ class PlayState extends MusicBeatState
 
 		if(!inCutscene && ClientPrefs.charsAndBG) {
 			final lerpVal:Float = CoolUtil.boundTo(elapsed * 2.4 * cameraSpeed * playbackRate, 0, 1);
-			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x + moveCamTo[0]/102, camFollow.x + moveCamTo[0]/102, lerpVal), FlxMath.lerp(camFollowPos.y + moveCamTo[1]/102, camFollow.y + moveCamTo[1]/102, lerpVal));
+			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 			if (ClientPrefs.charsAndBG && !boyfriendIdled) {
 				if(!startingSong && !endingSong && boyfriend.animation.curAnim != null && boyfriend.animation.curAnim.name.startsWith('idle')) {
 					boyfriendIdleTime += elapsed;
@@ -3236,9 +3233,6 @@ class PlayState extends MusicBeatState
 					boyfriendIdleTime = 0;
 				}
 			}
-			final panLerpVal:Float = CoolUtil.clamp(elapsed * 4.4 * cameraSpeed, 0, 1);
-			moveCamTo[0] = FlxMath.lerp(moveCamTo[0], 0, panLerpVal);
-			moveCamTo[1] = FlxMath.lerp(moveCamTo[1], 0, panLerpVal);
 		}
 		if (ClientPrefs.showNPS && (notesHitDateArray.length > 0 || oppNotesHitDateArray.length > 0)) {
 			notesToRemoveCount = 0;
