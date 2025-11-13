@@ -6,6 +6,7 @@ art/build_x64-officialrelease.bat
 art/test_x64-debug-officialrelease.bat
 
 ### VS Code
+build/*
 export/*
 .vscode/*
 .haxelib/
