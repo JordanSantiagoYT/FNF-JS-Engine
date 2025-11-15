@@ -136,7 +136,7 @@
 	<haxelib name="flxanimate"/>
 
 	<!-- Enables a terminal log prompt on debug builds -->
-	<haxelib name="hxcpp-debug-server" if="debug"/>
+	<haxelib name="hxcpp-debug-server" if="debug" optional="true"/>
 	<haxedef name="HXVLC_NO_SHARE_DIRECTORY" if="VIDEOS_ALLOWED" />
 
 	<!--Disable the Flixel core focus lost screen-->
