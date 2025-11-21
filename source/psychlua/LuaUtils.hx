@@ -6,6 +6,10 @@ import flixel.util.FlxColor;
 
 import openfl.display.BlendMode;
 
+#if LUA_ALLOWED
+import psychlua.FunkinLua.State;
+#end
+
 using StringTools;
 
 @:allow(psychlua.FunkinLua)
@@ -106,13 +110,18 @@ class LuaUtils {
 		Lua.pop(lua, 1);
 
 		if (v != null) v = v.trim();
-		if (v == null || v == "") {
-			return switch(status) {
-				case Lua.LUA_ERRRUN: return "Runtime Error";
-				case Lua.LUA_ERRMEM: return "Memory Allocation Error";
-				case Lua.LUA_ERRERR: return "Critical Error";
-				case _: return "Unknown Error";
+		if (v == null || v == "")
+		{
+			switch (status)
+			{
+				case type if (type == Lua.ERRRUN):
+					return "Runtime Error";
+				case type if (type == Lua.ERRMEM):
+					return "Memory Allocation Error";
+				case type if (type == Lua.ERRERR):
+					return "Critical Error";
 			}
+			return "Unknown Error";
 		}
 
 		return v;

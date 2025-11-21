@@ -124,10 +124,8 @@
 	<!--JS stuff needed-->
 	<haxelib name="hscript" />
 	<haxedef name="hscriptPos" />
-	<haxelib name="linc_luajit" if="LUA_ALLOWED"/>
+	<haxelib name="hxluajit" if="LUA_ALLOWED"/>
 	<haxelib name="tjson" />
-	<!--<haxelib name="hxCodec" if="VIDEOS_ALLOWED"/>-->
-
 	<haxelib name="hxvlc" if="VIDEOS_ALLOWED"/>
 
 	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED" />
