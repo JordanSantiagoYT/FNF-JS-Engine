@@ -15,7 +15,7 @@ using StringTools;
 @:allow(psychlua.FunkinLua)
 class LuaUtils {
     //Better optimized than using some getProperty shit or idk
-	static inline function getFlxEaseByString(?ease:String = '') {
+	public static inline function getFlxEaseByString(?ease:String = '') {
 		return switch(ease.toLowerCase().trim()) {
 			case 'backin': return FlxEase.backIn;
 			case 'backinout': return FlxEase.backInOut;
@@ -57,7 +57,7 @@ class LuaUtils {
 		}
 	}
 
-	static inline function blendModeFromString(blend:String):BlendMode {
+	public static inline function blendModeFromString(blend:String):BlendMode {
 		return switch(blend.toLowerCase().trim()) {
 			case 'add': return ADD;
 			case 'alpha': return ALPHA;
@@ -77,7 +77,7 @@ class LuaUtils {
 		}
 	}
 
-	static inline function cameraFromString(cam:String):FlxCamera {
+	public static inline function cameraFromString(cam:String):FlxCamera {
 		return switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud': return PlayState.instance.camHUD;
 			case 'camother' | 'other': return PlayState.instance.camOther;
@@ -104,7 +104,7 @@ class LuaUtils {
 		#end
 	}
 
-	static function getErrorMessage(lua: #if LUA_ALLOWED State #else Dynamic #end, status:Int):String {
+	public static function getErrorMessage(lua: #if LUA_ALLOWED State #else Dynamic #end, status:Int):String {
 		#if LUA_ALLOWED
 		var v:String = Lua.tostring(lua, -1);
 		Lua.pop(lua, 1);
@@ -139,7 +139,7 @@ class LuaUtils {
 		return false;
 	}
 
-	static function getBool(lua: #if LUA_ALLOWED State #else Dynamic #end, variable:String) {
+	public static function getBool(lua: #if LUA_ALLOWED State #else Dynamic #end, variable:String) {
 		#if LUA_ALLOWED
 		var result:String = null;
 		Lua.getglobal(lua, variable);
