@@ -31,7 +31,7 @@ class PlayState extends MusicBeatState
 	private var singAnimations:Array<String> = ['singLEFT', 'singDOWN', 'singUP', 'singRIGHT'];
 
 	public static var instance:PlayState;
-	public static var STRUM_X = 48.5;
+	public static var STRUM_X = 48;
 	public static var STRUM_X_MIDDLESCROLL = -278;
 
 	public var renderPath(default, null):String = ClientPrefs.renderPath;
