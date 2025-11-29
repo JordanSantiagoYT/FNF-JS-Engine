@@ -3,263 +3,209 @@ package;
 import shaders.RGBPalette.RGBShaderReference;
 import shaders.RGBPalette;
 
-// wow this code is a mess -avie
 class StrumNote extends FlxSprite
 {
-  public var rgbShader:RGBShaderReference;
-  public var notes_angle:Null<Float> = null;
-  public var resetAnim:Float = 0;
-  public var noteData:Int = 0;
-  public var direction:Float = 90; // plan on doing scroll directions soon -bb
-  public var downScroll:Bool = false; // plan on doing scroll directions soon -bb
-  public var sustainReduce:Bool = true;
+	public var rgbShader:RGBShaderReference;
+    	public var notes_angle:Null<Float> = null;
+	public var resetAnim:Float = 0;
+	public var noteData:Int = 0;
+	public var direction:Float = 90;//plan on doing scroll directions soon -bb
+	public var downScroll:Bool = false;//plan on doing scroll directions soon -bb
+	public var sustainReduce:Bool = true;
 
-  static final HOLD_TIME:Float = 0.1;
+	public var player:Int;
+	public var ogNoteskin:String = null;
 
-  public var HoldTimer:Float = -1;
+	public var texture(default, set):String = null;
+	private function set_texture(value:String):String {
+		if(texture != value) {
+			texture = (value != null ? value : "noteskins/NOTE_assets" + Note.getNoteSkinPostfix());
+			reloadNote();
+		}
+		return value;
+	}
+	public var useRGBShader:Bool = true;
 
-  public var player:Int;
-  public var ogNoteskin:String = null;
+	public function getAngle() {
+		return (notes_angle == null ? angle : notes_angle);
+	}
 
-  public var texture(default, set):String = null;
+	public function new(x:Float, y:Float, leData:Int, player:Int, ?inEditor:Bool = false) {
+		rgbShader = new RGBShaderReference(this, Note.initializeGlobalRGBShader(leData));
+		rgbShader.enabled = false;
+		if(PlayState.SONG != null && PlayState.SONG.disableNoteRGB || !ClientPrefs.enableColorShader) useRGBShader = false;
 
-  private function set_texture(value:String):String
-  {
-    if (texture != value)
-    {
-      texture = (value != null ? value : "noteskins/NOTE_assets" + Note.getNoteSkinPostfix());
-      reloadNote();
-    }
-    return value;
-  }
+		var arr:Array<FlxColor> = ClientPrefs.arrowRGB[leData];
+		if(PlayState.isPixelStage) arr = ClientPrefs.arrowRGBPixel[leData];
+		if(arr != null && leData <= arr.length && useRGBShader)
+		{
+			@:bypassAccessor
+			{
+				rgbShader.r = arr[0];
+				rgbShader.g = arr[1];
+				rgbShader.b = arr[2];
+			}
+		}
+		noteData = leData;
+		this.player = player;
+		this.noteData = leData;
+		super(x, y);
 
-  public var useRGBShader:Bool = true;
+		var skin:String = null;
+		if(PlayState.SONG != null && PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1) skin = PlayState.SONG.arrowSkin;
+		else skin = Note.defaultNoteSkin;
 
-  public function getAngle()
-  {
-    return (notes_angle == null ? angle : notes_angle);
-  }
+		var customSkin:String = skin + Note.getNoteSkinPostfix();
+		if(Paths.fileExists('images/$customSkin.png', IMAGE)) skin = customSkin;
 
-  public function new(x:Float, y:Float, leData:Int, player:Int, ?inEditor:Bool = false)
-  {
-    rgbShader = new RGBShaderReference(this, Note.initializeGlobalRGBShader(leData));
-    rgbShader.enabled = false;
-    if (PlayState.SONG != null && PlayState.SONG.disableNoteRGB || !ClientPrefs.enableColorShader) useRGBShader = false;
+		texture = skin; //Load texture and anims
+		ogNoteskin = skin;
 
-    var arr:Array<FlxColor> = ClientPrefs.arrowRGB[leData];
-    if (PlayState.isPixelStage) arr = ClientPrefs.arrowRGBPixel[leData];
-    if (arr != null && leData <= arr.length && useRGBShader)
-    {
-      @:bypassAccessor
-      {
-        rgbShader.r = arr[0];
-        rgbShader.g = arr[1];
-        rgbShader.b = arr[2];
-      }
-    }
-    noteData = leData;
-    this.player = player;
-    this.noteData = leData;
-    super(x, y);
+		scrollFactor.set();
+	}
 
-    var skin:String = null;
+	public function reloadNote()
+	{
+		var lastAnim:String = null;
+		if(animation.curAnim != null) lastAnim = animation.curAnim.name;
 
-    if (PlayState.SONG != null && PlayState.SONG.arrowSkin != null && PlayState.SONG.arrowSkin.length > 1) skin = PlayState.SONG.arrowSkin;
-    else
-      skin = Note.defaultNoteSkin;
+		if(PlayState.isPixelStage)
+		{
+			loadGraphic(Paths.image('pixelUI/' + texture));
+			width = width / 4;
+			height = height / 5;
+			loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
 
-    var customSkin:String = skin + Note.getNoteSkinPostfix();
-    if (Paths.fileExists('images/$customSkin.png', IMAGE)) skin = customSkin;
+			antialiasing = false;
+			setGraphicSize(Std.int(width * PlayState.daPixelZoom));
 
-    texture = skin; // Load texture and anims
-    ogNoteskin = skin;
+			animation.add('green', [6]);
+			animation.add('red', [7]);
+			animation.add('blue', [5]);
+			animation.add('purple', [4]);
+			switch (Math.abs(noteData) % 4)
+			{
+				case 0:
+					animation.add('static', [0]);
+					animation.add('pressed', [4, 8], 12, false);
+					animation.add('confirm', [12, 16], 24, false);
+				case 1:
+					animation.add('static', [1]);
+					animation.add('pressed', [5, 9], 12, false);
+					animation.add('confirm', [13, 17], 24, false);
+				case 2:
+					animation.add('static', [2]);
+					animation.add('pressed', [6, 10], 12, false);
+					animation.add('confirm', [14, 18], 12, false);
+				case 3:
+					animation.add('static', [3]);
+					animation.add('pressed', [7, 11], 12, false);
+					animation.add('confirm', [15, 19], 24, false);
+			}
+		}
+		else
+		{
+			frames = Paths.getSparrowAtlas(texture);
+			animation.addByPrefix('green', 'arrowUP');
+			animation.addByPrefix('blue', 'arrowDOWN');
+			animation.addByPrefix('purple', 'arrowLEFT');
+			animation.addByPrefix('red', 'arrowRIGHT');
 
-    this.animation.onFrameChange.add(onAnimationFrame);
-    this.animation.onFinish.add(onAnimationFinished);
+			antialiasing = ClientPrefs.globalAntialiasing;
+			setGraphicSize(Std.int(width * 0.7));
 
-    scrollFactor.set();
-  }
+			switch (Math.abs(noteData) % 4)
+			{
+				case 0:
+					animation.addByPrefix('static', 'arrowLEFT');
+					animation.addByPrefix('pressed', 'left press', 24, false);
+					animation.addByPrefix('confirm', 'left confirm', 24, false);
+				case 1:
+					animation.addByPrefix('static', 'arrowDOWN');
+					animation.addByPrefix('pressed', 'down press', 24, false);
+					animation.addByPrefix('confirm', 'down confirm', 24, false);
+				case 2:
+					animation.addByPrefix('static', 'arrowUP');
+					animation.addByPrefix('pressed', 'up press', 24, false);
+					animation.addByPrefix('confirm', 'up confirm', 24, false);
+				case 3:
+					animation.addByPrefix('static', 'arrowRIGHT');
+					animation.addByPrefix('pressed', 'right press', 24, false);
+					animation.addByPrefix('confirm', 'right confirm', 24, false);
+			}
+		}
+		updateHitbox();
 
-  function onAnimationFrame(name:String, frameNumber:Int, frameIndex:Int):Void {} // not that this func is unfinished but it's made to do nothing
+		if(lastAnim != null)
+		{
+			playAnim(lastAnim, true);
+		}
+	}
 
-  function onAnimationFinished(name:String):Void
-  {
-    // better code for the confirm shit
-    if (name == 'confirm')
-    {
-      HoldTimer = 0;
-    }
-  }
+	public function postAddedToGroup() {
+		playAnim('static');
+		x += Note.swagWidth * noteData;
+		x += 50;
+		x += ((FlxG.width / 2) * player);
+		ID = noteData;
+	}
 
-  public function reloadNote()
-  {
-    /*
-     * WHAT THE FUCK IS THIS??
-     * YOU SHOULD MAKE THIS FUNCTION ON A SEPARATE SCRIPT FILE
-     * ALSO WHY THE FUCK IS THE GAME HARDCODED
-     * HXS, HXC AND OTHER HSCRIPT SHIT EXISTS
-     *
-     * @see https://files.catbox.moe/kfcmrb.PNG
-     *
-     * sorry i had to rant about everything on the jse source
-     * -avie
-     */
-    var lastAnim:String = null;
-    if (animation.curAnim != null) lastAnim = animation.curAnim.name;
+	override function update(elapsed:Float) {
+		if (ClientPrefs.ffmpegMode) elapsed = 1 / ClientPrefs.targetFPS;
+		if(resetAnim > 0) {
+			resetAnim -= elapsed;
+			if(resetAnim <= 0) {
+				playAnim('static');
+				resetAnim = 0;
+			}
+		}
+		super.update(elapsed);
+	}
 
-    if (PlayState.isPixelStage)
-    {
-      loadGraphic(Paths.image('pixelUI/' + texture));
-      width = width / 4;
-      height = height / 5;
-      loadGraphic(Paths.image('pixelUI/' + texture), true, Math.floor(width), Math.floor(height));
+	public function playAnim(anim:String, ?force:Bool = false, ?r:FlxColor, ?g:FlxColor, ?b:FlxColor) {
+		animation.play(anim, force);
+		if(animation.curAnim != null)
+		{
+			centerOffsets();
+			centerOrigin();
+		}
+		if(useRGBShader)
+		{
+			rgbShader.enabled = (animation.curAnim != null && animation.curAnim.name != 'static');
+			if (r != null && g != null && b != null) updateRGBColors(r, g, b);
+		} else if (!useRGBShader && rgbShader != null) rgbShader.enabled = false;
+	}
+	public function updateNoteSkin(noteskin:String) {
+			if (texture == "noteskins/" + noteskin || noteskin == ogNoteskin || texture == noteskin) return; //if the noteskin to change to is the same as before then don't update it
+			if (noteskin != null && noteskin.length > 0) texture = "noteskins/" + noteskin;
+			else texture = "noteskins/NOTE_assets" + Note.getNoteSkinPostfix();
+	}
+	public function updateRGBColors(?r:FlxColor, ?g:FlxColor, ?b:FlxColor) {
+        if (rgbShader != null)
+		{
+			rgbShader.r = r;
+			rgbShader.g = g;
+			rgbShader.b = b;
+		}
+	}
+	public function resetRGB()
+	{
+		if (rgbShader != null && animation.curAnim != null && animation.curAnim.name == 'static')
+		{
+			switch (ClientPrefs.noteColorStyle)
+			{
+				case 'Quant-Based', 'Rainbow', 'Char-Based':
+				rgbShader.r = 0xFFF9393F;
+				rgbShader.g = 0xFFFFFFFF;
+				rgbShader.b = 0xFF651038;
+				case 'Grayscale':
+				rgbShader.r = 0xFFA0A0A0;
+				rgbShader.g = FlxColor.WHITE;
+				rgbShader.b = 0xFF424242;
+				default:
 
-      antialiasing = false;
-      setGraphicSize(Std.int(width * PlayState.daPixelZoom));
-
-      animation.add('green', [6]);
-      animation.add('red', [7]);
-      animation.add('blue', [5]);
-      animation.add('purple', [4]);
-      switch (Math.abs(noteData) % 4)
-      {
-        case 0:
-          animation.add('static', [0]);
-          animation.add('pressed', [4, 8], 12, false);
-          animation.add('confirm', [12, 16], 24, false);
-        case 1:
-          animation.add('static', [1]);
-          animation.add('pressed', [5, 9], 12, false);
-          animation.add('confirm', [13, 17], 24, false);
-        case 2:
-          animation.add('static', [2]);
-          animation.add('pressed', [6, 10], 12, false);
-          animation.add('confirm', [14, 18], 12, false);
-        case 3:
-          animation.add('static', [3]);
-          animation.add('pressed', [7, 11], 12, false);
-          animation.add('confirm', [15, 19], 24, false);
-      }
-    }
-    else
-    {
-      frames = Paths.getSparrowAtlas(texture);
-      animation.addByPrefix('green', 'arrowUP');
-      animation.addByPrefix('blue', 'arrowDOWN');
-      animation.addByPrefix('purple', 'arrowLEFT');
-      animation.addByPrefix('red', 'arrowRIGHT');
-
-      antialiasing = ClientPrefs.globalAntialiasing;
-      setGraphicSize(Std.int(width * 0.7));
-
-      switch (Math.abs(noteData) % 4)
-      {
-        case 0:
-          animation.addByPrefix('static', 'arrowLEFT');
-          animation.addByPrefix('pressed', 'left press', 24, false);
-          animation.addByPrefix('confirm', 'left confirm', 24, false);
-        case 1:
-          animation.addByPrefix('static', 'arrowDOWN');
-          animation.addByPrefix('pressed', 'down press', 24, false);
-          animation.addByPrefix('confirm', 'down confirm', 24, false);
-        case 2:
-          animation.addByPrefix('static', 'arrowUP');
-          animation.addByPrefix('pressed', 'up press', 24, false);
-          animation.addByPrefix('confirm', 'up confirm', 24, false);
-        case 3:
-          animation.addByPrefix('static', 'arrowRIGHT');
-          animation.addByPrefix('pressed', 'right press', 24, false);
-          animation.addByPrefix('confirm', 'right confirm', 24, false);
-      }
-    }
-    updateHitbox();
-
-    if (lastAnim != null)
-    {
-      playAnim(lastAnim, true);
-    }
-  }
-
-  public function postAddedToGroup()
-  {
-    playAnim('static');
-    x += Note.swagWidth * noteData;
-    x += 50;
-    x += ((FlxG.width / 2) * player);
-    ID = noteData;
-  }
-
-  override function update(elapsed:Float)
-  {
-    if (ClientPrefs.ffmpegMode) elapsed = 1 / ClientPrefs.targetFPS;
-
-    super.update(elapsed);
-
-    centerOrigin();
-
-    if (HoldTimer >= 0)
-    {
-      HoldTimer += elapsed;
-      if (HoldTimer >= HOLD_TIME)
-      {
-        HoldTimer = -1;
-        playAnim('static');
-      }
-    }
-  }
-
-  public function playAnim(anim:String, ?force:Bool = false, ?r:FlxColor, ?g:FlxColor, ?b:FlxColor)
-  {
-    animation.play(anim, force);
-    if (animation.curAnim != null)
-    {
-      centerOffsets();
-      centerOrigin();
-    }
-    if (useRGBShader)
-    {
-      rgbShader.enabled = (animation.curAnim != null && animation.curAnim.name != 'static');
-      if (r != null && g != null && b != null) updateRGBColors(r, g, b);
-    }
-    else if (!useRGBShader && rgbShader != null) rgbShader.enabled = false;
-  }
-
-  public function updateNoteSkin(noteskin:String)
-  {
-    if (texture == "noteskins/" + noteskin || noteskin == ogNoteskin || texture == noteskin) return
-      ; // if the noteskin to change to is the same as before then don't update it
-    if (noteskin != null && noteskin.length > 0) texture = "noteskins/" + noteskin;
-    else
-      texture = "noteskins/NOTE_assets" + Note.getNoteSkinPostfix();
-  }
-
-  public function updateRGBColors(?r:FlxColor, ?g:FlxColor, ?b:FlxColor)
-  {
-    if (rgbShader != null)
-    {
-      rgbShader.r = r;
-      rgbShader.g = g;
-      rgbShader.b = b;
-    }
-  }
-
-  public function resetRGB()
-  {
-    if (rgbShader != null && animation.curAnim != null && animation.curAnim.name == 'static')
-    {
-      switch (ClientPrefs.noteColorStyle)
-      {
-        case 'Quant-Based', 'Rainbow', 'Char-Based':
-          rgbShader.r = 0xFFF9393F;
-          rgbShader.g = 0xFFFFFFFF;
-          rgbShader.b = 0xFF651038;
-        case 'Grayscale':
-          rgbShader.r = 0xFFA0A0A0;
-          rgbShader.g = FlxColor.WHITE;
-          rgbShader.b = 0xFF424242;
-        default:
-      }
-      rgbShader.enabled = false;
-    }
-  }
+			}
+			rgbShader.enabled = false;
+		}
+	}
 }
