@@ -3712,7 +3712,7 @@ class PlayState extends MusicBeatState
 
 	// Health icon updaters
 	// This variable tracks the reset time for the Dave & Bambi/Strident Crisis icons.
-	var iconSizeResetTime = 0;
+	var iconSizeResetTime:Float = 0;
 	public dynamic function updateIconsScale(elapsed:Float)
 	{
 		switch (ClientPrefs.iconBounceType) {
