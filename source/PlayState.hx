@@ -3711,6 +3711,8 @@ class PlayState extends MusicBeatState
 	}
 
 	// Health icon updaters
+	// This variable tracks the reset time for the Dave & Bambi/Strident Crisis icons.
+	var iconSizeResetTime = 0;
 	public dynamic function updateIconsScale(elapsed:Float)
 	{
 		switch (ClientPrefs.iconBounceType) {
@@ -3720,14 +3722,20 @@ class PlayState extends MusicBeatState
 					Std.int(FlxMath.lerp(i.frameHeight, i.height, CoolUtil.boundTo(1 - (elapsed * 30 * playbackRate), 0, 1))));
 
 			case 'Strident Crisis':
+				iconSizeResetTime = Math.max(0, iconSizeResetTime - elapsed);
+				var iconLerp = FlxEase.quartIn(iconSizeResetTime / 0.5);
+
 				for (i in [iconP1, iconP2])
-					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, 0.50 / playbackRate)),
-					Std.int(FlxMath.lerp(i.frameHeight, i.height, 0.50 / playbackRate)));
+					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, iconLerp)),
+					Std.int(FlxMath.lerp(i.frameHeight, i.height, iconLerp)));
 
 			case 'Dave and Bambi':
+				iconSizeResetTime = Math.max(0, iconSizeResetTime - elapsed / playbackRate);
+				var iconLerp = FlxEase.quartIn(iconSizeResetTime / 0.8);
+				
 				for (i in [iconP1, iconP2])
-					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, 0.8 / playbackRate)),
-					Std.int(FlxMath.lerp(i.frameHeight, i.height, 0.8 / playbackRate)));
+					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, iconLerp)),
+					Std.int(FlxMath.lerp(i.frameHeight, i.height, iconLerp)));
 
 			case 'Plank Engine':
 				final funnyBeat = (Conductor.songPosition / 1000) * (Conductor.bpm / 60);
@@ -6101,7 +6109,7 @@ class PlayState extends MusicBeatState
 	{
 		switch(ClientPrefs.iconBounceType) {
 			case 'Dave and Bambi':
-				final funny:Float = Math.max(Math.min(healthBar.value,(maxHealth/0.95)),0.1);
+				final funny:Float = Math.max(Math.min(healthBar.value,(maxHealth*0.95)),0.1);
 
 				//health icon bounce but epic
 				if (!opponentChart)
@@ -6112,6 +6120,7 @@ class PlayState extends MusicBeatState
 					iconP2.setGraphicSize(Std.int(iconP2.width + (50 * funny)),Std.int(iconP2.height - (25 * funny)));
 					iconP1.setGraphicSize(Std.int(iconP1.width + (50 * ((2 - funny) + 0.1))),Std.int(iconP1.height - (25 * ((2 - funny) + 0.1))));
 				}
+				iconSizeResetTime = 0.8;
 
 			case 'Old Psych':
 				for (i in [iconP1, iconP2])
@@ -6132,6 +6141,7 @@ class PlayState extends MusicBeatState
 
 					FlxTween.tween(i, {'scale.x': 1, 'scale.y': 1}, Conductor.crochet / 1250 * gfSpeed / playbackRate, {ease: FlxEase.quadOut});
 				}
+				iconSizeResetTime = 0.5;
 
 			case 'Plank Engine':
 				for (i in [iconP1, iconP2]) {
