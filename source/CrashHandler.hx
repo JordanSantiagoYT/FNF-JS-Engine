@@ -149,7 +149,7 @@ class CrashHandler
 			{
 				if (!FileSystem.exists("crash/"))
 					FileSystem.createDirectory("crash/");
-				File.saveContent(path, '$errorMessage\n\nCrash Happened on JS Engine v${MainMenuState.psychEngineJSVersionNumber}!');
+				File.saveContent(path, '$errorMessage\n\nCrash Happened on JS Engine v${MainMenuState.psychEngineJSVersion}!');
 			}
 			catch (e)
 				trace('Couldn\'t save error message. (${e.message})');
@@ -197,7 +197,7 @@ class Crash extends MusicBeatState
 		bg.color = 0xFF232323;
 		add(bg);
 
-		var ohNo:FlxText = new FlxText(0, 0, 1280, 'JS Engine v${MainMenuState.psychEngineJSVersionNumber} has crashed!');
+		var ohNo:FlxText = new FlxText(0, 0, 1280, 'JS Engine v${MainMenuState.psychEngineJSVersion} has crashed!');
 		ohNo.setFormat(Paths.font('vcr.ttf'), 48, FlxColor.WHITE, FlxTextAlign.CENTER);
 		ohNo.alpha = 0;
 		ohNo.screenCenter();
