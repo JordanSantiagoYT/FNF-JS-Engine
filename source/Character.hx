@@ -30,7 +30,6 @@ typedef CharacterFile = {
 	@:optional var shake_intensity:Float;
 	@:optional var shake_duration:Float;
 	@:optional var _editor_isPlayer:Null<Bool>;
-	@:optional var _editor_isPlayer:Null<Bool>;
 }
 
 typedef AnimArray = {
