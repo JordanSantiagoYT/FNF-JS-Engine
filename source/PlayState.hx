@@ -103,8 +103,6 @@ class PlayState extends MusicBeatState
 	public static var storyWeek:Int = 0;
 	public static var storyPlaylist:Array<String> = [];
 	public static var storyDifficulty:Int = 1;
-	var winning:Bool = false;
-	var losing:Bool = false;
 
 	var curTime:Float = 0;
 	var songCalc:Float = 0;
@@ -1679,12 +1677,8 @@ class PlayState extends MusicBeatState
 	}
 
 	public function reloadHealthBarColors(leftColorArray:Array<Int>, rightColorArray:Array<Int>) {
-		if (!ClientPrefs.ogHPColor) {
-				healthBar.createFilledBar(FlxColor.fromRGB(leftColorArray[0], leftColorArray[1], leftColorArray[2]),
-				FlxColor.fromRGB(rightColorArray[0], rightColorArray[1], rightColorArray[2]));
-		} else {
-				healthBar.createFilledBar(0xFFFF0000, 0xFF66FF33);
-		}
+		healthBar.createFilledBar(FlxColor.fromRGB(leftColorArray[0], leftColorArray[1], leftColorArray[2]),
+		FlxColor.fromRGB(rightColorArray[0], rightColorArray[1], rightColorArray[2]));
 
 		healthBar.updateBar();
 	}
@@ -3203,23 +3197,6 @@ class PlayState extends MusicBeatState
 
 		if (tankmanAscend && curStep > 895 && curStep < 1151) camGame.zoom = 0.8;
 
-		if (healthBar.percent >= 80 && !winning)
-		{
-			winning = true;
-			reloadHealthBarColors(dad.losingColorArray, boyfriend.winningColorArray);
-		}
-		if (healthBar.percent <= 20 && !losing)
-		{
-			losing = true;
-			reloadHealthBarColors(dad.winningColorArray, boyfriend.losingColorArray);
-		}
-		if (healthBar.percent >= 20 && losing || healthBar.percent <= 80 && winning)
-		{
-			losing = false;
-			winning = false;
-			reloadHealthBarColors(dad.healthColorArray, boyfriend.healthColorArray);
-		}
-
 		if(!inCutscene && ClientPrefs.charsAndBG) {
 			final lerpVal:Float = CoolUtil.boundTo(elapsed * 2.4 * cameraSpeed * playbackRate, 0, 1);
 			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
@@ -4258,7 +4235,7 @@ class PlayState extends MusicBeatState
 				shouldDrainHealth = (opponentDrain || (opponentChart ? boyfriend.healthDrain : dad.healthDrain));
 				if (!opponentDrain && !Math.isNaN((opponentChart ? boyfriend : dad).drainAmount)) healthDrainAmount = opponentChart ? boyfriend.drainAmount : dad.drainAmount;
 				if (!opponentDrain && !Math.isNaN((opponentChart ? boyfriend : dad).drainFloor)) healthDrainFloor = opponentChart ? boyfriend.drainFloor : dad.drainFloor;
-				if (!ClientPrefs.ogHPColor) reloadHealthBarColors(dad.healthColorArray, boyfriend.healthColorArray);
+				reloadHealthBarColors(dad.healthColorArray, boyfriend.healthColorArray);
 				if (ClientPrefs.showNotes)
 				{
 					for (i in strumLineNotes.members)
