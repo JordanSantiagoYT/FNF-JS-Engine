@@ -244,7 +244,7 @@ class EditorPlayState extends MusicBeatState
 						hitCausesMiss: songNotes[3] == 'Hurt Note',
 						multSpeed: 1,
 						multAlpha: 1,
-						noteDensity: currentMultiplier,
+						noteDensity: 1,
 						ignoreNote: songNotes[3] == 'Hurt Note' && gottaHitNote
 					};
 					if (swagNote.noteskin?.length > 0 && !Paths.noteSkinFramesMap.exists(swagNote.noteskin)) Paths.initNote(swagNote.noteskin);
@@ -267,17 +267,16 @@ class EditorPlayState extends MusicBeatState
 								noteskin: '',
 								gfNote: songNotes[3] == 'GF Sing' || (section.gfSection && songNotes[1] < 4),
 								noAnimation: songNotes[3] == 'No Animation',
-								isSustainNote: true,
-								isSustainEnd: susNote == floorSus,
-								sustainLength: 0,
-								sustainScale: 1 / ratio,
 								parentST: swagNote.strumTime,
 								parentSL: swagNote.sustainLength,
 								hitHealth: 0.023,
 								missHealth: 0.0475,
 								wasHit: false,
 								multSpeed: 1,
-								wasSpawned: false
+								multAlpha: 1,
+								noteDensity: 1,
+								hitCausesMiss: songNotes[3] == 'Hurt Note',
+								ignoreNote: songNotes[3] == 'Hurt Note' && swagNote.mustPress
 							};
 							inline unspawnNotes.push(sustainNote);
 							//Sys.sleep(0.0001);
