@@ -19,8 +19,8 @@ typedef EventNote = {
 	public var oppNote:Bool = false;
 	public var noteType:String = "";
 	public var animSuffix:String = "";
-	public var noteskin:String = "";
-	public var texture:String = "";
+	public var noteskin:Null<String> = null;
+	public var texture:Null<String> = null;
 	public var noAnimation:Bool = false;
 	public var noMissAnimation:Bool = false;
 	public var gfNote:Bool = false;
@@ -617,20 +617,22 @@ class Note extends FlxSprite
 	var shouldCenterOffsets:Bool = true;
 	public function setupNoteData(chartNoteData:PreloadedChartNote):Void
 	{
+		var ns = chartNoteData.noteskin ?? "";
+		var tx = chartNoteData.texture ?? "";
+	
 		wasGoodHit = hitByOpponent = tooLate = canBeHit = false; // Don't make an update call of this for the note group
 
-		if (chartNoteData.noteskin.length > 0 && chartNoteData.noteskin != '' && chartNoteData.noteskin != texture)
-		{
-			texture = 'noteskins/' + chartNoteData.noteskin;
+		if (ns.length > 0 && ns != texture) {
+			texture = 'noteskins/' + ns;
 			useRGBShader = false;
 		}
-		if (chartNoteData.texture.length > 0 && chartNoteData.texture != texture)
-		{
-			texture = chartNoteData.texture;
+
+		if (tx.length > 0 && tx != texture) {
+			texture = tx;
 			shouldCenterOffsets = false;
 		}
-		if ((chartNoteData.noteskin.length < 1 && chartNoteData.texture.length < 1) && texture != Paths.defaultSkin)
-		{
+
+		if (ns.length < 1 && tx.length < 1 && texture != Paths.defaultSkin) {
 			texture = Paths.defaultSkin;
 			useRGBShader = (ClientPrefs.enableColorShader && PlayState.SONG != null && !PlayState.SONG.disableNoteRGB);
 			shouldCenterOffsets = useRGBShader;
