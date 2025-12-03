@@ -5,9 +5,6 @@ import away3d.library.assets.IAsset;
 import openfl.display.BitmapData;
 
 /**
- * @author Ne_Eo
- * @see https://twitter.com/Ne_Eo_Twitch
- *
  * Edited by lunarclient
  * @see https://twitter.com/lunarcleint
  */

@@ -6,9 +6,6 @@ import away3d.library.assets.IAsset;
 /**
  * @author lunarclient
  * @see https://twitter.com/lunarcleint
- *
- * Help from Ne_Eo
- * @see https://twitter.com/Ne_Eo_Twitch
  */
 class Flx3DUtil
 {

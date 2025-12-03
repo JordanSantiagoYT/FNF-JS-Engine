@@ -2,7 +2,7 @@ package debug;
 
 import debug.Memory;
 import lime.system.System as LimeSystem;
-import mem.GetTotalMemory;
+import debug.mem.GetTotalMemory;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
 

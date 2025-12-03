@@ -20,7 +20,7 @@
 
 README.md revamped by [Nael2xd](https://youtube.com/@nael2xd?si=axwJrY_8jdlXUwSm)
 
-_If you're looking for the Mobile port, [go here](https://github.com/JordanSantiagoYT/FNF-JS-Engine/tree/mobile)._
+<!-- _If you're looking for the Mobile port, [go here](https://github.com/JordanSantiagoYT/FNF-JS-Engine/tree/mobile)._ -->
 
 ## Welcome
 

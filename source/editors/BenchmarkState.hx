@@ -1,7 +1,7 @@
 package editors;
 
 import flixel.FlxState;
-import model.objects.flixel.Flixel;
+import flx3d.model.objects.flixel.Flixel;
 
 class BenchmarkState extends FlxState
 {

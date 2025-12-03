@@ -102,6 +102,8 @@
 	<assets path="assets/weekend1"      library="weekend1"      exclude="*.mp3" unless="web"/>
 	<assets path="assets/preload/models"        library="models"        />
 	<assets path="assets/preload/models"        library="models"        />
+	
+	<assets path="gamemode.ini" if="linux" unless="debug"/>
 
 	<assets path="assets/soundtray" embed="true" />
 
@@ -131,6 +133,7 @@
 	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED" />
 	<!-- openfls folder dialog is an pain in the ass -->
 	<haxelib name="hxnativefiledialog" if="cpp" unless="hl || neko"/>
+	<haxelib name="hxgamemode" if="linux" unless="debug"/>
 	<haxelib name="flxanimate"/>
 
 	<!-- Enables a terminal log prompt on debug builds -->
