@@ -226,28 +226,28 @@ class EditorPlayState extends MusicBeatState
 
 					final gottaHitNote:Bool = (songNotes[1] < 4 ? section.mustHitSection : !section.mustHitSection);
 
-					final swagNote:PreloadedChartNote = cast {
+					final swagNote:PreloadedChartNote = {
 						strumTime: daStrumTime,
 						noteData: daNoteData,
-						mustPress: gottaHitNote,
+						mustPress: bothSides || gottaHitNote,
+						oppNote: (opponentChart ? gottaHitNote : !gottaHitNote),
 						noteType: songNotes[3],
 						animSuffix: (songNotes[3] == 'Alt Animation' || section.altAnim ? '-alt' : ''),
-						noteskin: '',
+						noteskin: (gottaHitNote ? bfNoteskin : dadNoteskin),
 						gfNote: songNotes[3] == 'GF Sing' || (section.gfSection && songNotes[1] < 4),
 						noAnimation: songNotes[3] == 'No Animation',
-						isSustainNote: false,
-						isSustainEnd: false,
+						noMissAnimation: songNotes[3] == 'No Animation',
 						sustainLength: songNotes[2],
-						sustainScale: 0,
 						hitHealth: 0.023,
-						missHealth: 0.0475,
+						missHealth: songNotes[3] != 'Hurt Note' ? 0.0475 : 0.3,
 						wasHit: false,
+						hitCausesMiss: songNotes[3] == 'Hurt Note',
 						multSpeed: 1,
 						multAlpha: 1,
-						wasSpawned: false,
+						noteDensity: currentMultiplier,
 						ignoreNote: songNotes[3] == 'Hurt Note' && gottaHitNote
 					};
-					if (swagNote.noteskin.length > 0 && !Paths.noteSkinFramesMap.exists(swagNote.noteskin)) Paths.initNote(swagNote.noteskin);
+					if (swagNote.noteskin != null && swagNote.noteskin.length > 0 && !Paths.noteSkinFramesMap.exists(swagNote.noteskin)) Paths.initNote(swagNote.noteskin);
 
 					if(!Std.isOfType(songNotes[3], String)) swagNote.noteType = ChartingState.noteTypeList[songNotes[3]]; //Backward compatibility + compatibility with Week 7 charts
 
