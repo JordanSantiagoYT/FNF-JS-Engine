@@ -43,7 +43,7 @@ body:
     id: knownIssueCheck
     attributes:
       label: "Did you check if this issue is already known?"
-      description: "[Click me here to see the Known Issues and Fixes... Please?](https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues/1031)"
+      description: "[Click me here to see the Known Issues and Fixes... Please?](https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues/1031) If not, you will automatically be rejected."
       options:
         - "No"
         - "Yes"
@@ -54,7 +54,7 @@ body:
     id: dupeCheck
     attributes:
       label: "Did you check for any similar issues?"
-      description: "Check if there is one. Don't report the issue if you find an issue related to this one, or it will be closed as a duplicate."
+      description: "Check if there is one. Don't report the issue if you find an issue related to this one, or it will be closed as a duplicate. If you answer 'No', you will automatically be rejected."
       options:
         - "No"
         - "Yes"

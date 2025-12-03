@@ -31,7 +31,7 @@ class PlayState extends MusicBeatState
 	private var singAnimations:Array<String> = ['singLEFT', 'singDOWN', 'singUP', 'singRIGHT'];
 
 	public static var instance:PlayState;
-	public static var STRUM_X = 48.5;
+	public static var STRUM_X = 48;
 	public static var STRUM_X_MIDDLESCROLL = -278;
 
 	public var renderPath(default, null):String = ClientPrefs.renderPath;
@@ -103,8 +103,6 @@ class PlayState extends MusicBeatState
 	public static var storyWeek:Int = 0;
 	public static var storyPlaylist:Array<String> = [];
 	public static var storyDifficulty:Int = 1;
-	var winning:Bool = false;
-	var losing:Bool = false;
 
 	var curTime:Float = 0;
 	var songCalc:Float = 0;
@@ -378,9 +376,6 @@ class PlayState extends MusicBeatState
 	private var controlArray:Array<String>;
 
 	public var songName:String;
-
-	//cam panning
-	var moveCamTo:HaxeVector<Float> = new HaxeVector(2);
 
 	var theListBotplay:Array<String> = [];
 
@@ -1682,12 +1677,8 @@ class PlayState extends MusicBeatState
 	}
 
 	public function reloadHealthBarColors(leftColorArray:Array<Int>, rightColorArray:Array<Int>) {
-		if (!ClientPrefs.ogHPColor) {
-				healthBar.createFilledBar(FlxColor.fromRGB(leftColorArray[0], leftColorArray[1], leftColorArray[2]),
-				FlxColor.fromRGB(rightColorArray[0], rightColorArray[1], rightColorArray[2]));
-		} else {
-				healthBar.createFilledBar(0xFFFF0000, 0xFF66FF33);
-		}
+		healthBar.createFilledBar(FlxColor.fromRGB(leftColorArray[0], leftColorArray[1], leftColorArray[2]),
+		FlxColor.fromRGB(rightColorArray[0], rightColorArray[1], rightColorArray[2]));
 
 		healthBar.updateBar();
 	}
@@ -3206,26 +3197,9 @@ class PlayState extends MusicBeatState
 
 		if (tankmanAscend && curStep > 895 && curStep < 1151) camGame.zoom = 0.8;
 
-		if (healthBar.percent >= 80 && !winning)
-		{
-			winning = true;
-			reloadHealthBarColors(dad.losingColorArray, boyfriend.winningColorArray);
-		}
-		if (healthBar.percent <= 20 && !losing)
-		{
-			losing = true;
-			reloadHealthBarColors(dad.winningColorArray, boyfriend.losingColorArray);
-		}
-		if (healthBar.percent >= 20 && losing || healthBar.percent <= 80 && winning)
-		{
-			losing = false;
-			winning = false;
-			reloadHealthBarColors(dad.healthColorArray, boyfriend.healthColorArray);
-		}
-
 		if(!inCutscene && ClientPrefs.charsAndBG) {
 			final lerpVal:Float = CoolUtil.boundTo(elapsed * 2.4 * cameraSpeed * playbackRate, 0, 1);
-			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x + moveCamTo[0]/102, camFollow.x + moveCamTo[0]/102, lerpVal), FlxMath.lerp(camFollowPos.y + moveCamTo[1]/102, camFollow.y + moveCamTo[1]/102, lerpVal));
+			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 			if (ClientPrefs.charsAndBG && !boyfriendIdled) {
 				if(!startingSong && !endingSong && boyfriend.animation.curAnim != null && boyfriend.animation.curAnim.name.startsWith('idle')) {
 					boyfriendIdleTime += elapsed;
@@ -3236,9 +3210,6 @@ class PlayState extends MusicBeatState
 					boyfriendIdleTime = 0;
 				}
 			}
-			final panLerpVal:Float = CoolUtil.clamp(elapsed * 4.4 * cameraSpeed, 0, 1);
-			moveCamTo[0] = FlxMath.lerp(moveCamTo[0], 0, panLerpVal);
-			moveCamTo[1] = FlxMath.lerp(moveCamTo[1], 0, panLerpVal);
 		}
 		if (ClientPrefs.showNPS && (notesHitDateArray.length > 0 || oppNotesHitDateArray.length > 0)) {
 			notesToRemoveCount = 0;
@@ -3717,6 +3688,8 @@ class PlayState extends MusicBeatState
 	}
 
 	// Health icon updaters
+	// This variable tracks the reset time for the Dave & Bambi/Strident Crisis icons.
+	var iconSizeResetTime:Float = 0;
 	public dynamic function updateIconsScale(elapsed:Float)
 	{
 		switch (ClientPrefs.iconBounceType) {
@@ -3726,14 +3699,20 @@ class PlayState extends MusicBeatState
 					Std.int(FlxMath.lerp(i.frameHeight, i.height, CoolUtil.boundTo(1 - (elapsed * 30 * playbackRate), 0, 1))));
 
 			case 'Strident Crisis':
+				iconSizeResetTime = Math.max(0, iconSizeResetTime - elapsed);
+				var iconLerp = FlxEase.quartIn(iconSizeResetTime / 0.5);
+
 				for (i in [iconP1, iconP2])
-					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, 0.50 / playbackRate)),
-					Std.int(FlxMath.lerp(i.frameHeight, i.height, 0.50 / playbackRate)));
+					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, iconLerp)),
+					Std.int(FlxMath.lerp(i.frameHeight, i.height, iconLerp)));
 
 			case 'Dave and Bambi':
+				iconSizeResetTime = Math.max(0, iconSizeResetTime - elapsed / playbackRate);
+				var iconLerp = FlxEase.quartIn(iconSizeResetTime / 0.8);
+				
 				for (i in [iconP1, iconP2])
-					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, 0.8 / playbackRate)),
-					Std.int(FlxMath.lerp(i.frameHeight, i.height, 0.8 / playbackRate)));
+					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, iconLerp)),
+					Std.int(FlxMath.lerp(i.frameHeight, i.height, iconLerp)));
 
 			case 'Plank Engine':
 				final funnyBeat = (Conductor.songPosition / 1000) * (Conductor.bpm / 60);
@@ -4256,7 +4235,7 @@ class PlayState extends MusicBeatState
 				shouldDrainHealth = (opponentDrain || (opponentChart ? boyfriend.healthDrain : dad.healthDrain));
 				if (!opponentDrain && !Math.isNaN((opponentChart ? boyfriend : dad).drainAmount)) healthDrainAmount = opponentChart ? boyfriend.drainAmount : dad.drainAmount;
 				if (!opponentDrain && !Math.isNaN((opponentChart ? boyfriend : dad).drainFloor)) healthDrainFloor = opponentChart ? boyfriend.drainFloor : dad.drainFloor;
-				if (!ClientPrefs.ogHPColor) reloadHealthBarColors(dad.healthColorArray, boyfriend.healthColorArray);
+				reloadHealthBarColors(dad.healthColorArray, boyfriend.healthColorArray);
 				if (ClientPrefs.showNotes)
 				{
 					for (i in strumLineNotes.members)
@@ -4714,9 +4693,12 @@ class PlayState extends MusicBeatState
 	}
 
 	public function KillNotes() {
-		for (group in [notes, sustainNotes])
-		while (group.length > 0) {
-			group.remove(group.members[0], true);
+		for (group in [notes, sustainNotes]){
+			if (group != null){
+				while (group.length > 0) {
+					group.remove(group.members[0], true);
+				}
+			}
 		}
 		//unspawnNotes = [];
 		//eventNotes = [];
@@ -6107,7 +6089,7 @@ class PlayState extends MusicBeatState
 	{
 		switch(ClientPrefs.iconBounceType) {
 			case 'Dave and Bambi':
-				final funny:Float = Math.max(Math.min(healthBar.value,(maxHealth/0.95)),0.1);
+				final funny:Float = Math.max(Math.min(healthBar.value,(maxHealth*0.95)),0.1);
 
 				//health icon bounce but epic
 				if (!opponentChart)
@@ -6118,6 +6100,7 @@ class PlayState extends MusicBeatState
 					iconP2.setGraphicSize(Std.int(iconP2.width + (50 * funny)),Std.int(iconP2.height - (25 * funny)));
 					iconP1.setGraphicSize(Std.int(iconP1.width + (50 * ((2 - funny) + 0.1))),Std.int(iconP1.height - (25 * ((2 - funny) + 0.1))));
 				}
+				iconSizeResetTime = 0.8;
 
 			case 'Old Psych':
 				for (i in [iconP1, iconP2])
@@ -6138,6 +6121,7 @@ class PlayState extends MusicBeatState
 
 					FlxTween.tween(i, {'scale.x': 1, 'scale.y': 1}, Conductor.crochet / 1250 * gfSpeed / playbackRate, {ease: FlxEase.quadOut});
 				}
+				iconSizeResetTime = 0.5;
 
 			case 'Plank Engine':
 				for (i in [iconP1, iconP2]) {

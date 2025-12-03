@@ -58,7 +58,6 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var iconBounceType:String = 'New Psych';
 	public static var smoothHealth:Bool = true;
 	public static var smoothHPBug:Bool = false;
-	public static var ogHPColor:Bool = false;
 	public static var flashing:Bool = true;
 	public static var camZooms:Bool = true;
 	public static var showNotes:Bool = true;

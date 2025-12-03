@@ -102,6 +102,8 @@
 	<assets path="assets/weekend1"      library="weekend1"      exclude="*.mp3" unless="web"/>
 	<assets path="assets/preload/models"        library="models"        />
 	<assets path="assets/preload/models"        library="models"        />
+	
+	<assets path="gamemode.ini" if="linux" unless="debug"/>
 
 	<assets path="assets/soundtray" embed="true" />
 
@@ -124,19 +126,18 @@
 	<!--JS stuff needed-->
 	<haxelib name="hscript" />
 	<haxedef name="hscriptPos" />
-	<haxelib name="linc_luajit" if="LUA_ALLOWED"/>
+	<haxelib name="hxluajit" if="LUA_ALLOWED"/>
 	<haxelib name="tjson" />
-	<!--<haxelib name="hxCodec" if="VIDEOS_ALLOWED"/>-->
-
 	<haxelib name="hxvlc" if="VIDEOS_ALLOWED"/>
 
 	<haxelib name="hxdiscord_rpc" if="DISCORD_ALLOWED" />
 	<!-- openfls folder dialog is an pain in the ass -->
 	<haxelib name="hxnativefiledialog" if="cpp" unless="hl || neko"/>
+	<haxelib name="hxgamemode" if="linux" unless="debug"/>
 	<haxelib name="flxanimate"/>
 
 	<!-- Enables a terminal log prompt on debug builds -->
-	<haxelib name="hxcpp-debug-server" if="debug"/>
+	<haxelib name="hxcpp-debug-server" if="debug" optional="true"/>
 	<haxedef name="HXVLC_NO_SHARE_DIRECTORY" if="VIDEOS_ALLOWED" />
 
 	<!--Disable the Flixel core focus lost screen-->

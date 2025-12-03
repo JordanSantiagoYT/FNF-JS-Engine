@@ -11,9 +11,9 @@ class CustomSubstate extends MusicBeatSubstate
 	public static function implement(funk:FunkinLua)
 	{
 		var lua = funk.lua;
-		Lua_helper.add_callback(lua, "openCustomSubstate", openCustomSubstate);
-		Lua_helper.add_callback(lua, "closeCustomSubstate", closeCustomSubstate);
-		Lua_helper.add_callback(lua, "insertToCustomSubstate", insertToCustomSubstate);
+		Convert.addCallback(lua, "openCustomSubstate", openCustomSubstate);
+		Convert.addCallback(lua, "closeCustomSubstate", closeCustomSubstate);
+		Convert.addCallback(lua, "insertToCustomSubstate", insertToCustomSubstate);
 	}
 	#end
 	

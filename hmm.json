@@ -80,11 +80,11 @@
       "url": "https://github.com/MAJigsaw77/hxdiscord_rpc"
     },
     {
-      "name": "linc_luajit",
+      "name": "hxluajit",
       "type": "git",
       "dir": null,
       "ref": "master",
-      "url": "https://github.com/JS-Engine-things/linc_luajit"
+      "url": "https://github.com/JS-Engine-things/hxluajit"
     },
     {
       "name": "funkin.vis",

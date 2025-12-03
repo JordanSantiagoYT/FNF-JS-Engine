@@ -6,17 +6,14 @@ import flixel.FlxGame;
 import lime.app.Application;
 import openfl.Lib;
 import openfl.display.Sprite;
+#if (linux && !debug)
+import hxgamemode.GamemodeClient;
+#end
 
 #if (linux || mac)
 import lime.graphics.Image;
 #end
 
-#if linux
-@:cppInclude('./external/gamemode_client.h')
-@:cppFileCode('
-	#define GAMEMODE_AUTO
-')
-#end
 class Main extends Sprite {
 	final game = {
 		width: 1280,
@@ -33,6 +30,19 @@ class Main extends Sprite {
 	public static final superDangerMode:Bool = Sys.args().contains("-troll");
 
 	// You can pretty much ignore everything from here on - your code should go in your states.
+	
+	@:noCompletion
+	private static function __init__():Void {
+		#if (linux && !debug)
+		// Request we start game mode
+		if (GamemodeClient.request_start() != 0) {
+			Sys.println('Failed to request gamemode start: ${GamemodeClient.error_string()}...');
+			System.exit(1);
+		} else {
+			Sys.println('Succesfully requested gamemode to start...');
+		}
+		#end
+	}
 
 	public static function main():Void {
 		Lib.current.addChild(new Main());
@@ -78,8 +88,6 @@ class Main extends Sprite {
 			FlxG.sound = soundFrontEnd;
 			funkinGame._customSoundTray = objects.CustomSoundTray.CustomSoundTray;
 		}
-		// turns out I forgot this, I'm a bit dumb for that
-		#if LUA_ALLOWED Lua.set_callbacks_function(cpp.Callable.fromStaticFunction(psychlua.CallbackHandler.call)); #end
 
 		addChild(funkinGame);
 

@@ -12,8 +12,8 @@ class Screenshot {
 	var height:Int;
 	var window:Window = null;
 	var image:Image;
-	var target:String = #if !linux "assets\\gameRenders" #else "assets/gameRenders" #end;
-	public static var slash:String = #if !linux "\\" #else "/" #end;
+	var target:String = #if windows "assets\\gameRenders" #else "assets/gameRenders" #end;
+	public static var slash:String = #if windows "\\" #else "/" #end;
 
 	public function new(x:Int = -1, y:Int = -1, w:Int = -1, h:Int = -1) {
 		if(x < 0) this.x = 0;

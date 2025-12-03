@@ -6,12 +6,16 @@ import flixel.util.FlxColor;
 
 import openfl.display.BlendMode;
 
+#if LUA_ALLOWED
+import psychlua.FunkinLua.State;
+#end
+
 using StringTools;
 
 @:allow(psychlua.FunkinLua)
 class LuaUtils {
     //Better optimized than using some getProperty shit or idk
-	static inline function getFlxEaseByString(?ease:String = '') {
+	public static inline function getFlxEaseByString(?ease:String = '') {
 		return switch(ease.toLowerCase().trim()) {
 			case 'backin': return FlxEase.backIn;
 			case 'backinout': return FlxEase.backInOut;
@@ -53,7 +57,7 @@ class LuaUtils {
 		}
 	}
 
-	static inline function blendModeFromString(blend:String):BlendMode {
+	public static inline function blendModeFromString(blend:String):BlendMode {
 		return switch(blend.toLowerCase().trim()) {
 			case 'add': return ADD;
 			case 'alpha': return ALPHA;
@@ -73,7 +77,7 @@ class LuaUtils {
 		}
 	}
 
-	static inline function cameraFromString(cam:String):FlxCamera {
+	public static inline function cameraFromString(cam:String):FlxCamera {
 		return switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud': return PlayState.instance.camHUD;
 			case 'camother' | 'other': return PlayState.instance.camOther;
@@ -100,19 +104,24 @@ class LuaUtils {
 		#end
 	}
 
-	static function getErrorMessage(lua: #if LUA_ALLOWED State #else Dynamic #end, status:Int):String {
+	public static function getErrorMessage(lua: #if LUA_ALLOWED State #else Dynamic #end, status:Int):String {
 		#if LUA_ALLOWED
 		var v:String = Lua.tostring(lua, -1);
 		Lua.pop(lua, 1);
 
 		if (v != null) v = v.trim();
-		if (v == null || v == "") {
-			return switch(status) {
-				case Lua.LUA_ERRRUN: return "Runtime Error";
-				case Lua.LUA_ERRMEM: return "Memory Allocation Error";
-				case Lua.LUA_ERRERR: return "Critical Error";
-				case _: return "Unknown Error";
+		if (v == null || v == "")
+		{
+			switch (status)
+			{
+				case type if (type == Lua.ERRRUN):
+					return "Runtime Error";
+				case type if (type == Lua.ERRMEM):
+					return "Memory Allocation Error";
+				case type if (type == Lua.ERRERR):
+					return "Critical Error";
 			}
+			return "Unknown Error";
 		}
 
 		return v;
@@ -130,7 +139,7 @@ class LuaUtils {
 		return false;
 	}
 
-	static function getBool(lua: #if LUA_ALLOWED State #else Dynamic #end, variable:String) {
+	public static function getBool(lua: #if LUA_ALLOWED State #else Dynamic #end, variable:String) {
 		#if LUA_ALLOWED
 		var result:String = null;
 		Lua.getglobal(lua, variable);

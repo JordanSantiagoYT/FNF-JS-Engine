@@ -1,6 +1,5 @@
 #if !macro
 import Paths;
-import haxe.ds.Vector as HaxeVector; //apparently denpa uses vectors, which is required for camera panning i guess
 
 #if sys
 import sys.*;
@@ -8,8 +7,8 @@ import sys.io.*;
 #end
 
 #if LUA_ALLOWED
-import llua.*;
-import llua.Lua;
+import hxluajit.*;
+import hxluajit.Types;
 import psychlua.*;
 #else
 import psychlua.FunkinLua; // TODO: test and seperate this into LuaUtils
