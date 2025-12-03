@@ -96,13 +96,6 @@
       "url": "https://github.com/JS-Engine-things/grig.audio"
     },
     {
-      "name": "away3d",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://github.com/moxie-coder/away3d"
-    },
-    {
       "name": "tjson",
       "type": "git",
       "dir": null,

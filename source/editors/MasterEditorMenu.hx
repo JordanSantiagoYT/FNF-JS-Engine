@@ -1,9 +1,5 @@
 package editors;
 
-#if MODS_ALLOWED
-#end
-
-
 class MasterEditorMenu extends MusicBeatState
 {
 	var options:Array<String> = [
@@ -13,8 +9,7 @@ class MasterEditorMenu extends MusicBeatState
 		'Dialogue Portrait Editor',
 		'Character Editor',
 		'Chart Editor',
-		'Note Splash Debug',
-		'3D Benchmark'
+		'Note Splash Debug'
 	];
 	private var grpTexts:FlxTypedGroup<Alphabet>;
 	private var directories:Array<String> = [null];
@@ -117,8 +112,6 @@ class MasterEditorMenu extends MusicBeatState
 					LoadingState.loadAndSwitchState(ChartingState.new, false);
 				case 'Note Splash Debug':
 					LoadingState.loadAndSwitchState(NoteSplashDebugState.new, false);
-				case '3D Benchmark':
-					LoadingState.loadAndSwitchState(BenchmarkState.new, false);
 			}
 			FlxG.sound.music.volume = 0;
 			#if PRELOAD_ALL
