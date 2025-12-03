@@ -4693,11 +4693,13 @@ class PlayState extends MusicBeatState
 	}
 
 	public function KillNotes() {
-		for (group in [notes, sustainNotes])
-			if (group != null)
+		for (group in [notes, sustainNotes]){
+			if (group != null){
 				while (group.length > 0) {
 					group.remove(group.members[0], true);
 				}
+			}
+		}
 		//unspawnNotes = [];
 		//eventNotes = [];
 	}
