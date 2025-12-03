@@ -101,13 +101,6 @@
       "url": "https://github.com/JS-Engine-things/grig.audio"
     },
     {
-      "name": "away3d",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://github.com/moxie-coder/away3d"
-    },
-    {
       "name": "tjson",
       "type": "git",
       "dir": null,
@@ -120,6 +113,11 @@
       "dir": null,
       "ref": "main",
       "url": "https://github.com/MAJigsaw77/hxnativefiledialog"
+    },
+    {
+      "name": "hxgamemode",
+      "type": "haxelib",
+      "version": null
     }
   ]
 }

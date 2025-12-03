@@ -64,7 +64,6 @@
 		<library name="week6"         preload="true" />
 		<library name="week7"         preload="true" />
 		<library name="weekend1"      preload="true" />
-		<library name="models"        preload="true" />
 	</section>
 
 	<section if="NO_PRELOAD_ALL">
@@ -77,7 +76,6 @@
 		<library name="week6"         preload="false" />
 		<library name="week7"         preload="false" />
 		<library name="weekend1"      preload="false" />
-		<library name="models"        preload="false" />
 	</section>
 
 	<assets path="assets/videos"        library="videos"        if="VIDEOS_ALLOWED"/>
@@ -100,8 +98,6 @@
 	<assets path="assets/week7"         library="week7"         exclude="*.ogg" if="web"/>
 	<assets path="assets/week7"         library="week7"         exclude="*.mp3" unless="web"/>
 	<assets path="assets/weekend1"      library="weekend1"      exclude="*.mp3" unless="web"/>
-	<assets path="assets/preload/models"        library="models"        />
-	<assets path="assets/preload/models"        library="models"        />
 	
 	<assets path="gamemode.ini" if="linux" unless="debug"/>
 
@@ -121,7 +117,6 @@
 	<haxelib name="flixel" />
 	<haxelib name="flixel-ui" version="2.6.0" />
 	<haxelib name="flixel-addons" />
-	<haxelib name="away3d" />
 
 	<!--JS stuff needed-->
 	<haxelib name="hscript" />
