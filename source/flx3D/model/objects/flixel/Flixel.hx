@@ -1,4 +1,4 @@
-package flx3d.model.objects.flixel;
+package flx3D.model.objects.flixel;
 
 import away3d.entities.Mesh;
 import away3d.events.Asset3DEvent;

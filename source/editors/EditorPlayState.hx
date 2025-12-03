@@ -229,7 +229,7 @@ class EditorPlayState extends MusicBeatState
 					final swagNote:PreloadedChartNote = {
 						strumTime: daStrumTime,
 						noteData: daNoteData,
-						mustPress: bothSides || gottaHitNote,
+						mustPress: gottaHitNote,
 						oppNote: (opponentChart ? gottaHitNote : !gottaHitNote),
 						noteType: songNotes[3],
 						animSuffix: (songNotes[3] == 'Alt Animation' || section.altAnim ? '-alt' : ''),
