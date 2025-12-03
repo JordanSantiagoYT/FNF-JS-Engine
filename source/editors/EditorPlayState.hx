@@ -230,7 +230,7 @@ class EditorPlayState extends MusicBeatState
 						strumTime: daStrumTime,
 						noteData: daNoteData,
 						mustPress: gottaHitNote,
-						oppNote: (opponentChart ? gottaHitNote : !gottaHitNote),
+						oppNote: !gottaHitNote,
 						noteType: songNotes[3],
 						animSuffix: (songNotes[3] == 'Alt Animation' || section.altAnim ? '-alt' : ''),
 						noteskin: (gottaHitNote ? bfNoteskin : dadNoteskin),
@@ -247,7 +247,7 @@ class EditorPlayState extends MusicBeatState
 						noteDensity: currentMultiplier,
 						ignoreNote: songNotes[3] == 'Hurt Note' && gottaHitNote
 					};
-					if (swagNote.noteskin != null && swagNote.noteskin.length > 0 && !Paths.noteSkinFramesMap.exists(swagNote.noteskin)) Paths.initNote(swagNote.noteskin);
+					if (swagNote.noteskin?.length > 0 && !Paths.noteSkinFramesMap.exists(swagNote.noteskin)) Paths.initNote(swagNote.noteskin);
 
 					if(!Std.isOfType(songNotes[3], String)) swagNote.noteType = ChartingState.noteTypeList[songNotes[3]]; //Backward compatibility + compatibility with Week 7 charts
 
