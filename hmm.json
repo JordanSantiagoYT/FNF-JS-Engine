@@ -115,6 +115,11 @@
       "dir": null,
       "ref": "main",
       "url": "https://github.com/MAJigsaw77/hxnativefiledialog"
+    },
+    {
+      "name": "hxgamemode",
+      "type": "haxelib",
+      "version": null
     }
   ]
 }
