@@ -37,7 +37,7 @@ class Main extends Sprite {
 		// Request we start game mode
 		if (GamemodeClient.request_start() != 0) {
 			Sys.println('Failed to request gamemode start: ${GamemodeClient.error_string()}...');
-			openfl.system.System.exit(1);
+			System.exit(1);
 		} else {
 			Sys.println('Succesfully requested gamemode to start...');
 		}
