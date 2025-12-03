@@ -25,7 +25,7 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   buildLinux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
