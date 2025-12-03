@@ -233,7 +233,7 @@ class EditorPlayState extends MusicBeatState
 						oppNote: !gottaHitNote,
 						noteType: songNotes[3],
 						animSuffix: (songNotes[3] == 'Alt Animation' || section.altAnim ? '-alt' : ''),
-						noteskin: (gottaHitNote ? bfNoteskin : dadNoteskin),
+						noteskin: '',
 						gfNote: songNotes[3] == 'GF Sing' || (section.gfSection && songNotes[1] < 4),
 						noAnimation: songNotes[3] == 'No Animation',
 						noMissAnimation: songNotes[3] == 'No Animation',
