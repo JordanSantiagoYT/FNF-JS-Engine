@@ -169,9 +169,9 @@ class FunkinLua {
 		set('defaultGirlfriendY', game.GF_Y);
 
 		// Character shit
-		set('boyfriendName', PlayState.SONG.player1);
-		set('dadName', PlayState.SONG.player2);
-		set('gfName', PlayState.SONG.gfVersion);
+		set('boyfriendName', PlayState.SONG.player1 ?? 'bf');
+		set('dadName', PlayState.SONG.player2 ?? 'dad');
+		set('gfName', PlayState.SONG.gfVersion ?? 'gf');
 
 		// Some settings, no jokes
 		set('downscroll', ClientPrefs.downScroll);

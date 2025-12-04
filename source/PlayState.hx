@@ -1501,7 +1501,6 @@ class PlayState extends MusicBeatState
 		}
 		#end
 
-		startCallback();
 		RecalculateRating();
 
 		if(!ClientPrefs.controllerMode)
@@ -1535,6 +1534,8 @@ class PlayState extends MusicBeatState
 
 		cacheCountdown();
 		cachePopUpScore();
+
+		startCallback();
 
 		super.create();
 		Paths.clearUnusedMemory();
