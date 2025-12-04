@@ -373,7 +373,6 @@ class Project extends HXProject
 		setHaxedef("hscriptPos");
 		if (!isDebug())
 			setHaxedef("no-deprecation-warnings");
-		setHaxedef("LINC_LUA_RELATIVE_DYNAMIC_LIB"); // DISABLE THIS IF ISSUES ARE FOUND!
 		setHaxedef("FLX_NO_FOCUS_LOST_SCREEN"); // I FORGOT LMAFOAOO
 
 		// setHaxedef("NO_PRECOMPILED_HEADERS");
@@ -444,10 +443,8 @@ class Project extends HXProject
 		if (isDesktop() && DISCORD_ALLOWED.isEnabled(this))
 			addHaxelib('hxdiscord_rpc'); // Discord API
 
-		addHaxelib('away3d'); // 3D API
-
 		if (isDesktop() && LUA_ALLOWED.isEnabled(this))
-			addHaxelib('linc_luajit'); // Lua API
+			addHaxelib('hxluajit'); // Lua API
 
 		if (isDebug())
 			addHaxelib('hxcpp-debug-server'); // VSCode debug support
@@ -487,9 +484,6 @@ class Project extends HXProject
 		// splash stuff
 		var shouldEmbedSplash = true;
 		addAssetPath("assets/splash", null, "default", ["*"], exclude, shouldEmbedSplash);
-
-		// 3D assets
-		addAssetPath("assets/preload/models", "assets/models", "default", ["*"], exclude, shouldEmbedFonts);
 
 		// Shared asset libraries
 		addAssetLibrary("songs", shouldEmbed, shouldPreload);
