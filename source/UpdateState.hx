@@ -217,7 +217,7 @@ class UpdateState extends MusicBeatState
 
 			httpCheck.onStatus = function(status:Int):Void {
 					trace('HTTP Status for URL check: ' + status);
-					if (status == 200) { // HTTP 200 OK
+					if (status == 200 || status == 302) { // HTTP 200 OK
 							trace("Update file found. Initiating download...");
 							startDownload(); // Now proceed with the actual download
 					} else if (status == 404) { // HTTP 404 Not Found
