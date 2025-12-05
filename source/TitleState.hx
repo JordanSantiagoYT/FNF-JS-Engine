@@ -89,18 +89,27 @@ class TitleState extends MusicBeatState
 				returnedData[1] = data.substring(versionEndIndex + 1, data.length);
 				updateVersion = returnedData[0];
 				final curVersion:String = MainMenuState.psychEngineJSVersion.trim();
-				final cleanVersion:String = curVersion.split(" (")[0]; // Removes everything after " ("
+				// Strip extra text and extract numeric version
+				final cleanVersion:String = CoolUtil.extractVersion(curVersion.split(" (")[0]);
+				updateVersion = CoolUtil.extractVersion(updateVersion);
+				
 				trace(cleanVersion);
 				trace('version online: ' + updateVersion + ', your version: ' + cleanVersion);
-				if(updateVersion != cleanVersion && CoolUtil.isVersionNewer(updateVersion, cleanVersion)) {
-					trace('versions arent matching!');
-					OutdatedState.currChanges = returnedData[1];
-					mustUpdate = true;
-					Main.askedToUpdate = true;
+				
+				if(updateVersion != cleanVersion) {
+					if(CoolUtil.isVersionNewer(updateVersion, cleanVersion)) {
+						trace('versions arent matching!');
+						OutdatedState.currChanges = returnedData[1];
+						mustUpdate = true;
+					} else {
+						trace('$updateVersion is less than $cleanVersion. Skipping update as it\'s likely a dev version');
+					}
 				}
-				if(updateVersion == curVersion) {
+				
+				if(updateVersion == cleanVersion) {
 					trace('the versions match!');
 				}
+				
 				else
 					trace('$updateVersion is less than $cleanVersion. Skipping update as it\'s likely an dev version');
 			}
@@ -512,3 +521,4 @@ class TitleState extends MusicBeatState
 		}
 	}
 }
+
