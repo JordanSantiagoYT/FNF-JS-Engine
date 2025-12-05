@@ -78,27 +78,40 @@ class CoolUtil
 		return (m / snap);
 	}
 
-	public static function isVersionNewer(versionA:String, versionB:String):Bool {
-		var partsA = versionA.split(".").map(Std.parseInt);
-		var partsB = versionB.split(".").map(Std.parseInt);
+	// Extract only the numeric version (e.g. "1.49.1") from a tag string
+public static function extractVersion(tag:String):String {
+    var regex = ~/([0-9]+\.[0-9]+\.[0-9]+)/;
+    if (regex.match(tag)) {
+        return regex.matched(0); // returns "1.49.1"
+    }
+    return tag.trim(); // fallback if regex fails
+}
 
-		// Pad shorter version with zeros (e.g. "1.2" becomes "1.2.0")
-		while (partsA.length < partsB.length) partsA.push(0);
-		while (partsB.length < partsA.length) partsB.push(0);
+public static function isVersionNewer(versionA:String, versionB:String):Bool {
+    // Clean up inputs first
+    versionA = extractVersion(versionA);
+    versionB = extractVersion(versionB);
 
-		for (i in 0...partsA.length) {
-			if (partsA[i] > partsB[i]){
-				trace("versionA is greater!");
-				return true;
-			}
-			if (partsA[i] < partsB[i]){
-				trace("versionA is less!");
-				return false;
-			}
-		}
+    var partsA = versionA.split(".").map(Std.parseInt);
+    var partsB = versionB.split(".").map(Std.parseInt);
 
-		return false; // Equal versions
-	}
+    // Pad shorter version with zeros (e.g. "1.2" becomes "1.2.0")
+    while (partsA.length < partsB.length) partsA.push(0);
+    while (partsB.length < partsA.length) partsB.push(0);
+
+    for (i in 0...partsA.length) {
+        if (partsA[i] > partsB[i]) {
+            trace("versionA is greater!");
+            return true;    
+        }
+        if (partsA[i] < partsB[i]) {
+            trace("versionA is less!");
+            return false;
+        }
+    }
+
+    return false; // Equal versions
+}
 
 	#if desktop
 	public static var resW:Float = 1;
