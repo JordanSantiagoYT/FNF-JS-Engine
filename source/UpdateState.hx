@@ -217,9 +217,12 @@ class UpdateState extends MusicBeatState
 
 			httpCheck.onStatus = function(status:Int):Void {
 					trace('HTTP Status for URL check: ' + status);
-					if (status == 200 || status == 302) { // 200 = OK, 302 = Found (but in both cases, the file was found)
-							trace("Update file found. Initiating download...");
-							startDownload(); // Now proceed with the actual download
+					if (status == 200) { // 200 = OK
+						trace("Update file found. Initiating download...");
+						startDownload(); // Now proceed with the actual download
+					} else if (status == 302) { // 302 = FOUND, if it doesn't work then go to GitHub
+						trace("Update file found. Attempting & Initiating download... If it doesn't work, try downloading via GitHub.com/JordanSantiagoYT/FNF-JS-Engine");
+						startDownload();
 					} else if (status == 404) { // HTTP 404 Not Found
 							trace('File not found at URL: ' + online_url);
 							fatalError = true;
