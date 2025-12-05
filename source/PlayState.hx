@@ -1653,7 +1653,7 @@ class PlayState extends MusicBeatState
 		        polyphonyBF = value;
 		    // just in case, as an anti-crash prevention maybe?
 		    default:
-			polyphonyOppo = value;
+						polyphonyOppo = value;
 		        polyphonyBF = value;
 		}
 		return value;
@@ -2816,7 +2816,7 @@ class PlayState extends MusicBeatState
 		{
 			for (group in [notes, sustainNotes])
 				for (note in group){
-					if (note == null)
+					if (note == null || !note.alive)
 						continue;
 					if (ClientPrefs.enableColorShader) note.updateRGBColors();
 				}
@@ -4253,7 +4253,7 @@ class PlayState extends MusicBeatState
 				{
 					for (group in [notes, sustainNotes])
 						for (note in group){
-							if (note == null)
+							if (note == null || !note.alive)
 								continue;
 							if (ClientPrefs.enableColorShader) note.updateRGBColors();
 						}
@@ -4766,7 +4766,7 @@ class PlayState extends MusicBeatState
 
 	function judgeNote(note:Note = null, ?miss:Bool = false)
 	{
-		if (note == null) return;
+		if (note == null || !note.alive) return;
 		if (daRating == null) daRating = ratingsData[0]; //because it likes being stupid
 		if (!cpuControlled)
 		{
@@ -5798,7 +5798,7 @@ class PlayState extends MusicBeatState
 	}
 
 	public function spawnHoldSplashOnNote(note:Note, ?isDad:Bool = false) {
-		if (!ClientPrefs.noteSplashes || note == null)
+		if (!ClientPrefs.noteSplashes || note == null || !note.alive)
 			return;
 
 		splashesPerFrame[(isDad ? 2 : 3)] += 1;
