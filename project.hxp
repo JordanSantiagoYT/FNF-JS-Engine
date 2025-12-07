@@ -447,10 +447,10 @@ class Project extends HXProject
 			addHaxelib('hxluajit'); // Lua API
 
 		if (isDebug() && isCPP())
-			includeHaxelib("hxcpp-debug-server");
+			addHaxelib("hxcpp-debug-server");
 
 		if (isLinux() && !isDebug())
-			includeHaxelib("hxgamemode");
+			addHaxelib("hxgamemode");
 
 		if (isDesktop() && VIDEOS_ALLOWED.isEnabled(this))
 			addHaxelib('hxvlc');
@@ -615,6 +615,11 @@ class Project extends HXProject
 	public function isNodeJS():Bool
 	{
 		return this.targetFlags.exists("nodejs");
+	}
+	
+	inline function isCPP():Bool
+	{
+		return this.targetFlags.exists("cpp");
 	}
 
 	public function isCSharp():Bool
