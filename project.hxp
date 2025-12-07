@@ -533,8 +533,8 @@ class Project extends HXProject
 	function configureIcons()
 	{
 		for (size in [16, 32, 64])
-			addIcon('icons/icon${size}.png', size);
-		addIcon("icons/iconOG.png");
+			addIcon('art/icon${size}.png', size);
+		addIcon("art/iconOG.png");
 	}
 
 	//
