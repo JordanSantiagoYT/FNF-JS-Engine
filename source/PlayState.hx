@@ -3168,7 +3168,7 @@ class PlayState extends MusicBeatState
 				botEnergyCooldown -= elapsed;
 				if (botEnergyCooldown <= 0)
 				{
-					if (!FlxG.keys.pressed.CONTROL)
+					if (!controls.BOT_ENERGY_P)
 						noEnergy = false;
 				}
 			}
