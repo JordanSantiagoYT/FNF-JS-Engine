@@ -330,8 +330,6 @@ class PlayState extends MusicBeatState
 
 	public var ogCamZoom:Float = 1.05;
 
-	var ogBotTxt:String = '';
-
 	// how big to stretch the pixel art assets
 	public static var daPixelZoom:Float = 6;
 
@@ -400,7 +398,6 @@ class PlayState extends MusicBeatState
 
 	// FFMpeg values :)
 	var ffmpegMode = ClientPrefs.ffmpegMode;
-	var ffmpegInfo = ClientPrefs.ffmpegInfo;
 	var targetFPS = ClientPrefs.targetFPS;
 	var unlockFPS = ClientPrefs.unlockFPS;
 	var renderGCRate = ClientPrefs.renderGCRate;
@@ -1501,7 +1498,6 @@ class PlayState extends MusicBeatState
 		}
 		#end
 
-		startCallback();
 		RecalculateRating();
 
 		if(!ClientPrefs.controllerMode)
@@ -1524,10 +1520,8 @@ class PlayState extends MusicBeatState
 		else if(ClientPrefs.pauseMusic != 'None')
 			Paths.music(Paths.formatToSongPath(ClientPrefs.pauseMusic));
 
-		if(cpuControlled && ClientPrefs.randomBotplayText && ClientPrefs.botTxtStyle != 'Hide' && botplayTxt != null && ffmpegInfo != 'Frame Time')
+		if(cpuControlled && ClientPrefs.randomBotplayText && ClientPrefs.botTxtStyle != 'Hide' && botplayTxt != null)
 			botplayTxt.text = theListBotplay[FlxG.random.int(0, theListBotplay.length - 1)];
-
-		if (botplayTxt != null) ogBotTxt = botplayTxt.text;
 
 		resetRPC();
 		callOnLuas('onCreatePost');
@@ -1535,6 +1529,8 @@ class PlayState extends MusicBeatState
 
 		cacheCountdown();
 		cachePopUpScore();
+
+		startCallback();
 
 		super.create();
 		Paths.clearUnusedMemory();
@@ -3167,7 +3163,7 @@ class PlayState extends MusicBeatState
 				botEnergyCooldown -= elapsed;
 				if (botEnergyCooldown <= 0)
 				{
-					if (!FlxG.keys.pressed.CONTROL)
+					if (!controls.BOT_ENERGY_P)
 						noEnergy = false;
 				}
 			}
@@ -3654,12 +3650,12 @@ class PlayState extends MusicBeatState
 			{
 				var filename = CoolUtil.zeroFill(frameCaptured, 7);
 				try {
-					capture.save(Paths.formatToSongPath(SONG.song) + #if linux '/' #else '\\' #end, filename);
+					capture.save(Paths.formatToSongPath(SONG.song) + #if !windows '/' #else '\\' #end, filename);
 				}
 				catch (e) //If it catches an error, try capturing the frame again. If it still catches an error, skip the frame
 				{
 					try {
-						capture.save(Paths.formatToSongPath(SONG.song) + #if linux '/' #else '\\' #end, filename);
+						capture.save(Paths.formatToSongPath(SONG.song) + #if !windows '/' #else '\\' #end, filename);
 					}
 					catch (e) {}
 				}
@@ -3667,24 +3663,6 @@ class PlayState extends MusicBeatState
 			if (ClientPrefs.renderGCRate > 0 && (frameCaptured / targetFPS) % ClientPrefs.renderGCRate == 0) openfl.system.System.gc();
 			frameCaptured++;
 		}
-
-		if(botplayTxt != null && botplayTxt.visible) {
-			switch (ffmpegInfo)
-			{
-				case 'Frame Time': botplayTxt.text = CoolUtil.floatToStringPrecision(haxe.Timer.stamp() - takenTime, 3) + 's';
-				case 'Time Remaining':
-					var timeETA:String = CoolUtil.formatTime((FlxG.sound.music.length - Conductor.songPosition) * (60 / Main.fpsVar.currentFPS), 2);
-					if (ClientPrefs.showcaseMode) botplayTxt.text += '\nTime Remaining: ' + timeETA;
-					else botplayTxt.text = ogBotTxt + '\nTime Remaining: ' + timeETA;
-				case 'Rendering Time':
-					totalRenderTime = haxe.Timer.stamp() - startingTime;
-					if (ClientPrefs.showcaseMode) botplayTxt.text += '\nTime Taken: ' + CoolUtil.formatTime(totalRenderTime * 1000, 2);
-					else botplayTxt.text = ogBotTxt + '\nTime Taken: ' + CoolUtil.formatTime(totalRenderTime * 1000, 2);
-
-				default:
-			}
-		}
-		takenTime = haxe.Timer.stamp();
 	}
 
 	// Health icon updaters
@@ -3709,7 +3687,7 @@ class PlayState extends MusicBeatState
 			case 'Dave and Bambi':
 				iconSizeResetTime = Math.max(0, iconSizeResetTime - elapsed / playbackRate);
 				var iconLerp = FlxEase.quartIn(iconSizeResetTime / 0.8);
-				
+
 				for (i in [iconP1, iconP2])
 					i.setGraphicSize(Std.int(FlxMath.lerp(i.frameWidth, i.width, iconLerp)),
 					Std.int(FlxMath.lerp(i.frameHeight, i.height, iconLerp)));

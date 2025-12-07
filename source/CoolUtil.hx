@@ -245,7 +245,7 @@ class CoolUtil
 		var days:String = '' + Math.floor((musicTime / 1000 / 86400)) % 7;
 		var weeks:String = '' + Math.floor((musicTime / 1000 / (86400 * 7)));
 
-		if (secs.length < 2)
+		if (secs.length < 2 && days == '0')
 			secs = '0' + secs;
 
 		var shit:String = mins + ":" + secs;
@@ -292,26 +292,6 @@ class CoolUtil
 		else
 			format = Std.string(value);
 		return format;
-	}
-
-	public static function floatToStringPrecision(n:Float, prec:Int)
-	{
-		n = Math.round(n * Math.pow(10, prec));
-		var str = '' + n;
-		var len = str.length;
-		if (len <= prec)
-		{
-			while (len < prec)
-			{
-				str = '0' + str;
-				len++;
-			}
-			return '0.' + str;
-		}
-		else
-		{
-			return str.substr(0, str.length - prec) + '.' + str.substr(str.length - prec);
-		}
 	}
 
 	public static function getHealthColors(char:Character):Array<Int>

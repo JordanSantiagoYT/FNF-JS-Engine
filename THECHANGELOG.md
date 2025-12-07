@@ -1,18 +1,18 @@
-1.49.0;
-
-Changes from the Pre-release version:
+1.49.1;
 
 Removals:
 
-YT Watermark option, and Ratings counter (can both be recreated in Lua)
+Benchmark state and Away3D because they were ultimately useless here in this instance
+Win/lose bar colors & "OG HP Colors" options since those can be recreated in Lua
 
-Bug-fixes:
+Changes:
+Dave & Bambi/Strident Crisis icon bops are now frame independent
+Dave Engine health bar was updated to the design used in Volume 1
 
-Fixed an issue when attempting to loading an backup JSON in the chart editor (by not re-saving it, an oversight on my end whoops)
-Fix Rendering mode paths on Mac And Linux(?)
-Fix an crash in Weekend 1 from Nenes knife (that little devil)
-Fixed runHaxeCode not working, along with possibly many other functions (it was literally an ONE LINE FIX)
-Fixed "ShaderHandler" not working, because the required functions were private. (But requires to use 0.7 code currently)
+Bug-fixes (I got lazy writing this):
+Fixed some crashes regarding Notes(?)
+Fixed issues with the "Chart Editor playtesting" due to the changes in 1.49.0-Prerelease
+(Hopefully) Fix the original double note ghost script not working anymore
 
 	
 

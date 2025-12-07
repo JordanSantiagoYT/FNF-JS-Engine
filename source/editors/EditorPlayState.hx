@@ -233,7 +233,7 @@ class EditorPlayState extends MusicBeatState
 						oppNote: !gottaHitNote,
 						noteType: songNotes[3],
 						animSuffix: (songNotes[3] == 'Alt Animation' || section.altAnim ? '-alt' : ''),
-						noteskin: '',
+						noteskin: null,
 						gfNote: songNotes[3] == 'GF Sing' || (section.gfSection && songNotes[1] < 4),
 						noAnimation: songNotes[3] == 'No Animation',
 						noMissAnimation: songNotes[3] == 'No Animation',
@@ -258,7 +258,7 @@ class EditorPlayState extends MusicBeatState
 					final floorSus:Int = Math.floor(swagNote.sustainLength / Conductor.stepCrochet);
 					if (floorSus > 0) {
 						for (susNote in 0...floorSus + 1) {
-							final sustainNote:PreloadedChartNote = cast {
+							final sustainNote:PreloadedChartNote = {
 								strumTime: daStrumTime + (Conductor.stepCrochet * susNote),
 								noteData: daNoteData,
 								mustPress: gottaHitNote,
@@ -270,7 +270,6 @@ class EditorPlayState extends MusicBeatState
 								isSustainNote: true,
 								isSustainEnd: susNote == floorSus,
 								sustainLength: 0,
-								sustainScale: 1 / ratio,
 								parentST: swagNote.strumTime,
 								parentSL: swagNote.sustainLength,
 								hitHealth: 0.023,
