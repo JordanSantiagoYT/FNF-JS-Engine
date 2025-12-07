@@ -91,13 +91,13 @@ If you get an error while Compiling, go [here](https://github.com/JordanSantiago
 
 ## Customization:
 
-if you wish to disable things like *Lua Scripts* or *Video Cutscenes*, you can read over to `Project.xml`
+if you wish to disable things like *Lua Scripts* or *Video Cutscenes*, you can read over to `Project.hxp`
 
-inside `Project.xml`, you will find several variables to customize JS Engine to your liking
+inside `Project.hxp`, you will find several variables to customize JS Engine to your liking
 
-to start you off, disabling Videos should be simple, simply Delete the line `"VIDEOS_ALLOWED"` or comment it out by wrapping the line in XML-like comments, like this: `<!-- YOUR_LINE_HERE -->`
+to start you off, disabling Videos should be simple, simply Delete the line `VIDEOS_ALLOWED.apply(this, true);` or comment it out by adding `//` behind the code block, like this: `// VIDEOS_ALLOWED.apply(this, true);`
 
-same goes for *Lua Scripts*, comment out or delete the line with `LUA_ALLOWED`, this and other customization options are all available within the `Project.xml` file.
+same goes for *Lua Scripts*, comment out or delete the line with `LUA_ALLOWED.apply(this, true);`, this and other customization options are all available within the `Project.hxp` file.
 
 # Contributors
 
@@ -209,3 +209,4 @@ _____________________________________
 * Some stuff based on Week 7's changes has been put in (Background colors on Freeplay, Note splashes)
 * You can reset your Score on Freeplay/Story Mode by pressing Reset button.
 * You can listen to a song or adjust Scroll Speed/Damage taken/etc. on Freeplay by pressing Space.
+
