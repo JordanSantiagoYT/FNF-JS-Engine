@@ -3655,12 +3655,12 @@ class PlayState extends MusicBeatState
 			{
 				var filename = CoolUtil.zeroFill(frameCaptured, 7);
 				try {
-					capture.save(Paths.formatToSongPath(SONG.song) + #if linux '/' #else '\\' #end, filename);
+					capture.save(Paths.formatToSongPath(SONG.song) + #if !windows '/' #else '\\' #end, filename);
 				}
 				catch (e) //If it catches an error, try capturing the frame again. If it still catches an error, skip the frame
 				{
 					try {
-						capture.save(Paths.formatToSongPath(SONG.song) + #if linux '/' #else '\\' #end, filename);
+						capture.save(Paths.formatToSongPath(SONG.song) + #if !windows '/' #else '\\' #end, filename);
 					}
 					catch (e) {}
 				}
