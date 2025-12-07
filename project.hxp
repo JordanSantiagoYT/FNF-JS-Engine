@@ -446,8 +446,11 @@ class Project extends HXProject
 		if (isDesktop() && LUA_ALLOWED.isEnabled(this))
 			addHaxelib('hxluajit'); // Lua API
 
-		if (isDebug())
-			addHaxelib('hxcpp-debug-server'); // VSCode debug support
+		if (isDebug() && isCPP())
+			includeHaxelib("hxcpp-debug-server");
+
+		if (isLinux() && !isDebug())
+			includeHaxelib("hxgamemode");
 
 		if (isDesktop() && VIDEOS_ALLOWED.isEnabled(this))
 			addHaxelib('hxvlc');
@@ -519,6 +522,9 @@ class Project extends HXProject
 		// addAsset("art/readme.txt", "do NOT readme.txt", "art", shouldEmbedArt);
 		// addAsset("CHANGELOG.md", "changelog.txt", "/", shouldEmbedArt);
 		addAssetPath("example_mods", "mods", "default", ["*"], exclude, shouldEmbed); // lololololoolollo
+		
+		if (isLinux() && !isDebug())
+			addAsset("gamemode.ini");
 	}
 
 	/**
