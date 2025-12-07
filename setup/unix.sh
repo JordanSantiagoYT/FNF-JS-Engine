@@ -6,8 +6,8 @@ echo Installing dependencies...
 echo This might take a few moments depending on your internet speed.
 sudo apt update
 sudo apt install libgtk-3-dev libgl-dev libx11-dev libxi-dev libxpm-dev libxrandr-dev libncurses-dev
-haxelib git lime https://github.com/th2l-devs/lime --quiet
-haxelib git openfl https://github.com/th2l-devs/openfl --quiet
+haxelib git lime https://github.com/JS-Engine-things/lime --quiet
+haxelib git openfl https://github.com/JS-Engine-things/openfl --quiet
 haxelib git flixel https://github.com/JS-Engine-things/flixel-JS-Engine --quiet
 haxelib install flixel-addons 3.2.3 --quiet
 haxelib install flixel-tools 1.5.1 --quiet
@@ -24,4 +24,5 @@ haxelib git grig.audio https://github.com/JS-Engine-things/grig.audio --quiet
 haxelib git hxdiscord_rpc https://github.com/MAJigsaw77/hxdiscord_rpc --quiet --skip-dependencies
 haxelib git hxvlc https://github.com/JS-Engine-things/hxvlc --quiet --skip-dependencies
 haxelib git hxnativefiledialog https://github.com/MAJigsaw77/hxnativefiledialog --quiet --skip-dependencies
+haxelib install hxp
 echo Finished!

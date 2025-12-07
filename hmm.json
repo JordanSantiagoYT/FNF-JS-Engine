@@ -5,14 +5,14 @@
       "type": "git",
       "dir": null,
       "ref": null,
-      "url": "https://github.com/th2l-devs/lime"
+      "url": "https://github.com/JS-Engine-things/lime"
     },
     {
       "name": "openfl",
       "type": "git",
       "dir": null,
       "ref": null,
-      "url": "https://github.com/th2l-devs/openfl"
+      "url": "https://github.com/JS-Engine-things/openfl"
     },
     {
       "name": "flixel",
@@ -35,6 +35,11 @@
       "name": "flixel-ui",
       "type": "haxelib",
       "version": "2.6.0"
+    },
+    {
+      "name": "hxp",
+      "type": "haxelib",
+      "version": null
     },
     {
       "name": "hxcpp",
