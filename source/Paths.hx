@@ -173,63 +173,6 @@ class Paths
 		return config;
 	}
 
-	inline public static function mergeAllTextsNamed(path:String, defaultDirectory:String = null, allowDuplicates:Bool = false)
-	{
-		if(defaultDirectory == null) defaultDirectory = Paths.getSharedPath();
-		defaultDirectory = defaultDirectory.trim();
-		if(!defaultDirectory.endsWith('/')) defaultDirectory += '/';
-		if(!defaultDirectory.startsWith('assets/')) defaultDirectory = 'assets/$defaultDirectory';
-
-		var mergedList:Array<String> = [];
-		var paths:Array<String> = directoriesWithFile(defaultDirectory, path);
-
-		var defaultPath:String = defaultDirectory + path;
-		if(paths.contains(defaultPath))
-		{
-			paths.remove(defaultPath);
-			paths.insert(0, defaultPath);
-		}
-
-		for (file in paths)
-		{
-			var list:Array<String> = CoolUtil.coolTextFile(file);
-			for (value in list)
-				if((allowDuplicates || !mergedList.contains(value)) && value.length > 0)
-					mergedList.push(value);
-		}
-		return mergedList;
-	}
-	inline public static function directoriesWithFile(path:String, fileToFind:String, mods:Bool = true)
-	{
-		var foldersToCheck:Array<String> = [];
-		if(#if sys FileSystem.exists(path + fileToFind) || #end Assets.exists(path + fileToFind))
-			foldersToCheck.push(path + fileToFind);
-
-		#if MODS_ALLOWED
-		if(mods)
-		{
-			// Global mods first
-			for(mod in getGlobalMods())
-			{
-				var folder:String = Paths.mods(mod + '/' + fileToFind);
-				if(FileSystem.exists(folder) && !foldersToCheck.contains(folder)) foldersToCheck.push(folder);
-			}
-
-			// Then "PsychEngine/mods/" main folder
-			var folder:String = Paths.mods(fileToFind);
-			if(FileSystem.exists(folder) && !foldersToCheck.contains(folder)) foldersToCheck.push(Paths.mods(fileToFind));
-
-			// And lastly, the loaded mod's folder
-			if(currentModDirectory != null && currentModDirectory.length > 0)
-			{
-				var folder:String = Paths.mods(currentModDirectory + '/' + fileToFind);
-				if(FileSystem.exists(folder) && !foldersToCheck.contains(folder)) foldersToCheck.push(folder);
-			}
-		}
-		#end
-		return foldersToCheck;
-	}
-
 	public static function excludeAsset(key:String) {
 		if (!dumpExclusions.contains(key))
 			dumpExclusions.push(key);
@@ -951,74 +894,11 @@ class Paths
 		}
 		return 'mods/' + key;
 	}
+	#end
 
 	public static function getBackupFilePath(songPath:String, diff:String):String {
 	  final fileName = songPath + "-" + diff + ".json";
 	  return Paths.modsJson("$songPath/$fileName");
-	}
-
-
-	public static var globalMods:Array<String> = [];
-
-	static public function getGlobalMods()
-		return globalMods;
-
-	static public function pushGlobalMods() // prob a better way to do this but idc
-	{
-		globalMods = [];
-		var path:String = 'modsList.txt';
-		if(FileSystem.exists(path))
-		{
-			var list:Array<String> = CoolUtil.coolTextFile(path);
-			for (i in list)
-			{
-				var dat = i.split("|");
-				if (dat[1] == "1")
-				{
-					var folder = dat[0];
-					var path = Paths.mods(folder + '/pack.json');
-					if(FileSystem.exists(path)) {
-						try{
-							var rawJson:String = File.getContent(path);
-							if(rawJson != null && rawJson.length > 0) {
-								var stuff:Dynamic = Json.parse(rawJson);
-								var global:Bool = Reflect.getProperty(stuff, "runsGlobally");
-								if(global)globalMods.push(dat[0]);
-							}
-						} catch(e:Dynamic){
-							trace(e);
-						}
-					}
-				}
-			}
-		}
-		return globalMods;
-	}
-
-	static public function getModDirectories():Array<String> {
-		var list:Array<String> = [];
-		var modsFolder:String = mods();
-		if(FileSystem.exists(modsFolder)) {
-			for (folder in FileSystem.readDirectory(modsFolder)) {
-				var path = haxe.io.Path.join([modsFolder, folder]);
-				if (sys.FileSystem.isDirectory(path) && !ignoreModFolders.contains(folder) && !list.contains(folder)) {
-					list.push(folder);
-				}
-			}
-		}
-		return list;
-	}
-	#end
-
-	public static function loadTopMod()
-	{
-		Paths.currentModDirectory = '';
-
-		#if MODS_ALLOWED
-		var list:Array<String> = Paths.getGlobalMods();
-		if(list != null && list[0] != null)
-			Paths.currentModDirectory = list[0];
-		#end
 	}
 
 	#if flxanimate

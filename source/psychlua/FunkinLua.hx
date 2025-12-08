@@ -37,6 +37,7 @@ class FunkinLua {
 	public var lua:State = null;
 	#end
 	public var camTarget:FlxCamera;
+	public var modFolder:String = null;
 	public var scriptName:String = '';
 	public var closed:Bool = false;
 
@@ -60,6 +61,11 @@ class FunkinLua {
 		this.scriptName = scriptName;
 		final game:PlayState = PlayState.instance;
 		game.luaArray.push(this);
+		var myFolder:Array<String> = this.scriptName.split('/');
+		#if MODS_ALLOWED
+		if(myFolder[0] + '/' == Paths.mods() && (Mods.currentModDirectory == myFolder[1] || Mods.getGlobalMods().contains(myFolder[1]))) //is inside mods folder
+			this.modFolder = myFolder[1];
+		#end
 		try{
 			var result:Int = scriptCode != null ? LuaL.dostring(lua, scriptCode) : LuaL.dofile(lua, scriptName);
 			var resultStr:String = Lua.tostring(lua, result);
@@ -2251,6 +2257,24 @@ class FunkinLua {
 			if (text4 == null) text4 = '';
 			if (text5 == null) text5 = '';
 			LuaUtils.luaTrace(lua, '' + text1 + text2 + text3 + text4 + text5, true, false);
+		});
+		
+		// mod settings
+		addLocalCallback("getModSetting", function(saveTag:String, ?modName:String = null) {
+			#if MODS_ALLOWED
+			if(modName == null)
+			{
+				if(this.modFolder == null)
+				{
+					FunkinLua.luaTrace('getModSetting: Argument #2 is null and script is not inside a packed Mod folder!', false, false, FlxColor.RED);
+					return null;
+				}
+				modName = this.modFolder;
+			}
+			return LuaUtils.getModSetting(saveTag, modName);
+			#else
+			luaTrace("getModSetting: Mods are disabled in this build!", false, false, FlxColor.RED);
+			#end
 		});
 
 		addLocalCallback("close", function() {
