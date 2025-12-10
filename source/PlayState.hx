@@ -70,8 +70,6 @@ class PlayState extends MusicBeatState
 	public var GF_X:Float = 400;
 	public var GF_Y:Float = 130;
 
-	var randomBotplayText:String;
-
 	public var songSpeedTween:FlxTween;
 	public var songSpeed(default, set):Float = 1;
 	public var songSpeedType:String = "multiplicative";
@@ -375,8 +373,6 @@ class PlayState extends MusicBeatState
 
 	public var songName:String;
 
-	var theListBotplay:Array<String> = [];
-
 	var formattedScore:String;
 	var formattedSongMisses:String;
 	var formattedCombo:String;
@@ -442,14 +438,11 @@ class PlayState extends MusicBeatState
 		}
 
 		if (noteLimit == 0) noteLimit = 2147483647;
-		theListBotplay = CoolUtil.coolTextFile(Paths.txt('botplayText'));
 
 		if (FileSystem.exists(Paths.getSharedPath('sounds/hitsounds/' + ClientPrefs.hitsoundType.toLowerCase() + '.txt')))
 			hitsoundImageToLoad = File.getContent(Paths.getSharedPath('sounds/hitsounds/' + ClientPrefs.hitsoundType.toLowerCase() + '.txt'));
 		else if (FileSystem.exists(Paths.modFolders('sounds/hitsounds/' + ClientPrefs.hitsoundType.toLowerCase() + '.txt')))
 			hitsoundImageToLoad = File.getContent(Paths.modFolders('sounds/hitsounds/' + ClientPrefs.hitsoundType.toLowerCase() + '.txt'));
-
-		randomBotplayText = theListBotplay[FlxG.random.int(0, theListBotplay.length - 1)];
 
 		inline cpp.vm.Gc.enable(ClientPrefs.enableGC || ffmpegMode && !ClientPrefs.noRenderGC); //lagspike prevention
 		inline Paths.clearStoredMemory();
@@ -1519,9 +1512,6 @@ class PlayState extends MusicBeatState
 			Paths.music(PauseSubState.songName);
 		else if(ClientPrefs.pauseMusic != 'None')
 			Paths.music(Paths.formatToSongPath(ClientPrefs.pauseMusic));
-
-		if(cpuControlled && ClientPrefs.randomBotplayText && ClientPrefs.botTxtStyle != 'Hide' && botplayTxt != null)
-			botplayTxt.text = theListBotplay[FlxG.random.int(0, theListBotplay.length - 1)];
 
 		resetRPC();
 		callOnLuas('onCreatePost');
@@ -3295,87 +3285,7 @@ class PlayState extends MusicBeatState
 			botplaySine += 180 * elapsed;
 			botplayTxt.alpha = 1 - Math.sin((Math.PI * botplaySine) / 180 * playbackRate);
 		}
-		if((botplayTxt != null && cpuControlled && !ClientPrefs.showcaseMode && !botplayUsed) && ClientPrefs.randomBotplayText) {
-			botplayUsed = true;
-			if(botplayTxt.text == "this text is gonna kick you out of botplay in 10 seconds" || botplayTxt.text == "Your Botplay Free Trial will end in 10 seconds.")
-				{
-					new FlxTimer().start(10, function(tmr:FlxTimer)
-						{
-							cpuControlled = false;
-							botplayUsed = false;
-							botplayTxt.visible = false;
-						});
-				}
-			if(botplayTxt.text == "You use botplay? In 10 seconds I knock your botplay thing and text so you'll never use it >:)")
-				{
-					new FlxTimer().start(10, function(tmr:FlxTimer)
-						{
-							cpuControlled = false;
-							botplayUsed = false;
-							FlxG.sound.play(Paths.sound('pipe'), 10);
-							botplayTxt.visible = false;
-							PauseSubState.botplayLockout = true;
-						});
-				}
-			if(botplayTxt.text == "you have 10 seconds to run.")
-				{
-					new FlxTimer().start(10, function(tmr:FlxTimer)
-						{
-							#if VIDEOS_ALLOWED
-							startVideo('scary', function() Sys.exit(0));
-							#else
-							throw 'You should RUN, any minute now.'; // thought this'd be cooler
-							// Sys.exit(0);
-							#end
-						});
-				}
-			if(botplayTxt.text == "you're about to die in 30 seconds")
-				{
-					new FlxTimer().start(30, function(tmr:FlxTimer)
-						{
-							health = 0;
-						});
-				}
-			if(botplayTxt.text == "3 minutes until Boyfriend steals your liver.")
-				{
-				var title:String = 'Incoming Alert from Boyfriend';
-				var message:String = '3 minutes until Boyfriend steals your liver!';
-				FlxG.sound.music.pause();
-				pauseVocals();
-
-				lime.app.Application.current.window.alert(message, title);
-				FlxG.sound.music.resume();
-				unpauseVocals();
-					new FlxTimer().start(180, function(tmr:FlxTimer)
-						{
-							Sys.exit(0);
-						});
-				}
-			if(botplayTxt.text == "[DATA EXPUNGED]")
-				{
-				new FlxTimer().start(5, function(tmr:FlxTimer)
-					{
-						sendWindowsNotification('[DATA EXPUNGED]', 'Nice try...');
-						for (i in 0...5) trace('[DATA EXPUNGED]'); // he is taking over >:)
-						Sys.exit(0);
-					});
-				}
-
-			if(botplayTxt.text == "3 minutes until I steal your liver.")
-				{
-				var title:String = 'Incoming Alert from Jordan';
-				var message:String = '3 minutes until I steal your liver.';
-				FlxG.sound.music.pause();
-				pauseVocals();
-
-				lime.app.Application.current.window.alert(message, title);
-				unpauseVocals();
-					new FlxTimer().start(180, function(tmr:FlxTimer)
-						{
-							Sys.exit(0);
-						});
-				}
-		}
+		if(botplayTxt != null && cpuControlled && !ClientPrefs.showcaseMode && !botplayUsed) botplayUsed = true;
 
 		if (controls.PAUSE && startedCountdown && canPause && !heyStopTrying)
 		{

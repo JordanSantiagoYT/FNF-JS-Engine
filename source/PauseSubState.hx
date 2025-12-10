@@ -21,7 +21,6 @@ class PauseSubState extends MusicBeatSubstate
 	var skipTimeTracker:Alphabet;
 	var curTime:Float = Math.max(0, Conductor.songPosition);
 
-	public static var botplayLockout:Bool = false;
 	public static var inPause:Bool = false;
 	public static var requireRestart:Bool = false;
 
@@ -30,8 +29,6 @@ class PauseSubState extends MusicBeatSubstate
 	override function create()
 	{
 		if(CoolUtil.difficulties.length < 2) menuItemsOG.remove('Change Difficulty'); //No need to change difficulty if there is only one!
-
-		if(botplayLockout) menuItemsOG.remove('Toggle Botplay'); //you cant toggle it on MWAHAHAHAHAHA
 
 		if(PlayState.chartingMode)
 		{
