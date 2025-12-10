@@ -14,9 +14,9 @@ import openfl.display.BlendMode;
 
 #if (SHADERS_ALLOWED)
 import flixel.addons.display.FlxRuntimeShader;
-import shaders.ErrorHandledShader;
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
+import shaders.ErrorHandledShader;
 #end
 
 #if desktop
@@ -38,6 +38,7 @@ class FunkinLua {
 	#end
 	public var camTarget:FlxCamera;
 	public var scriptName:String = '';
+	public var modFolder:String = null;
 	public var closed:Bool = false;
 
 	#if hscript
@@ -60,6 +61,12 @@ class FunkinLua {
 		this.scriptName = scriptName;
 		final game:PlayState = PlayState.instance;
 		game.luaArray.push(this);
+
+		var myFolder:Array<String> = this.scriptName.split('/');
+		#if MODS_ALLOWED
+		if(myFolder[0] + '/' == Paths.mods() && (Paths.currentModDirectory == myFolder[1] || Paths.getGlobalMods().contains(myFolder[1]))) //is inside mods folder
+			this.modFolder = myFolder[1];
+		#end
 		try{
 			var result:Int = scriptCode != null ? LuaL.dostring(lua, scriptCode) : LuaL.dofile(lua, scriptName);
 			var resultStr:String = Lua.tostring(lua, result);
@@ -87,6 +94,7 @@ class FunkinLua {
 		set('luaDebugMode', false);
 		set('luaDeprecatedWarnings', true);
 		set('inChartEditor', false);
+		set('modFolder', this.modFolder);
 
 		// Song/Week shit
 		set('curBpm', Conductor.bpm);
@@ -190,6 +198,12 @@ class FunkinLua {
 		set('shadersEnabled', ClientPrefs.shaders);
 		set('scriptName', scriptName);
 		set('currentModDirectory', Paths.currentModDirectory);
+
+		// Noteskin/Splash shit
+		set('noteSkin', ClientPrefs.noteSkin);
+		set('noteSkinPostfix', Note.getNoteSkinPostfix());
+		set('splashSkin', ClientPrefs.splashType);
+		set('splashSkinPostfix', NoteSplash.getSplashSkinPostfix());
 
 		// If you don't want this to show, you can use the lua script to change it
 		set('user_path', CoolSystemStuff.getUserPath());
@@ -1571,12 +1585,15 @@ class FunkinLua {
 			}
 		});
 		registerFunction("cameraSetTarget", function(target:String) {
-			var isDad:Bool = false;
-			if(target == 'dad') {
-				isDad = true;
+			switch(target.trim().toLowerCase())
+			{
+				case 'gf', 'girlfriend': // now gf can be targeted
+					game.moveCameraToGirlfriend();
+				case 'dad', 'opponent':
+					game.moveCamera(true);
+				default:
+					game.moveCamera(false);
 			}
-			PlayState.instance.moveCamera(isDad);
-			return isDad;
 		});
 		registerFunction("cameraShake", function(camera:String, intensity:Float, duration:Float) {
 			LuaUtils.cameraFromString(camera).shake(intensity, duration / PlayState.instance.playbackRate);
