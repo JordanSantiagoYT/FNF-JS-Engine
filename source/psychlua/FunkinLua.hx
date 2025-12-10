@@ -965,25 +965,6 @@ class FunkinLua {
 			return true;
 		});
 
-		registerFunction("callMethod", function(funcToRun:String, ?args:Array<Dynamic>) {
-			var parent:Dynamic = PlayState.instance;
-			var split:Array<String> = funcToRun.split('.');
-			var varParent:Dynamic = MusicBeatState.getVariables().get(split[0].trim());
-			if (varParent != null) {
-				split.shift();
-				funcToRun = split.join('.').trim();
-				parent = varParent;
-			}
-
-			if(funcToRun.length > 0) {
-				return callMethodFromObject(parent, funcToRun, parseInstances(args));
-			}
-			return Reflect.callMethod(null, parent, parseInstances(args));
-		});
-		registerFunction("callMethodFromClass", function(className:String, funcToRun:String, ?args:Array<Dynamic>) {
-			return callMethodFromObject(Type.resolveClass(className), funcToRun, parseInstances(args));
-		});
-
 		//shitass stuff for epic coders like me B)  *image of obama giving himself a medal*
 		registerFunction("getObjectOrder", function(obj:String) {
 			var killMe:Array<String> = obj.split('.');
@@ -3010,28 +2991,6 @@ class FunkinLua {
 		}
 
 		return Reflect.getProperty(instance, variable);
-	}
-
-	static function callMethodFromObject(classObj:Dynamic, funcStr:String, args:Array<Dynamic>)
-	{
-		var split:Array<String> = funcStr.split('.');
-		var funcToRun:Function = null;
-		var obj:Dynamic = classObj;
-		//trace('start: ' + obj);
-		if(obj == null)
-		{
-			return null;
-		}
-
-		for (i in 0...split.length)
-		{
-			obj = getVarInArray(obj, split[i].trim());
-			//trace(obj, split[i]);
-		}
-
-		funcToRun = cast obj;
-		//trace('end: $obj');
-		return funcToRun != null ? Reflect.callMethod(obj, funcToRun, args) : null;
 	}
 
 	inline static function getTextObject(name:String):FlxText
