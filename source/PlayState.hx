@@ -1338,19 +1338,6 @@ class PlayState extends MusicBeatState
 			if (style == 'Forever Engine' || style == 'Vanilla') updateScore();
 		}
 
-		// Showcase and HUD logic
-		if (ClientPrefs.showcaseMode) {
-			final items = (ClientPrefs.showcaseST == 'AMZ')
-				? [scoreTxt, botplayTxt, timeBarBG, timeBar, timeTxt]
-				: [scoreTxt, botplayTxt, healthBarBG, healthBar, iconP1, iconP2];
-			for (item in items) if (item != null) item.visible = false;
-		}
-
-		if (ClientPrefs.hideHud) {
-			final hudItems:Array<Dynamic> = [scoreTxt, botplayTxt, healthBarBG, healthBar, iconP2, iconP1, timeBarBG, timeBar, timeTxt];
-			for (item in hudItems) if (item != null) item.visible = false;
-		}
-
 		style = null;
 
 		if (!ClientPrefs.charsAndBG) {
@@ -1378,7 +1365,7 @@ class PlayState extends MusicBeatState
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
-		botplayTxt.visible = cpuControlled && !ClientPrefs.showcaseMode;
+		botplayTxt.visible = cpuControlled && (!ClientPrefs.hideHud && ClientPrefs.botTxtStyle != 'Hide' && !ClientPrefs.showcaseMode);
 		add(botplayTxt);
 		if (ClientPrefs.downScroll)
 			botplayTxt.y = timeBarBG.y - 78;
@@ -1417,8 +1404,19 @@ class PlayState extends MusicBeatState
 				botplayTxt.visible = true;
 			}
 		}
-		if (ClientPrefs.showRendered)
-			renderedTxt.text = 'Rendered Notes: ' + formatNumber(notes.length);
+
+		// Showcase and HUD logic
+		if (ClientPrefs.showcaseMode) {
+			final items = (ClientPrefs.showcaseST == 'AMZ')
+				? [scoreTxt, botplayTxt, timeBarBG, timeBar, timeTxt]
+				: [scoreTxt, botplayTxt, healthBarBG, healthBar, iconP1, iconP2];
+			for (item in items) if (item != null) item.visible = false;
+		}
+
+		if (ClientPrefs.hideHud) {
+			final hudItems:Array<Dynamic> = [scoreTxt, botplayTxt, healthBarBG, healthBar, iconP2, iconP1, timeBarBG, timeBar, timeTxt];
+			for (item in hudItems) if (item != null) item.visible = false;
+		}
 
 		strumLineNotes.cameras = [camHUD];
 		grpNoteSplashes.cameras = [camHUD];

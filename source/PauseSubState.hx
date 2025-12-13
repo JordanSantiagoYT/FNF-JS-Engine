@@ -142,15 +142,11 @@ class PauseSubState extends MusicBeatSubstate
 		super.update(elapsed);
 		if (menuItems != menuItemsExit && menuItems.contains('Skip Time')) updateSkipTextStuff();
 
-		var upP = controls.UI_UP_P;
-		var downP = controls.UI_DOWN_P;
-		var accepted = controls.ACCEPT;
-
-		if (upP)
+		if (controls.UI_UP_P)
 		{
 			changeSelection(-1);
 		}
-		if (downP)
+		if (controls.UI_DOWN_P)
 		{
 			changeSelection(1);
 		}
@@ -194,7 +190,7 @@ class PauseSubState extends MusicBeatSubstate
 				}
 		}
 
-		if (accepted && (cantUnpause <= 0 || !ClientPrefs.controllerMode))
+		if (controls.ACCEPT && (cantUnpause <= 0 || !ClientPrefs.controllerMode))
 		{
 			if (menuItems == difficultyChoices)
 			{
@@ -263,9 +259,9 @@ class PauseSubState extends MusicBeatSubstate
 					PlayState.changedDifficulty = true;
 					if (PlayState.instance.botplayTxt != null)
 					{
-					PlayState.instance.botplayTxt.visible = PlayState.instance.cpuControlled;
-					PlayState.instance.botplayTxt.alpha = 1;
-					PlayState.instance.botplaySine = 0;
+						PlayState.instance.botplayTxt.visible = PlayState.instance.cpuControlled;
+						PlayState.instance.botplayTxt.alpha = 1;
+						PlayState.instance.botplaySine = 0;
 					}
 				case "Options":
 					FlxG.switchState(OptionsState.new);
@@ -312,7 +308,7 @@ class PauseSubState extends MusicBeatSubstate
 			case "Back":
 					menuItems = menuItemsOG;
 					regenMenu();
-			case "Exit to your Mother":
+			case "Exit To Your Mother": //this was case sensitive, so the entire time this would softlock your game
 					trace ("YO MAMA");
 					throw "lol";
 				}
