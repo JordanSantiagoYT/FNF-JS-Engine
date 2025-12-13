@@ -526,7 +526,7 @@ class PlayState extends MusicBeatState
 		persistentUpdate = true;
 		persistentDraw = true;
 		if (SONG == null)
-			SONG = Song.loadFromJson('tutorial');
+			SONG = Song.loadFromJson('test');
 
 		Conductor.mapBPMChanges(SONG);
 		Conductor.changeBPM(SONG.bpm);
@@ -1149,9 +1149,9 @@ class PlayState extends MusicBeatState
 		msTxt.cameras = [camHUD];
 		msTxt.scrollFactor.set();
 		msTxt.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Tails Gets Trolled V4') msTxt.setFormat("calibri.ttf", 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'TGT V4') msTxt.setFormat("comic.ttf", 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Doki Doki+') msTxt.setFormat("Aller_rg.ttf", 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
+		if (ClientPrefs.scoreStyle == 'Tails Gets Trolled V4') msTxt.setFormat(Paths.font("calibri.ttf"), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
+		if (ClientPrefs.scoreStyle == 'TGT V4') msTxt.setFormat(Paths.font("comic.ttf"), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
+		if (ClientPrefs.scoreStyle == 'Doki Doki+') msTxt.setFormat(Paths.font("Aller_rg.ttf"), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
 		msTxt.x = 408 + 250;
 		msTxt.y = 290 - 25;
 		if (PlayState.isPixelStage) {
@@ -4242,6 +4242,12 @@ class PlayState extends MusicBeatState
 
 	function sendWindowsNotification(title:String, desc:String, isEvent:Bool = false) {
 		// haha i got them from slushi engine :) (by nael2xd)
+		#if (cpp && windows)
+		if (PlatformUtil.detectWine() == true){
+			trace("Wine detected!");
+			return;
+		}
+		#end
 		#if windows
 		function getWindowsVersion() {
 			var windowsVersions:Map<String, Int> = [
