@@ -1148,7 +1148,7 @@ class PlayState extends MusicBeatState
 		msTxt = new FlxText(0, 0, 0, "");
 		msTxt.cameras = [camHUD];
 		msTxt.scrollFactor.set();
-		msTxt.setFormat("vcr.ttf", 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
+		msTxt.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
 		if (ClientPrefs.scoreStyle == 'Tails Gets Trolled V4') msTxt.setFormat("calibri.ttf", 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
 		if (ClientPrefs.scoreStyle == 'TGT V4') msTxt.setFormat("comic.ttf", 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
 		if (ClientPrefs.scoreStyle == 'Doki Doki+') msTxt.setFormat("Aller_rg.ttf", 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
@@ -1167,10 +1167,10 @@ class PlayState extends MusicBeatState
 		judgeTxt = new FlxText(400, timeBarBG.y + 120, FlxG.width - 800, "");
 		judgeTxt.cameras = [camHUD];
 		judgeTxt.scrollFactor.set();
-		judgeTxt.setFormat("vcr.ttf", 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Tails Gets Trolled V4') judgeTxt.setFormat("calibri.ttf", 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Dave and Bambi') judgeTxt.setFormat("comic.ttf", 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Doki Doki+') judgeTxt.setFormat("Aller_rg.ttf", 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+		judgeTxt.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+		if (ClientPrefs.scoreStyle == 'Tails Gets Trolled V4') judgeTxt.setFormat(Paths.font("calibri.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+		if (ClientPrefs.scoreStyle == 'Dave and Bambi') judgeTxt.setFormat(Paths.font("comic.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+		if (ClientPrefs.scoreStyle == 'Doki Doki+') judgeTxt.setFormat(Paths.font("Aller_rg.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 		judgeTxt.active = false;
 		judgeTxt.size = 32;
 		judgeTxt.visible = false;

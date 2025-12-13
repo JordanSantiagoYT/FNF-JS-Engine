@@ -64,7 +64,7 @@ class CreditsPopUp extends FlxSpriteGroup
 		bg = new FlxSprite().makeGraphic(400, 50, FlxColor.WHITE);
 		if (newHeading != null)
 		{
-				bg.loadGraphic(Paths.image(newHeading.path));
+			bg.loadGraphic(Paths.image(newHeading.path));
 		}
 		bg.antialiasing = newHeading.antiAliasing;
 		curHeading = newHeading;
@@ -106,7 +106,7 @@ class CreditsPopUp extends FlxSpriteGroup
 			remove(funnyText);
 		}
 		funnyText = new FlxText(1, 0, 650, text, 16);
-		funnyText.setFormat('vcr.ttf', 30, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		funnyText.setFormat(Paths.font('vcr.ttf'), 30, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		funnyText.borderSize = 2;
 		funnyText.antialiasing = true;
 		add(funnyText);
