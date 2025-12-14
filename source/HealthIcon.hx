@@ -52,8 +52,8 @@ class HealthIcon extends FlxSprite
 
 			//cleaned up to be less confusing. also floor is used so iSize has to definitively be 3 to use winning icons
 			final iSize:Float = Math.round(iconAsset.width / iconAsset.height);
-			initialWidth = width;
-			initialHeight = height;
+			initialWidth = iconAsset.width;
+			initialHeight = iconAsset.height;
 			loadGraphic(iconAsset, true, Math.floor(iconAsset.width / iSize), Math.floor(iconAsset.height));
 			iconOffsets[0] = (width - 150) / iSize;
 			iconOffsets[1] = (height - 150) / iSize;
