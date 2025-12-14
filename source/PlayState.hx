@@ -5259,8 +5259,7 @@ class PlayState extends MusicBeatState
 			if (ClientPrefs.showNotes || !ClientPrefs.showNotes && !cpuControlled)
 			{
 				while (limitNC < noteLimit && targetNote.strumTime - Conductor.songPosition < (NOTE_SPAWN_TIME / targetNote.multSpeed)) {
-					spawnedNote = new Note();
-					(targetNote.isSustainNote ? sustainNotes : notes).add(spawnedNote);
+					spawnedNote = (targetNote.isSustainNote ? sustainNotes : notes).recycle(Note);
 					spawnedNote.setupNoteData(targetNote);
 
 					if (!ClientPrefs.noSpawnFunc) callOnLuas('onSpawnNote', [(!spawnedNote.isSustainNote ? notes.members.indexOf(spawnedNote) : sustainNotes.members.indexOf(spawnedNote)), targetNote.noteData, targetNote.noteType, targetNote.isSustainNote]);
@@ -5672,18 +5671,15 @@ class PlayState extends MusicBeatState
 			killNotes.push(note);
 	}
 
+	var noteKill:Note = null;
 	public function destroyNotes():Void
 	{
 		final iterator:Iterator<Note> = killNotes.iterator();
 
 		while (iterator.hasNext())
 		{
-			final note:Note = iterator.next();
-			note.active = note.visible = false;
-			if (!ClientPrefs.lowQuality || !cpuControlled)
-				note.kill();
-			(note.isSustainNote ? sustainNotes : notes).remove(note, true);
-			note.destroy();
+			noteKill = iterator.next();
+			noteKill.kill();
 		}
 		killNotes = [];
 	}
