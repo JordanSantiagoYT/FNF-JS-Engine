@@ -1314,19 +1314,23 @@ class ChartingState extends MusicBeatState
 			if (check_notesSec.checked)
 			{
 				for(i in 0...value2) {
-				for (note in _song.notes[daSec - value1].sectionNotes)
-				{
-					var strum = note[0] + Conductor.stepCrochet * (getSectionBeats(daSec - value1) * 4 * value1);
-
-					var data = note[1];
-					if (swapNotes) data = Std.int(note[1] + 4) % 8;
-					var copiedNote:Array<Dynamic> = [strum, data, note[2], note[3]];
-					inline _song.notes[daSec].sectionNotes.push(copiedNote);
-				}
 					if (curSection - value1 < 0)
 					{
-					trace ("value1's section is less than 0 LMAO");
-					break;
+						trace ("The number you put for value 1 would cause the game to copy notes from a negative section.");
+						break;
+					}
+					for (note in _song.notes[daSec - value1].sectionNotes)
+					{
+						var strum = note[0] + Conductor.stepCrochet * (getSectionBeats(daSec - value1) * 4 * value1);
+
+						var data = note[1];
+						if (swapNotes) data = Std.int(note[1] + 4) % 8;
+						var copiedNote:Array<Dynamic> = [strum, data, note[2], note[3]];
+						inline _song.notes[daSec].sectionNotes.push(copiedNote);
+					}
+					if (sectionStartTime(1) > FlxG.sound.music.length) {
+						trace('Last possible section reached!');
+						break;
 					}
 					if (_song.notes[curSec + 1] == null)
 					{
@@ -1352,12 +1356,16 @@ class ChartingState extends MusicBeatState
 			return;
 			}
 			if(_song.notes[curSec] == null || _song.notes[curSec] != null && _song.notes[curSec].sectionNotes.length < 1 || Math.isNaN(_song.notes[curSec].sectionNotes.length) || _song.notes[curSec].sectionNotes == null) {
-			trace ("HEY! your section doesn't have any notes! please place at least 1 note then try using this.");
-			return; //prevent a crash if the section doesn't have any notes
+				trace ("HEY! your section doesn't have any notes! please place at least 1 note then try using this.");
+				return; //prevent a crash if the section doesn't have any notes
 			}
 			saveUndo(_song); //I don't even know why.
 
 			for(i in 0...value) {
+				if (sectionStartTime(1) > FlxG.sound.music.length) {
+					trace('Last possible section reached!');
+					break;
+				}
 				if (_song.notes[curSec + 1] == null) addSection(getSectionBeats());
 				changeSection(curSec+1);
 				for (note in _song.notes[curSec-1].sectionNotes)
