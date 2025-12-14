@@ -2274,10 +2274,7 @@ class FunkinLua {
 			closed = true;
 			return closed;
 		});
-		for (name => func in registeredFunctions) {
-			if (func != null)
-				Convert.addCallback(lua, name, func);
-		}
+
 		#if ACHIEVEMENTS_ALLOWED Achievements.addLuaCallbacks(lua); #end
 		#if HSCRIPT_ALLOWED HScript.implement(this); #end
 		CustomSubstate.implement(this);
@@ -2899,6 +2896,11 @@ class FunkinLua {
 				FlxG.cameras.remove(theCam);
 			}
 		});
+
+		for (name => func in registeredFunctions) {
+			if (func != null)
+				Convert.addCallback(lua, name, func);
+		}
 
 		call('onCreate', []);
 		#end
