@@ -56,9 +56,11 @@
       "url": "https://github.com/JS-Engine-things/hxvlc"
     },
     {
-      "name": "hscript",
-      "type": "haxelib",
-      "version": null
+      "name": "hscript-improved",
+      "type": "git",
+      "dir": null,
+      "ref": "master",
+      "url": "https://github.com/CodenameCrew/hscript-improved"
     },
     {
       "name": "hxcpp-debug-server",
