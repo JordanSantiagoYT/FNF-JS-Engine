@@ -382,6 +382,10 @@ class Project extends HXProject
 
 		// setHaxedef("safeMode"); // what is this
 
+		//as much as i didnt want to use this, the game won't compile without it.
+		//Allows to use HScript.
+		setHaxedef("hscript");
+
 		// If we aren't using the Flixel debugger, strip it out.
 		if (!isDebug())
 		{
