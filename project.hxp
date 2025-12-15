@@ -335,15 +335,15 @@ class Project extends HXProject
 		// For example, `-DMODS_ALLOWED` or `-DVIDEOS_ALLOWED`
 
 		// Should be true unless explicitly requested.
-		MODS_ALLOWED.apply(this, true);
-		LUA_ALLOWED.apply(this, true);
-		VIDEOS_ALLOWED.apply(this, true);
+		MODS_ALLOWED.apply(this, (isDesktop() || isMobile()) && !isWeb());
+		LUA_ALLOWED.apply(this, (isDesktop() || isMobile()) && (!isWeb() || !isHashLink()));
+		VIDEOS_ALLOWED.apply(this, (isDesktop() || isMobile()) && (!isWeb() || !is32Bit()));
 		CRASH_HANDLER.apply(this, true);
 		ACHIEVEMENTS_ALLOWED.apply(this, true);
 		CHECK_FOR_UPDATES.apply(this, true);
 		FEATURE_LOG_TRACE.apply(this, isDebug());
-		HSCRIPT_ALLOWED.apply(this, isDesktop());
-		DISCORD_ALLOWED.apply(this, isDesktop());
+		HSCRIPT_ALLOWED.apply(this, (isDesktop() || isMobile() || isWeb()));
+		DISCORD_ALLOWED.apply(this, (isDesktop() || isMobile()));
 		SHADERS_ALLOWED.apply(this, true);
 		FUNNY_ALLOWED.apply(this, true);
 		// TITLE_SCREEN_EASTER_EGG.apply(this, true);
@@ -381,10 +381,6 @@ class Project extends HXProject
 		setHaxedef("HXCPP_GC_BIG_BLOCKS");
 
 		// setHaxedef("safeMode"); // what is this
-
-		//as much as i didnt want to use this, the game won't compile without it.
-		//Allows to use HScript.
-		setHaxedef("hscript");
 
 		// If we aren't using the Flixel debugger, strip it out.
 		if (!isDebug())

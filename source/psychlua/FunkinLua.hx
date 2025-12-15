@@ -12,7 +12,7 @@ import openfl.Lib;
 import openfl.display.BitmapData;
 import openfl.display.BlendMode;
 
-#if (SHADERS_ALLOWED)
+#if SHADERS_ALLOWED
 import flixel.addons.display.FlxRuntimeShader;
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
@@ -41,7 +41,7 @@ class FunkinLua {
 	public var modFolder:String = null;
 	public var closed:Bool = false;
 
-	#if hscript
+	#if HSCRIPT_ALLOWED
 	public var hscript:HScript = null;
 	#end
 
