@@ -41,7 +41,7 @@ class FunkinLua {
 	public var modFolder:String = null;
 	public var closed:Bool = false;
 
-	#if hscript
+	#if hscript-improved
 	public var hscript:HScript = null;
 	#end
 
