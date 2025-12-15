@@ -5038,7 +5038,7 @@ class PlayState extends MusicBeatState
 				{
 					for (n in group.members)
 					{ // I can't do a filter here, that's kinda awesome
-						var canHit:Bool = (n != null && !usingBotEnergy && !strumsBlocked[n.noteData] && n.canBeHit && n.mustPress && !n.tooLate && !n.wasGoodHit && !n.blockHit);
+						var canHit:Bool = (n != null && n.exists && !usingBotEnergy && !strumsBlocked[n.noteData] && n.canBeHit && n.mustPress && !n.tooLate && !n.wasGoodHit && !n.blockHit);
 
 						if (canHit && n.isSustainNote)
 						{
