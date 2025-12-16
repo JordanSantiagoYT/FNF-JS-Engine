@@ -14,6 +14,19 @@ import hxgamemode.GamemodeClient;
 import lime.graphics.Image;
 #end
 
+#if windows
+@:buildXml('
+<target id="haxe">
+	<lib name="wininet.lib" if="windows" />
+	<lib name="dwmapi.lib" if="windows" />
+</target>
+')
+@:cppFileCode('
+#include <windows.h>
+#include <winuser.h>
+')
+#end
+
 class Main extends Sprite {
 	final game = {
 		width: 1280,
@@ -30,7 +43,7 @@ class Main extends Sprite {
 	public static final superDangerMode:Bool = Sys.args().contains("-troll");
 
 	// You can pretty much ignore everything from here on - your code should go in your states.
-	
+
 	@:noCompletion
 	private static function __init__():Void {
 		#if (linux && !debug)
@@ -50,11 +63,12 @@ class Main extends Sprite {
 
 	public function new() {
 		super();
-		#if windows //DPI AWARENESS BABY
-		@:functionCode('
-		#include <Windows.h>
-		SetProcessDPIAware()
-		')
+		#if (cpp && windows)
+		untyped __cpp__("
+				SetProcessDPIAware(); // allows for more crisp visuals
+				SetConsoleOutputCP(CP_UTF8);
+				DisableProcessWindowsGhosting() // lets you move the window and such if it's not responding
+		");
 		#end
 		CrashHandler.init();
 		setupGame();
