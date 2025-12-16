@@ -19,6 +19,7 @@ import flixel.util.FlxSort;
 import lime.system.System;
 import objects.*;
 import openfl.events.KeyboardEvent;
+import play.objects.*;
 #if SHADERS_ALLOWED
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
@@ -299,12 +300,12 @@ class PlayState extends MusicBeatState
 	public var singDurMult:Int = 1;
 
 	//ms timing popup shit
-	public var msTxt:FlxText;
+	public var msTxt:MSText;
 	public var msTimer:FlxTimer = null;
 	public var restartTimer:FlxTimer = null;
 
 	//ms timing popup shit except for simplified ratings
-	public var judgeTxt:FlxText;
+	public var judgeTxt:JudgeText;
 	public var judgeTxtTimer:FlxTimer = null;
 
 	public var oppScore:Float = 0;
@@ -1145,36 +1146,12 @@ class PlayState extends MusicBeatState
 		}
 		moveCameraSection();
 
-		msTxt = new FlxText(0, 0, 0, "");
-		msTxt.cameras = [camHUD];
-		msTxt.scrollFactor.set();
-		msTxt.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Tails Gets Trolled V4') msTxt.setFormat(Paths.font("calibri.ttf"), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'TGT V4') msTxt.setFormat(Paths.font("comic.ttf"), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Doki Doki+') msTxt.setFormat(Paths.font("Aller_rg.ttf"), 20, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-		msTxt.x = 408 + 250;
-		msTxt.y = 290 - 25;
-		if (PlayState.isPixelStage) {
-			msTxt.x = 408 + 260;
-			msTxt.y = 290 + 20;
-		}
-		msTxt.x += ClientPrefs.comboOffset[0];
-		msTxt.y -= ClientPrefs.comboOffset[1];
-		msTxt.active = false;
-		msTxt.visible = false;
+		msTxt = new MSText(camHUD);
 		insert(members.indexOf(strumLineNotes), msTxt);
 
-		judgeTxt = new FlxText(400, timeBarBG.y + 120, FlxG.width - 800, "");
-		judgeTxt.cameras = [camHUD];
-		judgeTxt.scrollFactor.set();
-		judgeTxt.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Tails Gets Trolled V4') judgeTxt.setFormat(Paths.font("calibri.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Dave and Bambi') judgeTxt.setFormat(Paths.font("comic.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		if (ClientPrefs.scoreStyle == 'Doki Doki+') judgeTxt.setFormat(Paths.font("Aller_rg.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		judgeTxt.active = false;
-		judgeTxt.size = 32;
-		judgeTxt.visible = false;
+		judgeTxt = new JudgeText(camHUD);
 		add(judgeTxt);
+
 		switch(ClientPrefs.healthBarStyle)
 		{
 			case 'Dave Engine':
@@ -4765,85 +4742,23 @@ class PlayState extends MusicBeatState
 			}
 
 			if (ClientPrefs.showMS && !ClientPrefs.hideHud) {
-				FlxTween.cancelTweensOf(msTxt);
-				msTxt.cameras = [camHUD];
-				msTxt.visible = true;
-				msTxt.screenCenter();
-				msTxt.x = (FlxG.width * 0.35) + 80;
-				msTxt.alpha = 1;
-				msTxt.text = FlxMath.roundDecimal(-noteDiff, 3) + " MS";
-				if (cpuControlled) msTxt.text = "0 MS (Bot)";
-				msTxt.x += ClientPrefs.comboOffset[0];
-				msTxt.y -= ClientPrefs.comboOffset[1];
-				if (combo >= 10000) msTxt.x += 30 * (Std.string(combo).length - 4);
-				FlxTween.tween(msTxt,
-					{y: msTxt.y + 8},
-					0.1 / playbackRate,
-					{onComplete: function(_){
-
-							FlxTween.tween(msTxt, {alpha: 0}, 0.2 / playbackRate, {
-								// ease: FlxEase.circOut,
-								onComplete: function(_){msTxt.visible = false;},
-								startDelay: 1.4 / playbackRate
-							});
-						}
-					});
-				switch (daRating.name) //This is so stupid, but it works
-				{
-					case 'perfect': msTxt.color = FlxColor.YELLOW;
-					case 'sick':  msTxt.color = FlxColor.CYAN;
-					case 'good': msTxt.color = FlxColor.LIME;
-					case 'bad': msTxt.color = FlxColor.ORANGE;
-					case 'shit': msTxt.color = FlxColor.RED;
-					default: msTxt.color = FlxColor.WHITE;
-				}
-				if (miss) msTxt.color = FlxColor.fromRGB(204, 66, 66);
+				msTxt.showHit({
+					noteDiff: noteDiff,
+					combo: combo,
+					rating: daRating.name,
+					miss: miss,
+					cpuControlled: cpuControlled,
+					playbackRate: playbackRate
+				});
 			}
 
 			if (ClientPrefs.ratingPopups && ClientPrefs.simplePopups && !ClientPrefs.hideHud) {
-				FlxTween.cancelTweensOf(judgeTxt);
-				FlxTween.cancelTweensOf(judgeTxt.scale);
-				judgeTxt.cameras = [camHUD];
-				judgeTxt.visible = true;
-				judgeTxt.screenCenter(X);
-				if (botplayTxt != null) judgeTxt.y = !ClientPrefs.downScroll ? botplayTxt.y + 60 : botplayTxt.y - 60;
-				judgeTxt.alpha = 1;
-				if (!miss) switch (daRating.name)
-				{
-					case 'perfect':
-						judgeTxt.color = FlxColor.YELLOW;
-						judgeTxt.text = hitStrings[0] + '\n' + formatNumber(combo);
-					case 'sick':
-						judgeTxt.color = FlxColor.CYAN;
-						judgeTxt.text = hitStrings[1] + '\n' + formatNumber(combo);
-					case 'good':
-						judgeTxt.color = FlxColor.LIME;
-						judgeTxt.text = hitStrings[2] + '\n' + formatNumber(combo);
-					case 'bad':
-						judgeTxt.color = FlxColor.ORANGE;
-						judgeTxt.text = hitStrings[3] + '\n' + formatNumber(combo);
-					case 'shit':
-						judgeTxt.color = FlxColor.RED;
-						judgeTxt.text = hitStrings[4] + '\n' + formatNumber(combo);
-					default: judgeTxt.color = FlxColor.WHITE;
-				}
-				else
-				{
-					judgeTxt.color = FlxColor.fromRGB(204, 66, 66);
-					judgeTxt.text = hitStrings[5] + '\n' + formatNumber(combo);
-				}
-				judgeTxt.scale.x = 1.075;
-				judgeTxt.scale.y = 1.075;
-				FlxTween.tween(judgeTxt.scale,
-					{x: 1, y: 1},
-				0.1 / playbackRate,
-					{onComplete: function(_){
-							FlxTween.tween(judgeTxt.scale, {x: 0, y: 0}, 0.1 / playbackRate, {
-								onComplete: function(_){judgeTxt.visible = false;},
-								startDelay: 1.0 / playbackRate
-							});
-						}
-					});
+				judgeTxt.showHit({
+					combo: combo,
+					rating: daRating.name,
+					miss: miss,
+					playbackRate: playbackRate
+				});
 			}
 			if (ClientPrefs.ratingPopups && !ClientPrefs.simplePopups) popUpGroup.sort((o, a, b) ->
 				{

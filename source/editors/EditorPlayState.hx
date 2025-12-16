@@ -6,8 +6,8 @@ import Section.SwagSection;
 import Song.SwagSong;
 import flixel.input.keyboard.FlxKey;
 import flixel.util.FlxSort;
-import objects.SustainSplash;
 import openfl.events.KeyboardEvent;
+import play.objects.SustainSplash;
 
 class EditorPlayState extends MusicBeatState
 {

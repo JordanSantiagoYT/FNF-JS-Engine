@@ -37,11 +37,6 @@ class NoteSplash extends FlxSprite
 		antialiasing = ClientPrefs.globalAntialiasing;
 	}
 
-	override function destroy()
-	{
-		super.destroy();
-	}
-
 	var maxAnims:Int = 2;
 	var config:NoteSplashConfig = null;
 	public function setupNoteSplash(x:Float, y:Float, direction:Int = 0, ?note:Note = null) {

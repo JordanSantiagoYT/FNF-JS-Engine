@@ -1,7 +1,7 @@
 package;
 
 import backend.NoteTypesConfig;
-import objects.SustainSplash;
+import play.objects.SustainSplash;
 import shaders.RGBPalette.RGBShaderReference;
 import shaders.RGBPalette;
 
@@ -39,7 +39,7 @@ typedef EventNote = {
 	public var ignoreNote:Bool = false;
 	public var blockHit:Bool = false;
 	public var lowPriority:Bool = false;
-	
+
 	public function dispose() {
 		// will be cleared by the GC later
 		for (field in Reflect.fields(this)) {
@@ -619,7 +619,7 @@ class Note extends FlxSprite
 	{
 		var ns = chartNoteData.noteskin ?? "";
 		var tx = chartNoteData.texture ?? "";
-	
+
 		wasGoodHit = hitByOpponent = tooLate = canBeHit = false; // Don't make an update call of this for the note group
 
 		if (ns.length > 0 && ns != texture) {
