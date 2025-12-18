@@ -4,7 +4,7 @@ cd ..
 echo Installing dependencies...
 echo This might take a few moments depending on your internet speed.
 @echo on
-haxelib git lime https://github.com/JS-Engine-things/lime --quiet
+haxelib git lime https://github.com/JS-Engine-things/lime-8.1.2 --quiet
 haxelib git openfl https://github.com/JS-Engine-things/openfl --quiet
 haxelib git flixel https://github.com/JS-Engine-things/flixel-JS-Engine --quiet
 haxelib install flixel-addons 3.2.3 --quiet
