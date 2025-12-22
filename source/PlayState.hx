@@ -1989,54 +1989,10 @@ class PlayState extends MusicBeatState
 
 	public static function formatCompactNumber(number:Float):String
 	{
-		var suffixes1:Array<String> = [
-		 	'',
-		 	'mi',
-		 	'bi',
-		 	'tri',
-		 	'quadri',
-		 	'quinti',
-		 	'sexti',
-		 	'septi',
-		 	'octi',
-		 	'noni'
-	  ];
-	var tenSuffixes:Array<Array<String>> = [
-	  ['', '', ''],
-	  ['deci', 'n', ''],
-	  ['viginti', 'm', 's'],
-	  ['trigenti', 'n', 's'],
-	  ['quadraginti', 'n', 's'],
-	  ['quinquaginti', 'n', 's'],
-	  ['sexaginti', 'n', ''],
-	  ['septuaginti', 'n', ''],
-	  ['octoginti', 'm', 'x'],
-	  ['nonaginti', '', '']
-	];
-	var decSuffixes:Array<Array<Dynamic>> = [
-	  ['', false],
- 	  ['un', false],
-	  ['duo', false],
-	  ['tre', true],
-	  ['quattuor', false],
-	  ['quin', false],
-	  ['se', true],
-	  ['septe', true],
-	  ['octo', false],
-	  ['nove', true]
-	];
-	var centiSuffixes:Array<Array<String>> = [
-	  ['', '', ''],
-	  ['centi', 'n', 'x'],
-	  ['ducenti', 'n', ''],
-	  ['trecenti', 'n', 's'],
-	  ['quadringenti', 'n', 's'],
-	  ['quingenti', 'n', 's'],
-	  ['sescenti', 'n', ''],
-	  ['septingenti', 'n', ''],
-	  ['octingenti', 'm', 'x'],
-	  ['nongenti', '', '']
-	];
+		var suffixes1:Array<String> = ['', 'mi', 'bi', 'tri', 'quadri', 'quinti', 'sexti', 'septi', 'octi', 'noni'];
+	var tenSuffixes:Array<Array<String>> = [['', '', ''], ['deci', 'n', ''], ['viginti', 'm', 's'], ['trigenti', 'n', 's'], ['quadraginti', 'n', 's'], ['quinquaginti', 'n', 's'], ['sexaginti', 'n', ''], ['septuaginti', 'n', ''],['octoginti', 'm', 'x'], ['nonaginti', '', '']];
+	var decSuffixes:Array<Array<Dynamic>> = [['', false], ['un', false], ['duo', false], ['tre', true], ['quattuor', false], ['quin', false], ['se', true], ['septe', true], ['octo', false], ['nove', true]];
+	var centiSuffixes:Array<Array<String>> = [['', '', ''], ['centi', 'n', 'x'], ['ducenti', 'n', ''], ['trecenti', 'n', 's'], ['quadringenti', 'n', 's'], ['quingenti', 'n', 's'], ['sescenti', 'n', ''], ['septingenti', 'n', ''], ['octingenti', 'm', 'x'], ['nongenti', '', '']];
 
 		var magnitude:Int = -1;
 		var num:Float = number;
@@ -2052,37 +2008,13 @@ class PlayState extends MusicBeatState
 		var tenIndex:Int = Math.floor((magnitude / 10) % 10);
 		var centiIndex:Int = Math.floor(magnitude / 100);
 
-		var unitSuffix:String = (magnitude <= 10) ? suffixes1[unitIndex] : decSuffixes[unitIndex][0];
+		var unitSubSuffix1:String = tenIndex == 0 && centiIndex > 0 ? centiSuffixes[centiIndex][1] : tenSuffixes[tenIndex][1];
+		var unitSubSuffix2:String = tenIndex == 0 && centiIndex > 0 ? centiSuffixes[centiIndex][2] : tenSuffixes[tenIndex][2];
+		var unitSubSuffix3:String = unitIndex != 3 && unitIndex != 6 ? unitSubSuffix1 : unitIndex == 3 && unitSubSuffix2 == 'x' ? 's' : unitSubSuffix2;
+
+		var unitSuffix:String = magnitude <= 10 ? suffixes1[unitIndex] : decSuffixes[unitIndex][0] + unitSubSuffix3;
 		var tenSuffix:String = tenSuffixes[tenIndex][0];
 		var centiSuffix:String = centiSuffixes[centiIndex][0];
-		if (decSuffixes[unitIndex][1])
-		{
-			if (magnitude > 10)
-			{
-				if (tenIndex == 0 && centiIndex > 0)
-				{
-					if (unitIndex != 3 && unitIndex != 6) {
-						unitSuffix += centiSuffixes[centiIndex][1];
-					} else {
-						if (unitIndex == 3 && centiSuffixes[centiIndex][2] == 'x') {
-							unitSuffix += 's';
-						} else {
-							unitSuffix += centiSuffixes[centiIndex][2];
-						}
-					}
-				} else if (tenIndex > 0) {
-					if (unitIndex != 3 && unitIndex != 6) {
-						unitSuffix += tenSuffixes[tenIndex][1];
-					} else {
-						if (unitIndex == 3 && tenSuffixes[tenIndex][2] == 'x') {
-							unitSuffix += 's';
-						} else {
-							unitSuffix += tenSuffixes[tenIndex][2];
-						}
-					}
-				}
-			}
-    }
 
 		var finalSuffix:String = unitSuffix + tenSuffix + centiSuffix;
 		var compactValue:Float = Math.floor(num * 100) / 100; // Use the floor value for the compact representation
