@@ -729,27 +729,6 @@ class FreeplayState extends MusicBeatState
 		positionHighscore();
 	}
 
-    public static function formatCompactNumber(number:Float):String //this entire function is ai generated LMAO
-    {
-        var suffixes:Array<String> = [' bytes', ' KB', ' MB', ' GB', 'TB'];
-        var magnitude:Int = 0;
-        var num:Float = number;
-
-        while (num >= 1000.0 && magnitude < suffixes.length - 1)
-        {
-            num /= 1000.0;
-            magnitude++;
-        }
-
-        // Use the floor value for the compact representation
-        var compactValue:Float = Math.floor(num * 100) / 100;
-	if (compactValue <= 0.001) {
-		return "0"; //Return 0 if compactValue = null
-	} else {
-        	return compactValue + (magnitude == 0 ? "" : "") + suffixes[magnitude];
-	}
-    }
-
 	function changeSelection(change:Int = 0, playSound:Bool = true)
 	{
 		if (player.playingMusic) return;
