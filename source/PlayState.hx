@@ -1989,53 +1989,113 @@ class PlayState extends MusicBeatState
 
 	public static function formatCompactNumber(number:Float):String
 	{
-		var suffixes1:Array<String> = ['ni', 'mi', 'bi', 'tri', 'quadri', 'quinti', 'sexti', 'septi', 'octi', 'noni'];
-		var tenSuffixes:Array<String> = ['', 'deci', 'viginti', 'triginti', 'quadraginti', 'quinquaginti', 'sexaginti', 'septuaginti', 'octoginti', 'nonaginti', 'centi'];
-		var decSuffixes:Array<String> = ['', 'un', 'duo', 'tre', 'quattuor', 'quin', 'sex', 'septe', 'octo', 'nove'];
-		var centiSuffixes:Array<String> = ['centi', 'ducenti', 'trecenti', 'quadringenti', 'quingenti', 'sescenti', 'septingenti', 'octingenti', 'nongenti'];
+		var suffixes1:Array<String> = [
+		 	'',
+		 	'mi',
+		 	'bi',
+		 	'tri',
+		 	'quadri',
+		 	'quinti',
+		 	'sexti',
+		 	'septi',
+		 	'octi',
+		 	'noni'
+	  ];
+	var tenSuffixes:Array<Array<String>> = [
+	  ['', '', ''],
+	  ['deci', 'n', ''],
+	  ['viginti', 'm', 's'],
+	  ['trigenti', 'n', 's'],
+	  ['quadraginti', 'n', 's'],
+	  ['quinquaginti', 'n', 's'],
+	  ['sexaginti', 'n', ''],
+	  ['septuaginti', 'n', ''],
+	  ['octoginti', 'm', 'x'],
+	  ['nonaginti', '', '']
+	];
+	var decSuffixes:Array<Array<Dynamic>> = [
+	  ['', false],
+ 	  ['un', false],
+	  ['duo', false],
+	  ['tre', true],
+	  ['quattuor', false],
+	  ['quin', false],
+	  ['se', true],
+	  ['septe', true],
+	  ['octo', false],
+	  ['nove', true]
+	];
+	var centiSuffixes:Array<Array<String>> = [
+	  ['', '', ''],
+	  ['centi', 'n', 'x'],
+	  ['ducenti', 'n', ''],
+	  ['trecenti', 'n', 's'],
+	  ['quadringenti', 'n', 's'],
+	  ['quingenti', 'n', 's'],
+	  ['sescenti', 'n', ''],
+	  ['septingenti', 'n', ''],
+	  ['octingenti', 'm', 'x'],
+	  ['nongenti', '', '']
+	];
 
-		var magnitude:Int = 0;
+		var magnitude:Int = -1;
 		var num:Float = number;
-		var tenIndex:Int = 0;
 
 		while (num >= 1000.0)
 		{
 			num /= 1000.0;
+      magnitude++;
+		}
 
-			if (magnitude == suffixes1.length - 1) {
-				tenIndex++;
-			}
+		// Determine which suffixes to use
+		var unitIndex:Int = Math.floor(magnitude % 10);
+		var tenIndex:Int = Math.floor((magnitude / 10) % 10);
+		var centiIndex:Int = Math.floor(magnitude / 100)
 
-			magnitude++;
-
-			if (magnitude == 21) {
-				tenIndex++;
-				magnitude = 11;
+		var unitSuffix:String = (magnitude <= 10) ? suffixes1[unitIndex] : decSuffixes[unitIndex][0];
+		var tenSuffix:String = tenSuffixes[tenIndex][0];
+		var centiSuffix:String = centiSuffixes[centiIndex][0];
+		if (magnitude > 10)
+		{
+			if (tenIndex == 0 && centiIndex > 0)
+			{
+				if (unitIndex != 3 && unitIndex != 6) {
+					unitSuffix += centiSuffixes[centiIndex][1];
+				} else {
+					if (unitIndex == 3 && centiSuffixes[centiIndex][2] == 'x') {
+						unitSuffix += 's';
+					} else {
+						unitSuffix += centiSuffixes[centiIndex][2];
+					}
+				}
+			} else if (tenIndex > 0) {
+				if (unitIndex != 3 && unitIndex != 6) {
+					unitSuffix += tenSuffixes[tenIndex][1];
+				} else {
+					if (unitSuffix == 3 && tenSuffixes[tenIndex][2] == 'x') {
+						unitSuffix += 's';
+					} else {
+						unitSuffix += tenSuffixes[tenIndex][2];
+					}
+				}
 			}
 		}
 
-		// Determine which set of suffixes to use
-		var suffixSet:Array<String> = (magnitude <= suffixes1.length) ? suffixes1 : ((magnitude <= suffixes1.length + decSuffixes.length) ? decSuffixes : centiSuffixes);
-
-		// Use the appropriate suffix based on magnitude
-		var suffix:String = (magnitude <= suffixes1.length) ? suffixSet[magnitude - 1] : suffixSet[magnitude - 1 - suffixes1.length];
-		var tenSuffix:String = (tenIndex <= 10) ? tenSuffixes[tenIndex] : centiSuffixes[tenIndex - 11];
-
-		// Use the floor value for the compact representation
-		var compactValue:Float = Math.floor(num * 100) / 100;
+		final finalSuffix:String = unitSuffix + tenSuffix + centiSuffix;
+		var compactValue:Float = Math.floor(num * 100) / 100; // Use the floor value for the compact representation
 
 		if (compactValue <= 0.001) {
 			return "0"; // Return 0 if compactValue = null
 		} else {
 			var illionRepresentation:String = "";
 
-			if (magnitude > 0) {
-				illionRepresentation += suffix + tenSuffix;
+			if (magnitude > -1) {
+				illionRepresentation += finalSuffix;
 			}
 
-				if (magnitude > 1) illionRepresentation += "llion";
+				if (magnitude > 0) illionRepresentation += "llion";
 
-			return compactValue + (magnitude == 0 ? "" : " ") + (magnitude == 1 ? 'thousand' : illionRepresentation);
+			return compactValue + (magnitude == -1 ? "" : " ") + (magnitude == 0 ? 'thousand' : illionRepresentation);
 		}
 	}
 
