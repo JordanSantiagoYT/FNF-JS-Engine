@@ -2012,7 +2012,7 @@ class PlayState extends MusicBeatState
 		var unitSubSuffix2:String = tenIndex == 0 && centiIndex > 0 ? centiSuffixes[centiIndex][2] : tenSuffixes[tenIndex][2];
 		var unitSubSuffix3:String = unitIndex != 3 && unitIndex != 6 ? unitSubSuffix1 : unitIndex == 3 && unitSubSuffix2 == 'x' ? 's' : unitSubSuffix2;
 
-		var unitSuffix:String = magnitude <= 10 ? suffixes1[unitIndex] : decSuffixes[unitIndex][0] + unitSubSuffix3;
+		var unitSuffix:String = magnitude <= 10 ? suffixes1[unitIndex] : decSuffixes[unitIndex][0] + (decSuffixes[unitIndex][1] ? unitSubSuffix3 : '');
 		var tenSuffix:String = tenSuffixes[tenIndex][0];
 		var centiSuffix:String = centiSuffixes[centiIndex][0];
 
