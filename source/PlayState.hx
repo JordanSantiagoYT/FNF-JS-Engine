@@ -2055,31 +2055,34 @@ class PlayState extends MusicBeatState
 		var unitSuffix:String = (magnitude <= 10) ? suffixes1[unitIndex] : decSuffixes[unitIndex][0];
 		var tenSuffix:String = tenSuffixes[tenIndex][0];
 		var centiSuffix:String = centiSuffixes[centiIndex][0];
-		if (magnitude > 10)
+		if (decSuffixes[unitIndex][1])
 		{
-			if (tenIndex == 0 && centiIndex > 0)
+			if (magnitude > 10)
 			{
-				if (unitIndex != 3 && unitIndex != 6) {
-					unitSuffix += centiSuffixes[centiIndex][1];
-				} else {
-					if (unitIndex == 3 && centiSuffixes[centiIndex][2] == 'x') {
-						unitSuffix += 's';
+				if (tenIndex == 0 && centiIndex > 0)
+				{
+					if (unitIndex != 3 && unitIndex != 6) {
+						unitSuffix += centiSuffixes[centiIndex][1];
 					} else {
-						unitSuffix += centiSuffixes[centiIndex][2];
+						if (unitIndex == 3 && centiSuffixes[centiIndex][2] == 'x') {
+							unitSuffix += 's';
+						} else {
+							unitSuffix += centiSuffixes[centiIndex][2];
+						}
 					}
-				}
-			} else if (tenIndex > 0) {
-				if (unitIndex != 3 && unitIndex != 6) {
-					unitSuffix += tenSuffixes[tenIndex][1];
-				} else {
-					if (unitSuffix == 3 && tenSuffixes[tenIndex][2] == 'x') {
-						unitSuffix += 's';
+				} else if (tenIndex > 0) {
+					if (unitIndex != 3 && unitIndex != 6) {
+						unitSuffix += tenSuffixes[tenIndex][1];
 					} else {
-						unitSuffix += tenSuffixes[tenIndex][2];
+						if (unitIndex == 3 && tenSuffixes[tenIndex][2] == 'x') {
+							unitSuffix += 's';
+						} else {
+							unitSuffix += tenSuffixes[tenIndex][2];
+						}
 					}
 				}
 			}
-		}
+    }
 
 		var finalSuffix:String = unitSuffix + tenSuffix + centiSuffix;
 		var compactValue:Float = Math.floor(num * 100) / 100; // Use the floor value for the compact representation
