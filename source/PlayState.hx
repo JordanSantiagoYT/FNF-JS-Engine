@@ -2050,7 +2050,7 @@ class PlayState extends MusicBeatState
 		// Determine which suffixes to use
 		var unitIndex:Int = Math.floor(magnitude % 10);
 		var tenIndex:Int = Math.floor((magnitude / 10) % 10);
-		var centiIndex:Int = Math.floor(magnitude / 100)
+		var centiIndex:Int = Math.floor(magnitude / 100);
 
 		var unitSuffix:String = (magnitude <= 10) ? suffixes1[unitIndex] : decSuffixes[unitIndex][0];
 		var tenSuffix:String = tenSuffixes[tenIndex][0];
