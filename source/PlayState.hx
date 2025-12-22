@@ -2081,7 +2081,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		final finalSuffix:String = unitSuffix + tenSuffix + centiSuffix;
+		var finalSuffix:String = unitSuffix + tenSuffix + centiSuffix;
 		var compactValue:Float = Math.floor(num * 100) / 100; // Use the floor value for the compact representation
 
 		if (compactValue <= 0.001) {
