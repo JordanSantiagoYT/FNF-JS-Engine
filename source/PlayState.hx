@@ -436,6 +436,7 @@ class PlayState extends MusicBeatState
 			FlxG.fixedTimestep = true;
 			FlxG.animationTimeScale = ClientPrefs.framerate / targetFPS;
 			if (!ClientPrefs.oldFFmpegMode) initRender(renderPath);
+			FlxG.signals.preStateSwitch.addOnce(() -> stopRender());
 		}
 
 		if (noteLimit == 0) noteLimit = 2147483647;
@@ -4571,20 +4572,12 @@ class PlayState extends MusicBeatState
 
 	public function restartSong(noTrans:Bool = true)
 	{
-		if (process != null) stopRender();
 		PlayState.instance.paused = true; // For lua
 		FlxG.sound.music.volume = 0;
 		vocals.volume = opponentVocals.volume = 0;
 
-		if(noTrans)
-		{
-			FlxTransitionableState.skipNextTransOut = true;
-			FlxG.resetState();
-		}
-		else
-		{
-			FlxG.resetState();
-		}
+		FlxTransitionableState.skipNextTransOut = noTrans;
+		FlxG.resetState();
 	}
 
 	public var totalPlayed:Int = 0;
@@ -6259,16 +6252,13 @@ class PlayState extends MusicBeatState
 
 	public static function stopRender():Void
 	{
-		if (!ClientPrefs.ffmpegMode)
+		if (!ClientPrefs.ffmpegMode || process == null)
 			return;
 
-		if (process != null){
-			if (process.stdin != null)
-				process.stdin.close();
+		process?.stdin?.close();
 
-			process.close();
-			process.kill();
-		}
+		process?.close();
+		process?.kill();
 
 		FlxG.autoPause = ClientPrefs.autoPause;
 	}
