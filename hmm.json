@@ -85,7 +85,7 @@
       "name": "hxluajit",
       "type": "git",
       "dir": null,
-      "ref": "master",
+      "ref": "main",
       "url": "https://github.com/JS-Engine-things/hxluajit"
     },
     {
