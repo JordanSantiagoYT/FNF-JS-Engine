@@ -421,6 +421,13 @@ class VisualsUISubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
+		var option:Option = new Option('Counter Border',
+			'If unchecked, disables the Counter Border, increases performance at the cost of readability.',
+			'fpsBorder',
+			'bool',
+			false);
+		addOption(option);
+
 		var option:Option = new Option('Main Menu Tips',
 			"If unchecked, hides those tips at the top in the main menu!",
 			'tipTexts',

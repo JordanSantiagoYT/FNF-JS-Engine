@@ -1,19 +1,13 @@
 package;
 
-import flixel.FlxState;
-import flixel.addons.transition.TransitionData;
 // import flixel.graphics.FlxGraphic;
 import flixel.graphics.frames.FlxFrame;
 import flixel.group.FlxGroup;
 import flixel.input.gamepad.FlxGamepad;
 import flixel.input.keyboard.FlxKey;
-import flixel.system.ui.FlxSoundTray;
 import openfl.Assets;
-import openfl.display.Bitmap;
 import openfl.display.BitmapData;
-import options.GraphicsSettingsSubState;
 #if VIDEOS_ALLOWED
-import VideoSprite;
 #end
 
 typedef TitleData =

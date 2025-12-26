@@ -1,8 +1,8 @@
 package debug;
 
-import debug.Memory;
-import lime.system.System as LimeSystem;
 import debug.mem.GetTotalMemory;
+import lime.system.System as LimeSystem;
+import openfl.display.Bitmap;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
 
@@ -19,6 +19,10 @@ class FPSCounter extends TextField
 {
 	public var currentFPS(default, null):Float;
 
+	public var bitmap:Bitmap;
+	var lastText:String = "";
+	var outlineDirty:Bool = true;
+
 	/*
 	* The current memory usage (WARNING: This might NOT your total memory usage, rather it might show the garbage collector memory if you aren't running on a C++ platform.)
 	*/
@@ -28,7 +32,7 @@ class FPSCounter extends TextField
 
 	var mempeak(get, never):Float;
 	inline function get_mempeak():Float
-	        return GetTotalMemory.getPeakRSS();
+	  return GetTotalMemory.getPeakRSS();
 
 	@:noCompletion private var times:Array<Float>;
 
@@ -42,12 +46,21 @@ class FPSCounter extends TextField
 		currentFPS = 0;
 		selectable = false;
 		mouseEnabled = false;
-		defaultTextFormat = new TextFormat("VCR OSD Mono", 12, color);
+		defaultTextFormat = new TextFormat("VCR OSD Mono", 14, color);
 		autoSize = LEFT;
 		multiline = true;
 		text = "FPS: ";
 
+		FlxG.signals.gameResized.add(rescale);
+
 		times = [];
+	}
+
+	function rescale(width:Int, height:Int):Void {
+		var scale:Float = height / 720;
+
+    this.scaleX = scale;
+    this.scaleY = scale;
 	}
 
 	var timeColor:Float = 0.0;
@@ -96,7 +109,34 @@ class FPSCounter extends TextField
 			if (currentFPS <= ClientPrefs.framerate / 4)
 				textColor = 0xFFFF0000;
 		}
-		// deltaTimeout = 0.0;
+
+		var newText = text;
+
+		if (ClientPrefs.fpsBorder)
+		{
+			visible = true;
+
+			if (outlineDirty || newText != lastText)
+			{
+				if (bitmap != null && Main.instance.contains(bitmap))
+					Main.instance.removeChild(bitmap);
+
+				bitmap = ImageOutline.renderImage(this, 2, 0x000000, 1);
+				Main.instance.addChild(bitmap);
+
+				lastText = newText;
+				outlineDirty = false;
+			}
+
+			visible = false;
+		}
+		else
+		{
+			visible = true;
+			if (bitmap != null && Main.instance.contains(bitmap))
+				Main.instance.removeChild(bitmap);
+		}
+
 	}
 
 	public dynamic function updateText():Void   // so people can override it in hscript

@@ -522,7 +522,7 @@ class Project extends HXProject
 		// addAsset("art/readme.txt", "do NOT readme.txt", "art", shouldEmbedArt);
 		// addAsset("CHANGELOG.md", "changelog.txt", "/", shouldEmbedArt);
 		addAssetPath("example_mods", "mods", "default", ["*"], exclude, shouldEmbed); // lololololoolollo
-		
+
 		if (isLinux() && !isDebug())
 			addAsset("gamemode.ini");
 	}
@@ -616,7 +616,7 @@ class Project extends HXProject
 	{
 		return this.targetFlags.exists("nodejs");
 	}
-	
+
 	inline function isCPP():Bool
 	{
 		return this.targetFlags.exists("cpp");
