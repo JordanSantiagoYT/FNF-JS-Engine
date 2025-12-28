@@ -51,16 +51,19 @@ class FPSCounter extends TextField
 		multiline = true;
 		text = "FPS: ";
 
-		FlxG.signals.gameResized.add(rescale);
+		FlxG.signals.gameResized.add(function(w, h)
+		{
+			setScale(Math.min(openfl.Lib.current.stage.stageWidth / FlxG.width, openfl.Lib.current.stage.stageHeight / FlxG.height));
+		});
 
 		times = [];
 	}
 
-	function rescale(width:Int, height:Int):Void {
-		var scale:Float = height / 720;
-
-    this.scaleX = scale;
-    this.scaleY = scale;
+	public inline function setScale(?scale:Float)
+	{
+		if (scale == null)
+			scale = Math.min(FlxG.stage.window.width / FlxG.width, FlxG.stage.window.height / FlxG.height);
+		scaleX = scaleY = #if android (scale > 1 ? scale : 1) #else (scale < 1 ? scale : 1) #end;
 	}
 
 	var timeColor:Float = 0.0;
