@@ -43,10 +43,6 @@ class PlayState extends MusicBeatState
 
 	private var tauntKey:Array<FlxKey>;
 
-	public var camGameShaders:Array<ShaderEffect> = [];
-	public var camHUDShaders:Array<ShaderEffect> = [];
-	public var camOtherShaders:Array<ShaderEffect> = [];
-
 	var lastUpdateTime:Float = 0.0;
 
 	//event variables
@@ -1714,31 +1710,16 @@ class PlayState extends MusicBeatState
 	}
 
 	public function addShaderToCamera(cam:String,effect:Dynamic){//STOLE FROM ANDROMEDA	// actually i got it from old psych engine
-		#if SHADERS_ALLOWED
-		if (!ClientPrefs.shaders)
-			return;
 		switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud':
-				camHUDShaders.push(effect);
-				var newCamEffects:Array<BitmapFilter>=[]; // IT SHUTS HAXE UP IDK WHY BUT WHATEVER IDK WHY I CANT JUST ARRAY<SHADERFILTER>
-				for(i in camHUDShaders){
-					newCamEffects.push(new ShaderFilter(i.shader));
-				}
-				camHUD.filters = newCamEffects;
+				if (camHUD.filters == null) camHUD.filters = [];
+				camHUD.filters?.push(new ShaderFilter(effect.shader));
 			case 'camother' | 'other':
-				camOtherShaders.push(effect);
-				var newCamEffects:Array<BitmapFilter>=[]; // IT SHUTS HAXE UP IDK WHY BUT WHATEVER IDK WHY I CANT JUST ARRAY<SHADERFILTER>
-				for(i in camOtherShaders){
-					newCamEffects.push(new ShaderFilter(i.shader));
-				}
-				camOther.filters = newCamEffects;
+				if (camOther.filters == null) camOther.filters = [];
+				camOther.filters?.push(new ShaderFilter(effect.shader));
 			case 'camgame' | 'game':
-				camGameShaders.push(effect);
-				var newCamEffects:Array<BitmapFilter>=[]; // IT SHUTS HAXE UP IDK WHY BUT WHATEVER IDK WHY I CANT JUST ARRAY<SHADERFILTER>
-				for(i in camGameShaders){
-					newCamEffects.push(new ShaderFilter(i.shader));
-				}
-				camGame.filters = newCamEffects;
+				if (camGame.filters == null) camGame.filters = [];
+				camGame.filters?.push(new ShaderFilter(effect.shader));
 			default:
 				if(modchartSprites.exists(cam)) {
 					Reflect.setProperty(modchartSprites.get(cam),"shader",effect.shader);
@@ -1749,64 +1730,47 @@ class PlayState extends MusicBeatState
 					Reflect.setProperty(OBJ,"shader", effect.shader);
 				}
 		}
-		#end
-  }
+ 	}
 
-  public function removeShaderFromCamera(cam:String,effect:ShaderEffect){
-	#if SHADERS_ALLOWED
-	if (!ClientPrefs.shaders)
-		return;
-	switch(cam.toLowerCase()) {
-		case 'camhud' | 'hud':
-			camHUDShaders.remove(effect);
-			var newCamEffects:Array<BitmapFilter>=[];
-			for(i in camHUDShaders){
-				newCamEffects.push(new ShaderFilter(i.shader));
+	public function removeShaderFromCamera(cam:String,effect:Dynamic){
+		var filter = new ShaderFilter(effect.shader);
+		switch(cam.toLowerCase()) {
+			case 'camhud' | 'hud':
+				camHUD.filters?.remove(filter);
+			case 'camother' | 'other':
+				camOther.filters?.remove(filter);
+			case 'camgame' | 'game':
+				camGame.filters?.remove(filter);
+			default:
+				if(modchartSprites.exists(cam)) {
+					Reflect.setProperty(modchartSprites.get(cam),"shader",null);
+				} else if(modchartTexts.exists(cam)) {
+					Reflect.setProperty(modchartTexts.get(cam),"shader",null);
+				} else {
+					var OBJ = Reflect.getProperty(PlayState.instance,cam);
+					Reflect.setProperty(OBJ,"shader", null);
+				}
 			}
-			camHUD.filters = newCamEffects;
-		case 'camother' | 'other':
-			camOtherShaders.remove(effect);
-			var newCamEffects:Array<BitmapFilter>=[];
-			for(i in camOtherShaders){
-				newCamEffects.push(new ShaderFilter(i.shader));
-			}
-			camOther.filters = newCamEffects;
-		default:
-			if(modchartSprites.exists(cam)) {
-				Reflect.setProperty(modchartSprites.get(cam),"shader",null);
-			} else if(modchartTexts.exists(cam)) {
-				Reflect.setProperty(modchartTexts.get(cam),"shader",null);
-			} else {
-				var OBJ = Reflect.getProperty(PlayState.instance,cam);
-				Reflect.setProperty(OBJ,"shader", null);
-			}
-		}
-	#end
-  }
-  public function clearShaderFromCamera(cam:String){
-	#if SHADERS_ALLOWED
-	if (!ClientPrefs.shaders)
-		return;
-	switch(cam.toLowerCase()) {
-		case 'camhud' | 'hud':
-			camHUDShaders = [];
-			var newCamEffects:Array<BitmapFilter>=[];
-			camHUD.filters = newCamEffects;
-		case 'camother' | 'other':
-			camOtherShaders = [];
-			var newCamEffects:Array<BitmapFilter>=[];
-			camOther.filters = newCamEffects;
-		case 'camgame' | 'game':
-			camGameShaders = [];
-			var newCamEffects:Array<BitmapFilter>=[];
-			camGame.filters = newCamEffects;
-		default:
-			camGameShaders = [];
-			var newCamEffects:Array<BitmapFilter>=[];
-			camGame.filters = newCamEffects;
 	}
-	#end
-  }
+	public function clearShaderFromCamera(cam:String){
+		switch(cam.toLowerCase()) {
+			case 'camhud' | 'hud':
+				camHUD.filters = [];
+			case 'camother' | 'other':
+				camOther.filters = [];
+			case 'camgame' | 'game':
+				camGame.filters = [];
+			default:
+				camGame.filters = [];
+		}
+	}
+
+	public function getLuaObject(tag:String, text:Bool=true):FlxSprite {
+		if(modchartSprites.exists(tag)) return modchartSprites.get(tag);
+		if(text && modchartTexts.exists(tag)) return modchartTexts.get(tag);
+		if(variables.exists(tag)) return variables.get(tag);
+		return null;
+	}
 
 	public function getLuaObject(tag:String, text:Bool=true):FlxSprite {
 		if(modchartSprites.exists(tag)) return modchartSprites.get(tag);
@@ -3075,11 +3039,16 @@ class PlayState extends MusicBeatState
 			if(disableTheTripperAt <= curStep || isDead)
 				disableTheTripper = true;
 
-			FlxG.camera.filters = [new ShaderFilter(screenshader.shader)];
-			screenshader.update(elapsed);
 			if(disableTheTripper)
 			{
 				screenshader.shader.uampmul.value[0] -= (elapsed / 2);
+			}
+
+			if (screenshader?.shader?.uampmul?.value[0] > 0)
+				screenshader.update(elapsed);
+			else {
+				removeShaderFromCamera('camGame', screenshader);
+				screenshader.Enabled = false;
 			}
 		}
 
@@ -4128,16 +4097,14 @@ class PlayState extends MusicBeatState
 				return;
 				#end
 				#if SHADERS_ALLOWED
-				if(ClientPrefs.flashing && ClientPrefs.shaders) {
-					var timeRainbow:Int = Std.parseInt(value1);
-					var speedRainbow:Float = Std.parseFloat(value2);
+				if(ClientPrefs.flashing && ClientPrefs.shaders && curStep < Std.parseInt(value1)) {
 					disableTheTripper = false;
-					disableTheTripperAt = timeRainbow;
+					disableTheTripperAt = Std.parseInt(value1);
 					FlxG.camera.filters = [new ShaderFilter(screenshader.shader)];
 					screenshader.waveAmplitude = 1;
 					screenshader.waveFrequency = 2;
-					screenshader.waveSpeed = speedRainbow * playbackRate;
-					screenshader.shader.uTime.value[0] = new flixel.math.FlxRandom().float(-100000, 100000);
+					screenshader.waveSpeed = Std.parseFloat(value2) * playbackRate;
+					screenshader.shader.uTime.value[0] = new flixel.math.FlxRandom().float(-1e3, 1e3);
 					screenshader.shader.uampmul.value[0] = 1;
 					screenshader.Enabled = true;
 				}
