@@ -657,7 +657,7 @@ class Note extends FlxSprite
 
 		hitHealth = chartNoteData.hitHealth;
 		missHealth = chartNoteData.missHealth;
-		hitCausesMiss = chartNoteData.hitCausesMiss;
+		hitCausesMiss = chartNoteData.hitCausesMiss ?? false;
 		ignoreNote = chartNoteData.ignoreNote;
 		blockHit = chartNoteData.blockHit;
 		multSpeed = chartNoteData.multSpeed;
