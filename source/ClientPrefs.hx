@@ -1,7 +1,6 @@
 package;
 
 import Controls;
-import flixel.graphics.FlxGraphic;
 import flixel.input.keyboard.FlxKey;
 
 class ClientPrefs { //default settings if it can't find a save file containing your current settings
@@ -242,7 +241,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 
 		'debug_1'		=> [SEVEN, NONE],
 		'debug_2'		=> [EIGHT, NONE],
-		'qt_taunt'		=> [SPACE, NONE]
+		'taunt'		=> [SPACE, NONE]
 	];
 	public static var defaultKeys:Map<String, Array<FlxKey>> = null;
 
@@ -345,7 +344,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	}
 
 	inline public static function getGameplaySetting(name:String, defaultValue:Dynamic):Dynamic {
-		return /*PlayState.isStoryMode ? defaultValue : */ (gameplaySettings.exists(name) ? gameplaySettings.get(name) : defaultValue);
+		return (gameplaySettings.exists(name) ? gameplaySettings.get(name) : defaultValue);
 	}
 
 	public static function reloadControls() {
