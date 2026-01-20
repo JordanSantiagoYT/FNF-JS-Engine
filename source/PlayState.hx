@@ -4,8 +4,6 @@ import Achievements;
 import Character.Boyfriend;
 import Conductor.Rating;
 import DialogueBoxPsych;
-import Note.EventNote;
-import Note.PreloadedChartNote;
 import Note;
 import Section.SwagSection;
 import Shaders;
@@ -16,12 +14,11 @@ import editors.ChartingState;
 import flixel.input.keyboard.FlxKey;
 import flixel.ui.FlxBar;
 import flixel.util.FlxSort;
-import lime.system.System;
 import objects.*;
 import openfl.events.KeyboardEvent;
+import openfl.system.System;
 import play.objects.*;
 #if SHADERS_ALLOWED
-import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
 #end
@@ -446,7 +443,7 @@ class PlayState extends MusicBeatState
 		inline Paths.clearStoredMemory();
 
 		#if sys
-		openfl.system.System.gc();
+		System.gc();
 		#end
 
 		// for lua
@@ -2744,7 +2741,7 @@ class PlayState extends MusicBeatState
 
 		final endTime = haxe.Timer.stamp();
 
-		openfl.system.System.gc();
+		System.gc();
 
 		final elapsedTime = endTime - startTime;
 
@@ -3249,7 +3246,7 @@ class PlayState extends MusicBeatState
 						PlayState.SONG = Song.loadFromJson(SONG.event7Value + (CoolUtil.difficultyString() == 'NORMAL' ? '' : '-' + CoolUtil.difficulties[storyDifficulty]), SONG.event7Value);
 				LoadingState.loadAndSwitchState(PlayState.new);
 				case "Close Game":
-					openfl.system.System.exit(0);
+					System.exit(0);
 				case "Play Video":
 					updateTime = false;
 					FlxG.sound.music.volume = 0;
@@ -3504,7 +3501,7 @@ class PlayState extends MusicBeatState
 					catch (e) {}
 				}
 			}
-			if (ClientPrefs.renderGCRate > 0 && (frameCaptured / targetFPS) % ClientPrefs.renderGCRate == 0) openfl.system.System.gc();
+			if (ClientPrefs.renderGCRate > 0 && (frameCaptured / targetFPS) % ClientPrefs.renderGCRate == 0) System.gc();
 			frameCaptured++;
 		}
 	}
@@ -4192,7 +4189,7 @@ class PlayState extends MusicBeatState
 				"Windows 7" => 7,
 			];
 
-			var platformLabel = System.platformLabel;
+			var platformLabel = lime.system.System.platformLabel;
 			var words = platformLabel.split(" ");
 			var windowsIndex = words.indexOf("Windows");
 			var result = "";
