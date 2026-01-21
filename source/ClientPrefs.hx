@@ -241,7 +241,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 
 		'debug_1'		=> [SEVEN, NONE],
 		'debug_2'		=> [EIGHT, NONE],
-		'taunt'		=> [SPACE, NONE]
+		'taunt'		  => [SPACE, NONE]
 	];
 	public static var defaultKeys:Map<String, Array<FlxKey>> = null;
 
