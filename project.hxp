@@ -380,6 +380,13 @@ class Project extends HXProject
 		// Allow memory to go above 1GB.
 		setHaxedef("HXCPP_GC_BIG_BLOCKS");
 
+        // HXCPP configuration options
+        setHaxedef("HXCPP_GC_GENERATIONAL");
+        setHaxedef("HXCPP_GC_DYNAMIC_SIZE");
+        setHaxedef("HXCPP_CPP17");
+        setHaxedef("HXCPP_ALIGN_ALLOC");
+        setHaxedef("HXCPP_FAST_LINK");
+
 		// setHaxedef("safeMode"); // what is this
 
 		// If we aren't using the Flixel debugger, strip it out.
