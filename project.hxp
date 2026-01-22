@@ -384,7 +384,7 @@ class Project extends HXProject
         setHaxedef("HXCPP_GC_GENERATIONAL");
         setHaxedef("HXCPP_GC_DYNAMIC_SIZE");
         setHaxedef("HXCPP_CPP17");
-        setHaxedef("HXCPP_ALIGN_ALLOC");
+        // setHaxedef("HXCPP_ALIGN_ALLOC");
         setHaxedef("HXCPP_FAST_LINK");
 
 		// setHaxedef("safeMode"); // what is this
