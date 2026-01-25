@@ -255,7 +255,7 @@ class WeekData
 
     if (rawJson != null && rawJson.length > 0)
     {
-      var parsed:Dynamic = haxe.Json.parse(rawJson);
+      var parsed:Dynamic = Json.parse(rawJson);
       if (isValidWeekJson(parsed)) return cast parsed;
       else
         return null; // Skip invalid week jsons
