@@ -1607,7 +1607,7 @@ class PlayState extends MusicBeatState
 		        polyphonyBF = value;
 		    // just in case, as an anti-crash prevention maybe?
 		    default:
-						polyphonyOppo = value;
+				polyphonyOppo = value;
 		        polyphonyBF = value;
 		}
 		return value;
