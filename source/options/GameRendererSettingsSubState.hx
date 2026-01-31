@@ -3,8 +3,8 @@ package options;
 import Controls;
 import flixel.graphics.FlxGraphic;
 import flixel.input.keyboard.FlxKey;
-import openfl.Lib;
 import haxe.io.Path;
+import openfl.Lib;
 #if hxnativefiledialog
 import hxnativefiledialog.NFD;
 import hxnativefiledialog.Types;
@@ -24,14 +24,6 @@ class GameRendererSettingsSubState extends BaseOptionsMenu
 			'ffmpegMode',
 			'bool',
 			false);
-		addOption(option);
-
-		var option:Option = new Option('Info Shown: ',
-			"Choose what info it should show while rendering a song.",
-			'ffmpegInfo',
-			'string',
-			'None',
-			['None', 'Rendering Time', 'Time Remaining', 'Frame Time']);
 		addOption(option);
 
   	var option:Option = new Option('Video Framerate',

@@ -178,7 +178,7 @@ class CharacterEditorState extends MusicBeatState
 		UI_characterbox = new FlxUITabMenu(null, tabs, true);
 		UI_characterbox.cameras = [camMenu];
 
-		UI_characterbox.resize(350, 400);
+		UI_characterbox.resize(350, 340);
 		UI_characterbox.x = UI_box.x - 100;
 		UI_characterbox.y = UI_box.y + UI_box.height;
 		UI_characterbox.scrollFactor.set();
@@ -591,8 +591,6 @@ class CharacterEditorState extends MusicBeatState
 				sing_duration: 4,
 				scale: 1,
 				healthbar_colors: [161, 161, 161],
-				winning_colors: [161, 161, 161],
-				losing_colors: [161, 161, 161],
 				camera_position: [0, 0],
 				position: [0, 0],
 				vocals_file: null,
@@ -653,14 +651,6 @@ class CharacterEditorState extends MusicBeatState
 	var healthColorStepperG:FlxUINumericStepper;
 	var healthColorStepperB:FlxUINumericStepper;
 
-	var winningColorStepperR:FlxUINumericStepper;
-	var winningColorStepperG:FlxUINumericStepper;
-	var winningColorStepperB:FlxUINumericStepper;
-
-	var losingColorStepperR:FlxUINumericStepper;
-	var losingColorStepperG:FlxUINumericStepper;
-	var losingColorStepperB:FlxUINumericStepper;
-
 	var barShowDropDown:FlxUIDropDownMenuCustom;
 
 	function addCharacterUI() {
@@ -681,36 +671,12 @@ class CharacterEditorState extends MusicBeatState
 		var decideIconColor:FlxButton = new FlxButton(reloadImage.x, reloadImage.y + 30, "Get Icon Color", function()
 			{
 				var coolColor = FlxColor.fromInt(CoolUtil.dominantColor(leHealthIcon));
-				switch(barToUse)
-				{
-					case 1:
-					{
-						healthColorStepperR.value = coolColor.red;
-						healthColorStepperG.value = coolColor.green;
-						healthColorStepperB.value = coolColor.blue;
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, healthColorStepperR, null);
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, healthColorStepperG, null);
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, healthColorStepperB, null);
-					}
-					case 2:
-					{
-						losingColorStepperR.value = coolColor.red;
-						losingColorStepperG.value = coolColor.green;
-						losingColorStepperB.value = coolColor.blue;
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, losingColorStepperR, null);
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, losingColorStepperG, null);
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, losingColorStepperB, null);
-					}
-					case 3:
-					{
-						winningColorStepperR.value = coolColor.red;
-						winningColorStepperG.value = coolColor.green;
-						winningColorStepperB.value = coolColor.blue;
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, winningColorStepperR, null);
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, winningColorStepperG, null);
-						getEvent(FlxUINumericStepper.CHANGE_EVENT, winningColorStepperB, null);
-					}
-				}
+				healthColorStepperR.value = coolColor.red;
+				healthColorStepperG.value = coolColor.green;
+				healthColorStepperB.value = coolColor.blue;
+				getEvent(FlxUINumericStepper.CHANGE_EVENT, healthColorStepperR, null);
+				getEvent(FlxUINumericStepper.CHANGE_EVENT, healthColorStepperG, null);
+				getEvent(FlxUINumericStepper.CHANGE_EVENT, healthColorStepperB, null);
 			});
 
 		healthIconInputText = new FlxUIInputText(15, imageInputText.y + 35, 75, leHealthIcon.getCharacter(), 8);
@@ -759,36 +725,11 @@ class CharacterEditorState extends MusicBeatState
 		healthColorStepperG = new FlxUINumericStepper(singDurationStepper.x + 65, saveCharacterButton.y, 20, char.healthColorArray[1], 0, 255, 0);
 		healthColorStepperB = new FlxUINumericStepper(singDurationStepper.x + 130, saveCharacterButton.y, 20, char.healthColorArray[2], 0, 255, 0);
 
-		winningColorStepperR = new FlxUINumericStepper(singDurationStepper.x, saveCharacterButton.y + 40, 20, char.winningColorArray[0], 0, 255, 0);
-		winningColorStepperG = new FlxUINumericStepper(singDurationStepper.x + 65, winningColorStepperR.y, 20, char.winningColorArray[1], 0, 255, 0);
-		winningColorStepperB = new FlxUINumericStepper(singDurationStepper.x + 130, winningColorStepperR.y, 20, char.winningColorArray[2], 0, 255, 0);
-
-		losingColorStepperR = new FlxUINumericStepper(singDurationStepper.x, winningColorStepperR.y + 40, 20, char.losingColorArray[0], 0, 255, 0);
-		losingColorStepperG = new FlxUINumericStepper(singDurationStepper.x + 65, losingColorStepperR.y, 20, char.losingColorArray[1], 0, 255, 0);
-		losingColorStepperB = new FlxUINumericStepper(singDurationStepper.x + 130, losingColorStepperR.y, 20, char.losingColorArray[2], 0, 255, 0);
-
-		barShowDropDown = new FlxUIDropDownMenuCustom(winningColorStepperB.x + 80, winningColorStepperB.y + 20, FlxUIDropDownMenuCustom.makeStrIdLabelArray(['Normal', 'Losing', 'Winning'], true), function(buttonChosen:String)
-		{
-			barToUse = Std.parseInt(buttonChosen) + 1;
-			if (barToUse == 1) leHealthIcon.animation.curAnim.curFrame = 0;
-			if (barToUse == 2 && leHealthIcon.animation.numFrames > 1) leHealthIcon.animation.curAnim.curFrame = 1;
-			if (barToUse == 3 && leHealthIcon.animation.numFrames > 2) leHealthIcon.animation.curAnim.curFrame = 2;
-
-			if (barToUse == 1) healthBarBG.color = FlxColor.fromRGB(char.healthColorArray[0], char.healthColorArray[1], char.healthColorArray[2]);
-			if (barToUse == 2) healthBarBG.color = FlxColor.fromRGB(char.losingColorArray[0], char.losingColorArray[1], char.losingColorArray[2]);
-			if (barToUse == 3) healthBarBG.color = FlxColor.fromRGB(char.winningColorArray[0], char.winningColorArray[1], char.winningColorArray[2]);
-		});
-		barShowDropDown.selectedLabel = 'Normal';
-		barShowDropDown.header.cameras = [camMenu];
-
-		tab_group.add(new FlxText(15, saveCharacterButton.y + 110, 0, 'Noteskin:'));
-		noteskinText = new FlxUIInputText(15, saveCharacterButton.y + 128, 200, '', 8);
+		tab_group.add(new FlxText(15, healthColorStepperB.y + 20, 0, 'Noteskin:'));
+		noteskinText = new FlxUIInputText(15, healthColorStepperB.y + 40, 200, '', 8);
 		noteskinText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 		tab_group.add(noteskinText);
 
-		tab_group.add(barShowDropDown);
-
-		tab_group.add(new FlxText(barShowDropDown.x, barShowDropDown.y - 18, 0, 'Bar to show:'));
 		tab_group.add(new FlxText(15, imageInputText.y - 18, 0, 'Image file name:'));
 		tab_group.add(new FlxText(15, healthIconInputText.y - 18, 0, 'Health icon name:'));
 		tab_group.add(new FlxText(15, vocalsInputText.y - 18, 100, 'Vocals File Postfix:'));
@@ -797,8 +738,6 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.add(new FlxText(positionXStepper.x, positionXStepper.y - 18, 0, 'Character X/Y:'));
 		tab_group.add(new FlxText(positionCameraXStepper.x, positionCameraXStepper.y - 18, 0, 'Camera X/Y:'));
 		tab_group.add(new FlxText(healthColorStepperR.x, healthColorStepperR.y - 18, 0, 'Health bar R/G/B:'));
-		tab_group.add(new FlxText(healthColorStepperR.x, healthColorStepperR.y + 20, 0, 'Winning bar R/G/B:'));
-		tab_group.add(new FlxText(healthColorStepperR.x, healthColorStepperR.y + 60, 0, 'Losing bar R/G/B:'));
 		tab_group.add(imageInputText);
 		tab_group.add(reloadImage);
 		tab_group.add(decideIconColor);
@@ -815,12 +754,6 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.add(healthColorStepperR);
 		tab_group.add(healthColorStepperG);
 		tab_group.add(healthColorStepperB);
-		tab_group.add(winningColorStepperR);
-		tab_group.add(winningColorStepperG);
-		tab_group.add(winningColorStepperB);
-		tab_group.add(losingColorStepperR);
-		tab_group.add(losingColorStepperG);
-		tab_group.add(losingColorStepperB);
 		tab_group.add(saveCharacterButton);
 
 		for (i in tab_group.members)
@@ -1090,36 +1023,6 @@ class CharacterEditorState extends MusicBeatState
 				char.healthColorArray[2] = Math.round(healthColorStepperB.value);
 				if (barToUse == 1) healthBarBG.color = FlxColor.fromRGB(char.healthColorArray[0], char.healthColorArray[1], char.healthColorArray[2]);
 			}
-			else if(sender == winningColorStepperR)
-			{
-				char.winningColorArray[0] = Math.round(winningColorStepperR.value);
-				if (barToUse == 3) healthBarBG.color = FlxColor.fromRGB(char.winningColorArray[0], char.winningColorArray[1], char.winningColorArray[2]);
-			}
-			else if(sender == winningColorStepperG)
-			{
-				char.winningColorArray[1] = Math.round(winningColorStepperG.value);
-				if (barToUse == 3) healthBarBG.color = FlxColor.fromRGB(char.winningColorArray[0], char.winningColorArray[1], char.winningColorArray[2]);
-			}
-			else if(sender == winningColorStepperB)
-			{
-				char.winningColorArray[2] = Math.round(winningColorStepperB.value);
-				if (barToUse == 3) healthBarBG.color = FlxColor.fromRGB(char.healthColorArray[0], char.healthColorArray[1], char.healthColorArray[2]);
-			}
-			else if(sender == losingColorStepperR)
-			{
-				char.losingColorArray[0] = Math.round(losingColorStepperR.value);
-				if (barToUse == 2) healthBarBG.color = FlxColor.fromRGB(char.losingColorArray[0], char.losingColorArray[1], char.losingColorArray[2]);
-			}
-			else if(sender == losingColorStepperG)
-			{
-				char.losingColorArray[1] = Math.round(losingColorStepperG.value);
-				if (barToUse == 2) healthBarBG.color = FlxColor.fromRGB(char.losingColorArray[0], char.losingColorArray[1], char.losingColorArray[2]);
-			}
-			else if(sender == losingColorStepperB)
-			{
-				char.losingColorArray[2] = Math.round(losingColorStepperB.value);
-				if (barToUse == 2) healthBarBG.color = FlxColor.fromRGB(char.losingColorArray[0], char.losingColorArray[1], char.losingColorArray[2]);
-			}
 		}
 	}
 
@@ -1359,32 +1262,6 @@ class CharacterEditorState extends MusicBeatState
 		healthColorStepperG.value = char.healthColorArray[1];
 		healthColorStepperB.value = char.healthColorArray[2];
 
-		if (char.winningColorArray != null && char.winningColorArray.length > 2)
-		{
-			winningColorStepperR.value = char.winningColorArray[0];
-			winningColorStepperG.value = char.winningColorArray[1];
-			winningColorStepperB.value = char.winningColorArray[2];
-		}
-		else
-		{
-			winningColorStepperR.value = char.healthColorArray[0];
-			winningColorStepperG.value = char.healthColorArray[1];
-			winningColorStepperB.value = char.healthColorArray[2];
-		}
-
-		if (char.losingColorArray != null && char.losingColorArray.length > 2)
-		{
-			losingColorStepperR.value = char.losingColorArray[0];
-			losingColorStepperG.value = char.losingColorArray[1];
-			losingColorStepperB.value = char.losingColorArray[2];
-		}
-		else
-		{
-			losingColorStepperR.value = char.healthColorArray[0];
-			losingColorStepperG.value = char.healthColorArray[1];
-			losingColorStepperB.value = char.healthColorArray[2];
-		}
-		barToUse == 1;
 		healthBarBG.color = FlxColor.fromRGB(char.healthColorArray[0], char.healthColorArray[1], char.healthColorArray[2]);
 	}
 
@@ -1401,14 +1278,6 @@ class CharacterEditorState extends MusicBeatState
 	{
 		if (FlxG.mouse.justPressed) FlxG.sound.play(Paths.sound('click'));
 		MusicBeatState.camBeat = FlxG.camera;
-
-		while (changeBar = false)
-		{
-			changeBar = true;
-			if (barToUse == 1) healthBarBG.color = FlxColor.fromRGB(char.healthColorArray[0], char.healthColorArray[1], char.healthColorArray[2]);
-			if (barToUse == 2) healthBarBG.color = FlxColor.fromRGB(char.losingColorArray[0], char.losingColorArray[1], char.losingColorArray[2]);
-			if (barToUse == 3) healthBarBG.color = FlxColor.fromRGB(char.winningColorArray[0], char.winningColorArray[1], char.winningColorArray[2]);
-		}
 
 		var inputTexts:Array<FlxUIInputText> = [animationInputText, imageInputText, healthIconInputText, animationNameInputText, animationIndicesInputText, noteskinText];
 		for (i in 0...inputTexts.length) {
@@ -1656,8 +1525,6 @@ class CharacterEditorState extends MusicBeatState
 			"flip_x": char.originalFlipX,
 			"no_antialiasing": char.noAntialiasing,
 			"healthbar_colors": char.healthColorArray,
-			"winning_colors": char.winningColorArray,
-			"losing_colors": char.losingColorArray,
 
 			"vocals_file": char.vocalsFile,
 

@@ -5,14 +5,14 @@
       "type": "git",
       "dir": null,
       "ref": null,
-      "url": "https://github.com/th2l-devs/lime"
+      "url": "https://github.com/JS-Engine-things/lime-8.1.2"
     },
     {
       "name": "openfl",
       "type": "git",
       "dir": null,
       "ref": null,
-      "url": "https://github.com/th2l-devs/openfl"
+      "url": "https://github.com/JS-Engine-things/openfl"
     },
     {
       "name": "flixel",
@@ -37,6 +37,11 @@
       "version": "2.6.0"
     },
     {
+      "name": "hxp",
+      "type": "haxelib",
+      "version": null
+    },
+    {
       "name": "hxcpp",
       "type": "git",
       "dir": null,
@@ -51,9 +56,11 @@
       "url": "https://github.com/JS-Engine-things/hxvlc"
     },
     {
-      "name": "hscript",
-      "type": "haxelib",
-      "version": null
+      "name": "hscript-improved",
+      "type": "git",
+      "dir": null,
+      "ref": "master",
+      "url": "https://github.com/CodenameCrew/hscript-improved"
     },
     {
       "name": "hxcpp-debug-server",
@@ -75,11 +82,11 @@
       "url": "https://github.com/MAJigsaw77/hxdiscord_rpc"
     },
     {
-      "name": "linc_luajit",
+      "name": "hxluajit",
       "type": "git",
       "dir": null,
-      "ref": "master",
-      "url": "https://github.com/JS-Engine-things/linc_luajit"
+      "ref": "main",
+      "url": "https://github.com/JS-Engine-things/hxluajit"
     },
     {
       "name": "funkin.vis",
@@ -96,13 +103,6 @@
       "url": "https://github.com/JS-Engine-things/grig.audio"
     },
     {
-      "name": "away3d",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://github.com/moxie-coder/away3d"
-    },
-    {
       "name": "tjson",
       "type": "git",
       "dir": null,
@@ -115,6 +115,11 @@
       "dir": null,
       "ref": "main",
       "url": "https://github.com/MAJigsaw77/hxnativefiledialog"
+    },
+    {
+      "name": "hxgamemode",
+      "type": "haxelib",
+      "version": null
     }
   ]
 }

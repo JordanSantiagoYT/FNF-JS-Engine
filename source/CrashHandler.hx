@@ -82,6 +82,16 @@ class CrashHandler
 		"JS, more like buggy engine lol"
 	];
 
+	// this is a map containing common crash sources mapped to a summarized reason, use to add an extra line on the crash screen.
+	static final commonCrashers:Map<String, String> = [
+		'SuperSecretDebugMenu.crashDaEngine()' => 'You intentionally caused this.',
+		'Paths.addAnimAndCheck()' => "You're missing a config file for your note splash skin.",
+		'JsonParser.invalidChar()' => "Your json is either formatted incorrectly or corrupted.",
+		'Song.onLoadJson()' => "You attempted to load a chart that was made in Psych Engine 1.0."
+	];
+
+	public static var extraLines:Array<String> = ['\n\n'];
+
 	public static function init():Void
 	{
 		Lib.current.loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, onUncaughtError);
@@ -142,14 +152,25 @@ class CrashHandler
 			}
 			stackLabel = stackLabelArr.join('\r\n');
 
+			var crashReason = '';
+			for (source => reason in commonCrashers) {
+				if (stackLabel.contains(source)) {
+					crashReason = reason;
+					if (!extraLines.contains(crashReason)) extraLines.push(crashReason);
+				}
+			}
+			
+			if (stackLabel != null)
+				for (line in extraLines)
+					stackLabel += line;
+
 			errorMessage += 'Uncaught Error: $m\n\n$stackLabel';
-			trace(errorMessage);
 
 			try
 			{
 				if (!FileSystem.exists("crash/"))
 					FileSystem.createDirectory("crash/");
-				File.saveContent(path, '$errorMessage\n\nCrash Happened on JS Engine v${MainMenuState.psychEngineJSVersionNumber}!');
+				File.saveContent(path, '$errorMessage\n\nCrash Happened on JS Engine v${MainMenuState.psychEngineJSVersion}!');
 			}
 			catch (e)
 				trace('Couldn\'t save error message. (${e.message})');
@@ -197,7 +218,7 @@ class Crash extends MusicBeatState
 		bg.color = 0xFF232323;
 		add(bg);
 
-		var ohNo:FlxText = new FlxText(0, 0, 1280, 'JS Engine v${MainMenuState.psychEngineJSVersionNumber} has crashed!');
+		var ohNo:FlxText = new FlxText(0, 0, 1280, 'JS Engine v${MainMenuState.psychEngineJSVersion} has crashed!');
 		ohNo.setFormat(Paths.font('vcr.ttf'), 48, FlxColor.WHITE, FlxTextAlign.CENTER);
 		ohNo.alpha = 0;
 		ohNo.screenCenter();
@@ -243,7 +264,7 @@ class Crash extends MusicBeatState
 			add(crash[i]);
 		}
 
-		var tip:FlxText = new FlxText(180, 0, 1280, "Press any key to restart. (Press ENTER to Report This Bug)");
+		var tip:FlxText = new FlxText(180, 0, 1280, "Press any key to restart." + (CrashHandler.extraLines.length > 0 ? " (Press ENTER to Report This Bug)" : " You cannot report this issue."));
 		tip.setFormat(Paths.font('vcr.ttf'), 36, FlxColor.WHITE, FlxTextAlign.CENTER);
 		tip.alpha = 0;
 		tip.screenCenter();
@@ -275,7 +296,7 @@ class Crash extends MusicBeatState
 		if (FlxG.keys.justPressed.ANY && !clicked)
 		{
 			FlxTransitionableState.skipNextTransIn = false;
-			if (FlxG.keys.justPressed.ENTER)
+			if (FlxG.keys.justPressed.ENTER && CrashHandler.extraLines.length < 1)
 			{
 				clicked = true;
 				for (sprite in members)
@@ -309,7 +330,9 @@ class Crash extends MusicBeatState
 					}
 				}, 10);
 			}
-			else if (!FlxG.keys.justPressed.F2)
+			else if (!FlxG.keys.justPressed.F2) {
+				Paths.playMenuMusic(true, 0);
 				FlxG.switchState(MainMenuState.new);
+			}
 		}
 }

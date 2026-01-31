@@ -112,10 +112,16 @@ class GameOverSubstate extends MusicBeatSubstate
 				neneKnife.animation.addByPrefix('anim', 'knife toss', 24, false);
 				neneKnife.antialiasing = ClientPrefs.globalAntialiasing;
 				neneKnife.animation.finishCallback = function(_)
-				{
-					remove(neneKnife);
-					neneKnife.destroy();
-				}
+                {
+                    neneKnife.visible = false;
+
+                    new FlxTimer().start(0.01, function(tmr:FlxTimer) {
+                        if(neneKnife != null) {
+                            remove(neneKnife);
+                            neneKnife.destroy();
+                        }
+                    });
+                }
 				insert(0, neneKnife);
 				neneKnife.animation.play('anim', true);
 			}

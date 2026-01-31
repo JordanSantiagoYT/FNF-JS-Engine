@@ -1,7 +1,5 @@
 package options;
 
-import Controls;
-import flixel.graphics.FlxGraphic;
 import flixel.input.keyboard.FlxKey;
 
 class ControlsSubState extends MusicBeatSubstate {
@@ -17,7 +15,7 @@ class ControlsSubState extends MusicBeatSubstate {
 		['Down', 'note_down'],
 		['Up', 'note_up'],
 		['Right', 'note_right'],
-		['Taunt', 'qt_taunt'],
+		['Taunt', 'taunt'],
 		['Use BE', 'bot_energy'],
 		[''],
 		['UI'],

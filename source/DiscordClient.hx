@@ -6,6 +6,9 @@ import cpp.ConstCharStar;
 import cpp.Function;
 import cpp.RawConstPointer;
 #end
+#if LUA_ALLOWED
+import psychlua.FunkinLua.State;
+#end
 
 import hxdiscord_rpc.Discord;
 import hxdiscord_rpc.Types;
@@ -150,8 +153,8 @@ class DiscordClient
 	#if LUA_ALLOWED
 	public static function addLuaCallbacks(lua:State)
 	{
-		Lua_helper.add_callback(lua, "changeDiscordPresence", changePresence);
-		Lua_helper.add_callback(lua, "changeDiscordClientID", function(?newID:String) {
+		Convert.addCallback(lua, "changeDiscordPresence", changePresence);
+		Convert.addCallback(lua, "changeDiscordClientID", function(?newID:String) {
 			if(newID == null) newID = _defaultID;
 			clientID = newID;
 		});

@@ -1,7 +1,6 @@
 package;
 
 import Controls;
-import flixel.graphics.FlxGraphic;
 import flixel.input.keyboard.FlxKey;
 
 @:structInit class SaveVariables { //default settings if it can't find a save file containing your current settings
@@ -51,7 +50,6 @@ import flixel.input.keyboard.FlxKey;
 	public static var healthBarStyle:String = 'Vanilla';
 	public static var watermarkStyle:String = 'Vanilla';
 	public static var botTxtStyle:String = 'Vanilla';
-	public static var ytWatermarkPosition:String = 'Hidden';
 	public static var strumLitStyle:String = 'Full Anim';
 	public static var bfIconStyle:String = 'Default';
 	public static var ratingType:String = 'Default';
@@ -59,15 +57,12 @@ import flixel.input.keyboard.FlxKey;
 	public static var iconBounceType:String = 'New Psych';
 	public static var smoothHealth:Bool = true;
 	public static var smoothHPBug:Bool = false;
-	public static var ogHPColor:Bool = false;
 	public static var flashing:Bool = true;
 	public static var camZooms:Bool = true;
-	public static var ratingCounter:Bool = false;
 	public static var showNotes:Bool = true;
 	public static var scoreZoom:Bool = true;
 	public static var healthBarAlpha:Float = 1;
 	public static var showFPS:Bool = true;
-	public static var randomBotplayText:Bool = true;
 	public static var botTxtFade:Bool = true;
 	public static var pauseMusic:String = 'Tea Time';
 	public static var daMenuMusic:String = 'Default';
@@ -79,6 +74,7 @@ import flixel.input.keyboard.FlxKey;
 	public static var tipTexts:Bool = true;
 	public static var discordRPC:Bool = true;
 	public static var peOGCrash:Bool = false;
+	public static var fpsBorder:Bool = false;
 
 	//Graphics
 	public static var lowQuality:Bool = false;
@@ -156,7 +152,6 @@ import flixel.input.keyboard.FlxKey;
 
 	// Game Renderer
 	public static var ffmpegMode:Bool = false;
-	public static var ffmpegInfo:String = 'None';
 	public static var targetFPS:Float = 60;
 	public static var unlockFPS:Bool = false;
 	public static var renderBitrate:Float = 5.0;
@@ -252,7 +247,7 @@ class ClientPrefs {
 
 		'debug_1'		=> [SEVEN, NONE],
 		'debug_2'		=> [EIGHT, NONE],
-		'qt_taunt'		=> [SPACE, NONE]
+		'taunt'		    => [SPACE, NONE]
 	];
 	public static var gamepadBinds:Map<String, Array<FlxGamepadInputID>> = [
 		'note_up'		=> [DPAD_UP, Y],
@@ -409,3 +404,4 @@ class ClientPrefs {
 		FlxG.sound.volumeUpKeys = turnOn ? InitState.volumeUpKeys : [];
 	}
 }
+

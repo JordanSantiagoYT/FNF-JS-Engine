@@ -1,4 +1,4 @@
-package objects;
+package play.objects;
 
 import shaders.RGBPalette;
 

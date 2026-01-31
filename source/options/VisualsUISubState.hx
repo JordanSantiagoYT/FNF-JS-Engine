@@ -247,14 +247,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			['Vanilla', 'JS Engine', 'Dave Engine', 'Doki Doki+', 'TGT V4', 'VS Impostor', 'Hide']);
 		addOption(option);
 
-		var option:Option = new Option('YT Watermark Position:',
-			"Where do you want your YouTube watermark to be?",
-			'ytWatermarkPosition',
-			'string',
-			'Hidden',
-			['Top', 'Middle', 'Bottom', 'Hidden']);
-		addOption(option);
-
 		var option:Option = new Option('Strum Light Up Style:',
 			"How would you like the strum animations to play when lit up? \nNote: Turn on 'Light Opponent/Botplay Strums' to see this in action!",
 			'strumLitStyle',
@@ -315,13 +307,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
-		var option:Option = new Option('OG HP Colors',
-			'If checked, the health bar will globally use Red/Green as the colors.',
-			'ogHPColor',
-			'bool',
-			false);
-		addOption(option);
-
 		var option:Option = new Option('Flashing Lights',
 			"Uncheck this if you're sensitive to flashing lights!",
 			'flashing',
@@ -334,13 +319,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			'camZooms',
 			'bool',
 			true);
-		addOption(option);
-
-		var option:Option = new Option('Rating Counter',
-			"If checked, you can see how many Sicks, Goods, Bads, etc you've hit on the left.",
-			'ratingCounter',
-			'bool',
-			false);
 		addOption(option);
 
 		var option:Option = new Option('Show Notes',
@@ -378,13 +356,6 @@ class VisualsUISubState extends BaseOptionsMenu
 		addOption(option);
 		option.onChange = onChangeFPSCounter;
 		#end
-
-		var option:Option = new Option('Random Botplay Text',
-			"Uncheck this if you don't want to be insulted when\nyou use Botplay.",
-			'randomBotplayText',
-			'bool',
-			true);
-		addOption(option);
 
 		var option:Option = new Option('Botplay Text Fading',
 			"If checked, the botplay text will do cool fading.",
@@ -446,6 +417,13 @@ class VisualsUISubState extends BaseOptionsMenu
 		var option:Option = new Option('Show Debug Info',
 			"If checked, the game will show additional debug info.\nNote: Turn on FPS Counter before using this!",
 			'debugInfo',
+			'bool',
+			false);
+		addOption(option);
+
+		var option:Option = new Option('Counter Border',
+			'If unchecked, disables the Counter Border, increases performance at the cost of readability.',
+			'fpsBorder',
 			'bool',
 			false);
 		addOption(option);

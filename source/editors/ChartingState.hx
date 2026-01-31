@@ -870,7 +870,7 @@ class ChartingState extends MusicBeatState
             // Kinda stupid but it works
             openSubState(new Prompt('This action will clear current progress.\n\nProceed?', 0, function() {
                 try {
-				  var wrapper: SwagSong = Song.parseJSON(f);
+				  var wrapper:SwagSong = Song.parseJSON(f);
 				  if (wrapper.song == null) {
 					CoolUtil.coolError(
 					  "Failed to load JSON – not a valid chart.json.",
@@ -878,29 +878,10 @@ class ChartingState extends MusicBeatState
 					);
 					return;
 				  }
-
-				  // 2) Compute where our backup should live
-				  var songPath = Paths.formatToSongPath(wrapper.song);
-				  var backupPath = Paths.getBackupFilePath(songPath, "backup");
-
-				  // 3) Ensure the directory exists
-				  var backupDir = haxe.io.Path.directory(backupPath);
-				if (!FileSystem.exists(backupDir) && !FileSystem.isDirectory(backupDir))
-				  FileSystem.createDirectory(backupDir);
-
-				  // 4) If there's already a backup, rename it so we don’t overwrite
-				  if (FileSystem.exists(backupPath)) {
-					FileSystem.rename(backupPath, backupPath + "~");
-				  }
-
-				  // 5) Write out the backup file
-				  File.saveContent(backupPath, f);
-
-				  // 6) Immediately use the object you already loaded
+				  
 				  PlayState.SONG = wrapper;
 				  CoolUtil.currentDifficulty = "backup";
 
-				  // 7) Kick off the state reset
 				  FlxG.resetState();
 
                 } catch(e) {
@@ -1253,6 +1234,9 @@ class ChartingState extends MusicBeatState
 		});
 		var clearLeftSectionButton:FlxButton = new FlxButton(duetButton.x, duetButton.y + 30, "Clear Left Side", function()
 		{
+			if (Conductor.songPosition >= 0)
+				curSection = Math.floor(Conductor.songPosition / (Conductor.stepCrochet * 16));
+
 			if (_song.notes[curSection] == null || _song.notes[curSection] != null && _song.notes[curSection].sectionNotes == null) return;
 			saveUndo(_song); //this is really weird so im saving it as an undoable action just in case it does the wrong section
 			var removeThese = [];
@@ -1272,6 +1256,9 @@ class ChartingState extends MusicBeatState
 		});
 		var clearRightSectionButton:FlxButton = new FlxButton(clearLeftSectionButton.x + 100, clearLeftSectionButton.y, "Clear Right Side", function()
 		{
+			if (Conductor.songPosition >= 0)
+				curSection = Math.floor(Conductor.songPosition / (Conductor.stepCrochet * 16));
+
 			if (_song.notes[curSection] == null || _song.notes[curSection] != null && _song.notes[curSection].sectionNotes == null) return;
 			saveUndo(_song); //this is really weird so im saving it as an undoable action just in case it does the wrong section
 			var removeThese = [];
@@ -1333,19 +1320,23 @@ class ChartingState extends MusicBeatState
 			if (check_notesSec.checked)
 			{
 				for(i in 0...value2) {
-				for (note in _song.notes[daSec - value1].sectionNotes)
-				{
-					var strum = note[0] + Conductor.stepCrochet * (getSectionBeats(daSec - value1) * 4 * value1);
-
-					var data = note[1];
-					if (swapNotes) data = Std.int(note[1] + 4) % 8;
-					var copiedNote:Array<Dynamic> = [strum, data, note[2], note[3]];
-					inline _song.notes[daSec].sectionNotes.push(copiedNote);
-				}
 					if (curSection - value1 < 0)
 					{
-					trace ("value1's section is less than 0 LMAO");
-					break;
+						trace ("The number you put for value 1 would cause the game to copy notes from a negative section.");
+						break;
+					}
+					for (note in _song.notes[daSec - value1].sectionNotes)
+					{
+						var strum = note[0] + Conductor.stepCrochet * (getSectionBeats(daSec - value1) * 4 * value1);
+
+						var data = note[1];
+						if (swapNotes) data = Std.int(note[1] + 4) % 8;
+						var copiedNote:Array<Dynamic> = [strum, data, note[2], note[3]];
+						inline _song.notes[daSec].sectionNotes.push(copiedNote);
+					}
+					if (sectionStartTime(1) > FlxG.sound.music.length) {
+						trace('Last possible section reached!');
+						break;
 					}
 					if (_song.notes[curSec + 1] == null)
 					{
@@ -1371,12 +1362,16 @@ class ChartingState extends MusicBeatState
 			return;
 			}
 			if(_song.notes[curSec] == null || _song.notes[curSec] != null && _song.notes[curSec].sectionNotes.length < 1 || Math.isNaN(_song.notes[curSec].sectionNotes.length) || _song.notes[curSec].sectionNotes == null) {
-			trace ("HEY! your section doesn't have any notes! please place at least 1 note then try using this.");
-			return; //prevent a crash if the section doesn't have any notes
+				trace ("HEY! your section doesn't have any notes! please place at least 1 note then try using this.");
+				return; //prevent a crash if the section doesn't have any notes
 			}
 			saveUndo(_song); //I don't even know why.
 
 			for(i in 0...value) {
+				if (sectionStartTime(1) > FlxG.sound.music.length) {
+					trace('Last possible section reached!');
+					break;
+				}
 				if (_song.notes[curSec + 1] == null) addSection(getSectionBeats());
 				changeSection(curSec+1);
 				for (note in _song.notes[curSec-1].sectionNotes)
@@ -3507,7 +3502,8 @@ class ChartingState extends MusicBeatState
 
 		updateGrid((songBeginning ? true : false));
 
-			if (FlxG.sound.music.playing && idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.pauseMusic();
+		if (FlxG.sound.music.playing && idleMusic != null && idleMusic.music != null && idleMusicAllow) 
+			idleMusic.pauseMusic();
 
 		FlxG.sound.music.pause();
 		// Basically old shit from changeSection???

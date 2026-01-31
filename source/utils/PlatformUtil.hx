@@ -113,4 +113,19 @@ class PlatformUtil
     static public function updateWallpaper() {  // Only works on windows, otherwise returns 0!
         return null;
     }
+	
+
+	#if (cpp && windows) // assuming Wine sets the "windows" macro to true
+	@:functionCode('
+		HMODULE ntdll = GetModuleHandleA("ntdll.dll");
+		if (ntdll) {
+			void* wine_get_version = GetProcAddress(ntdll, "wine_get_version");
+			if (wine_get_version) return true;
+		}
+		return false;
+	')
+	#end
+	public static function detectWine():Bool {
+		return false;
+	}
 }

@@ -19,18 +19,16 @@ typedef CharacterFile = {
 	var flip_x:Bool;
 	var no_antialiasing:Bool;
 	var healthbar_colors:Array<Int>;
-	var winning_colors:Array<Int>;
-	var losing_colors:Array<Int>;
-	var noteskin:String;
-	var vocals_file:String;
+	@:optional var noteskin:String;
+	@:optional var vocals_file:String;
 
-	var health_drain:Bool;
-	var drain_amount:Float;
-	var drain_floor:Float;
+	@:optional var health_drain:Bool;
+	@:optional var drain_amount:Float;
+	@:optional var drain_floor:Float;
 
-	var shake_screen:Bool;
-	var shake_intensity:Float;
-	var shake_duration:Float;
+	@:optional var shake_screen:Bool;
+	@:optional var shake_intensity:Float;
+	@:optional var shake_duration:Float;
 	@:optional var _editor_isPlayer:Null<Bool>;
 }
 
@@ -92,8 +90,6 @@ class Character extends FlxSprite
 	public var originalFlipX:Bool = false;
 	public var editorIsPlayer:Null<Bool> = null;
 	public var healthColorArray:Array<Int> = [255, 0, 0];
-	public var winningColorArray:Array<Int> = [255, 0, 0];
-	public var losingColorArray:Array<Int> = [255, 0, 0];
 
 	public static var DEFAULT_CHARACTER:String = 'bf'; //In case a character is missing, it will use BF on its place
 	public function new(x:Float, y:Float, ?character:String = 'bf', ?isPlayer:Bool = false, ?isDeathCharacter:Bool = false)
@@ -227,14 +223,6 @@ class Character extends FlxSprite
 
 		if(json.healthbar_colors != null && json.healthbar_colors.length > 2)
 			healthColorArray = json.healthbar_colors;
-
-		if(json.winning_colors != null && json.winning_colors.length > 2)
-			winningColorArray = json.winning_colors;
-		else winningColorArray = healthColorArray;
-
-		if(json.losing_colors != null && json.losing_colors.length > 2)
-			losingColorArray = json.losing_colors;
-		else losingColorArray = healthColorArray;
 
 		antialiasing = !noAntialiasing;
 		if(!ClientPrefs.globalAntialiasing) antialiasing = false;

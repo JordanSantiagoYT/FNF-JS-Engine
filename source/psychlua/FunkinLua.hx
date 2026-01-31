@@ -12,11 +12,11 @@ import openfl.Lib;
 import openfl.display.BitmapData;
 import openfl.display.BlendMode;
 
-#if (SHADERS_ALLOWED)
+#if SHADERS_ALLOWED
 import flixel.addons.display.FlxRuntimeShader;
-import shaders.ErrorHandledShader;
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
+import shaders.ErrorHandledShader;
 #end
 
 #if desktop
@@ -38,9 +38,10 @@ class FunkinLua {
 	#end
 	public var camTarget:FlxCamera;
 	public var scriptName:String = '';
+	public var modFolder:String = null;
 	public var closed:Bool = false;
 
-	#if hscript
+	#if HSCRIPT_ALLOWED
 	public var hscript:HScript = null;
 	#end
 
@@ -60,6 +61,12 @@ class FunkinLua {
 		this.scriptName = scriptName;
 		final game:PlayState = PlayState.instance;
 		game.luaArray.push(this);
+
+		var myFolder:Array<String> = this.scriptName.split('/');
+		#if MODS_ALLOWED
+		if(myFolder[0] + '/' == Paths.mods() && (Paths.currentModDirectory == myFolder[1] || Paths.getGlobalMods().contains(myFolder[1]))) //is inside mods folder
+			this.modFolder = myFolder[1];
+		#end
 		try{
 			var result:Int = scriptCode != null ? LuaL.dostring(lua, scriptCode) : LuaL.dofile(lua, scriptName);
 			var resultStr:String = Lua.tostring(lua, result);
@@ -87,6 +94,7 @@ class FunkinLua {
 		set('luaDebugMode', false);
 		set('luaDeprecatedWarnings', true);
 		set('inChartEditor', false);
+		set('modFolder', this.modFolder);
 
 		// Song/Week shit
 		set('curBpm', Conductor.bpm);
@@ -169,9 +177,9 @@ class FunkinLua {
 		set('defaultGirlfriendY', game.GF_Y);
 
 		// Character shit
-		set('boyfriendName', PlayState.SONG.player1);
-		set('dadName', PlayState.SONG.player2);
-		set('gfName', PlayState.SONG.gfVersion);
+		set('boyfriendName', PlayState.SONG.player1 ?? 'bf');
+		set('dadName', PlayState.SONG.player2 ?? 'dad');
+		set('gfName', PlayState.SONG.gfVersion ?? 'gf');
 
 		// Some settings, no jokes
 		set('downscroll', ClientPrefs.downScroll);
@@ -190,6 +198,12 @@ class FunkinLua {
 		set('shadersEnabled', ClientPrefs.shaders);
 		set('scriptName', scriptName);
 		set('currentModDirectory', Paths.currentModDirectory);
+
+		// Noteskin/Splash shit
+		set('noteSkin', ClientPrefs.noteSkin);
+		set('noteSkinPostfix', Note.getNoteSkinPostfix());
+		set('splashSkin', ClientPrefs.splashType);
+		set('splashSkinPostfix', NoteSplash.getSplashSkinPostfix());
 
 		// If you don't want this to show, you can use the lua script to change it
 		set('user_path', CoolSystemStuff.getUserPath());
@@ -211,7 +225,7 @@ class FunkinLua {
 
 		for (name => func in customFunctions) {
 			if (func != null)
-				Lua_helper.add_callback(lua, name, func);
+				Convert.addCallback(lua, name, func);
 		}
 
 		// shader shit
@@ -605,11 +619,11 @@ class FunkinLua {
 					if(luaInstance.scriptName == cervix)
 					{
 						Lua.getglobal(luaInstance.lua, global);
-						if(Lua.isnumber(luaInstance.lua,-1)){
+						if(Lua.isnumber(luaInstance.lua,-1) == 1){
 							Lua.pushnumber(lua, Lua.tonumber(luaInstance.lua, -1));
-						}else if(Lua.isstring(luaInstance.lua,-1)){
+						}else if(Lua.isstring(luaInstance.lua,-1) == 1){
 							Lua.pushstring(lua, Lua.tostring(luaInstance.lua, -1));
-						}else if(Lua.isboolean(luaInstance.lua,-1)){
+						}else if(Lua.isboolean(luaInstance.lua,-1) == 1){
 							Lua.pushboolean(lua, Lua.toboolean(luaInstance.lua, -1));
 						}else{
 							Lua.pushnil(lua);
@@ -1571,12 +1585,15 @@ class FunkinLua {
 			}
 		});
 		registerFunction("cameraSetTarget", function(target:String) {
-			var isDad:Bool = false;
-			if(target == 'dad') {
-				isDad = true;
+			switch(target.trim().toLowerCase())
+			{
+				case 'gf', 'girlfriend': // now gf can be targeted
+					game.moveCameraToGirlfriend();
+				case 'dad', 'opponent':
+					game.moveCamera(true);
+				default:
+					game.moveCamera(false);
 			}
-			PlayState.instance.moveCamera(isDad);
-			return isDad;
 		});
 		registerFunction("cameraShake", function(camera:String, intensity:Float, duration:Float) {
 			LuaUtils.cameraFromString(camera).shake(intensity, duration / PlayState.instance.playbackRate);
@@ -2257,10 +2274,7 @@ class FunkinLua {
 			closed = true;
 			return closed;
 		});
-		for (name => func in registeredFunctions) {
-			if (func != null)
-				Lua_helper.add_callback(lua, name, func);
-		}
+
 		#if ACHIEVEMENTS_ALLOWED Achievements.addLuaCallbacks(lua); #end
 		#if HSCRIPT_ALLOWED HScript.implement(this); #end
 		CustomSubstate.implement(this);
@@ -2883,6 +2897,11 @@ class FunkinLua {
 			}
 		});
 
+		for (name => func in registeredFunctions) {
+			if (func != null)
+				Convert.addCallback(lua, name, func);
+		}
+
 		call('onCreate', []);
 		#end
 	}
@@ -2890,7 +2909,7 @@ class FunkinLua {
 	public function addLocalCallback(name:String, myFunction:Dynamic)
 	{
 		callbacks.set(name, myFunction);
-		Lua_helper.add_callback(lua, name, null); // just so that it gets called
+		Convert.addCallback(lua, name, myFunction); // just so that it gets called
 	}
 
 	public static function registerFunction(name:String, func:Dynamic):Void
@@ -3185,8 +3204,8 @@ class FunkinLua {
 			Lua.getglobal(lua, func);
 			var type:Int = Lua.type(lua, -1);
 
-			if (type != Lua.LUA_TFUNCTION) {
-				if (type > Lua.LUA_TNIL)
+			if (type != Lua.TFUNCTION) {
+				if (type > Lua.TNIL)
 					LuaUtils.luaTrace(lua, "ERROR (" + func + "): attempt to call a " + typeToString(type) + " value", false, false, FlxColor.RED);
 
 				Lua.pop(lua, 1);
@@ -3197,7 +3216,7 @@ class FunkinLua {
 			var status:Int = Lua.pcall(lua, args.length, 1, 0);
 
 			// Checks if it's not successful, then show a error.
-			if (status != Lua.LUA_OK) {
+			if (status != Lua.OK) {
 				var error:String = LuaUtils.getErrorMessage(lua, status);
 				LuaUtils.luaTrace(lua, "ERROR (" + func + "): " + error, false, false, FlxColor.RED);
 				return Function_Continue;
@@ -3266,16 +3285,24 @@ class FunkinLua {
 		return coverMeInPiss;
 	}
 
-	function typeToString(type:Int):String {
+	public static function typeToString(type:Int):String
+	{
 		#if LUA_ALLOWED
-		switch(type) {
-			case Lua.LUA_TBOOLEAN: return "boolean";
-			case Lua.LUA_TNUMBER: return "number";
-			case Lua.LUA_TSTRING: return "string";
-			case Lua.LUA_TTABLE: return "table";
-			case Lua.LUA_TFUNCTION: return "function";
+		switch (type)
+		{
+			case type if (type == Lua.TBOOLEAN):
+				return "boolean";
+			case type if (type == Lua.TNUMBER):
+				return "number";
+			case type if (type == Lua.TSTRING):
+				return "string";
+			case type if (type == Lua.TTABLE):
+				return "table";
+			case type if (type == Lua.TFUNCTION):
+				return "function";
+			case type if (type <= Lua.TNIL):
+				return "nil";
 		}
-		if (type <= Lua.LUA_TNIL) return "nil";
 		#end
 		return "unknown";
 	}
@@ -3287,7 +3314,7 @@ class FunkinLua {
 
 		if (Reflect.isFunction(data)) {
 			// Bind as a callable Lua function
-			Lua_helper.add_callback(lua, variable, data);
+			Convert.addCallback(lua, variable, data);
 			return;
 		}
 
@@ -3317,4 +3344,5 @@ class FunkinLua {
 		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
 	}
 }
+typedef State = cpp.RawPointer<Lua_State>;
 // hi guys, my name is "secret"!
