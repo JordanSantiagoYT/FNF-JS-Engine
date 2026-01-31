@@ -1234,6 +1234,9 @@ class ChartingState extends MusicBeatState
 		});
 		var clearLeftSectionButton:FlxButton = new FlxButton(duetButton.x, duetButton.y + 30, "Clear Left Side", function()
 		{
+			if (Conductor.songPosition >= 0)
+				curSection = Math.floor(Conductor.songPosition / (Conductor.stepCrochet * 16));
+
 			if (_song.notes[curSection] == null || _song.notes[curSection] != null && _song.notes[curSection].sectionNotes == null) return;
 			saveUndo(_song); //this is really weird so im saving it as an undoable action just in case it does the wrong section
 			var removeThese = [];
@@ -1253,6 +1256,9 @@ class ChartingState extends MusicBeatState
 		});
 		var clearRightSectionButton:FlxButton = new FlxButton(clearLeftSectionButton.x + 100, clearLeftSectionButton.y, "Clear Right Side", function()
 		{
+			if (Conductor.songPosition >= 0)
+				curSection = Math.floor(Conductor.songPosition / (Conductor.stepCrochet * 16));
+
 			if (_song.notes[curSection] == null || _song.notes[curSection] != null && _song.notes[curSection].sectionNotes == null) return;
 			saveUndo(_song); //this is really weird so im saving it as an undoable action just in case it does the wrong section
 			var removeThese = [];
@@ -3496,7 +3502,8 @@ class ChartingState extends MusicBeatState
 
 		updateGrid((songBeginning ? true : false));
 
-			if (FlxG.sound.music.playing && idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.pauseMusic();
+		if (FlxG.sound.music.playing && idleMusic != null && idleMusic.music != null && idleMusicAllow) 
+			idleMusic.pauseMusic();
 
 		FlxG.sound.music.pause();
 		// Basically old shit from changeSection???
