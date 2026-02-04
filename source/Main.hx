@@ -93,9 +93,6 @@ class Main extends Sprite {
 			game.height = Math.ceil(stageHeight / game.zoom);
 		};
 
-		ClientPrefs.loadDefaultStuff();
-		#if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
-
 		final funkinGame:FlxGame = new FlxGame(game.width, game.height, game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate, game.skipSplash, game.startFullscreen);
 		// Literally just from Vanilla FNF but I implemented it my own way. -Torch
 		// torch is my friend btw :3 -moxie

@@ -4767,22 +4767,6 @@ class PlayState extends MusicBeatState
 		if (plrInputNotes.length != 0) {
 			var funnyNote:Note = plrInputNotes[0]; // front note
 
-			if (plrInputNotes.length > 1) {
-				var doubleNote:Note = plrInputNotes[1];
-
-				//if the note has the same notedata and doOppStuff indicator as funnynote, then do the check
-				if (doubleNote.noteData == funnyNote.noteData && doubleNote.doOppStuff == funnyNote.doOppStuff) {
-					// if the note has a 0ms distance (is on top of the current note), kill it
-					if (Math.abs(doubleNote.strumTime - funnyNote.strumTime) < 1.0)
-						invalidateNote(doubleNote);
-					else if (doubleNote.strumTime < funnyNote.strumTime)
-					{
-						// replace the note if its ahead of time (or at least ensure "doubleNote" is ahead)
-						funnyNote = doubleNote;
-					}
-				}
-				else goodNoteHit(doubleNote); //otherwise, hit doubleNote instead of killing it
-			}
 			goodNoteHit(funnyNote);
 			if (plrInputNotes.length > 2 && ClientPrefs.ezSpam) {
 				for (i in 1...plrInputNotes.length) goodNoteHit(plrInputNotes[i]);
