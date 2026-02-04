@@ -23,6 +23,12 @@ import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
 #end
 
+enum CharacterFocus
+{
+	BF;
+	DAD;
+	GF;
+}
 
 class PlayState extends MusicBeatState
 {
@@ -4242,42 +4248,51 @@ class PlayState extends MusicBeatState
 
 		if (gf != null && SONG.notes[curSection].gfSection)
 		{
-			moveCameraToGirlfriend();
+			moveCamera(GF);
 			callOnLuas('onMoveCamera', ['gf']);
 			return;
 		}
 
 		if (!SONG.notes[curSection].mustHitSection)
 		{
-			moveCamera(true);
+			moveCamera(DAD);
 			callOnLuas('onMoveCamera', ['dad']);
 		}
 		else
 		{
-			moveCamera(false);
+			moveCamera(BF);
 			callOnLuas('onMoveCamera', ['boyfriend']);
 		}
 	}
 
 	var cameraTwn:FlxTween;
-	public function moveCamera(isDad:Bool, isGF:Bool = false)
+	public function moveCamera(focus:CharacterFocus)
 	{
 		var char:Character = null;
-		var charCamOffset = [0, 0];
-		if(isDad && dad != null)
+		var charCamOffset:Array<Float> = [0, 0];
+		switch (focus)
 		{
-			char = dad; charCamOffset = opponentCameraOffset;
-		}
-		else if (boyfriend != null)
-		{
-			char = boyfriend; charCamOffset = boyfriendCameraOffset;
-		}
-		if (isGF && gf != null)
-		{
-			char = gf; charCamOffset = girlfriendCameraOffset;
+			case GF if (gf != null):
+				char = gf;
+				charCamOffset = girlfriendCameraOffset;
+
+			case DAD if (dad != null):
+				char = dad;
+				charCamOffset = opponentCameraOffset;
+
+			case BF if (boyfriend != null):
+				char = boyfriend;
+				charCamOffset = boyfriendCameraOffset;
+
+			default:
+				return;
 		}
 		if (char != null) {
-			camFollow.set(char.getMidpoint().x - (char == gf ? 0 : char == boyfriend ? 100 : -150), char.getMidpoint().y - (char == gf ? 0 : 100));
+			final mid = char.getMidpoint();
+			camFollow.set(
+				mid.x - (char == gf ? 0 : char == boyfriend ? 100 : -150),
+				mid.y - (char == gf ? 0 : 100)
+			);
 			camFollow.x -= char.cameraPosition[0] + charCamOffset[0] * (char == boyfriend ? -1 : 1);
 			camFollow.y += char.cameraPosition[1] + charCamOffset[1];
 			if (char == dad || char == gf) tweenCamIn();

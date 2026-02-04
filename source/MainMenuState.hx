@@ -367,7 +367,7 @@ class MainMenuState extends MusicBeatState
       }
       #end
     }
-    //
+    // Something because someone wanted it
     #if FUNNY_ALLOWED
     if (funnycatperson != null && FlxG.mouse.overlaps(funnycatperson) && FlxG.mouse.justPressed)
     {
