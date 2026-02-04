@@ -280,7 +280,7 @@ class ChartingState extends MusicBeatState
 
   var autoSaveTimer:FlxTimer;
 
-  public var autoSaveLength:Float = 240; // 4 minutes, probably long but less lag
+  public var autoSaveLength:Int = 240; // 4 minutes (DEFAULT), probably long but less lag
 
   override function create()
   {
@@ -510,17 +510,18 @@ class ChartingState extends MusicBeatState
 		\nQ/E - Decrease/Increase Note Sustain Length
 		\nSpace - Stop/Resume song";
 
-    var tipTextArray:Array<String> = text.split('\n');
-    for (i in 0...tipTextArray.length)
-    {
-      var tipText:FlxText = new FlxText(UI_box.x, UI_box.y + UI_box.height + 8, 0, tipTextArray[i], 20);
-      tipText.y += i * 8;
-      tipText.setFormat(Paths.font("vcr.ttf"), 12, FlxColor.WHITE, LEFT /*, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK*/);
-      // tipText.borderSize = 2;
-      tipText.scrollFactor.set();
-      add(tipText);
-    }
-    add(UI_box);
+		var tipTextArray:Array<String> = text.split('\n');
+		for (i in 0...tipTextArray.length) {
+			var tipText:FlxText = new FlxText(UI_box.x, UI_box.y + UI_box.height + 8, 0, tipTextArray[i], 20);
+			tipText.y += i * 8;
+			tipText.setFormat(Paths.font("vcr.ttf"), 12, FlxColor.WHITE, LEFT/*, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK*/);
+			//tipText.borderSize = 2;
+			tipText.scrollFactor.set();
+			add(tipText);
+		}
+		add(UI_box);
+
+	autoSaveLength = ClientPrefs.autosaveTime ?? 240;
 
     autosaveIndicator = new FlxSprite(-30, FlxG.height - 90).loadGraphic(Paths.image('autosaveIndicator'));
     autosaveIndicator.setGraphicSize(200, 70);

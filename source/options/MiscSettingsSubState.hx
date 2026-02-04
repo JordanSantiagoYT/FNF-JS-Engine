@@ -54,6 +54,18 @@ class MiscSettingsSubState extends BaseOptionsMenu
 			true);
 		addOption(option);
 
+		var option:Option = new Option('Autosave Time: ',
+			'Change the amount of time for a chart to autosave.', 
+			'autosaveTime',
+			'int',
+			240);
+		option.scrollSpeed = 30;
+		option.minValue = 30;
+		option.maxValue = 600;
+		option.changeValue = 1;
+		option.displayFormat = '%vs';
+		addOption(option);
+
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
 
 		super();

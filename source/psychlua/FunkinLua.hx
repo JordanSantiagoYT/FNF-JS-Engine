@@ -1588,7 +1588,7 @@ class FunkinLua {
 			switch(target.trim().toLowerCase())
 			{
 				case 'gf', 'girlfriend': // now gf can be targeted
-					game.moveCameraToGirlfriend();
+					game.moveCamera(false, true);
 				case 'dad', 'opponent':
 					game.moveCamera(true);
 				default:

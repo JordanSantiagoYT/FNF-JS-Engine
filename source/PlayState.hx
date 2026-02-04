@@ -4259,33 +4259,30 @@ class PlayState extends MusicBeatState
 		}
 	}
 
-	public function moveCameraToGirlfriend()
-	{
-		camFollow.set(gf.getMidpoint().x, gf.getMidpoint().y);
-		camFollow.x += gf.cameraPosition[0] + girlfriendCameraOffset[0];
-		camFollow.y += gf.cameraPosition[1] + girlfriendCameraOffset[1];
-		tweenCamIn();
-	}
-
 	var cameraTwn:FlxTween;
-	public function moveCamera(isDad:Bool)
+	public function moveCamera(isDad:Bool, isGF:Bool = false)
 	{
-		if(isDad)
+		var char:Character = null;
+		var charCamOffset = [0, 0];
+		if(isDad && dad != null)
 		{
-			if(dad == null) return;
-			camFollow.set(dad.getMidpoint().x + 150, dad.getMidpoint().y - 100);
-			camFollow.x += dad.cameraPosition[0] + opponentCameraOffset[0];
-			camFollow.y += dad.cameraPosition[1] + opponentCameraOffset[1];
-			tweenCamIn();
+			char = dad; charCamOffset = opponentCameraOffset;
 		}
-		else
+		else if (boyfriend != null)
 		{
-			if(boyfriend == null) return;
-			camFollow.set(boyfriend.getMidpoint().x - 100, boyfriend.getMidpoint().y - 100);
-			camFollow.x -= boyfriend.cameraPosition[0] - boyfriendCameraOffset[0];
-			camFollow.y += boyfriend.cameraPosition[1] + boyfriendCameraOffset[1];
+			char = boyfriend; charCamOffset = boyfriendCameraOffset;
+		}
+		if (isGF && gf != null)
+		{
+			char = gf; charCamOffset = girlfriendCameraOffset;
+		}
+		if (char != null) {
+			camFollow.set(char.getMidpoint().x - (char == gf ? 0 : char == boyfriend ? 100 : -150), char.getMidpoint().y - (char == gf ? 0 : 100));
+			camFollow.x -= char.cameraPosition[0] + charCamOffset[0] * (char == boyfriend ? -1 : 1);
+			camFollow.y += char.cameraPosition[1] + charCamOffset[1];
+			if (char == dad || char == gf) tweenCamIn();
 
-			if (songName == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1)
+			if (char == boyfriend && songName == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1)
 			{
 				cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1}, (Conductor.stepCrochet * 4 / 1000), {ease: FlxEase.elasticInOut, onComplete:
 					function (twn:FlxTween)
