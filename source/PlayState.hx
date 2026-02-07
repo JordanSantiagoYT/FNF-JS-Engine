@@ -2399,6 +2399,10 @@ class PlayState extends MusicBeatState
 			if (cpuControlled) detailsText = detailsText + ' (using a bot)';
 			// Updating Discord Rich Presence (with Time Left)
 			DiscordClient.changePresence(detailsText, SONG.song + " (" + storyDifficultyText + ")", iconP2.getCharacter(), true, songLength);
+			if (ffmpegMode) {
+				detailsText = 'Rendering a Song';
+				DiscordClient.changePresence(detailsText, SONG.song + " (" + storyDifficultyText + ")", iconP2.getCharacter(), true, songLength);
+			}
 		}
 		#end
 		setOnLuas('songLength', songLength);
