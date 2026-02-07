@@ -1,18 +1,24 @@
-1.49.1;
+1.50.0;
 
-Removals:
+The crash handler now has summarized reasoning that tells you WHY your engine crashed specifically. there are a few summarized reasons right now, but there'll be more added in the future!
+The cameraSetTarget function can now target GF! to do it, put "gf" as the target instead!
+Added FPS Border option: Allows you to add a border around the FPS counter. Increases readability.
+Added Autosave Time Option (Misc): Change the amount of time in seconds that it takes to autosave a chart.
 
-Benchmark state and Away3D because they were ultimately useless here in this instance
-Win/lose bar colors & "OG HP Colors" options since those can be recreated in Lua
+Removed Render Info and Random Botplay Text as they've been recreated in LUA.
 
-Changes:
-Dave & Bambi/Strident Crisis icon bops are now frame independent
-Dave Engine health bar was updated to the design used in Volume 1
+"Exit To Your Mother" no longer softlocks the game.
+The "Windows Notification" event now detects if you're using Wine.
+The MS and Judge text popups have been refactored into separate classes (Not fully tested!)
+"qt_taunt" keybind has been renamed to "taunt".
+Tabbing out of the game with auto pause inactive will no longer inaccurately change the Discord RPC to say "BRB!"
 
-Bug-fixes (I got lazy writing this):
-Fixed some crashes regarding Notes(?)
-Fixed issues with the "Chart Editor playtesting" due to the changes in 1.49.0-Prerelease
-(Hopefully) Fix the original double note ghost script not working anymore
-
-	
-
+Fixed the Update State failing to download an update. (Only applies to 1.50.0 and newer!)
+Fixed Classic Rendering Mode crashing on Linux devices
+After MONTHS of not seeing it, fixed a bug with Bot Energy if it wasn't binded to CTRL.
+Fixed the Golden Apple icon bounce looking.. off.
+Tried to add failsafes when using the section copy buttons in the Chart Editor.
+Fixed some functions being null in LUA (hopefully)
+Hurt Notes have been fixed.. again.
+Added hitCausesMiss null safety, fixing a bug where not having this value on a note would crash the game.
+Fixed 'Clear Left/Right Section' clearing notes from a different section than the one you're on. (probably)
