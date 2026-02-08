@@ -1131,102 +1131,115 @@ class DistortBGEffect extends Effect
 
 class PulseEffectAlt
 {
-  public var shader(default, null):PulseShader = new PulseShader();
+  public var shader(default, null):PulseShader;
 
   public var waveSpeed(default, set):Float = 0;
   public var waveFrequency(default, set):Float = 0;
   public var waveAmplitude(default, set):Float = 0;
-  public var Enabled(default, set):Bool = false;
+  public var enabled(default, set):Bool = false;
 
   public function new():Void
   {
-    shader.uTime.value = [0];
-    shader.uEnabled.value = [false];
+    shader = new PulseShader();
+    shader.speed = 0;
+    shader.frequency = 0;
+    shader.waveAmplitude = 0;
+    shader.enabled = false;
   }
 
   public function update(elapsed:Float):Void
   {
-    shader.uTime.value[0] += elapsed;
+    shader.update(elapsed);
   }
 
   function set_waveSpeed(v:Float):Float
   {
     waveSpeed = v;
-    shader.uSpeed.value = [waveSpeed];
+    shader.speed = v;
     return v;
   }
 
-  function set_Enabled(v:Bool):Bool
+  function set_enabled(v:Bool):Bool
   {
-    Enabled = v;
-    shader.uEnabled.value = [Enabled];
+    enabled = v;
+    shader.enabled = v;
     return v;
   }
 
   function set_waveFrequency(v:Float):Float
   {
     waveFrequency = v;
-    shader.uFrequency.value = [waveFrequency];
+    shader.frequency = v;
     return v;
   }
 
   function set_waveAmplitude(v:Float):Float
   {
     waveAmplitude = v;
-    shader.uWaveAmplitude.value = [waveAmplitude];
+    shader.waveAmplitude = v;
     return v;
   }
 }
 
 class PulseEffect extends Effect
 {
-  public var shader:PulseShader = new PulseShader();
+  public var shader:PulseShader;
 
   public var waveSpeed(default, set):Float = 0;
   public var waveFrequency(default, set):Float = 0;
   public var waveAmplitude(default, set):Float = 0;
-  public var Enabled(default, set):Bool = false;
+  public var enabled(default, set):Bool = false;
 
   public function new(waveSpeed:Float, waveFrequency:Float, waveAmplitude:Float):Void
   {
+    shader = new PulseShader();
+
     this.waveSpeed = waveSpeed;
     this.waveFrequency = waveFrequency;
     this.waveAmplitude = waveAmplitude;
-    shader.uTime.value = [0];
-    shader.uEnabled.value = [false];
+    this.enabled = false;
+
+    // PulseShader constructor already sets defaults,
+    // but we override with our specific values
+    shader.speed = waveSpeed;
+    shader.frequency = waveFrequency;
+    shader.waveAmplitude = waveAmplitude;
+    shader.enabled = false;
+    shader.time = 0;
+
     PlayState.instance.shaderUpdates.push(update);
   }
 
   public function update(elapsed:Float):Void
   {
-    shader.uTime.value[0] += elapsed;
+    shader.update(elapsed);
   }
 
   function set_waveSpeed(v:Float):Float
   {
     waveSpeed = v;
-    shader.uSpeed.value = [waveSpeed];
+    shader.speed = v;
     return v;
   }
 
-  function set_Enabled(v:Bool):Bool
+  function set_enabled(v:Bool):Bool
   {
-    Enabled = v;
-    shader.uEnabled.value = [Enabled];
+    enabled = v;
+    shader.enabled = v;
     return v;
   }
 
   function set_waveFrequency(v:Float):Float
   {
     waveFrequency = v;
-    shader.uFrequency.value = [waveFrequency];
+    shader.frequency = v;
     return v;
   }
 
   function set_waveAmplitude(v:Float):Float
   {
     waveAmplitude = v;
-    shader.uWaveAmplitude.value = [waveAmplitude];
+    shader.waveAmplitude = v;
     return v;
   }
 }
@@ -1375,7 +1388,7 @@ class PulseShader extends ErrorHandledRuntimeShader
 
   public function new()
   {
-    super(Assets.getText(Paths.frag('pulseEffect')));
+    super(Assets.getText(Paths.shaderFragment('pulseEffect', 'preload')));
 
     // Initialize with default values
     setFloat('uWaveAmplitude', waveAmplitude);

@@ -289,7 +289,7 @@ class PlayState extends MusicBeatState
 
 	var EngineWatermark:FlxText;
 
-	public static var screenshader:Shaders.PulseEffectAlt = new PulseEffectAlt();
+	public static var screenshader:Shaders.PulseEffectAlt;
 
 	var disableTheTripper:Bool = false;
 	var disableTheTripperAt:Int;
@@ -457,6 +457,8 @@ class PlayState extends MusicBeatState
 		// for lua
 		instance = this;
 
+		screenshader = new PulseEffectAlt();
+
 		debugKeysChart = ClientPrefs.copyKey(ClientPrefs.keyBinds.get('debug_1'));
 		debugKeysCharacter = ClientPrefs.copyKey(ClientPrefs.keyBinds.get('debug_2'));
 		PauseSubState.songName = null; //Reset to default
@@ -479,7 +481,7 @@ class PlayState extends MusicBeatState
 		screenshader.waveAmplitude = 1;
 		screenshader.waveFrequency = 2;
 		screenshader.waveSpeed = 1;
-		screenshader.shader.uTime.value[0] = new flixel.math.FlxRandom().float(-100000, 100000);
+		screenshader.shader.time = new flixel.math.FlxRandom().float(-100000, 100000);
 
 		if (FlxG.sound.music != null)
 			FlxG.sound.music.stop();
@@ -1504,7 +1506,7 @@ class PlayState extends MusicBeatState
 		startingTime = haxe.Timer.stamp();
 	}
 
-	#if (SHADERS_ALLOWED)
+	#if SHADERS_ALLOWED
 	public var runtimeShaders:Map<String, Array<String>> = new Map<String, Array<String>>();
 	public function createRuntimeShader(shaderName:String):ErrorHandledRuntimeShader
 	{
@@ -3035,21 +3037,21 @@ class PlayState extends MusicBeatState
 	override public function update(elapsed:Float)
 	{
 		if (ffmpegMode) elapsed = 1 / ClientPrefs.targetFPS;
-		if (screenshader.Enabled)
+		if (screenshader.enabled)
 		{
 			if(disableTheTripperAt <= curStep || isDead)
 				disableTheTripper = true;
 
 			if(disableTheTripper)
 			{
-				screenshader.shader.uWaveAmplitude.value[0] -= (elapsed / 2);
+				screenshader.shader.waveAmplitude -= (elapsed / 2);
 			}
 
-			if (screenshader?.shader?.uWaveAmplitude?.value[0] > 0)
+			if (screenshader?.shader?.waveAmplitude > 0)
 				screenshader.update(elapsed);
 			else {
 				removeShaderFromCamera('camGame', screenshader);
-				screenshader.Enabled = false;
+				screenshader.enabled = false;
 			}
 		}
 
@@ -4098,8 +4100,8 @@ class PlayState extends MusicBeatState
 					screenshader.waveAmplitude = 1;
 					screenshader.waveFrequency = 2;
 					screenshader.waveSpeed = Std.parseFloat(value2) * playbackRate;
-					screenshader.shader.uTime.value[0] = new flixel.math.FlxRandom().float(-1e3, 1e3);
-					screenshader.Enabled = true;
+					screenshader.shader.time = new flixel.math.FlxRandom().float(-1e3, 1e3);
+					screenshader.enabled = true;
 				}
 				#end
 			case 'Popup':
