@@ -3,12 +3,11 @@ package;
 // STOLEN FROM HAXEFLIXEL DEMO LOL
 import WiggleEffect.WiggleEffectType;
 import WiggleEffect.WiggleShader;
-import backend.FlxFixedShader;
-import flixel.addons.display.FlxRuntimeShader;
 import flixel.system.FlxAssets.FlxShader;
 import openfl.Lib;
 import openfl.display.BitmapData;
 import openfl.display.ShaderInput;
+import shaders.ErrorHandledShader;
 
 typedef ShaderEffect = {
   var shader:Dynamic;
@@ -1174,9 +1173,8 @@ class PulseEffectAlt
 
 	public function new():Void
 	{
-		shader.uTime.value = [0];
-        shader.uampmul.value = [0];
-        shader.uEnabled.value = [false];
+    shader.uTime.value = [0];
+    shader.uEnabled.value = [false];
 	}
 
     public function update(elapsed:Float):Void
@@ -1230,7 +1228,6 @@ class PulseEffect extends Effect
 		this.waveFrequency = waveFrequency;
 		this.waveAmplitude = waveAmplitude;
 		shader.uTime.value = [0];
-        shader.uampmul.value = [0];
         shader.uEnabled.value = [false];
 		PlayState.instance.shaderUpdates.push(update);
 	}
@@ -1411,58 +1408,67 @@ class DistortBGShader extends FlxShader
 }
 
 
-class PulseShader extends FlxFixedShader
+class PulseShader extends ErrorHandledRuntimeShader
 {
-    @:glFragmentSource('
-    #pragma header
-    uniform float uampmul;
+  public var waveAmplitude(default, set):Float = 0;
+  public var frequency(default, set):Float = 1;
+  public var speed(default, set):Float = 1;
+  public var time(default, set):Float = 0;
+  public var enabled(default, set):Bool = false;
 
-    //modified version of the wave shader to create weird garbled corruption like messes
-    uniform float uTime;
+  public function new()
+  {
+      super(Assets.getText(Paths.frag('pulseEffect')));
 
-    /**
-     * How fast the waves move over time
-     */
-    uniform float uSpeed;
+      // Initialize with default values
+      setFloat('uWaveAmplitude', waveAmplitude);
+      setFloat('uFrequency', frequency);
+      setFloat('uSpeed', speed);
+      setFloat('uTime', time);
+      setBool('uEnabled', enabled);
+  }
 
-    /**
-     * Number of waves over time
-     */
-    uniform float uFrequency;
+  // Setters to automatically update shader uniforms when properties change
+  function set_waveAmplitude(value:Float):Float
+  {
+      waveAmplitude = value;
+      setFloat('uWaveAmplitude', value);
+      return value;
+  }
 
-    uniform bool uEnabled;
+  function set_frequency(value:Float):Float
+  {
+      frequency = value;
+      setFloat('uFrequency', value);
+      return value;
+  }
 
-    /**
-     * How much the pixels are going to stretch over the waves
-     */
-    uniform float uWaveAmplitude;
+  function set_speed(value:Float):Float
+  {
+      speed = value;
+      setFloat('uSpeed', value);
+      return value;
+  }
 
-    vec4 sineWave(vec4 pt, vec2 pos)
-    {
-        if (uampmul > 0.0)
-        {
-            float offsetX = sin(pt.y * uFrequency + uTime * uSpeed);
-            float offsetY = sin(pt.x * (uFrequency * 2.0) - (uTime / 2.0) * uSpeed);
-            float offsetZ = sin(pt.z * (uFrequency / 2.0) + (uTime / 3.0) * uSpeed);
-            pt.x = mix(pt.x,sin(pt.x / 2.0 * pt.y + (5.0 * offsetX) * pt.z),uWaveAmplitude * uampmul);
-            pt.y = mix(pt.y,sin(pt.y / 3.0 * pt.z + (2.0 * offsetZ) - pt.x),uWaveAmplitude * uampmul);
-            pt.z = mix(pt.z,sin(pt.z / 6.0 * (pt.x * offsetY) - (50.0 * offsetZ) * (pt.z * offsetX)),uWaveAmplitude * uampmul);
-        }
+  function set_time(value:Float):Float
+  {
+      time = value;
+      setFloat('uTime', value);
+      return value;
+  }
 
+  function set_enabled(value:Bool):Bool
+  {
+      enabled = value;
+      setBool('uEnabled', value);
+      return value;
+  }
 
-        return vec4(pt.x, pt.y, pt.z, pt.w);
-    }
-
-    void main()
-    {
-        vec2 uv = openfl_TextureCoordv;
-        gl_FragColor = sineWave(texture2D(bitmap, uv),uv);
-    }')
-
-    public function new()
-    {
-       super();
-    }
+  public function update(elapsed:Float):Void
+  {
+      if (enabled)
+          time += elapsed * speed;
+  }
 }
 
 class BlockedGlitchEffect

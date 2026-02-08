@@ -1,6 +1,6 @@
 package shaders;
 
-import flixel.system.FlxAssets.FlxShader;
+import backend.FlxFixedShader;
 import openfl.display.BitmapData;
 import openfl.display.ShaderParameter;
 import openfl.display.ShaderParameterType;
@@ -12,7 +12,7 @@ typedef Light =
 	var radius:Float;
 }
 
-class RainShader extends FlxShader
+class RainShader extends FlxFixedShader
 {
 	@:glVertexHeader('
 		  // normalized screen coord

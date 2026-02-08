@@ -480,7 +480,6 @@ class PlayState extends MusicBeatState
 		screenshader.waveFrequency = 2;
 		screenshader.waveSpeed = 1;
 		screenshader.shader.uTime.value[0] = new flixel.math.FlxRandom().float(-100000, 100000);
-		screenshader.shader.uampmul.value[0] = 0;
 
 		if (FlxG.sound.music != null)
 			FlxG.sound.music.stop();
@@ -3043,10 +3042,10 @@ class PlayState extends MusicBeatState
 
 			if(disableTheTripper)
 			{
-				screenshader.shader.uampmul.value[0] -= (elapsed / 2);
+				screenshader.shader.uWaveAmplitude.value[0] -= (elapsed / 2);
 			}
 
-			if (screenshader?.shader?.uampmul?.value[0] > 0)
+			if (screenshader?.shader?.uWaveAmplitude?.value[0] > 0)
 				screenshader.update(elapsed);
 			else {
 				removeShaderFromCamera('camGame', screenshader);
@@ -4091,13 +4090,6 @@ class PlayState extends MusicBeatState
 			}
 
 			case 'Rainbow Eyesore':
-				#if (linux && LUA_ALLOWED)
-				addTextToDebug('Rainbow shader does not work on Linux right now!', FlxColor.RED);
-				return;
-				#elseif linux
-				trace('Rainbow shader does not work on Linux right now!');
-				return;
-				#end
 				#if SHADERS_ALLOWED
 				if(ClientPrefs.flashing && ClientPrefs.shaders && curStep < Std.parseInt(value1)) {
 					disableTheTripper = false;
@@ -4107,7 +4099,6 @@ class PlayState extends MusicBeatState
 					screenshader.waveFrequency = 2;
 					screenshader.waveSpeed = Std.parseFloat(value2) * playbackRate;
 					screenshader.shader.uTime.value[0] = new flixel.math.FlxRandom().float(-1e3, 1e3);
-					screenshader.shader.uampmul.value[0] = 1;
 					screenshader.Enabled = true;
 				}
 				#end
