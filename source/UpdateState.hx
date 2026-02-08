@@ -211,21 +211,39 @@ class UpdateState extends MusicBeatState
 			}
 	}
 
-	public function checkAndStartDownload() {
+	public function checkAndStartDownload(url:String) {
 			trace("Checking update URL existence...");
-			var httpCheck = new Http(online_url);
+			var httpCheck = new Http(url);
 
 			httpCheck.onStatus = function(status:Int):Void {
 					trace('HTTP Status for URL check: ' + status);
-					if (status == 200 || status == 302) { // 200 = OK, 302 = Found (but in both cases, the file was found)
+					switch(status) {
+							case 200: // OK
 							trace("Update file found. Initiating download...");
 							startDownload(); // Now proceed with the actual download
-					} else if (status == 404) { // HTTP 404 Not Found
-							trace('File not found at URL: ' + online_url);
+							
+							case 301, 302, 303, 307, 308: //Redirect codes
+			                var newURL = httpCheck.responseHeaders.get("Location");
+			
+			                if (newURL != null && newURL != "")
+			                {
+			                    trace("The update link has been redirected to:" + newURL);
+			                    checkAndStartDownload(newURL);
+			                }
+			                else
+			                {
+			                    fatalError = true;
+			                    Application.current.window.alert("The update link was redirected but its Location header wasn't found.\nTry downloading the update manually from GitHub.");
+			                    FlxG.resetGame();
+			                }
+
+							case 404: // Not Found
+							trace('File not found at URL: ' + url);
 							fatalError = true;
 							Application.current.window.alert('Couldn\'t find the update file! The file may have been moved or doesn\'t exist for this version. Please check for a new version manually or report this issue.');
 							FlxG.resetGame();
-					} else { // Handle other HTTP errors
+
+							default: //Any other HTTP errors
 							trace('Unexpected HTTP status for URL check: ' + status);
 							fatalError = true;
 							Application.current.window.alert('An error occurred while checking for updates (Status: ' + status + '). Please try again later.');
