@@ -211,7 +211,16 @@ class UpdateState extends MusicBeatState
 			}
 	}
 
-	public function checkAndStartDownload(url:String) {
+	public function checkAndStartDownload(url:String, redirects:Int = 0) {
+			if (fatalError) return;
+
+			if (redirects > 5) {
+		        fatalError = true;
+		        Application.current.window.alert("Too many redirects while trying to download the update.");
+		        FlxG.resetGame();
+		        return;
+		    }
+
 			trace("Checking update URL existence...");
 			var httpCheck = new Http(url);
 
@@ -221,14 +230,15 @@ class UpdateState extends MusicBeatState
 							case 200: // OK
 							trace("Update file found. Initiating download...");
 							startDownload(url); // Now proceed with the actual download
-							
+
 							case 301, 302, 303, 307, 308: //Redirect codes
 			                var newURL = httpCheck.responseHeaders.get("Location");
-			
+							if (newURL == null) newURL = httpCheck.responseHeaders.get("location"); // lowercase URL if "location" is lowercase
+
 			                if (newURL != null && newURL != "")
 			                {
 			                    trace("The update link has been redirected to:" + newURL);
-			                    checkAndStartDownload(newURL);
+			                    checkAndStartDownload(newURL, redirects + 1);
 			                }
 			                else
 			                {
