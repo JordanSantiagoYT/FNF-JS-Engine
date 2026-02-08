@@ -1388,14 +1388,22 @@ class PulseShader extends ErrorHandledRuntimeShader
 
   public function new()
   {
-    super(Assets.getText(Paths.shaderFragment('pulseEffect', 'preload')));
+    var shaderSource:String = Assets.getText(Paths.shaderFragment('pulseEffect', 'preload'));
+
+    if (shaderSource == null || shaderSource.length == 0) {
+        trace("CRITICAL ERROR: Shader file 'pulseEffect' NOT FOUND or EMPTY!");
+    } else {
+        trace("Shader loaded successfully. Length: " + shaderSource.length);
+    }
+
+    super(shaderSource);
 
     // Initialize with default values
-    setFloat('uWaveAmplitude', waveAmplitude);
-    setFloat('uFrequency', frequency);
-    setFloat('uSpeed', speed);
-    setFloat('uTime', time);
-    setBool('uEnabled', enabled);
+    this.setFloat('uWaveAmplitude', waveAmplitude);
+    this.setFloat('uFrequency', frequency);
+    this.setFloat('uSpeed', speed);
+    this.setFloat('uTime', time);
+    this.setBool('uEnabled', enabled);
   }
 
   // Setters to automatically update shader uniforms when properties change
