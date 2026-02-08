@@ -1,19 +1,23 @@
 package backend;
 
-import flixel.system.FlxAssets.FlxShader;
-import openfl.display3D.Program3D;
+import flixel.system.FlxAssets.FlxShader as OriginalFlxShader;
 
-// goddamn prefix
-@:access(openfl.display3D.Context3D)
-@:access(openfl.display3D.Program3D)
-@:access(openfl.display.ShaderInput)
-@:access(openfl.display.ShaderParameter)
-class FlxFixedShader extends FlxShader
+using StringTools;
+
+/**
+ * A modded FlxShader that allows using GLSL Es 300 and GLSL 330
+ * @author Mihai Alexandru (M.A. Jigsaw)
+ */
+class FlxFixedShader extends OriginalFlxShader
 {
 	public var custom:Bool = false;
+	public var save:Bool = true;
 
-	public override function new()
+	public override function new(?save:Bool)
 	{
+		if (save != null)
+			this.save = save;
+
 		super();
 	}
 
@@ -35,92 +39,135 @@ class FlxFixedShader extends FlxShader
 		}
 
 		if (__context != null && program == null)
+			initGLforce();
+	}
+
+	public function initGLforce()
+	{
+		if (!custom)
+			initGood(glFragmentSource, glVertexSource);
+	}
+
+	public function initGood(glFragmentSource:String, glVertexSource:String)
+	{
+		@:privateAccess
+		var gl = __context.gl;
+
+		#if lime_opengles
+		var prefix = "#version 300 es\n";
+		#elseif mac
+		var prefix = "#version 120\n";
+		#else
+		var prefix = "#version 330\n";
+		#end
+
+		#if (js && html5)
+		prefix += (precisionHint == FULL ? "precision mediump float;\n" : "precision lowp float;\n");
+		#else
+		prefix += "#ifdef GL_ES\n"
+			+ (precisionHint == FULL ? "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
+				+ "precision highp float;\n"
+				+ "#else\n"
+				+ "precision mediump float;\n"
+				+ "#endif\n" : "precision lowp float;\n")
+			+ "#endif\n\n";
+		#end
+
+		#if lime_opengles
+		prefix += 'out vec4 output_FragColor;\n';
+		var vertex = prefix
+			+ glVertexSource.replace("attribute", "in")
+				.replace("varying", "out")
+				.replace("texture2D", "texture")
+				.replace("gl_FragColor", "output_FragColor");
+		var fragment = prefix + glFragmentSource.replace("varying", "in").replace("texture2D", "texture").replace("gl_FragColor", "output_FragColor");
+		#else
+		var vertex = prefix + glVertexSource;
+		var fragment = prefix + glFragmentSource;
+		#end
+
+		var id = vertex + fragment;
+
+		@:privateAccess
+		if (__context.__programs.exists(id) && save)
 		{
-			var prefix = "#version 120\n";
+			@:privateAccess
+			program = __context.__programs.get(id);
+		}
+		else
+		{
+			program = __context.createProgram(GLSL);
 
-			var gl = __context.gl;
+			@:privateAccess
+			program.__glProgram = __createGLProgram(vertex, fragment);
 
-			prefix += "#ifdef GL_ES
-				"
-				+ (precisionHint == FULL ? "#ifdef GL_FRAGMENT_PRECISION_HIGH
-				precision highp float;
-				#else
-				precision mediump float;
-				#endif" : "precision lowp float;")
-				+ "
-				#endif
-				";
-
-			var vertex = prefix + glVertexSource;
-			var fragment = prefix + glFragmentSource;
-
-			var id = vertex + fragment;
-
-			if (__context.__programs.exists(id))
-			{
-				program = __context.__programs.get(id);
-			}
-			else
-			{
-				program = __context.createProgram(GLSL);
-
-				// TODO
-				// program.uploadSources (vertex, fragment);
-				program.__glProgram = __createGLProgram(vertex, fragment);
-
+			@:privateAccess
+			if (save)
 				__context.__programs.set(id, program);
+		}
+
+		if (program != null)
+		{
+			@:privateAccess
+			glProgram = program.__glProgram;
+
+			for (input in __inputBitmapData)
+			{
+				@:privateAccess
+				if (input.__isUniform)
+				{
+					@:privateAccess
+					input.index = gl.getUniformLocation(glProgram, input.name);
+				}
+				else
+				{
+					@:privateAccess
+					input.index = gl.getAttribLocation(glProgram, input.name);
+				}
 			}
 
-			if (program != null)
+			for (parameter in __paramBool)
 			{
-				glProgram = program.__glProgram;
-
-				for (input in __inputBitmapData)
+				@:privateAccess
+				if (parameter.__isUniform)
 				{
-					if (input.__isUniform)
-					{
-						input.index = gl.getUniformLocation(glProgram, input.name);
-					}
-					else
-					{
-						input.index = gl.getAttribLocation(glProgram, input.name);
-					}
+					@:privateAccess
+					parameter.index = gl.getUniformLocation(glProgram, parameter.name);
 				}
-
-				for (parameter in __paramBool)
+				else
 				{
-					if (parameter.__isUniform)
-					{
-						parameter.index = gl.getUniformLocation(glProgram, parameter.name);
-					}
-					else
-					{
-						parameter.index = gl.getAttribLocation(glProgram, parameter.name);
-					}
+					@:privateAccess
+					parameter.index = gl.getAttribLocation(glProgram, parameter.name);
 				}
+			}
 
-				for (parameter in __paramFloat)
+			for (parameter in __paramFloat)
+			{
+				@:privateAccess
+				if (parameter.__isUniform)
 				{
-					if (parameter.__isUniform)
-					{
-						parameter.index = gl.getUniformLocation(glProgram, parameter.name);
-					}
-					else
-					{
-						parameter.index = gl.getAttribLocation(glProgram, parameter.name);
-					}
+					@:privateAccess
+					parameter.index = gl.getUniformLocation(glProgram, parameter.name);
 				}
-
-				for (parameter in __paramInt)
+				else
 				{
-					if (parameter.__isUniform)
-					{
-						parameter.index = gl.getUniformLocation(glProgram, parameter.name);
-					}
-					else
-					{
-						parameter.index = gl.getAttribLocation(glProgram, parameter.name);
-					}
+					@:privateAccess
+					parameter.index = gl.getAttribLocation(glProgram, parameter.name);
+				}
+			}
+
+			for (parameter in __paramInt)
+			{
+				@:privateAccess
+				if (parameter.__isUniform)
+				{
+					@:privateAccess
+					parameter.index = gl.getUniformLocation(glProgram, parameter.name);
+				}
+				else
+				{
+					@:privateAccess
+					parameter.index = gl.getAttribLocation(glProgram, parameter.name);
 				}
 			}
 		}

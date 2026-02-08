@@ -95,13 +95,16 @@ class SSPlugin extends flixel.FlxBasic
 
 		current = this;
 		daContainer = new Sprite();
+		daContainer.mouseEnabled = false;
 		FlxG.stage.addChild(daContainer);
 		flashSprite = new Sprite();
 		flashSprite.alpha = 0;
+		flashSprite.mouseEnabled = false;
 		flashBitmap = new Bitmap(new BitmapData(FlxG.width, FlxG.height, true, 0xFFFFFFFF));
 		flashSprite.addChild(flashBitmap);
 		screenshotSprite = new Sprite();
 		screenshotSprite.alpha = 0;
+		screenshotSprite.mouseEnabled = false;
 		daContainer.addChild(screenshotSprite);
 		outlineBitmap = new Bitmap(new BitmapData(Std.int(FlxG.width / 5) + 10, Std.int(FlxG.height / 5) + 10, true, 0xffffffff));
 		outlineBitmap.x = 5;

@@ -65,6 +65,7 @@ class Main extends Sprite {
 	public function new() {
 		super();
 		instance = this;
+		CrashHandler.init();
 		#if (cpp && windows)
 		untyped __cpp__("
 				SetProcessDPIAware(); // allows for more crisp visuals
@@ -72,7 +73,6 @@ class Main extends Sprite {
 				DisableProcessWindowsGhosting() // lets you move the window and such if it's not responding
 		");
 		#end
-		CrashHandler.init();
 		setupGame();
 	}
 
@@ -84,7 +84,7 @@ class Main extends Sprite {
 	private function setupGame():Void {
 		var stageWidth:Int = Lib.current.stage.stageWidth;
 		var stageHeight:Int = Lib.current.stage.stageHeight;
-
+		#if (openfl <= "9.2.0")
 		if (game.zoom == -1.0) {
 			var ratioX:Float = stageWidth / game.width;
 			var ratioY:Float = stageHeight / game.height;
@@ -92,7 +92,7 @@ class Main extends Sprite {
 			game.width = Math.ceil(stageWidth / game.zoom);
 			game.height = Math.ceil(stageHeight / game.zoom);
 		};
-
+		#end
 		ClientPrefs.loadDefaultStuff();
 		#if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
 
