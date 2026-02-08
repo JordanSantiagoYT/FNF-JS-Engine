@@ -1,3 +1,8 @@
+1.50.1;
+
+Fixed a bug where the opponent/bf's camera would be incredibly offset.
+Fixed a crash in 2hot related to its special notes.
+
 1.50.0;
 
 The crash handler now has summarized reasoning that tells you WHY your engine crashed specifically. there are a few summarized reasons right now, but there'll be more added in the future!
