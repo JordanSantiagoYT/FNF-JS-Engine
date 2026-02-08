@@ -92,7 +92,7 @@ class UpdateState extends MusicBeatState
 
 		getUpdateLink();
 		prepareUpdate();
-		checkAndStartDownload();
+		checkAndStartDownload(online_url);
 	}
 
 	var lastVare:Float = 0;
@@ -196,14 +196,14 @@ class UpdateState extends MusicBeatState
 	var httpHandler:Http;
 	var fatalError:Bool = false;
 
-	public function startDownload()
+	public function startDownload(url:String)
 	{
 			if (fatalError)
 					return;
 
 			trace("starting actual file download via URLLoader...");
 			try {
-					zip.load(new URLRequest(online_url));
+					zip.load(new URLRequest(url));
 			} catch (e:Dynamic) {
 					trace('Failed to initiate URLLoader download: ' + e);
 					Application.current.window.alert('Failed to start the download. Please try again.');
@@ -220,7 +220,7 @@ class UpdateState extends MusicBeatState
 					switch(status) {
 							case 200: // OK
 							trace("Update file found. Initiating download...");
-							startDownload(); // Now proceed with the actual download
+							startDownload(url); // Now proceed with the actual download
 							
 							case 301, 302, 303, 307, 308: //Redirect codes
 			                var newURL = httpCheck.responseHeaders.get("Location");
