@@ -195,6 +195,7 @@ class UpdateState extends MusicBeatState
 
 	var httpHandler:Http;
 	var fatalError:Bool = false;
+	var requestFinished:Bool = false;
 
 	public function startDownload(url:String)
 	{
@@ -228,6 +229,7 @@ class UpdateState extends MusicBeatState
 					trace('HTTP Status for URL check: ' + status);
 					switch(status) {
 							case 200: // OK
+							requestFinished = true;
 							trace("Update file found. Initiating download...");
 							startDownload(url); // Now proceed with the actual download
 
@@ -262,6 +264,7 @@ class UpdateState extends MusicBeatState
 			}
 
 			httpCheck.onError = function(msg:String):Void {
+					if (requestFinished) return;
 					trace('HTTP Error during URL check: ' + msg);
 					fatalError = true;
 					Application.current.window.alert('A network error occurred while checking for updates: ' + msg + '. Please check your internet connection.');
