@@ -23,13 +23,6 @@ import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
 #end
 
-enum CharacterFocus
-{
-	BF;
-	DAD;
-	GF;
-}
-
 class PlayState extends MusicBeatState
 {
 	private var singAnimations:Array<String> = ['singLEFT', 'singDOWN', 'singUP', 'singRIGHT'];
@@ -4247,39 +4240,39 @@ class PlayState extends MusicBeatState
 
 		if (gf != null && SONG.notes[curSection].gfSection)
 		{
-			moveCamera(GF);
+			moveCamera('gf');
 			callOnLuas('onMoveCamera', ['gf']);
 			return;
 		}
 
 		if (!SONG.notes[curSection].mustHitSection)
 		{
-			moveCamera(DAD);
+			moveCamera('dad');
 			callOnLuas('onMoveCamera', ['dad']);
 		}
 		else
 		{
-			moveCamera(BF);
+			moveCamera('bf');
 			callOnLuas('onMoveCamera', ['boyfriend']);
 		}
 	}
 
 	var cameraTwn:FlxTween;
-	public function moveCamera(focus:CharacterFocus)
+	public function moveCamera(focus:String = "bf")
 	{
 		var char:Character = null;
 		var charCamOffset:Array<Float> = [0, 0];
 		switch (focus)
 		{
-			case GF if (gf != null):
+			case 'gf' if (gf != null):
 				char = gf;
 				charCamOffset = girlfriendCameraOffset;
 
-			case DAD if (dad != null):
+			case 'dad' if (dad != null):
 				char = dad;
 				charCamOffset = opponentCameraOffset;
 
-			case BF if (boyfriend != null):
+			case 'bf' if (boyfriend != null):
 				char = boyfriend;
 				charCamOffset = boyfriendCameraOffset;
 

@@ -1588,11 +1588,11 @@ class FunkinLua {
 			switch(target.trim().toLowerCase())
 			{
 				case 'gf', 'girlfriend': // now gf can be targeted
-					game.moveCamera(GF);
+					game.moveCamera('gf');
 				case 'dad', 'opponent':
-					game.moveCamera(DAD);
+					game.moveCamera('dad');
 				default:
-					game.moveCamera(BF);
+					game.moveCamera('bf');
 			}
 		});
 		registerFunction("cameraShake", function(camera:String, intensity:Float, duration:Float) {

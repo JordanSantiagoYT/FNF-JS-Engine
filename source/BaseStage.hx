@@ -144,7 +144,7 @@ class BaseStage extends FlxBasic
 		else return false;
 	}
 	function moveCameraSection() if(onPlayState) PlayState.instance.moveCameraSection();
-	function moveCamera(focus:Dynamic) if(onPlayState) PlayState.instance.moveCamera(focus);
+	function moveCamera(focus:String = 'bf') if(onPlayState) PlayState.instance.moveCamera(focus);
 	inline private function get_paused() return game.paused;
 	inline private function get_songName() return game.songName;
 	inline private function get_isStoryMode() return PlayState.isStoryMode;
