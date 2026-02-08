@@ -4285,7 +4285,7 @@ class PlayState extends MusicBeatState
 				mid.x - (char == gf ? 0 : char == boyfriend ? 100 : -150),
 				mid.y - (char == gf ? 0 : 100)
 			);
-			camFollow.x += char.cameraPosition[0] + charCamOffset[0] * (char == boyfriend ? -1 : 1);
+			camFollow.x += char.cameraPosition[0] + charCamOffset[0];
 			camFollow.y += char.cameraPosition[1] + charCamOffset[1];
 			if (char == dad || char == gf) tweenCamIn();
 
