@@ -176,7 +176,7 @@ class Rating
 	public var name:String = '';
 	public var image:String = '';
 	public var counter:String = '';
-	public var hitWindow:Null<Int> = 0; //ms
+	public var hitWindow:Null<Float> = 0.0; //ms
 	public var ratingMod:Float = 1;
 	public var score:Int = 500;
 	public var noteSplash:Bool = true;
