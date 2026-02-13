@@ -2430,7 +2430,7 @@ class PlayState extends MusicBeatState
 	private function generateSong(?startingPoint:Float = 0):Void
 	{
 		var offsetStart = (startingPoint > 0 ? 500 : 0);
-	   	final startTime = haxe.Timer.stamp();
+		final startTime = haxe.Timer.stamp();
 
 		songSpeedType = ClientPrefs.getGameplaySetting('scrolltype','multiplicative');
 

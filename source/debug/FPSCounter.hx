@@ -3,8 +3,10 @@ package debug;
 import debug.mem.GetTotalMemory;
 import lime.system.System as LimeSystem;
 import openfl.display.Bitmap;
+import openfl.events.Event;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
+import openfl.text.TextFormatAlign;
 
 #if cpp
 #if windows
@@ -17,155 +19,195 @@ import openfl.text.TextFormat;
 #end
 class FPSCounter extends TextField
 {
-	public var currentFPS(default, null):Float;
+  public var currentFPS(default, null):Float;
 
-	public var bitmap:Bitmap;
-	var lastText:String = "";
-	var outlineDirty:Bool = true;
+  public var bitmap:Bitmap;
 
-	/*
-	* The current memory usage (WARNING: This might NOT your total memory usage, rather it might show the garbage collector memory if you aren't running on a C++ platform.)
-	*/
-	public var memory(get, never):Float;
-	inline function get_memory():Float
-		return GetTotalMemory.getCurrentRSS();
+  var lastText:String = "";
+  var outlineDirty:Bool = true;
 
-	var mempeak(get, never):Float;
-	inline function get_mempeak():Float
-	  return GetTotalMemory.getPeakRSS();
+  /*
+   * The current memory usage (WARNING: This might NOT your total memory usage, rather it might show the garbage collector memory if you aren't running on a C++ platform.)
+   */
+  public var memory(get, never):Float;
 
-	@:noCompletion private var times:Array<Float>;
+  inline function get_memory():Float
+    return GetTotalMemory.getCurrentRSS();
 
-	public function new(x:Float = 10, y:Float = 10, color:Int = 0x00000000)
-	{
-		super();
+  var mempeak(get, never):Float;
 
-		this.x = x;
-		this.y = y;
+  inline function get_mempeak():Float
+    return GetTotalMemory.getPeakRSS();
 
-		currentFPS = 0;
-		selectable = false;
-		mouseEnabled = false;
-		defaultTextFormat = new TextFormat("VCR OSD Mono", 14, color);
-		autoSize = LEFT;
-		multiline = true;
-		text = "FPS: ";
+  private var _framesPassed:Int = 0;
+  private var _updateClock:Float = 0;
+  private var _previousTime:Float = 0;
 
-		FlxG.signals.gameResized.add(function(w, h)
-		{
-			setScale(Math.min(openfl.Lib.current.stage.stageWidth / FlxG.width, openfl.Lib.current.stage.stageHeight / FlxG.height));
-		});
+  public var align(default, set):TextFormatAlign;
 
-		times = [];
-	}
+  public function new(x:Float = 10, y:Float = 10, color:Int = 0x00000000)
+  {
+    super();
 
-	public inline function setScale(?scale:Float)
-	{
-		if (scale == null)
-			scale = Math.min(FlxG.stage.window.width / FlxG.width, FlxG.stage.window.height / FlxG.height);
-		scaleX = scaleY = #if android (scale > 1 ? scale : 1) #else (scale < 1 ? scale : 1) #end;
-	}
+    this.x = x;
+    this.y = y;
 
-	var timeColor:Float = 0.0;
+    currentFPS = 0;
+    selectable = false;
+    mouseEnabled = false;
+    defaultTextFormat = new TextFormat("VCR OSD Mono", 14, color);
+    autoSize = LEFT;
+    multiline = true;
+    text = "FPS: ";
 
-	var fpsMultiplier:Float = 1.0;
-	var deltaTimeout:Float = 0.0;
-	public var timeoutDelay:Float = 50;
-	var now:Float = 0;
-	// Event Handlers
-	override function __enterFrame(deltaTime:Float):Void
-	{
-		if (!ClientPrefs.showFPS) return;
-		now = haxe.Timer.stamp() * 1000;
-		times.push(now);
-		while (times[0] < now - 1000 / fpsMultiplier) times.shift();
-		if (deltaTimeout <= timeoutDelay)
-		{
-			deltaTimeout += deltaTime;
-			return;
-		}
+    _previousTime = Main.getTime();
 
-		if (Std.isOfType(FlxG.state, PlayState) && !PlayState.instance.trollingMode)
-		{
-			try { fpsMultiplier = PlayState.instance.playbackRate; }
-			catch (e:Dynamic) { fpsMultiplier = 1.0; }
-		}
-		else fpsMultiplier = 1.0;
+    FlxG.signals.gameResized.add(function(w, h) {
+      align = align;
+    });
 
-		currentFPS = Math.min(FlxG.drawFramerate, times.length) / fpsMultiplier;
-		updateText();
+    addEventListener(Event.ADDED_TO_STAGE, (e:Event) -> {
+      if (align == null) align = #if mobile CENTER #else LEFT #end;
+    });
 
-		if (ClientPrefs.rainbowFPS)
-		{
-			timeColor = (timeColor % 360.0) + (1.0 / (ClientPrefs.framerate / 120));
-			textColor = FlxColor.fromHSB(timeColor, 1, 1);
-		}
-		else if (!ClientPrefs.ffmpegMode)
-		{
-			textColor = 0xFFFFFFFF;
-			if (currentFPS <= ClientPrefs.framerate / 2 && currentFPS >= ClientPrefs.framerate / 3)
-				textColor = 0xFFFFFF00;
+    addEventListener(Event.ENTER_FRAME, onEnterFrame);
+  }
 
-			if (currentFPS <= ClientPrefs.framerate / 3 && currentFPS >= ClientPrefs.framerate / 4)
-				textColor = 0xFFFF8000;
+  var timeColor:Float = 0.0;
 
-			if (currentFPS <= ClientPrefs.framerate / 4)
-				textColor = 0xFFFF0000;
-		}
+  var fpsMultiplier:Float = 1.0;
+  var deltaTimeout:Float = 0.0;
 
-		var newText = text;
+  public var timeoutDelay:Float = 50;
 
-		if (ClientPrefs.fpsBorder)
-		{
-			visible = true;
+  var now:Float = 0;
 
-			if (outlineDirty || newText != lastText)
-			{
-				if (bitmap != null && Main.instance.contains(bitmap))
-					Main.instance.removeChild(bitmap);
+  // Event Handlers
+  private function onEnterFrame(e:Event):Void
+  {
+    if (!ClientPrefs.showFPS) return;
 
-				bitmap = ImageOutline.renderImage(this, 2, 0x000000, 1);
-				Main.instance.addChild(bitmap);
+    final now = Main.getTime();
+    final deltaTime = Math.max(now - _previousTime, 0);
+    _previousTime = now;
 
-				lastText = newText;
-				outlineDirty = false;
-			}
+    _framesPassed++;
+    _updateClock += deltaTime;
 
-			visible = false;
-		}
-		else
-		{
-			visible = true;
-			if (bitmap != null && Main.instance.contains(bitmap))
-				Main.instance.removeChild(bitmap);
-		}
+    if (_updateClock >= 1000)
+    {
+      var multiplier:Float = 1.0;
 
-	}
+      if (Std.isOfType(FlxG.state, PlayState) && !PlayState.instance.trollingMode)
+      {
+        try
+        {
+          multiplier = PlayState.instance.playbackRate;
+        }
+        catch (e:Dynamic)
+          multiplier = 1.0;
+      }
 
-	public dynamic function updateText():Void   // so people can override it in hscript
-	{
-		text = "FPS: " + (ClientPrefs.ffmpegMode ? ClientPrefs.targetFPS : Math.round(currentFPS));
-		if (ClientPrefs.ffmpegMode)
-			text += " (Rendering Mode)";
+      currentFPS = (_framesPassed / multiplier);
+      currentFPS = Math.min(currentFPS, FlxG.drawFramerate);
 
-		if (ClientPrefs.showRamUsage) text += "\nMemory: " + FlxStringUtil.formatBytes(memory) + (ClientPrefs.showMaxRamUsage ? " / " + FlxStringUtil.formatBytes(mempeak) : "");
-		if (ClientPrefs.debugInfo)
-		{
-			text += '\nCurrent state: ${Type.getClassName(Type.getClass(FlxG.state))}';
-			if (FlxG.state.subState != null)
-				text += '\nCurrent substate: ${Type.getClassName(Type.getClass(FlxG.state.subState))}';
-				if (LimeSystem.platformName == LimeSystem.platformVersion || LimeSystem.platformVersion == null)
-					text += '\nOS: ${LimeSystem.platformName}' #if cpp + ' ${getArch()}' #end;
-				else
-					text += '\nOS: ${LimeSystem.platformName}' #if cpp + ' ${getArch()}' #end + ' - ${LimeSystem.platformVersion}';
+      updateText();
 
+      _framesPassed = 0;
+      _updateClock = 0;
+    }
 
-			text += '\nVersion: ${MainMenuState.psychEngineJSVersion}' #if commit + '(Commit ${MainMenuState.gitCommit})' #end;
-		}
-	}
-	#if cpp
-	#if windows
-	@:functionCode('
+    updateColors();
+
+    if (ClientPrefs.fpsBorder)
+    {
+      var newText = text;
+
+      visible = true;
+
+      if (outlineDirty || newText != lastText)
+      {
+        if (bitmap != null && Main.instance.contains(bitmap)) Main.instance.removeChild(bitmap);
+
+        bitmap = ImageOutline.renderImage(this, 2, 0x000000, 1);
+        Main.instance.addChild(bitmap);
+
+        lastText = newText;
+        outlineDirty = false;
+      }
+
+      visible = false;
+    } else
+    {
+      visible = true;
+      if (bitmap != null && Main.instance.contains(bitmap)) Main.instance.removeChild(bitmap);
+    }
+  }
+
+  public dynamic function updateColors():Void
+  {
+    if (ClientPrefs.ffmpegMode) return;
+
+    if (ClientPrefs.rainbowFPS)
+    {
+      timeColor = (timeColor % 360.0) + (1.0 / (ClientPrefs.framerate / 120));
+      textColor = FlxColor.fromHSB(timeColor, 1, 1);
+    } else
+    {
+      if (currentFPS <= ClientPrefs.framerate / 4) textColor = 0xFFFF0000;
+      else if (currentFPS <= ClientPrefs.framerate / 3) textColor = 0xFFFF8000;
+      else if (currentFPS <= ClientPrefs.framerate / 2) textColor = 0xFFFFFF00;
+      else
+        textColor = 0xFFFFFFFF;
+    }
+  }
+
+  public dynamic function updateText():Void // so people can override it in hscript
+  {
+    text = "FPS: " + (ClientPrefs.ffmpegMode ? ClientPrefs.targetFPS : Math.round(currentFPS));
+    if (ClientPrefs.ffmpegMode) text += " (Rendering Mode)";
+
+    if (ClientPrefs.showRamUsage) text += "\nMemory: "
+      + FlxStringUtil.formatBytes(memory)
+      + (ClientPrefs.showMaxRamUsage ? " / " + FlxStringUtil.formatBytes(mempeak) : "");
+    if (ClientPrefs.debugInfo)
+    {
+      text += '\nCurrent state: ${Type.getClassName(Type.getClass(FlxG.state))}';
+      if (FlxG.state.subState != null) text += '\nCurrent substate: ${Type.getClassName(Type.getClass(FlxG.state.subState))}';
+      if (LimeSystem.platformName == LimeSystem.platformVersion
+        || LimeSystem.platformVersion == null) text += '\nOS: ${LimeSystem.platformName}' #if cpp + ' ${getArch()}' #end;
+    else
+      text += '\nOS: ${LimeSystem.platformName}' #if cpp + ' ${getArch()}' #end + ' - ${LimeSystem.platformVersion}';
+
+      text += '\nVersion: ${MainMenuState.psychEngineJSVersion}' #if commit + '(Commit ${MainMenuState.gitCommit})' #end;
+    }
+  }
+
+  @:noCompletion
+  private function set_align(val)
+  {
+    return align = defaultTextFormat.align = switch (val)
+    {
+      default:
+        this.x = 10;
+        autoSize = LEFT;
+        LEFT;
+
+      case CENTER:
+        this.x = (this.stage.stageWidth - this.textWidth) * 0.5;
+        autoSize = CENTER;
+        CENTER;
+
+      case RIGHT:
+        this.x = (this.stage.stageWidth - this.textWidth) - 10;
+        autoSize = RIGHT;
+        RIGHT;
+    }
+  }
+
+  #if cpp
+  #if windows
+  @:functionCode('
 		SYSTEM_INFO osInfo;
 
 		GetSystemInfo(&osInfo);
@@ -186,22 +228,22 @@ class FPSCounter extends TextField
 				return ::String("Unknown");
 		}
 	')
-	#elseif (ios || mac)
-	@:functionCode('
+  #elseif (ios || mac)
+  @:functionCode('
 		const NXArchInfo *archInfo = NXGetLocalArchInfo();
     	return ::String(archInfo == NULL ? "Unknown" : archInfo->name);
 	')
-	#else
-	@:functionCode('
+  #else
+  @:functionCode('
 		struct utsname osInfo{};
 		uname(&osInfo);
 		return ::String(osInfo.machine);
 	')
-	#end
-	@:noCompletion
-	private function getArch():String
-	{
-		return null;
-	}
-	#end
+  #end
+  @:noCompletion
+  private function getArch():String
+  {
+    return null;
+  }
+  #end
 }
