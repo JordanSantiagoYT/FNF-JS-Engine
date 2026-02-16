@@ -21,10 +21,11 @@ package utils;
 #include <stdio.h>
 #include <iostream>
 #include <string>
-@:headerInclude('sys/utsname.h')
 ')
 #elseif (ios || mac)
 @:cppFileCode('#include <mach-o/arch.h>')
+#else
+@:cppFileCode('#include <sys/utsname.h>')
 #end
 @:allow(utils.PlatformUtil)
 class PlatformUtilNative
