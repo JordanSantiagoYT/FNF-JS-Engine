@@ -213,73 +213,73 @@ class UpdateState extends MusicBeatState
 	}
 
 	public function checkAndStartDownload(url:String, redirects:Int = 0) {
-			if (fatalError) return;
+		if (fatalError) return;
 
-			if (redirects > 5) {
-		        fatalError = true;
-		        Application.current.window.alert("Too many redirects while trying to download the update.");
-		        FlxG.resetGame();
-		        return;
-		    }
+		if (redirects > 5) {
+			fatalError = true;
+			Application.current.window.alert("Too many redirects while trying to download the update.");
+			FlxG.resetGame();
+			return;
+		}
 
-			trace("Checking update URL existence...");
-			var httpCheck = new Http(url);
+		trace("Checking update URL existence...");
+		var httpCheck = new Http(url);
 
-			httpCheck.onStatus = function(status:Int):Void {
-					trace('HTTP Status for URL check: ' + status);
-					switch(status) {
-							case 200: // OK
-							requestFinished = true;
-							trace("Update file found. Initiating download...");
-							startDownload(url); // Now proceed with the actual download
+		httpCheck.onStatus = function(status:Int):Void {
+				trace('HTTP Status for URL check: ' + status);
+				switch(status) {
+						case 200: // OK
+						requestFinished = true;
+						trace("Update file found. Initiating download...");
+						startDownload(url); // Now proceed with the actual download
 
-							case 301, 302, 303, 307, 308: //Redirect codes
-			                var newURL = httpCheck.responseHeaders.get("Location");
-							if (newURL == null) newURL = httpCheck.responseHeaders.get("location"); // lowercase URL if "location" is lowercase
+						case 301, 302, 303, 307, 308: //Redirect codes
+						var newURL = httpCheck.responseHeaders.get("Location");
+						if (newURL == null) newURL = httpCheck.responseHeaders.get("location"); // lowercase URL if "location" is lowercase
 
-			                if (newURL != null && newURL != "")
-			                {
-			                    trace("The update link has been redirected to:" + newURL);
-			                    checkAndStartDownload(newURL, redirects + 1);
-			                }
-			                else
-			                {
-			                    fatalError = true;
-			                    Application.current.window.alert("The update link was redirected but its Location header wasn't found.\nTry downloading the update manually from GitHub.");
-			                    FlxG.resetGame();
-			                }
-
-							case 404: // Not Found
-							trace('File not found at URL: ' + url);
+						if (newURL != null && newURL != "")
+						{
+							trace("The update link has been redirected to:" + newURL);
+							checkAndStartDownload(newURL, redirects + 1);
+						}
+						else
+						{
 							fatalError = true;
-							Application.current.window.alert('Couldn\'t find the update file! The file may have been moved or doesn\'t exist for this version. Please check for a new version manually or report this issue.');
+							Application.current.window.alert("The update link was redirected but its Location header wasn't found.\nTry downloading the update manually from GitHub.");
 							FlxG.resetGame();
+						}
 
-							default: //Any other HTTP errors
-							trace('Unexpected HTTP status for URL check: ' + status);
-							fatalError = true;
-							Application.current.window.alert('An error occurred while checking for updates (Status: ' + status + '). Please try again later.');
-							FlxG.resetGame();
-					}
-			}
+						case 404: // Not Found
+						trace('File not found at URL: ' + url);
+						fatalError = true;
+						Application.current.window.alert('Couldn\'t find the update file! The file may have been moved or doesn\'t exist for this version. Please check for a new version manually or report this issue.');
+						FlxG.resetGame();
 
-			httpCheck.onError = function(msg:String):Void {
-					if (requestFinished) return;
-					trace('HTTP Error during URL check: ' + msg);
-					fatalError = true;
-					Application.current.window.alert('A network error occurred while checking for updates: ' + msg + '. Please check your internet connection.');
-					FlxG.resetGame();
-			}
+						default: //Any other HTTP errors
+						trace('Unexpected HTTP status for URL check: ' + status);
+						fatalError = true;
+						Application.current.window.alert('An error occurred while checking for updates (Status: ' + status + '). Please try again later.');
+						FlxG.resetGame();
+				}
+		}
 
-			try {
-					// Use customRequest with HEAD method for efficiency
-					httpCheck.customRequest(false, null, "HEAD");
-			} catch (e:Dynamic) {
-					trace('Failed to send HEAD request: ' + e);
-					fatalError = true;
-					Application.current.window.alert('Failed to connect to the update server. Please check your internet connection.');
-					FlxG.resetGame();
-			}
+		httpCheck.onError = function(msg:String):Void {
+				if (requestFinished) return;
+				trace('HTTP Error during URL check: ' + msg);
+				fatalError = true;
+				Application.current.window.alert('A network error occurred while checking for updates: ' + msg + '. Please check your internet connection.');
+				FlxG.resetGame();
+		}
+
+		try {
+				// Use customRequest with HEAD method for efficiency
+				httpCheck.customRequest(false, null, "HEAD");
+		} catch (e:Dynamic) {
+				trace('Failed to send HEAD request: ' + e);
+				fatalError = true;
+				Application.current.window.alert('Failed to connect to the update server. Please check your internet connection.');
+				FlxG.resetGame();
+		}
 	}
 
 	function convert_size(bytes:Int)
