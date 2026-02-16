@@ -1382,7 +1382,7 @@ class PlayState extends MusicBeatState
 		if (ClientPrefs.showcaseMode) {
 			final items = (ClientPrefs.showcaseST == 'AMZ')
 				? [scoreTxt, botplayTxt, timeBarBG, timeBar, timeTxt]
-				: [scoreTxt, botplayTxt, healthBarBG, healthBar, iconP1, iconP2];
+				: [scoreTxt, healthBarBG, healthBar, iconP1, iconP2];
 			for (item in items) if (item != null) item.visible = false;
 		}
 
@@ -6221,4 +6221,5 @@ class PlayState extends MusicBeatState
 		FlxG.autoPause = ClientPrefs.autoPause;
 	}
 }
+
 
