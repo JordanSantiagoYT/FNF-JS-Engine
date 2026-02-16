@@ -21,11 +21,14 @@ package utils;
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <sys/utsname.h>
 ')
 #elseif (ios || mac)
-@:cppFileCode('#include <mach-o/arch.h>')
-#else
-@:cppFileCode('#include <sys/utsname.h>')
+@:cppFileCode('
+#include <mach-o/arch.h>
+#include <sys/utsname.h>
+')
+#end
 #end
 @:allow(utils.PlatformUtil)
 class PlatformUtilNative
@@ -47,7 +50,7 @@ class PlatformUtilNative
         Window wnd;
         Atom property = XInternAtom(display, "_NET_WM_WINDOW_OPACITY", False);
         int revert;
-        
+
         if(property != None)
         {
             XGetInputFocus(display, &wnd, &revert);
