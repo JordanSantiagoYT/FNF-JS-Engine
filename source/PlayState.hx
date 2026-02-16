@@ -1484,14 +1484,14 @@ class PlayState extends MusicBeatState
 		else if(ClientPrefs.pauseMusic != 'None')
 			Paths.music(Paths.formatToSongPath(ClientPrefs.pauseMusic));
 
-		resetRPC();
-		callOnLuas('onCreatePost');
-		stagesFunc(function(stage:BaseStage) stage.createPost());
-
 		cacheCountdown();
 		cachePopUpScore();
 
 		startCallback();
+
+		resetRPC();
+		callOnLuas('onCreatePost');
+		stagesFunc(function(stage:BaseStage) stage.createPost());
 
 		super.create();
 		Paths.clearUnusedMemory();
