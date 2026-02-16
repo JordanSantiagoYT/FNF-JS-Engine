@@ -168,9 +168,16 @@ class Project extends HXProject
 		info("Initializing build...");
 
 		// info("Target Version: " + ENGINE_VERSION);
-		info("Git Branch:     " + getGitBranch());
-		info("Git Commit:     " + getGitCommit());
-		info("Git Modified?   " + getGitModified());
+		var branch = getGitBranch();
+
+		if (branch != null && branch != "")
+		{
+			info("Git Branch:     " + branch);
+			info("Git Commit:     " + getGitCommit());
+			info("Git Modified?   " + getGitModified());
+		}
+		else Log.info("[WARN] Git information unavailable. Is this a proper Git repository?");
+
 		info("Display?        " + isDisplay());
 	}
 
@@ -825,7 +832,6 @@ class Project extends HXProject
 		if (process.exitCode() != 0)
 		{
 			var message = process.stderr.readAll().toString();
-			error('[ERROR] Could not determine current git commit; is this a proper Git repository?');
 		}
 
 		var commitHash:String = process.stdout.readLine();
@@ -842,12 +848,14 @@ class Project extends HXProject
 		var branchProcess = new sys.io.Process('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
 
 		if (branchProcess.exitCode() != 0)
-		{
 			var message = branchProcess.stderr.readAll().toString();
-			error('Could not determine current git branch; is this a proper Git repository?');
-		}
 
-		var branchName:String = branchProcess.stdout.readLine();
+		var branchName:String = '';
+
+		// Try to read the output line. If it errors out, return an empty string.
+		// This cancels the other Git commands in the event that the user isn't compiling in a Git repository.
+		try { branchName = branchProcess.stdout.readLine(); }
+		catch (e) {branchName = '';}
 
 		branchProcess.close();
 
@@ -861,7 +869,6 @@ class Project extends HXProject
 		if (branchProcess.exitCode() != 0)
 		{
 			var message = branchProcess.stderr.readAll().toString();
-			error('Could not determine current git status; is this a proper Git repository?');
 		}
 
 		var output:String = '';
