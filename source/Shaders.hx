@@ -1396,7 +1396,7 @@ class PulseShader extends ErrorHandledRuntimeShader
         trace("Shader loaded successfully. Length: " + shaderSource.length);
     }
 
-    super(shaderSource);
+    super('Pulse Effect', shaderSource);
 
     // Initialize with default values
     this.setFloat('uWaveAmplitude', waveAmplitude);
