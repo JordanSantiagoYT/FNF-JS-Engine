@@ -2305,7 +2305,6 @@ class PlayState extends MusicBeatState
 		opponentVocals.play();
 		if (ffmpegMode) vocals.volume = opponentVocals.volume = 0;
 		Conductor.songPosition = time;
-		songTime = time;
 		if (time > 0) clearNotesBefore(time);
 	}
 
@@ -2317,8 +2316,6 @@ class PlayState extends MusicBeatState
 	public function skipDialogue() {
 		callOnLuas('onSkipDialogue', [dialogueCount]);
 	}
-
-	var songTime:Float = 0;
 
 	function startSong():Void
 	{
