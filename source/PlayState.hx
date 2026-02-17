@@ -4083,13 +4083,15 @@ class PlayState extends MusicBeatState
 
 			case 'Rainbow Eyesore':
 				#if SHADERS_ALLOWED
+				var val2:Float = (Std.parseFloat(value2) <= 0 || Math.isNaN(Std.parseFloat(value2))) ? 1 : Std.parseFloat(value2);
+
 				if(ClientPrefs.flashing && ClientPrefs.shaders && curStep < Std.parseInt(value1)) {
 					disableTheTripper = false;
 					disableTheTripperAt = Std.parseInt(value1);
 					FlxG.camera.filters = [new ShaderFilter(screenshader.shader)];
 					screenshader.waveAmplitude = 1;
 					screenshader.waveFrequency = 2;
-					screenshader.waveSpeed = Std.parseFloat(value2) * playbackRate;
+					screenshader.waveSpeed = val2 * playbackRate;
 					screenshader.shader.time = new flixel.math.FlxRandom().float(-1e3, 1e3);
 					screenshader.enabled = true;
 				}
