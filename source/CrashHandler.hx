@@ -86,8 +86,7 @@ class CrashHandler
 	static final commonCrashers:Map<String, String> = [
 		'SuperSecretDebugMenu.crashDaEngine()' => 'You intentionally caused this.',
 		'Paths.addAnimAndCheck()' => "You're missing a config file for your note splash skin.",
-		'JsonParser.invalidChar()' => "Your json is either formatted incorrectly or corrupted.",
-		'Song.onLoadJson()' => "You attempted to load a chart that was made in Psych Engine 1.0."
+		'JsonParser.invalidChar()' => "Your json is either formatted incorrectly or corrupted."
 	];
 
 	public static var extraLines:Array<String> = ['\n\n'];

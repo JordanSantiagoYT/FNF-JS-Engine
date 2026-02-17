@@ -2534,7 +2534,10 @@ class PlayState extends MusicBeatState
 		// TODO: Optimize and clean up this mess, maybe split into functions
 		// this is absolute spaghetti code
 		for (section in noteData) {
-			if (section.changeBPM) currentBPMLol = section.bpm;
+			if (section.changeBPM) {
+				currentBPMLol = section.bpm;
+				stepCrochet = 15000 / currentBPMLol;
+			}
 
 			for (i in 0...section.sectionNotes.length)
 			{
@@ -2576,8 +2579,7 @@ class PlayState extends MusicBeatState
 						stair++;
 					}
 
-					gottaHitNote = ((songNotes[1] < 4 && !opponentChart)
-						|| (songNotes[1] > 3 && opponentChart) ? section.mustHitSection : !section.mustHitSection);
+					gottaHitNote = (!opponentChart ? songNotes[1] < 4 : songNotes[1] > 3) ? section.mustHitSection : !section.mustHitSection;
 
 					if ((bothSides || gottaHitNote) && songNotes[3] != 'Hurt Note') {
 						totalNotes += 1;
@@ -2670,8 +2672,6 @@ class PlayState extends MusicBeatState
 					}
 
 					if (swagNote.sustainLength < 1) continue;
-
-					stepCrochet = 15000 / currentBPMLol;
 
 					final roundSus:Int = Math.round(swagNote.sustainLength / stepCrochet);
 					if (roundSus > 0) {
@@ -3036,8 +3036,8 @@ class PlayState extends MusicBeatState
 			{
 				screenshader.shader.waveAmplitude -= (elapsed / 2);
 			}
-
-			if (screenshader?.shader?.waveAmplitude > 0)
+			
+			if (screenshader.waveAmplitude > 0)
 				screenshader.update(elapsed);
 			else {
 				removeShaderFromCamera('camGame', screenshader);

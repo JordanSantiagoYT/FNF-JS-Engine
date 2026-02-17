@@ -14,6 +14,31 @@ using StringTools;
 
 @:allow(psychlua.FunkinLua)
 class LuaUtils {
+	public static function getLuaTween(options:Dynamic)
+	{
+		return (options != null) ? {
+			type: getTweenTypeByString(options.type),
+			startDelay: options.startDelay,
+			onUpdate: options.onUpdate,
+			onStart: options.onStart,
+			onComplete: options.onComplete,
+			loopDelay: options.loopDelay,
+			ease: getFlxEaseByString(options.ease)
+		} : null;
+	}
+
+	//buncho string stuffs
+	public static function getTweenTypeByString(?type:String = '') {
+		switch(type.toLowerCase().trim())
+		{
+			case 'backward': return FlxTweenType.BACKWARD;
+			case 'looping'|'loop': return FlxTweenType.LOOPING;
+			case 'persist': return FlxTweenType.PERSIST;
+			case 'pingpong': return FlxTweenType.PINGPONG;
+		}
+		return FlxTweenType.ONESHOT;
+	}
+
     //Better optimized than using some getProperty shit or idk
 	public static inline function getFlxEaseByString(?ease:String = '') {
 		return switch(ease.toLowerCase().trim()) {

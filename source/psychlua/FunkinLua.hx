@@ -23,6 +23,16 @@ import shaders.ErrorHandledShader;
 import DiscordClient;
 #end
 
+typedef LuaTweenOptions = {
+	type:FlxTweenType,
+	startDelay:Float,
+	onUpdate:Null<String>,
+	onStart:Null<String>,
+	onComplete:Null<String>,
+	loopDelay:Float,
+	ease:EaseFunction
+}
+
 class FunkinLua {
 	public static var Function_Stop:Dynamic = "##PSYCHLUA_FUNCTIONSTOP";
 	public static var Function_Continue:Dynamic = "##PSYCHLUA_FUNCTIONCONTINUE";
@@ -996,8 +1006,61 @@ class FunkinLua {
 		});
 
 		// gay ass tweens
+		registerFunction("startTween", function(tag:String, vars:String, values:Any = null, duration:Float, ?options:Any = null) {
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
+			if(penisExam != null)
+			{
+				if(values != null)
+				{
+					var myOptions:LuaTweenOptions = LuaUtils.getLuaTween(options);
+					if(tag != null)
+					{
+						var variables = MusicBeatState.getVariables();
+						var originalTag:String = 'tween_' + tag.trim().replace(' ', '_').replace('.', '');
+						variables.set(tag, FlxTween.tween(penisExam, values, duration, myOptions != null ? {
+							type: myOptions.type,
+							ease: myOptions.ease,
+							startDelay: myOptions.startDelay,
+							loopDelay: myOptions.loopDelay,
+	
+							onUpdate: function(twn:FlxTween) {
+								if(myOptions.onUpdate != null) PlayState.instance.callOnLuas(myOptions.onUpdate, [originalTag, vars]);
+							},
+							onStart: function(twn:FlxTween) {
+								if(myOptions.onStart != null) PlayState.instance.callOnLuas(myOptions.onStart, [originalTag, vars]);
+							},
+							onComplete: function(twn:FlxTween) {
+								if(twn.type == FlxTweenType.ONESHOT || twn.type == FlxTweenType.BACKWARD) variables.remove(tag);
+								if(myOptions.onComplete != null) PlayState.instance.callOnLuas(myOptions.onComplete, [originalTag, vars]);
+							}
+						} : null));
+						return tag;
+					}
+					else FlxTween.tween(penisExam, values, duration, myOptions != null ? {
+						type: myOptions.type,
+						ease: myOptions.ease,
+						startDelay: myOptions.startDelay,
+						loopDelay: myOptions.loopDelay,
+
+						onUpdate: function(twn:FlxTween) {
+							if(myOptions.onUpdate != null) PlayState.instance.callOnLuas(myOptions.onUpdate, [null, vars]);
+						},
+						onStart: function(twn:FlxTween) {
+							if(myOptions.onStart != null) PlayState.instance.callOnLuas(myOptions.onStart, [null, vars]);
+						},
+						onComplete: function(twn:FlxTween) {
+							if(myOptions.onComplete != null) PlayState.instance.callOnLuas(myOptions.onComplete, [null, vars]);
+						}
+					} : null);
+				}
+				else LuaUtils.luaTrace(lua, 'startTween: No values on 2nd argument!', false, false, FlxColor.RED);
+			}
+			else LuaUtils.luaTrace(lua, 'startTween: Couldnt find object: ' + vars, false, false, FlxColor.RED);
+			return null;
+		});
+
 		registerFunction("doTweenX", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
-			var penisExam:Dynamic = tweenShit(tag, vars);
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
 				PlayState.instance.modchartTweens.set(tag, FlxTween.tween(penisExam, {x: value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
@@ -1010,7 +1073,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("doTweenScale", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
-			var penisExam:Dynamic = tweenShit(tag, vars);
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
 				PlayState.instance.modchartTweens.set(tag, FlxTween.tween(penisExam, {"scale.x": value,"scale.y": value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
@@ -1023,7 +1086,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("doTweenY", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
-			var penisExam:Dynamic = tweenShit(tag, vars);
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
 				PlayState.instance.modchartTweens.set(tag, FlxTween.tween(penisExam, {y: value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
@@ -1036,7 +1099,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("doTweenAngle", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
-			var penisExam:Dynamic = tweenShit(tag, vars);
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
 				PlayState.instance.modchartTweens.set(tag, FlxTween.tween(penisExam, {angle: value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
@@ -1049,7 +1112,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("doTweenAlpha", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
-			var penisExam:Dynamic = tweenShit(tag, vars);
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
 				PlayState.instance.modchartTweens.set(tag, FlxTween.tween(penisExam, {alpha: value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
@@ -1062,7 +1125,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("doTweenZoom", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
-			var penisExam:Dynamic = tweenShit(tag, vars);
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
 				if(vars == 'camHud' || vars == 'camGame' || vars == 'Hud' || vars == 'Game') {
 					PlayState.instance.modchartTweens.set(tag, FlxTween.tween(penisExam, {zoom: value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
@@ -1081,7 +1144,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("doTweenColor", function(tag:String, vars:String, targetColor:String, duration:Float, ease:String) {
-			var penisExam:Dynamic = tweenShit(tag, vars);
+			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
 				var color:Int = Std.parseInt(targetColor);
 				if(!targetColor.startsWith('0x')) color = Std.parseInt('0xff' + targetColor);
@@ -3171,13 +3234,13 @@ class FunkinLua {
 		}
 	}
 
-	function tweenShit(tag:String, vars:String) {
-		cancelTween(tag);
+	function tweenPrepare(tag:String, vars:String) {
+		if (tag != null) cancelTween(tag);
 		var variables:Array<String> = vars.split('.');
 		var sexyProp:Dynamic = getObjectDirectly(variables[0]);
-		if(variables.length > 1) {
+		if(variables.length > 1)
 			sexyProp = getVarInArray(getPropertyLoopThingWhatever(variables), variables[variables.length-1]);
-		}
+
 		return sexyProp;
 	}
 
