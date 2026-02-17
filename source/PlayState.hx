@@ -4083,7 +4083,7 @@ class PlayState extends MusicBeatState
 
 			case 'Rainbow Eyesore':
 				#if SHADERS_ALLOWED
-				var val2:Float = (Std.parseFloat(value2) <= 0 || Math.isNaN(Std.parseFloat(value2))) ? 1 : Std.parseFloat(value2);
+				final val2:Float = (Std.parseFloat(value2) <= 0 || Math.isNaN(Std.parseFloat(value2))) ? 1 : Std.parseFloat(value2);
 
 				if(ClientPrefs.flashing && ClientPrefs.shaders && curStep < Std.parseInt(value1)) {
 					disableTheTripper = false;
@@ -4097,8 +4097,8 @@ class PlayState extends MusicBeatState
 				}
 				#end
 			case 'Popup':
-				var title:String = (value1);
-				var message:String = (value2);
+				final title:String = (value1);
+				final message:String = (value2);
 				FlxG.sound.music.pause();
 				pauseVocals();
 
@@ -4106,8 +4106,8 @@ class PlayState extends MusicBeatState
 				FlxG.sound.music.resume();
 				unpauseVocals();
 			case 'Popup (No Pause)':
-				var title:String = (value1);
-				var message:String = (value2);
+				final title:String = (value1);
+				final message:String = (value2);
 
 				lime.app.Application.current.window.alert(message, title);
 
