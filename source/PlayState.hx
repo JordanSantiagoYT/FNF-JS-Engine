@@ -2525,8 +2525,8 @@ class PlayState extends MusicBeatState
 				}
 			}
 		}
-		var stepCrochet:Float = 0.0;
 		var currentBPMLol:Float = Conductor.bpm;
+		var stepCrochet:Float = 15000 / currentBPMLol;
 		var currentMultiplier:Float = 1;
 		var gottaHitNote:Bool = false;
 		var swagNote:PreloadedChartNote;
