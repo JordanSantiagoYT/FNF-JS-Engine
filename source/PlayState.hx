@@ -547,58 +547,18 @@ class PlayState extends MusicBeatState
 		songName = Paths.formatToSongPath(SONG.song);
 		curStage = (!ClientPrefs.charsAndBG ? "" : SONG.stage);
 		//trace('stage is: ' + curStage);
-		if(SONG.stage == null || SONG.stage.length < 1) {
-			switch (songName)
-			{
-				case 'spookeez' | 'south' | 'monster':
-					curStage = 'spooky';
-				case 'pico' | 'blammed' | 'philly' | 'philly-nice':
-					curStage = 'philly';
-				case 'milf' | 'satin-panties' | 'high':
-					curStage = 'limo';
-				case 'cocoa' | 'eggnog':
-					curStage = 'mall';
-				case 'winter-horrorland':
-					curStage = 'mallEvil';
-				case 'senpai' | 'roses':
-					curStage = 'school';
-				case 'thorns':
-					curStage = 'schoolEvil';
-				case 'ugh' | 'guns' | 'stress':
-					curStage = 'tank';
-				default:
-					curStage = 'stage';
-			}
-		}
+		if(SONG.stage == null || SONG.stage.length < 1)
+			curStage = StageData.vanillaSongStage(Song.loadedSongName);
+
 		SONG.stage = curStage;
 
 		var stageData:StageFile = StageData.getStageFile(curStage);
-		if(stageData == null) { //Stage couldn't be found, create a dummy stage for preventing a crash
-			stageData = {
-				directory: "",
-				defaultZoom: 0.9,
-				isPixelStage: false,
-				stageUI: "normal",
-
-				boyfriend: [770, 100],
-				girlfriend: [400, 130],
-				opponent: [100, 100],
-				hide_girlfriend: true,
-
-				camera_boyfriend: [0, 0],
-				camera_opponent: [0, 0],
-				camera_girlfriend: [0, 0],
-				camera_speed: 1
-			};
-		}
 
 		stageUI = "normal";
 		if (stageData.stageUI != null && stageData.stageUI.trim().length > 0)
 			stageUI = stageData.stageUI;
-		else {
-			if (stageData.isPixelStage)
-				stageUI = "pixel";
-		}
+		else if (stageData.isPixelStage)
+			stageUI = "pixel";
 
 		defaultCamZoom = ogCamZoom = stageData.defaultZoom;
 		isPixelStage = stageData.isPixelStage;
@@ -2748,7 +2708,9 @@ class PlayState extends MusicBeatState
 
 		final elapsedTime = endTime - startTime;
 
-		trace('\nDone! \n\nTime taken: ' + CoolUtil.formatTime(elapsedTime * 1000) + "\nAverage NPS while loading: " + Math.floor(notesLoadedRN / elapsedTime));
+		#if debug
+		Sys.print('\nDone! \n\nTime taken: ' + CoolUtil.formatTime(elapsedTime * 1000) + "\nAverage NPS while loading: " + Math.floor(notesLoadedRN / elapsedTime));
+		#end
 		notesLoadedRN = 0;
 	}
 

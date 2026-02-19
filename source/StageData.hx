@@ -1,15 +1,11 @@
 package;
 
-#if MODS_ALLOWED
-#else
-#end
 import Song;
-import haxe.format.JsonParser;
 
 typedef StageFile = {
 	var directory:String;
 	var defaultZoom:Float;
-	var isPixelStage:Bool;
+	@:optional var isPixelStage:Null<Bool>;
 	var stageUI:String;
 
 	var boyfriend:Array<Dynamic>;
@@ -24,62 +20,92 @@ typedef StageFile = {
 }
 
 class StageData {
+	public static function dummy():StageFile
+	{
+		return {
+			directory: "",
+			defaultZoom: 0.9,
+			stageUI: "normal",
+
+			boyfriend: [770, 100],
+			girlfriend: [400, 130],
+			opponent: [100, 100],
+			hide_girlfriend: false,
+
+			camera_boyfriend: [0, 0],
+			camera_opponent: [0, 0],
+			camera_girlfriend: [0, 0],
+			camera_speed: 1,
+		};
+	}
+
 	public static var forceNextDirectory:String = null;
 	public static function loadDirectory(SONG:SwagSong) {
 		var stage:String = '';
-		if(SONG.stage != null) {
+		if(SONG.stage != null)
 			stage = SONG.stage;
-		} else if(SONG.song != null) {
-			switch (SONG.song.toLowerCase().replace(' ', '-'))
-			{
-				case 'spookeez' | 'south' | 'monster':
-					stage = 'spooky';
-				case 'pico' | 'blammed' | 'philly' | 'philly-nice':
-					stage = 'philly';
-				case 'milf' | 'satin-panties' | 'high':
-					stage = 'limo';
-				case 'cocoa' | 'eggnog':
-					stage = 'mall';
-				case 'winter-horrorland':
-					stage = 'mallEvil';
-				case 'senpai' | 'roses':
-					stage = 'school';
-				case 'thorns':
-					stage = 'schoolEvil';
-				case 'ugh' | 'guns' | 'stress':
-					stage = 'tank';
-				default:
-					stage = 'stage';
-			}
-		} else {
+		else if(Song.loadedSongName != null)
+			stage = vanillaSongStage(Paths.formatToSongPath(Song.loadedSongName));
+		else
 			stage = 'stage';
-		}
 
 		var stageFile:StageFile = getStageFile(stage);
-		if(stageFile == null) { //preventing crashes
-			forceNextDirectory = '';
-		} else {
-			forceNextDirectory = stageFile.directory;
+		forceNextDirectory = (stageFile != null) ? stageFile.directory : ''; //preventing crashes
+	}
+
+	public static function vanillaSongStage(songName):String
+	{
+		// trace(songName);
+		return switch (songName)
+		{
+			case 'spookeez' | 'south' | 'monster':
+				'spooky';
+			case 'pico' | 'blammed' | 'philly' | 'philly-nice':
+				'philly';
+			case 'milf' | 'satin-panties' | 'high':
+				'limo';
+			case 'cocoa' | 'eggnog':
+				'mall';
+			case 'winter-horrorland':
+				'mallEvil';
+			case 'senpai' | 'roses':
+				'school';
+			case 'thorns':
+				'schoolEvil';
+			case 'ugh' | 'guns' | 'stress':
+				'tank';
+			default:
+				'stage';
 		}
 	}
 
 	public static function getStageFile(stage:String):StageFile {
 		var rawJson:String = null;
-		var path:String = Paths.getPreloadPath('stages/' + stage + '.json');
+		var relativePath:String = 'stages/' + stage + '.json';
 
 		#if MODS_ALLOWED
-		var modPath:String = Paths.modFolders('stages/' + stage + '.json');
+		var modPath:String = Paths.modFolders(relativePath);
 		if(FileSystem.exists(modPath)) {
 			rawJson = File.getContent(modPath);
-		} else if(FileSystem.exists(path)) {
-			rawJson = File.getContent(path);
-		}
-		#else
-		if(Assets.exists(path)) {
-			rawJson = Assets.getText(path);
 		}
 		#end
-		else { return null; }
-		return cast Json.parse(rawJson);
+
+		if(rawJson == null) {
+			var path:String = Paths.getPath(relativePath, TEXT, null, true);
+
+			#if MODS_ALLOWED
+			if(FileSystem.exists(path))
+				rawJson = File.getContent(path);
+			#else
+			if(Assets.exists(path))
+				rawJson = Assets.getText(path);
+			#end
+		}
+
+		if(rawJson == null)
+			return dummy();
+
+		return cast tjson.TJSON.parse(rawJson);
 	}
+
 }

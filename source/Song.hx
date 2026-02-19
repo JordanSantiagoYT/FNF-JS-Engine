@@ -139,10 +139,13 @@ class Song
 
 		return false;
 	}
-
+	public static var loadedSongName:String;
 	public static function loadFromJson(jsonInput:String, ?folder:String):SwagSong
 	{
+		if(folder == null) folder = jsonInput;
 		var rawJson:String = null;
+		
+		loadedSongName = folder;
 
 		var formattedFolder:String = Paths.formatToSongPath(folder);
 		var formattedSong:String = Paths.formatToSongPath(jsonInput);
