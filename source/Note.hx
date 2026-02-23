@@ -463,7 +463,7 @@ class Note extends FlxSprite
 	{
 		if (isSustainNote)
 		{
-			flipY = ClientPrefs.downScroll;
+			flipY = strum.downScroll;
 			scale.set(0.7, animation != null && animation.curAnim != null && animation.curAnim.name.endsWith('end') ? 1 : Conductor.stepCrochet * 0.0105 * (songSpeed * multSpeed) * sustainScale);
 
 			if (PlayState.isPixelStage)
@@ -488,7 +488,7 @@ class Note extends FlxSprite
 
 		if(copyY)
 		{
-			y = strum.y + offsetY + (!isSustainNote || ClientPrefs.downScroll ? 0 : 55) + Math.sin(strum.direction * Math.PI / 180) * distance;
+			y = strum.y + offsetY + (!isSustainNote || strum.downScroll ? 0 : 55) + Math.sin(strum.direction * Math.PI / 180) * distance;
 			if(strum.downScroll && isSustainNote)
 			{
 				if(PlayState.isPixelStage)

@@ -951,6 +951,7 @@ class EditorPlayState extends MusicBeatState
 
 			var babyArrow:StrumNote = new StrumNote(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X, strumLine.y, i, player);
 			babyArrow.alpha = targetAlpha;
+			babyArrow.downScroll = ClientPrefs.downScroll;
 
 			if (player == 1)
 			{
