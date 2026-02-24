@@ -18,6 +18,8 @@ import objects.*;
 import openfl.events.KeyboardEvent;
 import openfl.system.System;
 import play.objects.*;
+import flixel.text.FlxBitmapFont;
+import flixel.text.FlxBitmapText;
 #if SHADERS_ALLOWED
 import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
@@ -304,7 +306,7 @@ class PlayState extends MusicBeatState
 	public var songScore:Float = 0;
 	public var songHits:Int = 0;
 	public var songMisses:Float = 0;
-	public var scoreTxt:FlxText;
+	public var scoreTxt:FlxSprite = null;
 	var timeTxt:FlxText;
 
 	var hitTxt:FlxText;
@@ -384,6 +386,8 @@ class PlayState extends MusicBeatState
 
 	var startingTime:Float = haxe.Timer.stamp();
 	var endingTime:Float = haxe.Timer.stamp();
+	
+	static var vcrBitmapFont:FlxBitmapFont;
 
 	// FFMpeg values :)
 	var ffmpegMode = ClientPrefs.ffmpegMode;
@@ -1215,10 +1219,39 @@ class PlayState extends MusicBeatState
 		}
 
 		// TODO: cleanup playstate, by moving most of this and other duplicate functions like healthbop, etc
-		scoreTxt = new FlxText(0, healthBarBG.y + 50, FlxG.width, "", 20);
-		scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, CENTER, OUTLINE,FlxColor.BLACK);
-		scoreTxt.scrollFactor.set();
-		scoreTxt.borderSize = 1;
+		if (ClientPrefs.useBitmapScore){
+			var bmp:FlxBitmapText = new FlxBitmapText(
+				0, healthBarBG.y + 50, "",
+				FlxBitmapFont.fromAngelCode(
+					Paths.font("vcr-bmp.png"),
+					Paths.font("vcr-bmp.fnt")
+				)
+			);
+
+			bmp.alignment = CENTER;
+			bmp.borderStyle = OUTLINE;
+			bmp.borderColor = FlxColor.BLACK;
+			bmp.letterSpacing = -1;
+			bmp.scrollFactor.set();
+			bmp.borderSize = 1;
+
+			scoreTxt = bmp;
+		}
+		else
+		{
+			var txt:FlxText = new FlxText(
+				0, healthBarBG.y + 50,
+				FlxG.width, "", 20
+			);
+
+			txt.setFormat(Paths.font("vcr.ttf"), 16,
+				FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+
+			txt.scrollFactor.set();
+			txt.borderSize = 1;
+
+			scoreTxt = txt;
+		}
 		scoreTxt.visible = !ClientPrefs.hideHud;
 		add(scoreTxt);
 
@@ -1266,8 +1299,18 @@ class PlayState extends MusicBeatState
 			final s = Reflect.getProperty(styleSettings, style);
 			if (s.yOffset != null) scoreTxt.y = healthBarBG.y + s.yOffset;
 			if (s.xOverride != null) scoreTxt.x = s.xOverride;
-			scoreTxt.setFormat(Paths.font(s.font), s.size, s.color, CENTER, OUTLINE, FlxColor.BLACK);
-			scoreTxt.borderSize = s.borderSize;
+			if (!ClientPrefs.useBitmapScore)
+			{
+				cast(scoreTxt, FlxText).setFormat(
+					Paths.font(s.font),
+					s.size,
+					s.color,
+					CENTER,
+					OUTLINE,
+					FlxColor.BLACK
+				);
+			}
+			(scoreTxt : Dynamic).borderSize = s.borderSize;
 			if (style == 'Forever Engine' || style == 'Vanilla') updateScore();
 		}
 
@@ -2236,7 +2279,7 @@ class PlayState extends MusicBeatState
 				tempScore = 'Score: ' + formattedScore;
 		}
 
-		scoreTxt.text = '${tempScore}\n';
+		(scoreTxt : Dynamic).text = '${tempScore}\n';
 
 		callOnLuas('onUpdateScore', [miss]);
 	}
