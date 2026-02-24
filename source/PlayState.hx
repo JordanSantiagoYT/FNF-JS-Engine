@@ -1236,6 +1236,7 @@ class PlayState extends MusicBeatState
 			bmp.borderSize = 1;
 
 			scoreTxt = bmp;
+			scoreTxt.screenCenter(X);
 		}
 		else
 		{
@@ -1251,6 +1252,7 @@ class PlayState extends MusicBeatState
 			txt.borderSize = 1;
 
 			scoreTxt = txt;
+			scoreTxt.screenCenter(X);
 		}
 		scoreTxt.visible = !ClientPrefs.hideHud;
 		add(scoreTxt);
@@ -2220,6 +2222,17 @@ class PlayState extends MusicBeatState
 	var comboInfo = ClientPrefs.showComboInfo;
 	var showNPS = ClientPrefs.showNPS;
 	var missString:String = '';
+
+	function setScoreText(value:String)
+	{
+		if (Std.isOfType(scoreTxt, FlxText))
+			cast(scoreTxt, FlxText).text = value;
+		else
+			cast(scoreTxt, FlxBitmapText).text = value;
+
+		scoreTxt.screenCenter(X);
+	}
+		
 	public dynamic function updateScore(miss:Bool = false)
 	{
 		scoreTxtUpdateFrame++;
@@ -2279,7 +2292,7 @@ class PlayState extends MusicBeatState
 				tempScore = 'Score: ' + formattedScore;
 		}
 
-		(scoreTxt : Dynamic).text = '${tempScore}\n';
+		setScoreText('${tempScore}\n');
 
 		callOnLuas('onUpdateScore', [miss]);
 	}

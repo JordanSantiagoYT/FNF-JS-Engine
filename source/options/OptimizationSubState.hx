@@ -64,7 +64,7 @@ class OptimizationSubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 		
-		var option:Option = new Option('Use Bitmap ScoreTxt',
+		var option:Option = new Option('Use Bitmap ScoreTxt WIP',
 			"If checked, Uses FlxBitmapText for the score display to reduce garbage collection spikes and improve performance when the score updates frequently. 
 			May cause compatibility issues with Lua mods that change text size or font dynamically.",
 			'useBitmapScore',
