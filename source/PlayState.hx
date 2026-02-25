@@ -3630,7 +3630,7 @@ class PlayState extends MusicBeatState
 						vocals.stop();
 						opponentVocals.stop();
 						FlxG.sound.music.stop();
-						openSubState(new GameOverSubstate(boyfriend));
+						openSubState(new GameOverSubstate(boyfriend, PlayState.instance));
 						gameOverTimer = null;
 					});
 				}
@@ -3639,7 +3639,7 @@ class PlayState extends MusicBeatState
 					vocals.stop();
 					opponentVocals.stop();
 					FlxG.sound.music.stop();
-					openSubState(new GameOverSubstate(boyfriend));
+					openSubState(new GameOverSubstate(boyfriend, PlayState.instance));
 				}
 
 				#if DISCORD_ALLOWED
