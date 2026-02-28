@@ -1220,7 +1220,7 @@ class PlayState extends MusicBeatState
 
 		// TODO: cleanup playstate, by moving most of this and other duplicate functions like healthbop, etc
 		if (ClientPrefs.useBitmapScore){
-			var bmp:FlxBitmapText = new FlxBitmapText(
+			final bmp:FlxBitmapText = new FlxBitmapText(
 				0, healthBarBG.y + 50, "",
 				FlxBitmapFont.fromAngelCode(
 					Paths.font("vcr-bmp.png"),
@@ -1233,14 +1233,15 @@ class PlayState extends MusicBeatState
 			bmp.borderColor = FlxColor.BLACK;
 			bmp.letterSpacing = -1;
 			bmp.scrollFactor.set();
-			bmp.borderSize = 1;
+			bmp.borderSize = 2;
+			bmp.scale.set(bmp.scale.x * 1.1, bmp.scale.y * 1.1);
 
 			scoreTxt = bmp;
 			scoreTxt.screenCenter(X);
 		}
 		else
 		{
-			var txt:FlxText = new FlxText(
+			final txt:FlxText = new FlxText(
 				0, healthBarBG.y + 50,
 				FlxG.width, "", 20
 			);
@@ -1258,10 +1259,10 @@ class PlayState extends MusicBeatState
 		add(scoreTxt);
 
 		var style:String = ClientPrefs.scoreStyle;
-		var dadColors:Array<Int> = CoolUtil.getHealthColors(dad);
+		final dadColors:Array<Int> = CoolUtil.getHealthColors(dad);
 
 		// Configuration for each style
-		var styleSettings = { // profiency using typedefs
+		final styleSettings = { // profiency using typedefs
 			'JS Engine': {
 				font: "vcr.ttf", size: 18, color: FlxColor.fromRGB(dadColors[0], dadColors[1], dadColors[2]),
 				yOffset: null, borderSize: 2, xOverride: null
