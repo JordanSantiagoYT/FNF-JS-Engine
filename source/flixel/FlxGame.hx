@@ -11,6 +11,7 @@ import openfl.display.StageAlign;
 import openfl.display.StageScaleMode;
 import openfl.events.Event;
 import openfl.filters.BitmapFilter;
+import lime.system.System;
 #if desktop
 import openfl.events.FocusEvent;
 #end
@@ -77,7 +78,7 @@ class FlxGame extends Sprite
 	/**
 	 * Time in milliseconds that has passed (amount of "ticks" passed) since the game has started.
 	 */
-	public var ticks(default, null):Int = 0;
+	public var ticks(default, null):Float = 0;
 
 	/**
 	 * Enables or disables the filters set via `setFilters()`.
@@ -103,13 +104,15 @@ class FlxGame extends Sprite
 	/**
 	 * Total number of milliseconds elapsed since game start.
 	 */
-	var _total:Int = 0;
+	var _total:Float = 0;
 
 	/**
 	 * Time stamp of game startup. Needed on JS where `Lib.getTimer()`
 	 * returns time stamp of current date, not the time passed since app start.
 	 */
-	var _startTime:Int = 0;
+	var _startTime:Float = 0;
+
+	var _startCounter:Float = 0;
 
 	/**
 	 * Total number of milliseconds elapsed since last update loop.
@@ -284,6 +287,7 @@ class FlxGame extends Sprite
 		FlxG.updateFramerate = updateFramerate;
 		FlxG.drawFramerate = drawFramerate;
 		_accumulator = _stepMS;
+		_startCounter = System.getPerformanceCounter();
 		_skipSplash = skipSplash;
 
 		#if FLX_RECORD
@@ -357,6 +361,9 @@ class FlxGame extends Sprite
 		#if (desktop && openfl <= "4.0.0")
 		stage.addEventListener(FocusEvent.FOCUS_OUT, onFocusLost);
 		stage.addEventListener(FocusEvent.FOCUS_IN, onFocus);
+		#elseif (sys && openfl >= "9.3.0")
+		stage.nativeWindow.addEventListener(Event.DEACTIVATE, onFocusLost);
+		stage.nativeWindow.addEventListener(Event.ACTIVATE, onFocus);
 		#else
 		stage.addEventListener(Event.DEACTIVATE, onFocusLost);
 		stage.addEventListener(Event.ACTIVATE, onFocus);
@@ -506,9 +513,10 @@ class FlxGame extends Sprite
 	 */
 	function onEnterFrame(_):Void
 	{
+		final timer = getTimer();
 		ticks = getTicks();
-		_elapsedMS = ticks - _total;
-		_total = ticks;
+		_elapsedMS = timer - _total;
+		_total = timer;
 
 		#if FLX_SOUND_TRAY
 		if (soundTray != null && soundTray.active)
@@ -761,19 +769,19 @@ class FlxGame extends Sprite
 
 	function updateElapsed():Void
 	{
-			if (FlxG.fixedTimestep)
-			{
-				FlxG.elapsed = FlxG.timeScale * _stepSeconds; // fixed timestep
-			}
-			else
-			{
-				FlxG.elapsed = FlxG.timeScale * (_elapsedMS / 1000); // variable timestep
+		if (FlxG.fixedTimestep)
+		{
+			FlxG.elapsed = FlxG.timeScale * _stepSeconds; // fixed timestep
+		}
+		else
+		{
+			FlxG.elapsed = FlxG.timeScale * (_elapsedMS / 1000); // variable timestep
 
-				var max = FlxG.maxElapsed * FlxG.timeScale;
-				if (FlxG.elapsed > max)
-					FlxG.elapsed = max;
-			}
-			if (Type.getClassName(Type.getClass(FlxG.state)) == 'PlayState' && ClientPrefs.ffmpegMode) FlxG.elapsed = 1 / ClientPrefs.targetFPS;
+			var max = FlxG.maxElapsed * FlxG.timeScale;
+			if (FlxG.elapsed > max)
+				FlxG.elapsed = max;
+		}
+		if (Type.getClassName(Type.getClass(FlxG.state)) == 'PlayState' && ClientPrefs.ffmpegMode) FlxG.elapsed = 1 / ClientPrefs.targetFPS;
 	}
 
 	function updateInput():Void
@@ -888,10 +896,9 @@ class FlxGame extends Sprite
 		return getTimer() - _startTime;
 	}
 
-	dynamic function getTimer():Int
+	dynamic function getTimer():Float
 	{
-		// expensive, only call if necessary
-		return Lib.getTimer();
+		return ((System.getPerformanceCounter() - _startCounter) / System.getPerformanceFrequency()) * 1000;
 	}
 }
 

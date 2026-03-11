@@ -3621,7 +3621,7 @@ class PlayState extends MusicBeatState
 				modchartTimers.clear();
 				modchartTweens.clear();
 				#end
-				FlxG.camera.setFilters([]);
+				FlxG.camera.filters = [];
 
 				if(GameOverSubstate.deathDelay > 0)
 				{
