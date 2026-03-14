@@ -147,9 +147,9 @@ class ControlsSubState extends MusicBeatSubstate {
 			bindingTime += elapsed;
 			if(bindingTime > 5) {
 				if (curAlt) {
-					grpInputsAlt[curSelected].alpha = 1;
+					if (grpInputsAlt[curSelected] != null) grpInputsAlt[curSelected].alpha = 1;
 				} else {
-					grpInputs[curSelected].alpha = 1;
+					if (grpInputs[curSelected] != null) grpInputs[curSelected].alpha = 1;
 				}
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				rebindingKey = false;
