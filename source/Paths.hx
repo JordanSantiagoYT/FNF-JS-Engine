@@ -17,8 +17,6 @@ import openfl.utils.AssetType;
 import cpp.vm.Gc;
 #elseif hl
 import hl.Gc;
-#elseif neko
-import neko.vm.Gc;
 #end
 
 @:access(openfl.display.BitmapData)
@@ -246,7 +244,7 @@ class Paths
 
   @:noCompletion private inline static function _gc(major:Bool)
   {
-    #if (cpp || neko)
+    #if cpp
     Gc.run(major);
     #elseif hl
     Gc.major();
@@ -259,8 +257,6 @@ class Paths
     Gc.compact();
     #elseif hl
     Gc.major();
-    #elseif neko
-    Gc.run(true);
     #end
   }
 
