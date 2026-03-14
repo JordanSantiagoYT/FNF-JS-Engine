@@ -6,7 +6,6 @@ import flixel.input.keyboard.FlxKey;
 
 class OptionsState extends MusicBeatState
 {
-
     var kId = 0;
     var keys:Array<FlxKey> = [D, E, B, U, G, SEVEN]; // lol
 	var konamiIndex:Int = 0; // Track the progress in the Konami code sequence
@@ -74,7 +73,7 @@ class OptionsState extends MusicBeatState
 		add(camFollowPos);
 		FlxG.cameras.list[FlxG.cameras.list.indexOf(subCamera)].follow(camFollowPos);
 
-		#if desktop
+		#if DISCORD_ALLOWED
 		DiscordClient.changePresence("Options Menu", null);
 		#end
 

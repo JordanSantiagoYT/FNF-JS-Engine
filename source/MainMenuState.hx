@@ -59,6 +59,7 @@ class MainMenuState extends MusicBeatState
     Paths.clearUnusedMemory();
 
     tipsArray = CoolUtil.coolTextFile(Paths.txt('funnyTips'));
+	canDoTips = ClientPrefs.tipTexts; // so it's not running in the background
     if (tipsArray == null)
     {
       canDoTips = false;
@@ -86,7 +87,7 @@ class MainMenuState extends MusicBeatState
     #end
     WeekData.loadTheFirstEnabledMod();
 
-    #if desktop
+    #if DISCORD_ALLOWED
     // Updating Discord Rich Presence
     DiscordClient.changePresence("In the Menus", null);
     #end
@@ -315,7 +316,8 @@ class MainMenuState extends MusicBeatState
         if (optionShit[curSelected] == 'donate')
         {
           CoolUtil.browserLoad('https://github.com/JordanSantiagoYT/FNF-JS-Engine');
-        } else
+        } 
+		else
         {
           selectedSomethin = true;
           FlxG.sound.play(Paths.sound('confirmMenu'));
@@ -361,7 +363,8 @@ class MainMenuState extends MusicBeatState
           });
         }
       }
-      #if (desktop) else if (FlxG.keys.anyJustPressed(debugKeys))
+      #if (desktop) 
+	  else if (FlxG.keys.anyJustPressed(debugKeys))
       {
         FlxG.switchState(MasterEditorMenu.new);
       }

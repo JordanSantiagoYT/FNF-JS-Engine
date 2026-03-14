@@ -19,7 +19,7 @@ import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
 #end
 
-#if desktop
+#if DISCORD_ALLOWED
 import DiscordClient;
 #end
 

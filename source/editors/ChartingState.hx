@@ -326,7 +326,7 @@ class ChartingState extends MusicBeatState
     if (Note.globalRgbShaders.length > 0) Note.globalRgbShaders = [];
     Paths.initDefaultSkin(_song.arrowSkin, true);
 
-    #if desktop
+    #if DISCORD_ALLOWED
     // Updating Discord Rich Presence
     DiscordClient.changePresence("Chart Editor - Charting " + StringTools.replace(_song.song, '-', ' '),
       '${FlxStringUtil.formatMoney(CoolUtil.getNoteAmount(_song), false)} Notes');
@@ -3982,7 +3982,7 @@ class ChartingState extends MusicBeatState
         }
       }
     }
-    #if desktop
+    #if DISCORD_ALLOWED
     // Updating Discord Rich Presence (for updating Note Count)
     DiscordClient.changePresence("Chart Editor - Charting " + StringTools.replace(_song.song, '-', ' '),
       '${FlxStringUtil.formatMoney(CoolUtil.getNoteAmount(_song), false)} Notes');

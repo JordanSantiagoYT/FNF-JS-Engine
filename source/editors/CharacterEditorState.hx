@@ -22,10 +22,6 @@ import openfl.events.Event;
 import openfl.events.IOErrorEvent;
 import openfl.net.FileReference;
 
-#if MODS_ALLOWED
-#end
-
-
 /**
 	*DEBUG MODE
  */
@@ -1266,7 +1262,7 @@ class CharacterEditorState extends MusicBeatState
 	}
 
 	function updatePresence() {
-		#if desktop
+		#if DISCORD_ALLOWED
 		// Updating Discord Rich Presence
 		DiscordClient.changePresence("Character Editor", "Character: " + _char, leHealthIcon.getCharacter());
 		#end

@@ -24,7 +24,7 @@ class CreditsState extends MusicBeatState
 
 		MusicBeatState.windowNameSuffix = " - Credits";
 
-		#if desktop
+		#if DISCORD_ALLOWED
 		// Updating Discord Rich Presence
 		DiscordClient.changePresence("Viewing the Credits", null);
 		#end
