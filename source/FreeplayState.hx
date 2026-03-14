@@ -391,7 +391,10 @@ class FreeplayState extends MusicBeatState
 			ratingSplit[1] += '0';
 		}
 
-		scoreText.text = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit.join('.') + '%)';
+		try {
+			scoreText.text = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit?.join('.') + '%)';
+		}
+		catch(e){}
 		positionHighscore();
 
 		var upP = controls.UI_UP_P;
@@ -403,271 +406,274 @@ class FreeplayState extends MusicBeatState
 		var shiftMult:Int = 1;
 		if (FlxG.keys.pressed.SHIFT) shiftMult = 3;
 
-		if (!songSearchText.hasFocus)
-		{
-			if (!player.playingMusic)
+		try {
+			if (!songSearchText?.hasFocus)
 			{
-				if(songs.length > 1)
+				if (!player.playingMusic)
 				{
-					if (upP)
+					if(songs.length > 1)
 					{
-						changeSelection(-shiftMult);
-						holdTime = 0;
-					}
-					if (downP)
-					{
-						changeSelection(shiftMult);
-						holdTime = 0;
-					}
-
-					if(controls.UI_DOWN || controls.UI_UP)
-					{
-						var checkLastHold:Int = Math.floor((holdTime - 0.5) * 10);
-						holdTime += elapsed;
-						var checkNewHold:Int = Math.floor((holdTime - 0.5) * 10);
-						if(holdTime > 0.5 && checkNewHold - checkLastHold > 0)
+						if (upP)
 						{
-							changeSelection((checkNewHold - checkLastHold) * (controls.UI_UP ? -shiftMult : shiftMult));
+							changeSelection(-shiftMult);
+							holdTime = 0;
+						}
+						if (downP)
+						{
+							changeSelection(shiftMult);
+							holdTime = 0;
+						}
+
+						if(controls.UI_DOWN || controls.UI_UP)
+						{
+							var checkLastHold:Int = Math.floor((holdTime - 0.5) * 10);
+							holdTime += elapsed;
+							var checkNewHold:Int = Math.floor((holdTime - 0.5) * 10);
+							if(holdTime > 0.5 && checkNewHold - checkLastHold > 0)
+							{
+								changeSelection((checkNewHold - checkLastHold) * (controls.UI_UP ? -shiftMult : shiftMult));
+								changeDiff();
+							}
+						}
+
+						if(FlxG.mouse.wheel != 0)
+						{
+							FlxG.sound.play(Paths.sound('scrollMenu'), 0.2);
+							changeSelection(-shiftMult * FlxG.mouse.wheel, false);
 							changeDiff();
 						}
 					}
 
-					if(FlxG.mouse.wheel != 0)
+
+					if (controls.UI_LEFT_P)
+						changeDiff(-1);
+					else if (controls.UI_RIGHT_P)
+						changeDiff(1);
+					else if (upP || downP) changeDiff();
+				}
+
+
+				if (controls.BACK)
+				{
+					curPlaying = false;
+					if (player.playingMusic)
 					{
-						FlxG.sound.play(Paths.sound('scrollMenu'), 0.2);
-						changeSelection(-shiftMult * FlxG.mouse.wheel, false);
-						changeDiff();
+						FlxG.sound.music.stop();
+						destroyFreeplayVocals();
+						FlxG.sound.music.volume = 0;
+						instPlaying = -1;
+
+						player.playingMusic = false;
+						player.switchPlayMusic();
+
+						Paths.playMenuMusic(true);
+						FlxTween.tween(FlxG.sound.music, {volume: 1}, 1);
+					}
+					else
+					{
+						persistentUpdate = false;
+						if(colorTween != null) {
+							colorTween.cancel();
+						}
+						FlxG.sound.play(Paths.sound('cancelMenu'));
+						FlxG.switchState(MainMenuState.new);
+						FlxG.mouse.visible = false;
 					}
 				}
 
-
-				if (controls.UI_LEFT_P)
-					changeDiff(-1);
-				else if (controls.UI_RIGHT_P)
-					changeDiff(1);
-				else if (upP || downP) changeDiff();
-			}
-
-
-			if (controls.BACK)
-			{
-				curPlaying = false;
-				if (player.playingMusic)
-				{
-					FlxG.sound.music.stop();
-					destroyFreeplayVocals();
-					FlxG.sound.music.volume = 0;
-					instPlaying = -1;
-
-					player.playingMusic = false;
-					player.switchPlayMusic();
-
-					Paths.playMenuMusic(true);
-					FlxTween.tween(FlxG.sound.music, {volume: 1}, 1);
-				}
-				else
+				if(ctrl && !player.playingMusic)
 				{
 					persistentUpdate = false;
+					openSubState(new GameplayChangersSubstate());
+				}
+				else if(space)
+				{
+					requiredRamLoad = 0;
+					noteCount = 0;
+						function playSong() {
+						#if PRELOAD_ALL
+						destroyFreeplayVocals();
+						FlxG.sound.music.volume = 0;
+						Mods.currentModDirectory = songs[curSelected].folder;
+						var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
+						PlayState.SONG = Song.loadFromJson(poop, songs[curSelected].songName.toLowerCase());
+
+						var diff:String = (PlayState.SONG.specialAudioName.length > 1 ? PlayState.SONG.specialAudioName : CoolUtil.difficulties[curDifficulty]).toLowerCase();
+
+						if (PlayState.SONG.needsVoices)
+						{
+							vocals = new FlxSound();
+							try
+							{
+								var playerVocals:String = getVocalFromCharacter(PlayState.SONG.player1);
+								var loadedVocals:openfl.media.Sound = Paths.voices(PlayState.SONG.song, diff, (playerVocals != null && playerVocals.length > 0) ? playerVocals : 'Player');
+								if(loadedVocals == null) loadedVocals = Paths.voices(PlayState.SONG.song, diff);
+
+								if(loadedVocals != null && loadedVocals.length > 0)
+								{
+									vocals.loadEmbedded(loadedVocals);
+									FlxG.sound.list.add(vocals);
+									vocals.persist = vocals.looped = true;
+									vocals.volume = 0.8;
+									vocals.play();
+									vocals.pause();
+								}
+								else vocals = FlxDestroyUtil.destroy(vocals);
+							}
+							catch(e:Dynamic)
+							{
+								vocals = FlxDestroyUtil.destroy(vocals);
+							}
+
+							opponentVocals = new FlxSound();
+							try
+							{
+								//trace('please work...');
+								var oppVocals:String = getVocalFromCharacter(PlayState.SONG.player2);
+								var loadedVocals:openfl.media.Sound = Paths.voices(PlayState.SONG.song, diff, (oppVocals != null && oppVocals.length > 0) ? oppVocals : 'Opponent');
+
+								if(loadedVocals != null && loadedVocals.length > 0)
+								{
+									opponentVocals.loadEmbedded(loadedVocals);
+									FlxG.sound.list.add(opponentVocals);
+									opponentVocals.persist = opponentVocals.looped = true;
+									opponentVocals.volume = 0.8;
+									opponentVocals.play();
+									opponentVocals.pause();
+									//trace('it worked yaaay!!');
+								}
+								else opponentVocals = FlxDestroyUtil.destroy(opponentVocals);
+							}
+							catch(e:Dynamic)
+							{
+								//trace('FUUUCK');
+								opponentVocals = FlxDestroyUtil.destroy(opponentVocals);
+							}
+						}
+						FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, diff), 0.7);
+						if (vocals != null)
+						{
+							vocals.play();
+							vocals.persist = true;
+							vocals.looped = true;
+							vocals.volume = 0.7;
+						}
+						instPlaying = curSelected;
+						Conductor.changeBPM(PlayState.SONG.bpm);
+						for (funnyIcon in grpIcons.members)
+							funnyIcon.canBounce = false;
+						grpIcons.members[instPlaying].canBounce = true;
+						curPlaying = true;
+						#end
+
+						if (FlxG.keys.pressed.SHIFT) {
+							for (section in PlayState.SONG.notes) {
+							noteCount += section.sectionNotes.length;
+							requiredRamLoad += 72872 * section.sectionNotes.length;
+							}
+							CoolUtil.coolError("There are " + FlxStringUtil.formatMoney(noteCount, false) + " notes in this chart!\nWith Show Notes turned on, you'd need " + FlxStringUtil.formatBytes(requiredRamLoad / 2) + " of ram to load this.", "JS Engine Chart Diagnosis");
+						}
+						player.playingMusic = true;
+						player.curTime = 0;
+						player.switchPlayMusic();
+						player.pauseOrResume(true);
+					}
+					function songJsonPopup() { //you pressed space, but the song's ogg files don't exist
+						var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
+						trace(poop + '\'s .ogg does not exist!');
+						FlxG.sound.play(Paths.sound('invalidJSON'));
+						FlxG.camera.shake(0.05, 0.05);
+						var funnyText = new FlxText(12, FlxG.height - 24, 0, "Invalid Song!");
+						funnyText.scrollFactor.set();
+						funnyText.screenCenter();
+						funnyText.x = 5;
+						funnyText.y = FlxG.height/2 - 64;
+						funnyText.setFormat("vcr.ttf", 64, FlxColor.RED, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+						add(funnyText);
+						FlxTween.tween(funnyText, {alpha: 0}, 0.9, {
+							onComplete: _ -> {
+								remove(funnyText, true);
+								funnyText.destroy();
+							}
+						});
+					}
+					var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
+					var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
+					#if MODS_ALLOWED
+					if(instPlaying != curSelected && !player.playingMusic)
+					{
+						if(sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())) || sys.FileSystem.exists(Paths.json(songLowercase + '/' + poop)) || sys.FileSystem.exists(Paths.modsJson(songLowercase + '/' + poop)))
+							playSong();
+						else
+							songJsonPopup();
+					}
+					#else
+					if(instPlaying != curSelected && !player.playingMusic)
+					{
+						if(OpenFlAssets.exists(Paths.inst(songLowercase + '/' + poop, CoolUtil.difficulties[curDifficulty].toLowerCase())) || OpenFlAssets.exists(Paths.json(songLowercase + '/' + poop)))
+							playSong();
+						else
+							songJsonPopup();
+					}
+					#end
+					else if (instPlaying == curSelected && player.playingMusic)
+					{
+						player.pauseOrResume(!player.playing);
+					}
+				}
+
+				else if (accepted && !player.playingMusic)
+				{
+					persistentUpdate = false;
+					var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
+					var poop:String = Highscore.formatSong(songLowercase, curDifficulty);
+
+					trace(poop);
+
+					CoolUtil.currentDifficulty = CoolUtil.difficultyString();
+
+					if(sys.FileSystem.exists(Paths.modsJson(songLowercase + '/' + poop)) || sys.FileSystem.exists(Paths.json(songLowercase + '/' + poop)) || OpenFlAssets.exists(Paths.modsJson(songLowercase + '/' + poop)) || OpenFlAssets.exists(Paths.json(songLowercase + '/' + poop))) {
+					PlayState.SONG = Song.loadFromJson(poop, songLowercase);
+					PlayState.storyDifficulty = curDifficulty;
+
+					PlayState.isStoryMode = PlayState.wasOriginallyFreeplay = ClientPrefs.alwaysTriggerCutscene;
+
+					trace('CURRENT WEEK: ' + WeekData.getWeekFileName());
 					if(colorTween != null) {
 						colorTween.cancel();
 					}
-					FlxG.sound.play(Paths.sound('cancelMenu'));
-					FlxG.switchState(MainMenuState.new);
-					FlxG.mouse.visible = false;
-				}
-			}
 
-			if(ctrl && !player.playingMusic)
-			{
-				persistentUpdate = false;
-				openSubState(new GameplayChangersSubstate());
-			}
-			else if(space)
-			{
-				requiredRamLoad = 0;
-				noteCount = 0;
-					function playSong() {
-					#if PRELOAD_ALL
-					destroyFreeplayVocals();
-					FlxG.sound.music.volume = 0;
-					Mods.currentModDirectory = songs[curSelected].folder;
-					var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
-					PlayState.SONG = Song.loadFromJson(poop, songs[curSelected].songName.toLowerCase());
-
-					var diff:String = (PlayState.SONG.specialAudioName.length > 1 ? PlayState.SONG.specialAudioName : CoolUtil.difficulties[curDifficulty]).toLowerCase();
-
-					if (PlayState.SONG.needsVoices)
-					{
-						vocals = new FlxSound();
-						try
-						{
-							var playerVocals:String = getVocalFromCharacter(PlayState.SONG.player1);
-							var loadedVocals:openfl.media.Sound = Paths.voices(PlayState.SONG.song, diff, (playerVocals != null && playerVocals.length > 0) ? playerVocals : 'Player');
-							if(loadedVocals == null) loadedVocals = Paths.voices(PlayState.SONG.song, diff);
-
-							if(loadedVocals != null && loadedVocals.length > 0)
-							{
-								vocals.loadEmbedded(loadedVocals);
-								FlxG.sound.list.add(vocals);
-								vocals.persist = vocals.looped = true;
-								vocals.volume = 0.8;
-								vocals.play();
-								vocals.pause();
-							}
-							else vocals = FlxDestroyUtil.destroy(vocals);
-						}
-						catch(e:Dynamic)
-						{
-							vocals = FlxDestroyUtil.destroy(vocals);
-						}
-
-						opponentVocals = new FlxSound();
-						try
-						{
-							//trace('please work...');
-							var oppVocals:String = getVocalFromCharacter(PlayState.SONG.player2);
-							var loadedVocals:openfl.media.Sound = Paths.voices(PlayState.SONG.song, diff, (oppVocals != null && oppVocals.length > 0) ? oppVocals : 'Opponent');
-
-							if(loadedVocals != null && loadedVocals.length > 0)
-							{
-								opponentVocals.loadEmbedded(loadedVocals);
-								FlxG.sound.list.add(opponentVocals);
-								opponentVocals.persist = opponentVocals.looped = true;
-								opponentVocals.volume = 0.8;
-								opponentVocals.play();
-								opponentVocals.pause();
-								//trace('it worked yaaay!!');
-							}
-							else opponentVocals = FlxDestroyUtil.destroy(opponentVocals);
-						}
-						catch(e:Dynamic)
-						{
-							//trace('FUUUCK');
-							opponentVocals = FlxDestroyUtil.destroy(opponentVocals);
-						}
-					}
-					FlxG.sound.playMusic(Paths.inst(PlayState.SONG.song, diff), 0.7);
-					if (vocals != null)
-					{
-						vocals.play();
-						vocals.persist = true;
-						vocals.looped = true;
-						vocals.volume = 0.7;
-					}
-					instPlaying = curSelected;
-					Conductor.changeBPM(PlayState.SONG.bpm);
-					for (funnyIcon in grpIcons.members)
-						funnyIcon.canBounce = false;
-					grpIcons.members[instPlaying].canBounce = true;
-					curPlaying = true;
-					#end
+					curPlaying = false;
 
 					if (FlxG.keys.pressed.SHIFT) {
-						for (section in PlayState.SONG.notes) {
-						noteCount += section.sectionNotes.length;
-						requiredRamLoad += 72872 * section.sectionNotes.length;
-						}
-						CoolUtil.coolError("There are " + FlxStringUtil.formatMoney(noteCount, false) + " notes in this chart!\nWith Show Notes turned on, you'd need " + FlxStringUtil.formatBytes(requiredRamLoad / 2) + " of ram to load this.", "JS Engine Chart Diagnosis");
+						LoadingState.loadAndSwitchState(ChartingState.new);
+					}else{
+						LoadingState.loadAndSwitchState(PlayState.new);
 					}
-					player.playingMusic = true;
-					player.curTime = 0;
-					player.switchPlayMusic();
-					player.pauseOrResume(true);
-				}
-				function songJsonPopup() { //you pressed space, but the song's ogg files don't exist
-					var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
-					trace(poop + '\'s .ogg does not exist!');
-					FlxG.sound.play(Paths.sound('invalidJSON'));
-					FlxG.camera.shake(0.05, 0.05);
-					var funnyText = new FlxText(12, FlxG.height - 24, 0, "Invalid Song!");
-					funnyText.scrollFactor.set();
-					funnyText.screenCenter();
-					funnyText.x = 5;
-					funnyText.y = FlxG.height/2 - 64;
-					funnyText.setFormat("vcr.ttf", 64, FlxColor.RED, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-					add(funnyText);
-					FlxTween.tween(funnyText, {alpha: 0}, 0.9, {
-						onComplete: _ -> {
-							remove(funnyText, true);
-							funnyText.destroy();
+
+					FlxG.sound.music.volume = 0;
+					FlxG.mouse.visible = false;
+
+					destroyFreeplayVocals();
+
+							} else {
+							if(sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())) && !sys.FileSystem.exists(Paths.json(poop + '/' + poop))) { //the json doesn't exist, but the song files do, or you put a typo in the name
+									CoolUtil.coolError("The JSON's name does not match with  " + poop + "!\nTry making them match.", "JS Engine Anti-Crash Tool");
+							} else if(sys.FileSystem.exists(Paths.json(poop + '/' + poop)) && !sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())))  {//the json exists, but the song files don't
+									CoolUtil.coolError("Your song seems to not have an Inst.ogg, check the folder name in 'songs'!", "JS Engine Anti-Crash Tool");
+						} else if(!sys.FileSystem.exists(Paths.json(poop + '/' + poop)) && !sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase()))) { //neither the json nor the song files actually exist
+							CoolUtil.coolError("It appears that " + poop + " doesn't actually have a JSON, nor does it actually have voices/instrumental files!\nMaybe try fixing its name in weeks/" + WeekData.getWeekFileName() + "?", "JS Engine Anti-Crash Tool");
 						}
-					});
-				}
-				var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
-				var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
-				#if MODS_ALLOWED
-				if(instPlaying != curSelected && !player.playingMusic)
-				{
-					if(sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())) || sys.FileSystem.exists(Paths.json(songLowercase + '/' + poop)) || sys.FileSystem.exists(Paths.modsJson(songLowercase + '/' + poop)))
-						playSong();
-					else
-						songJsonPopup();
-				}
-				#else
-				if(instPlaying != curSelected && !player.playingMusic)
-				{
-					if(OpenFlAssets.exists(Paths.inst(songLowercase + '/' + poop, CoolUtil.difficulties[curDifficulty].toLowerCase())) || OpenFlAssets.exists(Paths.json(songLowercase + '/' + poop)))
-						playSong();
-					else
-						songJsonPopup();
-				}
-				#end
-				else if (instPlaying == curSelected && player.playingMusic)
-				{
-					player.pauseOrResume(!player.playing);
-				}
-			}
-
-			else if (accepted && !player.playingMusic)
-			{
-				persistentUpdate = false;
-				var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
-				var poop:String = Highscore.formatSong(songLowercase, curDifficulty);
-
-				trace(poop);
-
-				CoolUtil.currentDifficulty = CoolUtil.difficultyString();
-
-				if(sys.FileSystem.exists(Paths.modsJson(songLowercase + '/' + poop)) || sys.FileSystem.exists(Paths.json(songLowercase + '/' + poop)) || OpenFlAssets.exists(Paths.modsJson(songLowercase + '/' + poop)) || OpenFlAssets.exists(Paths.json(songLowercase + '/' + poop))) {
-				PlayState.SONG = Song.loadFromJson(poop, songLowercase);
-				PlayState.storyDifficulty = curDifficulty;
-
-				PlayState.isStoryMode = PlayState.wasOriginallyFreeplay = ClientPrefs.alwaysTriggerCutscene;
-
-				trace('CURRENT WEEK: ' + WeekData.getWeekFileName());
-				if(colorTween != null) {
-					colorTween.cancel();
-				}
-
-				curPlaying = false;
-
-				if (FlxG.keys.pressed.SHIFT) {
-					LoadingState.loadAndSwitchState(ChartingState.new);
-				}else{
-					LoadingState.loadAndSwitchState(PlayState.new);
-				}
-
-				FlxG.sound.music.volume = 0;
-				FlxG.mouse.visible = false;
-
-				destroyFreeplayVocals();
-
-						} else {
-						if(sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())) && !sys.FileSystem.exists(Paths.json(poop + '/' + poop))) { //the json doesn't exist, but the song files do, or you put a typo in the name
-								CoolUtil.coolError("The JSON's name does not match with  " + poop + "!\nTry making them match.", "JS Engine Anti-Crash Tool");
-						} else if(sys.FileSystem.exists(Paths.json(poop + '/' + poop)) && !sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase())))  {//the json exists, but the song files don't
-								CoolUtil.coolError("Your song seems to not have an Inst.ogg, check the folder name in 'songs'!", "JS Engine Anti-Crash Tool");
-					} else if(!sys.FileSystem.exists(Paths.json(poop + '/' + poop)) && !sys.FileSystem.exists(Paths.inst(songLowercase, CoolUtil.difficulties[curDifficulty].toLowerCase()))) { //neither the json nor the song files actually exist
-						CoolUtil.coolError("It appears that " + poop + " doesn't actually have a JSON, nor does it actually have voices/instrumental files!\nMaybe try fixing its name in weeks/" + WeekData.getWeekFileName() + "?", "JS Engine Anti-Crash Tool");
 					}
 				}
-			}
-			else if (controls.RESET && !player.playingMusic) {
-				persistentUpdate = false;
-				openSubState(new ResetScoreSubState(songs[curSelected].songName, curDifficulty, songs[curSelected].songCharacter));
-				FlxG.sound.play(Paths.sound('scrollMenu'));
+				else if (controls.RESET && !player.playingMusic) {
+					persistentUpdate = false;
+					openSubState(new ResetScoreSubState(songs[curSelected].songName, curDifficulty, songs[curSelected].songCharacter));
+					FlxG.sound.play(Paths.sound('scrollMenu'));
+				}
 			}
 		}
+		catch(e){}
 		super.update(elapsed);
 	}
 
@@ -832,12 +838,15 @@ class FreeplayState extends MusicBeatState
 	}
 
 	private function positionHighscore() {
-		scoreText.x = FlxG.width - scoreText.width - 6;
+		try {
+			scoreText.x = FlxG.width - scoreText.width - 6;
 
-		scoreBG.scale.x = FlxG.width - scoreText.x + 6;
-		scoreBG.x = FlxG.width - (scoreBG.scale.x / 2);
-		diffText.x = Std.int(scoreBG.x + (scoreBG.width / 2));
-		diffText.x -= diffText.width / 2;
+			scoreBG.scale.x = FlxG.width - scoreText.x + 6;
+			scoreBG.x = FlxG.width - (scoreBG.scale.x / 2);
+			diffText.x = Std.int(scoreBG.x + (scoreBG.width / 2));
+			diffText.x -= diffText.width / 2;
+		}
+		catch(e){}
 	}
 	override function beatHit() {
 		super.beatHit();
