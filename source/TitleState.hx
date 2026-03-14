@@ -425,26 +425,15 @@ class TitleState extends MusicBeatState
         case 1:
           FlxG.sound.music.fadeIn(4, 0, 0.7);
         case 2:
-          #if PSYCH_WATERMARKS
           createCoolText(['JS Engine by'], 15);
-          #else
-          createCoolText(['ninjamuffin99', 'phantomArcade', 'kawaisprite', 'evilsk8er']);
-          #end
         case 4:
-          #if PSYCH_WATERMARKS
           addMoreText('Jordan Santiago', 15);
           addMoreText('Moxie', 15);
-          #else
           addMoreText('present');
-          #end
         case 5:
           deleteCoolText();
         case 6:
-          #if PSYCH_WATERMARKS
           createCoolText(['Not associated', 'with'], -40);
-          #else
-          createCoolText(['In association', 'with'], -40);
-          #end
         case 8:
           addMoreText('newgrounds', -40);
           ngSpr.visible = true;

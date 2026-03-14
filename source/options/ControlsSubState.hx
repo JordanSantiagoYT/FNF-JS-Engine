@@ -120,9 +120,9 @@ class ControlsSubState extends MusicBeatSubstate {
 					bindingTime = 0;
 					rebindingKey = true;
 					if (curAlt) {
-						grpInputsAlt[getInputTextNum()].alpha = 0;
+						grpInputsAlt[getInputTextNum()].alpha = 0.0001;
 					} else {
-						grpInputs[getInputTextNum()].alpha = 0;
+						grpInputs[getInputTextNum()].alpha = 0.0001;
 					}
 					FlxG.sound.play(Paths.sound('scrollMenu'));
 				}
@@ -147,9 +147,9 @@ class ControlsSubState extends MusicBeatSubstate {
 			bindingTime += elapsed;
 			if(bindingTime > 5) {
 				if (curAlt) {
-					grpInputsAlt[curSelected].alpha = 1;
+					grpInputsAlt[getInputTextNum()].alpha = 1;
 				} else {
-					grpInputs[curSelected].alpha = 1;
+					grpInputs[getInputTextNum()].alpha = 1;
 				}
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				rebindingKey = false;
