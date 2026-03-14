@@ -635,10 +635,10 @@ class PlayState extends MusicBeatState
 
 		#if MODS_ALLOWED
 		foldersToCheck.insert(0, Paths.mods('scripts/'));
-		if(Paths.currentModDirectory != null && Paths.currentModDirectory.length > 0)
-			foldersToCheck.insert(0, Paths.mods(Paths.currentModDirectory + '/scripts/'));
+		if(Mods.currentModDirectory != null && Mods.currentModDirectory.length > 0)
+			foldersToCheck.insert(0, Paths.mods(Mods.currentModDirectory + '/scripts/'));
 
-		for(mod in Paths.getGlobalMods())
+		for(mod in Mods.getGlobalMods())
 			foldersToCheck.insert(0, Paths.mods(mod + '/scripts/'));
 		#end
 
@@ -700,7 +700,7 @@ class PlayState extends MusicBeatState
 			startCharacterLua(gf.curCharacter);
 		}
 
-		var ratingQuoteStuff:Array<Dynamic> = Paths.mergeAllTextsNamed('data/ratingQuotes/${ClientPrefs.rateNameStuff}.txt', '', true);
+		var ratingQuoteStuff:Array<Dynamic> = Mods.mergeAllTextsNamed('data/ratingQuotes/${ClientPrefs.rateNameStuff}.txt', '', true);
 		if (ratingQuoteStuff == null || ratingQuoteStuff.indexOf(null) != -1){
 			trace('Failed to find quotes for ratings!');
 			// this should help fix a crash
@@ -1399,10 +1399,10 @@ class PlayState extends MusicBeatState
 
 		#if MODS_ALLOWED
 		foldersToCheck.insert(0, Paths.mods('data/' + Paths.formatToSongPath(SONG.song) + '/'));
-		if(Paths.currentModDirectory != null && Paths.currentModDirectory.length > 0)
-			foldersToCheck.insert(0, Paths.mods(Paths.currentModDirectory + '/data/' + Paths.formatToSongPath(SONG.song) + '/'));
+		if(Mods.currentModDirectory != null && Mods.currentModDirectory.length > 0)
+			foldersToCheck.insert(0, Paths.mods(Mods.currentModDirectory + '/data/' + Paths.formatToSongPath(SONG.song) + '/'));
 
-		for(mod in Paths.getGlobalMods())
+		for(mod in Mods.getGlobalMods())
 			foldersToCheck.insert(0, Paths.mods(mod + '/data/' + Paths.formatToSongPath(SONG.song) + '/' ));// using push instead of insert because these should run after everything else
 		#end
 
@@ -1491,10 +1491,10 @@ class PlayState extends MusicBeatState
 		}
 
 		var foldersToCheck:Array<String> = [Paths.mods('shaders/')];
-		if(Paths.currentModDirectory != null && Paths.currentModDirectory.length > 0)
-			foldersToCheck.insert(0, Paths.mods(Paths.currentModDirectory + '/shaders/'));
+		if(Mods.currentModDirectory != null && Mods.currentModDirectory.length > 0)
+			foldersToCheck.insert(0, Paths.mods(Mods.currentModDirectory + '/shaders/'));
 
-		for(mod in Paths.getGlobalMods())
+		for(mod in Mods.getGlobalMods())
 			foldersToCheck.insert(0, Paths.mods(mod + '/shaders/'));
 
 		for (folder in foldersToCheck)
@@ -4423,7 +4423,7 @@ class PlayState extends MusicBeatState
 
 				if (storyPlaylist.length <= 0)
 				{
-					WeekData.loadTheFirstEnabledMod();
+					Mods.loadTopMod();
 					Paths.playMenuMusic(true);
 					#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
 
@@ -4463,7 +4463,7 @@ class PlayState extends MusicBeatState
 			else
 			{
 				trace('WENT BACK TO FREEPLAY??');
-				WeekData.loadTheFirstEnabledMod();
+				Mods.loadTopMod();
 				#if DISCORD_ALLOWED DiscordClient.resetClientID(); #end
 
 				canResync = false;
@@ -4532,10 +4532,10 @@ class PlayState extends MusicBeatState
 
 		for (i in 0...10) Paths.image(pixelShitPart1 + 'num' + i + pixelShitPart2);
 		if (Paths.fileExists('images/${normalRating}' + 'hitStrings.txt', TEXT))
-			hitStrings = Paths.mergeAllTextsNamed('images/${normalRating}' + 'hitStrings.txt', null, false);
+			hitStrings = Mods.mergeAllTextsNamed('images/${normalRating}' + 'hitStrings.txt', null, false);
 
 		if (Paths.fileExists('images/${normalRating}' + 'fcStrings.txt', TEXT))
-			fcStrings = Paths.mergeAllTextsNamed('images/${normalRating}' + 'fcStrings.txt', null, false);
+			fcStrings = Mods.mergeAllTextsNamed('images/${normalRating}' + 'fcStrings.txt', null, false);
 	}
 
 	var rating:Popup = null;

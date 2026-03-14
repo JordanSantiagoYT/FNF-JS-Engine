@@ -83,9 +83,9 @@ class MainMenuState extends MusicBeatState
     #end
 
     #if MODS_ALLOWED
-    Paths.pushGlobalMods();
+    Mods.pushGlobalMods();
     #end
-    WeekData.loadTheFirstEnabledMod();
+    Mods.loadTopMod();
 
     #if DISCORD_ALLOWED
     // Updating Discord Rich Presence
@@ -347,7 +347,7 @@ class MainMenuState extends MusicBeatState
                     FlxG.switchState(FreeplayState.new);
                   #if MODS_ALLOWED
                   case 'mods':
-                    FlxG.switchState(ModsMenuState.new);
+                    FlxG.switchState(() -> new ModsMenuState());
                   #end
                   #if ACHIEVEMENTS_ALLOWED
                   case 'awards':

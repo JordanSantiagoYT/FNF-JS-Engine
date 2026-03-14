@@ -22,6 +22,10 @@ import flxanimate.*;
 import flxanimate.PsychFlxAnimate as FlxAnimate;
 #end
 
+#if MODS_ALLOWED
+import backend.Mods;
+#end
+
 //so that it doesn't bring up a "Type not found: Countdown"
 import BaseStage.Countdown;
 

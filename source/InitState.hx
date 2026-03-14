@@ -42,11 +42,11 @@ class InitState extends FlxState {
 
         // -- MODS -- //
 
-		#if LUA_ALLOWED
-		Paths.pushGlobalMods();
+		#if MODS_ALLOWED
+		Mods.pushGlobalMods();
 		#end
 		// Just to load a mod on start up if ya got one. For mods that change the menu music and bg
-		WeekData.loadTheFirstEnabledMod();
+		Mods.loadTopMod();
 
         // -- -- -- //
 

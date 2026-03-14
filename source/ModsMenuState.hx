@@ -3,13 +3,12 @@ package;
 import flixel.ui.FlxButton;
 import flixel.FlxBasic;
 import flixel.graphics.FlxGraphic;
-import flash.geom.Rectangle;
+import openfl.geom.Rectangle;
 import lime.utils.Assets;
 import haxe.Json;
 
 import flixel.util.FlxSpriteUtil;
-import objects.AttachedSprite;
-import options.ModSettingsSubState;
+// import options.ModSettingsSubState;
 import flixel.addons.transition.FlxTransitionableState;
 
 class ModsMenuState extends MusicBeatState
@@ -162,7 +161,6 @@ class ModsMenuState extends MusicBeatState
 			changeSelectedMod();
 			return super.create();
 		}
-		//
 
 		bgTitle = FlxSpriteUtil.drawRoundRectComplex(new FlxSprite(bgList.x + bgList.width + 20, 40).makeGraphic(840, 180, FlxColor.TRANSPARENT), 0, 0, 840, 180, 15, 15, 0, 0, FlxColor.BLACK);
 		bgTitle.alpha = 0.6;
@@ -220,7 +218,8 @@ class ModsMenuState extends MusicBeatState
 			for (button in buttons)
 				button.enabled = false;
 		}
-
+		// not yet
+		/*
 		settingsButton = new MenuButton(buttonsX + 300, buttonsY, 80, 80, Paths.image('modsMenuButtons'), function() //Settings
 		{
 			var curMod:ModItem = modsGroup.members[curSelectedMod];
@@ -237,6 +236,7 @@ class ModsMenuState extends MusicBeatState
 
 		if(modsGroup.members[curSelectedMod].settings == null || modsGroup.members[curSelectedMod].settings.length < 1)
 			settingsButton.enabled = false;
+		*/
 
 		var button = new MenuButton(buttonsX + 400, buttonsY, 80, 80, Paths.image('modsMenuButtons'), function() //On/Off
 		{
@@ -313,10 +313,10 @@ class ModsMenuState extends MusicBeatState
 				}
 				FlxG.camera.fade(FlxColor.BLACK, 0.5, false, FlxG.resetGame, false);
 			}
-			else MusicBeatState.switchState(new MainMenuState());
+			else LoadingState.loadAndSwitchState(MainMenuState.new, false);
 
 			persistentUpdate = false;
-			FlxG.autoPause = ClientPrefs.data.autoPause;
+			FlxG.autoPause = ClientPrefs.autoPause;
 			FlxG.mouse.visible = false;
 			return;
 		}
@@ -675,7 +675,7 @@ class ModsMenuState extends MusicBeatState
 		modDesc.text = curMod.desc;
 
 		for (button in buttons) if(button.focusChangeCallback != null) button.focusChangeCallback(button.onFocus);
-		settingsButton.enabled = (curMod.settings != null && curMod.settings.length > 0);
+		// settingsButton.enabled = (curMod.settings != null && curMod.settings.length > 0);
 	}
 
 	var centerMod:Int = 2;
@@ -744,11 +744,11 @@ class ModsMenuState extends MusicBeatState
 	function reload()
 	{
 		saveTxt();
-		FlxG.autoPause = ClientPrefs.data.autoPause;
+		FlxG.autoPause = ClientPrefs.autoPause;
 		FlxTransitionableState.skipNextTransIn = true;
 		FlxTransitionableState.skipNextTransOut = true;
 		var curMod:ModItem = modsGroup.members[curSelectedMod];
-		MusicBeatState.switchState(new ModsMenuState(curMod != null ? curMod.folder : null));
+		LoadingState.loadAndSwitchState(() -> new ModsMenuState(curMod != null ? curMod.folder : null), false);
 	}
 	
 	function saveTxt()
@@ -793,7 +793,7 @@ class ModItem extends FlxSpriteGroup
 
 		this.folder = folder;
 		pack = Mods.getPack(folder);
-
+		/*
 		var path:String = Paths.mods('$folder/data/settings.json');
 		if(FileSystem.exists(path))
 		{
@@ -813,7 +813,7 @@ class ModItem extends FlxSpriteGroup
 				trace('$errorTitle - $errorMsg');
 			}
 		}
-
+		*/
 		selectBg = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
 		selectBg.alpha = 0.8;
 		selectBg.visible = false;
