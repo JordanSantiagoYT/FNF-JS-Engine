@@ -101,6 +101,8 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 
 	function onChangeAntiAliasing()
 	{
+		FlxSprite.defaultAntialiasing = ClientPrefs.globalAntialiasing;
+	
 		for (sprite in members)
 		{
 			var sprite:Dynamic = sprite; //Make it check for FlxSprite instead of FlxBasic
