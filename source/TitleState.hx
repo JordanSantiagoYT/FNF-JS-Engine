@@ -7,8 +7,6 @@ import flixel.input.gamepad.FlxGamepad;
 import flixel.input.keyboard.FlxKey;
 import openfl.Assets;
 import openfl.display.BitmapData;
-#if VIDEOS_ALLOWED
-#end
 
 typedef TitleData =
 {
@@ -116,10 +114,6 @@ class TitleState extends MusicBeatState
 
     if (!initialized)
     {
-      if (FlxG.save.data != null && FlxG.save.data.fullscreen)
-      {
-        FlxG.fullscreen = FlxG.save.data.fullscreen;
-      }
       persistentUpdate = true;
       persistentDraw = true;
     }
