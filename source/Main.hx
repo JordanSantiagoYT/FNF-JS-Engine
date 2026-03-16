@@ -2,7 +2,7 @@ package;
 
 import backend.SSPlugin as ScreenShotPlugin;
 import debug.FPSCounter;
-import flixel.FlxGame;
+import backend.FunkinGame;
 import lime.app.Application;
 import openfl.Lib;
 import openfl.display.Sprite;
@@ -31,7 +31,7 @@ class Main extends Sprite
     {
       width: 1280,
       height: 720,
-      initialState: InitState.new,
+      initialState: InitState,
       zoom: -1.0,
       framerate: 60,
       skipSplash: true,
@@ -103,7 +103,7 @@ class Main extends Sprite
     ClientPrefs.loadDefaultStuff();
     #if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
 
-    final funkinGame:FlxGame = new FlxGame(game.width, game.height, game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate,
+    final funkinGame:FunkinGame = new FunkinGame(game.width, game.height, game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate,
       game.skipSplash, game.startFullscreen);
     // Literally just from Vanilla FNF but I implemented it my own way. -Torch
     // torch is my friend btw :3 -moxie

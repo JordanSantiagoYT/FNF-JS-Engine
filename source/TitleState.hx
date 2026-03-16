@@ -114,10 +114,6 @@ class TitleState extends MusicBeatState
 
     if (!initialized)
     {
-      if (FlxG.save.data != null && FlxG.save.data.fullscreen)
-      {
-        FlxG.fullscreen = FlxG.save.data.fullscreen;
-      }
       persistentUpdate = true;
       persistentDraw = true;
     }
