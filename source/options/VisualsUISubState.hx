@@ -28,7 +28,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			notes.add(note);
 		}
 
-		var noteSkins:Array<String> = Paths.mergeAllTextsNamed('images/noteskins/list.txt');
+		var noteSkins:Array<String> = Mods.mergeAllTextsNamed('images/noteskins/list.txt');
 		if(noteSkins.length > 0)
 		{
 			noteSkins.insert(0, 'Default'); //Default skin always comes first
@@ -46,7 +46,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			noteOptionID = optionsArray.length - 1;
 		}
 
-		var noteSplashList:Array<String> = Paths.mergeAllTextsNamed('images/noteSplashes/list.txt');
+		var noteSplashList:Array<String> = Mods.mergeAllTextsNamed('images/noteSplashes/list.txt');
 		if (noteSplashList.length > 0)
 		{
 			noteSplashList.insert(0, 'Default'); //Default skin always comes first
@@ -185,7 +185,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			true);
 		addOption(option);
 
-		var ratingQuoteList:Array<String> = Paths.mergeAllTextsNamed('data/ratingQuotes/list.txt', '', true);
+		var ratingQuoteList:Array<String> = Mods.mergeAllTextsNamed('data/ratingQuotes/list.txt', '', true);
 		if (ratingQuoteList.length > 0)
 		{
 			if (!ratingQuoteList.contains(ClientPrefs.rateNameStuff))
@@ -263,7 +263,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			['Default', 'VS Nonsense V2', 'Leather Engine', 'Doki Doki+', "Mic'd Up", 'FPS Plus', "OS 'Engine'"]);
 		addOption(option);
 
-		var ratingSpriteList:Array<String> = Paths.mergeAllTextsNamed('images/ratings/list.txt', null, true);
+		var ratingSpriteList:Array<String> = Mods.mergeAllTextsNamed('images/ratings/list.txt', null, true);
 		if (ratingSpriteList.length > 0)
 		{
 			ratingSpriteList.insert(0, 'Default'); //Default skin always comes first

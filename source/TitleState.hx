@@ -66,7 +66,7 @@ class TitleState extends MusicBeatState
     swagShader = new ColorSwap();
     super.create();
 
-    #if (CHECK_FOR_UPDATES)
+    #if CHECK_FOR_UPDATES
     if (ClientPrefs.checkForUpdates && !closedState && !Main.askedToUpdate)
     {
       trace('Checking for a update...');
@@ -124,11 +124,7 @@ class TitleState extends MusicBeatState
     }
 
     FlxG.mouse.visible = false;
-    #if FREEPLAY
-    FlxG.switchState(FreeplayState.new);
-    #elseif CHARTING
-    FlxG.switchState(ChartingState.new);
-    #else
+
     if (FlxG.save.data.flashing == null && !FlashingState.leftState)
     {
       FlxTransitionableState.skipNextTransIn = true;
@@ -145,7 +141,6 @@ class TitleState extends MusicBeatState
         });
       }
     }
-    #end
   }
 
   var logoBl:FlxSprite;
@@ -214,23 +209,7 @@ class TitleState extends MusicBeatState
     logoBl.shader = swagShader.shader;
 
     titleText = new FlxSprite(titleJSON.startx, titleJSON.starty);
-    #if (desktop && MODS_ALLOWED)
-    var path = "mods/" + Paths.currentModDirectory + "/images/titleEnter.png";
-    // trace(path, FileSystem.exists(path));
-    if (!FileSystem.exists(path))
-    {
-      path = "mods/images/titleEnter.png";
-    }
-    // trace(path, FileSystem.exists(path));
-    if (!FileSystem.exists(path))
-    {
-      path = "assets/images/titleEnter.png";
-    }
-    // trace(path, FileSystem.exists(path));
-    titleText.frames = FlxAtlasFrames.fromSparrow(BitmapData.fromFile(path), File.getContent(StringTools.replace(path, ".png", ".xml")));
-    #else
-    titleText.frames = Paths.getSparrowAtlas('titleEnter');
-    #end
+	titleText.frames = Paths.getSparrowAtlas('titleEnter');
     var animFrames:Array<FlxFrame> = [];
     @:privateAccess {
       titleText.animation.findByPrefix(animFrames, "ENTER IDLE");
@@ -446,7 +425,6 @@ class TitleState extends MusicBeatState
         case 4:
           addMoreText('Jordan Santiago', 15);
           addMoreText('Moxie', 15);
-          addMoreText('present');
         case 5:
           deleteCoolText();
         case 6:

@@ -74,7 +74,7 @@ class FunkinLua {
 
 		var myFolder:Array<String> = this.scriptName.split('/');
 		#if MODS_ALLOWED
-		if(myFolder[0] + '/' == Paths.mods() && (Paths.currentModDirectory == myFolder[1] || Paths.getGlobalMods().contains(myFolder[1]))) //is inside mods folder
+		if(myFolder[0] + '/' == Paths.mods() && (Mods.currentModDirectory == myFolder[1] || Mods.getGlobalMods().contains(myFolder[1]))) //is inside mods folder
 			this.modFolder = myFolder[1];
 		#end
 		try{
@@ -207,7 +207,7 @@ class FunkinLua {
 		set('lowQuality', ClientPrefs.lowQuality);
 		set('shadersEnabled', ClientPrefs.shaders);
 		set('scriptName', scriptName);
-		set('currentModDirectory', Paths.currentModDirectory);
+		set('currentModDirectory', Mods.currentModDirectory);
 
 		// Noteskin/Splash shit
 		set('noteSkin', ClientPrefs.noteSkin);
@@ -1600,7 +1600,7 @@ class FunkinLua {
 			PlayState.changedDifficulty = false;
 			PlayState.chartingMode = false;
 			PlayState.instance.transitioning = true;
-			WeekData.loadTheFirstEnabledMod();
+			Mods.loadTopMod();
 			return true;
 		});
 		registerFunction("getSongPosition", function() {
@@ -3093,10 +3093,10 @@ class FunkinLua {
 		}
 
 		var foldersToCheck:Array<String> = [Paths.mods('shaders/')];
-		if(Paths.currentModDirectory != null && Paths.currentModDirectory.length > 0)
-			foldersToCheck.insert(0, Paths.mods(Paths.currentModDirectory + '/shaders/'));
+		if(Mods.currentModDirectory != null && Mods.currentModDirectory.length > 0)
+			foldersToCheck.insert(0, Paths.mods(Mods.currentModDirectory + '/shaders/'));
 
-		for(mod in Paths.getGlobalMods())
+		for(mod in Mods.getGlobalMods())
 			foldersToCheck.insert(0, Paths.mods(mod + '/shaders/'));
 
 		for (folder in foldersToCheck)

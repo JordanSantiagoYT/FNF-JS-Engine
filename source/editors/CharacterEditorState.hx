@@ -1223,32 +1223,18 @@ class CharacterEditorState extends MusicBeatState
 	}
 
 	function reloadCharacterDropDown() {
-		var charsLoaded:Map<String, Bool> = new Map();
-
-		#if MODS_ALLOWED
-		characterList = [];
-		var directories:Array<String> = [Paths.mods('characters/'), Paths.mods(Paths.currentModDirectory + '/characters/'), Paths.getPreloadPath('characters/')];
-		for(mod in Paths.getGlobalMods())
-			directories.push(Paths.mods(mod + '/characters/'));
-		for (i in 0...directories.length) {
-			var directory:String = directories[i];
-			if(FileSystem.exists(directory)) {
-				for (file in FileSystem.readDirectory(directory)) {
-					var path = haxe.io.Path.join([directory, file]);
-					if (!sys.FileSystem.isDirectory(path) && file.endsWith('.json')) {
-						var charToCheck:String = file.substr(0, file.length - 5);
-						if(!charsLoaded.exists(charToCheck)) {
-							characterList.push(charToCheck);
-							charsLoaded.set(charToCheck, true);
-						}
-					}
+		characterList = Mods.mergeAllTextsNamed('data/characterList.txt', Paths.getSharedPath());
+		var foldersToCheck:Array<String> = Mods.directoriesWithFile(Paths.getSharedPath(), 'characters/');
+		for (folder in foldersToCheck)
+			for (file in FileSystem.readDirectory(folder))
+				if(file.toLowerCase().endsWith('.json'))
+				{
+					var charToCheck:String = file.substr(0, file.length - 5);
+					if(!characterList.contains(charToCheck))
+						characterList.push(charToCheck);
 				}
-			}
-		}
-		#else
-		characterList = CoolUtil.coolTextFile(Paths.txt('characterList'));
-		#end
 
+		if(characterList.length < 1) characterList.push('');
 		charDropDown.setData(FlxUIDropDownMenuCustom.makeStrIdLabelArray(characterList, true));
 		charDropDown.selectedLabel = _char;
 	}
