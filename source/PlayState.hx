@@ -988,7 +988,7 @@ class PlayState extends MusicBeatState
 				timeBar.createGradientBar([FlxColor.TRANSPARENT], [FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2]), FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2])]);
 			add(timeBar);
 		}
-			add(timeTxt);
+		add(timeTxt);
 
 		timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
 
@@ -3311,10 +3311,10 @@ class PlayState extends MusicBeatState
 		{
 			if (!paused)
 			{
-				if(updateTime && FlxG.game.ticks % (Std.int(ClientPrefs.framerate / 60) > 0 ? Std.int(ClientPrefs.framerate / 60) : 1) == 0) {
-					if (timeBar.visible) {
-						songPercent = Conductor.songPosition / songLength;
-					}
+				if(updateTime) 
+				{
+					songPercent = (Conductor.songPosition - ClientPrefs.noteOffset) / songLength;
+
 					if (Conductor.songPosition - lastUpdateTime >= 1.0)
 					{
 						lastUpdateTime = Conductor.songPosition;

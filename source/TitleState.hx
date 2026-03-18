@@ -425,7 +425,6 @@ class TitleState extends MusicBeatState
         case 4:
           addMoreText('Jordan Santiago', 15);
           addMoreText('Moxie', 15);
-          addMoreText('present');
         case 5:
           deleteCoolText();
         case 6:
