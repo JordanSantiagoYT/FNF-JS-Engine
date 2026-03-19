@@ -394,8 +394,6 @@ class Project extends HXProject
         // setHaxedef("HXCPP_ALIGN_ALLOC");
         setHaxedef("HXCPP_FAST_LINK");
 
-		// setHaxedef("safeMode"); // what is this
-
 		// If we aren't using the Flixel debugger, strip it out.
 		if (!isDebug())
 		{
