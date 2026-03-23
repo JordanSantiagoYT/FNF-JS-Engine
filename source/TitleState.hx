@@ -158,7 +158,7 @@ class TitleState extends MusicBeatState
 
     switch (ClientPrefs.daMenuMusic) // change this if you're making a source mod, like add your own or something
     {
-      case 'Mashup' | 'VS Impostor' | 'VS Nonsense V2':
+      case 'Mashup' | 'VS Impostor':
         Conductor.changeBPM(102);
       case 'Dave & Bambi':
         Conductor.changeBPM(148);
