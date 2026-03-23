@@ -406,6 +406,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool',
 			true);
 		addOption(option);
+		option.onChange = updateFPSText;
 
 		var option:Option = new Option('Show Peak RAM Usage',
 			"If checked, the game will show your maximum RAM usage.",
@@ -413,6 +414,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool',
 			true);
 		addOption(option);
+		option.onChange = updateFPSText;
 
 		var option:Option = new Option('Show Debug Info',
 			"If checked, the game will show additional debug info.\nNote: Turn on FPS Counter before using this!",
@@ -420,6 +422,7 @@ class VisualsUISubState extends BaseOptionsMenu
 			'bool',
 			false);
 		addOption(option);
+		option.onChange = updateFPSText;
 
 		var option:Option = new Option('Counter Border',
 			'If unchecked, disables the Counter Border, increases performance at the cost of readability.',
@@ -519,11 +522,15 @@ class VisualsUISubState extends BaseOptionsMenu
 		super.destroy();
 	}
 
-	#if !mobile
 	function onChangeFPSCounter()
 	{
 		if(Main.fpsVar != null)
 			Main.fpsVar.visible = ClientPrefs.showFPS;
 	}
-	#end
+	
+	function updateFPSText()
+	{
+		if(Main.fpsVar != null)
+			Main.fpsVar.updateText(); // force update so it hides it
+	}
 }

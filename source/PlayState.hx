@@ -3311,7 +3311,7 @@ class PlayState extends MusicBeatState
 		{
 			if (!paused)
 			{
-				if(updateTime) 
+				if(updateTime)
 				{
 					songPercent = (Conductor.songPosition - ClientPrefs.noteOffset) / songLength;
 
