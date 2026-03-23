@@ -531,6 +531,6 @@ class VisualsUISubState extends BaseOptionsMenu
 	function updateFPSText()
 	{
 		if(Main.fpsVar != null)
-			Main.fpsVar.updateText(); // force update so it hides it
+			Main.fpsVar.updateText(); // force update the text
 	}
 }
