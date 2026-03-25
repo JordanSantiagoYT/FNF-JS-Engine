@@ -73,10 +73,10 @@ class Main extends Sprite
     CrashHandler.init();
     #if (cpp && windows)
     untyped __cpp__("
-				SetProcessDPIAware(); // allows for more crisp visuals
-				SetConsoleOutputCP(CP_UTF8);
-				DisableProcessWindowsGhosting() // lets you move the window and such if it's not responding
-		");
+		SetProcessDPIAware(); // allows for more crisp visuals
+		SetConsoleOutputCP(CP_UTF8);
+		DisableProcessWindowsGhosting(); // lets you move the window and such if it's not responding
+	");
     #end
     setupGame();
   }
@@ -157,9 +157,7 @@ class Main extends Sprite
 
   public static function getTime():Float
   {
-    #if flash
-    return flash.Lib.getTimer();
-    #elseif ((js && !nodejs) || electron)
+    #if ((js && !nodejs) || electron)
     return js.Browser.window.performance.now();
     #elseif sys
     return Sys.time() * 1000;
