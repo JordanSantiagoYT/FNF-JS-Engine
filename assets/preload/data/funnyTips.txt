@@ -101,3 +101,4 @@ JS Engine is mentioned in the Funkipedia Mods Wiki exactly 6 times.
 This is the 100th fact that was added in here.
 whatr if expung invades all world.
 Did you know that the Playstate has the most variables in the engine's source code?
+Did you know that if you search up "JS Engine" on google, this engine is the first thing that comes up?
