@@ -76,7 +76,7 @@ class Paths
   public static function initSplash(?splashSkin:String)
   {
     var skin:String = (splashSkin != null && splashSkin.length > 0) ? splashSkin : 'noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix();
-    splashFrames = getSparrowAtlas(splashSkin);
+    splashFrames = getSparrowAtlas(skin);
     if (splashFrames == null) splashFrames = getSparrowAtlas('noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix());
 
     // Do this to be able to just copy over the splash animations and not reallocate it
@@ -87,8 +87,8 @@ class Paths
 
     // Use a for loop for adding all of the animations in the splash spritesheet, otherwise it won't find the animations for the next recycle
 
-    var config = splashConfigs.get(splashSkin);
-    if (config == null) config = initSplashConfig(splashSkin);
+    var config = splashConfigs.get(skin);
+    if (config == null) config = initSplashConfig(skin);
     var maxAnims:Int = 0;
     var animName:String = (config != null && config.anim != null && config.anim.length > 0) ? config.anim : "note splash";
 
