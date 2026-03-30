@@ -37,8 +37,6 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var tauntOnGo:Bool = true;
 	public static var oldSusStyle:Bool = false;
 	public static var showRendered:Bool = false;
-	public static var showcaseMode:Bool = false;
-	public static var showcaseST:String = 'JS';
 	public static var botWatermark:Bool = true;
 	public static var missRating:Bool = false;
 	public static var noteColorStyle:String = 'Normal';

@@ -233,7 +233,7 @@ class PlayState extends MusicBeatState
 	public var cpuControlled(default, set):Bool = false;
 	inline function set_cpuControlled(value:Bool){
 		cpuControlled = value;
-		if (botplayTxt != null && !ClientPrefs.showcaseMode) // this assures it'll always show up
+		if (botplayTxt != null) // this assures it'll always show up
 			botplayTxt.visible = (!ClientPrefs.hideHud && ClientPrefs.botTxtStyle != 'Hide') ? cpuControlled : false;
 
 		return cpuControlled;
@@ -307,7 +307,6 @@ class PlayState extends MusicBeatState
 	public var scoreTxt:FlxText;
 	var timeTxt:FlxText;
 
-	var hitTxt:FlxText;
 	var scoreTxtTween:FlxTween;
 
 	public static var campaignScore:Float = 0;
@@ -504,7 +503,7 @@ class PlayState extends MusicBeatState
 		middleScroll = ClientPrefs.middleScroll || bothSides;
 		if (bothSides) opponentChart = false;
 
-		if (ClientPrefs.showcaseMode || ffmpegMode)
+		if (ffmpegMode)
 			cpuControlled = true;
 
 		camGame = new FlxCamera();
@@ -1198,22 +1197,6 @@ class PlayState extends MusicBeatState
 
 		if (ClientPrefs.watermarkStyle == 'Hide' && EngineWatermark != null) EngineWatermark.visible = false;
 
-		if (ClientPrefs.showcaseMode && !ClientPrefs.charsAndBG) {
-			hitTxt = new FlxText(0, 20, 10000, "test", 42);
-			hitTxt.setFormat(Paths.font("vcr.ttf"), 42, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-			hitTxt.scrollFactor.set();
-			hitTxt.borderSize = 2;
-			hitTxt.visible = true;
-			hitTxt.cameras = [camHUD];
-			hitTxt.screenCenter(Y);
-			add(hitTxt);
-			var chromaScreen = new FlxSprite(-5000, -2000).makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.GREEN);
-			chromaScreen.scrollFactor.set(0, 0);
-			chromaScreen.scale.set(3, 3);
-			chromaScreen.updateHitbox();
-			add(chromaScreen);
-		}
-
 		// TODO: cleanup playstate, by moving most of this and other duplicate functions like healthbop, etc
 		scoreTxt = new FlxText(0, healthBarBG.y + 50, FlxG.width, "", 20);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, CENTER, OUTLINE,FlxColor.BLACK);
@@ -1298,7 +1281,7 @@ class PlayState extends MusicBeatState
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
-		botplayTxt.visible = cpuControlled && (!ClientPrefs.hideHud && ClientPrefs.botTxtStyle != 'Hide' && !ClientPrefs.showcaseMode);
+		botplayTxt.visible = cpuControlled && (!ClientPrefs.hideHud && ClientPrefs.botTxtStyle != 'Hide');
 		add(botplayTxt);
 		if (ClientPrefs.downScroll)
 			botplayTxt.y = timeBarBG.y - 78;
@@ -1331,19 +1314,6 @@ class PlayState extends MusicBeatState
 				botplayTxt.text = 'Practice Mode';
 				botplayTxt.visible = true;
 			}
-				if (ClientPrefs.showcaseMode && ClientPrefs.showcaseST != 'AMZ') {
-				botplayTxt.y += (!ClientPrefs.downScroll ? 60 : -60);
-				botplayTxt.text = 'NPS: $nps/$maxNPS\nOpp NPS: $oppNPS/$maxOppNPS';
-				botplayTxt.visible = true;
-			}
-		}
-
-		// Showcase and HUD logic
-		if (ClientPrefs.showcaseMode) {
-			final items = (ClientPrefs.showcaseST == 'AMZ')
-				? [scoreTxt, botplayTxt, timeBarBG, timeBar, timeTxt]
-				: [scoreTxt, healthBarBG, healthBar, iconP1, iconP2];
-			for (item in items) if (item != null) item.visible = false;
 		}
 
 		if (ClientPrefs.hideHud) {
@@ -3062,18 +3032,6 @@ class PlayState extends MusicBeatState
 		energyTxt.text = (botEnergy < 2 ? FlxMath.roundDecimal(botEnergy * 50, 0) + '%' : 'Full');
 		energyTxt.y = (FlxG.height / 1.3) - (botEnergy * 50 * 4);
 
-		if (ClientPrefs.showcaseMode && botplayTxt != null)
-		{
-			botplayTxt.text = '${formatNumber(Math.abs(enemyHits))}/${formatNumber(Math.abs(totalNotesPlayed))}\nNPS: ${formatNumber(nps)}/${formatNumber(maxNPS)}\nOpp NPS: ${formatNumber(oppNPS)}/${formatNumber(maxOppNPS)}';
-			if (polyphonyOppo != 1 || polyphonyBF != 1)
-			{
-				var set:String = formatNumber(polyphonyBF);
-				if (formatNumber(polyphonyOppo) != formatNumber(polyphonyBF))
-					set = formatNumber(polyphonyOppo) + "/" + formatNumber(polyphonyBF);
-				botplayTxt.text += '\nNote Multiplier: ' + set;
-			}
-		}
-
 		callOnLuas('onUpdate', [elapsed]);
 		super.update(elapsed);
 
@@ -3143,15 +3101,6 @@ class PlayState extends MusicBeatState
 			if (scoreTxtUpdateFrame <= 8 && scoreTxt != null) updateScore();
 		}
 
-		if (ClientPrefs.showcaseMode && !ClientPrefs.charsAndBG) {
-		hitTxt.text = 'Notes Hit: ' + formatNumber(totalNotesPlayed) + ' / ' + formatNumber(totalNotes)
-		+ '\nNPS: ' + formatNumber(nps) + '/' + formatNumber(maxNPS)
-		+ '\nOpponent Notes Hit: ' + formatNumber(enemyHits) + ' / ' + formatNumber(opponentNoteTotal)
-		+ '\nOpponent NPS: ' + formatNumber(oppNPS) + '/' + formatNumber(maxOppNPS)
-		+ '\nTotal Note Hits: ' + formatNumber(Math.abs(totalNotesPlayed + enemyHits))
-		+ '\nVideo Speedup: ' + Math.abs(playbackRate / playbackRate / playbackRate) + 'x';
-		}
-
 		if (scoreTxtUpdateFrame > 0) scoreTxtUpdateFrame = 0;
 		if (popUpsFrame > 0) popUpsFrame = 0;
 		if (missRecalcsPerFrame > 0) missRecalcsPerFrame = 0;
@@ -3181,7 +3130,7 @@ class PlayState extends MusicBeatState
 			botplaySine += 180 * elapsed;
 			botplayTxt.alpha = 1 - Math.sin((Math.PI * botplaySine) / 180 * playbackRate);
 		}
-		if(botplayTxt != null && cpuControlled && !ClientPrefs.showcaseMode && !botplayUsed) botplayUsed = true;
+		if(botplayTxt != null && cpuControlled && !botplayUsed) botplayUsed = true;
 
 		if (controls.PAUSE && startedCountdown && canPause && !heyStopTrying)
 		{
