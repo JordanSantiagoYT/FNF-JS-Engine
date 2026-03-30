@@ -513,38 +513,47 @@ class Note extends FlxSprite
 	public function clipToStrumNote(myStrum:StrumNote)
 	{
 		final center:Float = myStrum.y + offsetY + Note.swagWidth / 2;
-		if(isSustainNote && (mustPress || !ignoreNote) &&
-			(!mustPress || (wasGoodHit || !canBeHit)))
-		{
-			final swagRect:FlxRect = clipRect != null ? clipRect : new FlxRect(0, 0, frameWidth, frameHeight);
+		if (!isSustainNote || (!mustPress && ignoreNote) ||
+			(mustPress && !wasGoodHit && canBeHit)) return;
 
-			if (myStrum.downScroll)
+		if (clipRect == null) clipRect = FlxRect.get(0, 0, frameWidth, frameHeight);
+		final swagRect = clipRect;
+
+		if (myStrum.downScroll)
+		{
+			if (y - offset.y * scale.y + height >= center)
 			{
-				if(y - offset.y * scale.y + height >= center)
-				{
-					swagRect.width = frameWidth;
-					swagRect.height = (center - y) / scale.y;
-					swagRect.y = frameHeight - swagRect.height;
-				}
+				swagRect.height = (center - y) / scale.y;
+				swagRect.y = frameHeight - swagRect.height;
+				swagRect.width = frameWidth;
 			}
-			else if (y + offset.y * scale.y <= center)
-			{
-				swagRect.y = (center - y) / scale.y;
-				swagRect.width = width / scale.x;
-				swagRect.height = (height / scale.y) - swagRect.y;
-			}
-			clipRect = swagRect;
 		}
+		else if (y + offset.y * scale.y <= center)
+		{
+			swagRect.y = (center - y) / scale.y;
+			swagRect.height = (height / scale.y) - swagRect.y;
+			swagRect.width = width / scale.x;
+		}
+
+		// Bypass accessor + directly update _frame like the Codename approach
+		@:bypassAccessor clipRect = swagRect;
+		@:privateAccess if (frame != null && _frame != null)
+			_frame = frame.clipTo(swagRect, _frame);
+		dirty = true;
 	}
 
 	@:noCompletion
-	override function set_clipRect(rect:FlxRect):FlxRect
-	{
-		clipRect = rect;
+	override function set_clipRect(rect:FlxRect):FlxRect {
+		@:bypassAccessor clipRect = rect;
 
-		if (frames != null)
-			frame = frames.frames[animation.frameIndex];
-
+		@:privateAccess if (frame != null) {
+			if (rect != null && _frame != null)
+				_frame = frame.clipTo(rect, _frame);
+			else if (_frame != null)
+				_frame = frame.copyTo(_frame);
+			dirty = true;
+		}
+		
 		return rect;
 	}
 
