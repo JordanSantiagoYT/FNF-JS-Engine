@@ -5,9 +5,6 @@ import flixel.addons.text.FlxTypeText;
 import flixel.input.FlxKeyManager;
 import haxe.format.JsonParser;
 
-#if sys
-#end
-
 typedef DialogueCharacterFile = {
 	var image:String;
 	var dialogue_pos:String;
@@ -46,11 +43,7 @@ class DialogueCharacter extends FlxSprite
 	public static var DEFAULT_SCALE:Float = 0.7;
 
 	public var jsonFile:DialogueCharacterFile = null;
-	#if (haxe >= "4.0.0")
 	public var dialogueAnimations:Map<String, DialogueAnimArray> = new Map();
-	#else
-	public var dialogueAnimations:Map<String, DialogueAnimArray> = new Map<String, DialogueAnimArray>();
-	#end
 
 	public var startingPos:Float = 0; //For center characters, it works as the starting Y, for everything else it works as starting X
 	public var isGhost:Bool = false; //For the editor
@@ -226,11 +219,7 @@ class DialogueBoxPsych extends FlxSpriteGroup
 	public static var DEFAULT_CHAR_Y:Float = 60;
 
 	function spawnCharacters() {
-		#if (haxe >= "4.0.0")
 		var charsMap:Map<String, Bool> = new Map();
-		#else
-		var charsMap:Map<String, Bool> = new Map<String, Bool>();
-		#end
 		for (i in 0...dialogueList.dialogue.length) {
 			if(dialogueList.dialogue[i] != null) {
 				var charToAdd:String = dialogueList.dialogue[i].portrait;
@@ -503,14 +492,27 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		}
 	}
 
-	public static function parseDialogue(path:String):DialogueFile {
+	inline public static function parseDialogue(path:String):DialogueFile {
 		#if MODS_ALLOWED
-		if(FileSystem.exists(path))
-		{
-			return cast Json.parse(File.getContent(path));
-		}
+		return cast (FileSystem.exists(path)) ? Json.parse(File.getContent(path)) : dummy();
+		#else
+		return cast (Assets.exists(path, TEXT)) ? Json.parse(Assets.getText(path)) : dummy();
 		#end
-		return cast Json.parse(Assets.getText(path));
+	}
+
+	inline public static function dummy():DialogueFile {
+	    return {
+	        dialogue: [
+	            {
+	                portrait: "bf",
+	                expression: "talk",
+	                text: "DIALOGUE NOT FOUND",
+	                boxState: "normal",
+	                speed: 0.05,
+	                sound: null
+	            }
+	        ]
+	    };
 	}
 
 	public static function updateBoxOffsets(box:FlxSprite) { //Had to make it static because of the editors

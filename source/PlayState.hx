@@ -4797,17 +4797,6 @@ class PlayState extends MusicBeatState
 		if (opponentChart) char = dad;
 		if (startedCountdown && !char.stunned && generatedMusic)
 		{
-			// rewritten inputs???
-			/*
-			for (group in [notes, sustainNotes]) group.forEachAlive(function(daNote:Note)
-			{
-				// hold note functions
-				if (!usingBotEnergy && strumsBlocked[daNote.noteData] != true && daNote.isSustainNote && holdArray[daNote.noteData] && daNote.canBeHit
-				&& daNote.mustPress && !daNote.tooLate && !daNote.wasGoodHit && !daNote.blockHit) {
-					goodNoteHit(daNote);
-				}
-			});
-			*/
 			for (group in [notes, sustainNotes]){
 				if (group.length > 0)
 				{
