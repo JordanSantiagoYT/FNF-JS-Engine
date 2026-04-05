@@ -55,11 +55,11 @@ class Spooky extends BaseStage
 		lightningOffset = FlxG.random.int(8, 24);
 
 		if(boyfriend.animOffsets.exists('scared')) {
-			boyfriend.playAnim('scared', true);
+			boyfriend.playAnim('scared');
 		}
 
 		if(dad.animOffsets.exists('scared')) {
-			dad.playAnim('scared', true);
+			dad.playAnim('scared');
 		}
 
 		if(gf != null && gf.animOffsets.exists('scared')) {
