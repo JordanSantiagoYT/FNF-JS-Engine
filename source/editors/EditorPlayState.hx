@@ -12,8 +12,6 @@ import play.objects.SustainSplash;
 class EditorPlayState extends MusicBeatState
 {
 	// Yes, this is mostly a copy of PlayState, it's kinda dumb to make a direct copy of it but... ehhh
-	private var strumLine:FlxSprite;
-	private var comboGroup:FlxTypedGroup<FlxSprite>;
 	public var strumLineNotes:FlxTypedGroup<StrumNote>;
 	public var opponentStrums:FlxTypedGroup<StrumNote>;
 	public var playerStrums:FlxTypedGroup<StrumNote>;
@@ -75,13 +73,6 @@ class EditorPlayState extends MusicBeatState
 			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('note_up')),
 			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('note_right'))
 		];
-
-		strumLine = new FlxSprite(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X, 50).makeGraphic(FlxG.width, 10);
-		if(ClientPrefs.downScroll) strumLine.y = FlxG.height - 150;
-		strumLine.scrollFactor.set();
-
-		comboGroup = new FlxTypedGroup<FlxSprite>();
-		add(comboGroup);
 
 		sustainNotes = new FlxTypedGroup<Note>();
 		add(sustainNotes);
@@ -169,13 +160,12 @@ class EditorPlayState extends MusicBeatState
 		super.create();
 	}
 
-	//var songScore:Int = 0;
 	var songHits:Int = 0;
 	var songMisses:Int = 0;
 	var startingSong:Bool = true;
 	private function generateSong(?startingPoint:Float = 0):Void
 	{
-	   		final startTime = Sys.time();
+	   	final startTime = Sys.time();
 
 		Conductor.changeBPM(PlayState.SONG.bpm);
 
@@ -757,7 +747,6 @@ class EditorPlayState extends MusicBeatState
 	{
 		combo = 0;
 
-		//songScore -= 10;
 		songMisses++;
 
 		FlxG.sound.play(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.1, 0.2));
@@ -820,15 +809,7 @@ class EditorPlayState extends MusicBeatState
 
 		vocals.volume = 1;
 
-		var placement:String = Std.string(combo);
-
-		var coolText:FlxText = new FlxText(0, 0, 0, placement, 32);
-		coolText.x = COMBO_X;
-		coolText.y = COMBO_Y;
-		//
-
 		var rating:FlxSprite = new FlxSprite();
-		//var score:Int = 350;
 
 		var daRating:String = "sick";
 
@@ -855,7 +836,7 @@ class EditorPlayState extends MusicBeatState
 
 		rating.loadGraphic(Paths.image(pixelShitPart1 + daRating + pixelShitPart2));
 		rating.screenCenter();
-		rating.x = coolText.x - 40;
+		rating.x = COMBO_X - 40;
 		rating.y -= 60;
 		rating.acceleration.y = 550;
 		rating.velocity.y -= FlxG.random.int(140, 175);
@@ -864,7 +845,7 @@ class EditorPlayState extends MusicBeatState
 		rating.x += ClientPrefs.comboOffset[0];
 		rating.y -= ClientPrefs.comboOffset[1];
 
-		comboGroup.add(rating);
+		add(rating);
 
 		if (!PlayState.isPixelStage)
 		{
@@ -877,21 +858,14 @@ class EditorPlayState extends MusicBeatState
 		}
 		rating.updateHitbox();
 
-		var seperatedScore:Array<Int> = [];
-
-		if(combo >= 1000) {
-			seperatedScore.push(Math.floor(combo / 1000) % 10);
-		}
-		seperatedScore.push(Math.floor(combo / 100) % 10);
-		seperatedScore.push(Math.floor(combo / 10) % 10);
-		seperatedScore.push(combo % 10);
+		var seperatedScore:Array<String> = (combo + "").split('');
 
 		var daLoop:Int = 0;
 		for (i in seperatedScore)
 		{
-			var numScore:FlxSprite = new FlxSprite().loadGraphic(Paths.image(pixelShitPart1 + 'num' + Std.int(i) + pixelShitPart2));
+			var numScore:FlxSprite = new FlxSprite().loadGraphic(Paths.image(pixelShitPart1 + 'num' + i + pixelShitPart2));
 			numScore.screenCenter();
-			numScore.x = coolText.x + (43 * daLoop) - 90;
+			numScore.x = COMBO_X + (43 * daLoop) - 90;
 			numScore.y += 80;
 
 			numScore.x += ClientPrefs.comboOffset[2];
@@ -926,12 +900,9 @@ class EditorPlayState extends MusicBeatState
 			daLoop++;
 		}
 
-		coolText.text = Std.string(seperatedScore);
-
 		FlxTween.tween(rating, {alpha: 0}, 0.2, {
 			onComplete: function(tween:FlxTween)
 			{
-				coolText.destroy();
 				rating.destroy();
 			},
 			startDelay: Conductor.crochet * 0.001
@@ -940,6 +911,7 @@ class EditorPlayState extends MusicBeatState
 
 	private function generateStaticArrows(player:Int):Void
 	{
+		final strumLine:FlxPoint = FlxPoint.get(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X, (ClientPrefs.downScroll) ? FlxG.height - 150 : 50);
 		for (i in 0...4)
 		{
 			var targetAlpha:Float = 1;
@@ -949,7 +921,7 @@ class EditorPlayState extends MusicBeatState
 				else if(ClientPrefs.middleScroll) targetAlpha = 0.35;
 			}
 
-			var babyArrow:StrumNote = new StrumNote(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X, strumLine.y, i, player);
+			var babyArrow:StrumNote = new StrumNote(strumLine.x, strumLine.y, i, player);
 			babyArrow.alpha = targetAlpha;
 			babyArrow.downScroll = ClientPrefs.downScroll;
 
@@ -972,6 +944,7 @@ class EditorPlayState extends MusicBeatState
 			strumLineNotes.add(babyArrow);
 			babyArrow.postAddedToGroup();
 		}
+		strumLine.put();
 	}
 
 
