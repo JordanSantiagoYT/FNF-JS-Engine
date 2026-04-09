@@ -67,15 +67,7 @@ class OutdatedState extends MusicBeatState
 		checker.x += 0.45 / (ClientPrefs.framerate / 60);
 		checker.y += (0.16 / (ClientPrefs.framerate / 60));
 		if(!leftState) {
-			if (FlxG.keys.justPressed.ENTER) {
-				leftState = true;
-				#if windows
-				FlxG.switchState(UpdateState.new);
-				#else
-				CoolUtil.browserLoad("https://github.com/JordanSantiagoYT/FNF-JS-Engine/releases/latest");
-				#end
-			}
-			if (FlxG.keys.justPressed.SPACE) {
+			if (FlxG.keys.justPressed.ENTER || FlxG.keys.justPressed.SPACE) {
 				CoolUtil.browserLoad("https://github.com/JordanSantiagoYT/FNF-JS-Engine/releases/latest");
 			}
 			else if(controls.BACK) {

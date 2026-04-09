@@ -129,64 +129,6 @@ class CoolUtil
 		Sys.exit(0);
 	}
 
-	public static function updateTheEngine():Void
-	{
-		// Get the directory of the executable
-		var exePath = Sys.programPath();
-		var exeDir = Path.directory(exePath);
-
-		// Construct the source and destination paths
-		var sourceDirectory = Path.join([exeDir, "update", "raw"]);
-		var destinationDirectory = exeDir;
-
-		var scriptContent:String;
-		var scriptFileName:String;
-		var appName:String = "JSEngine"; // The base name of your executable/application bundle
-
-		#if windows
-		scriptFileName = "update.bat";
-		// Escape backslashes for use in the batch script
-		var winSourceDir = sourceDirectory.split('\\').join('\\\\');
-		var winDestDir = destinationDirectory.split('\\').join('\\\\');
-		var winExeName = appName + ".exe";
-
-		scriptContent = "@echo off\r\n";
-		scriptContent += "setlocal enabledelayedexpansion\r\n";
-		scriptContent += "set \"sourceDirectory=" + winSourceDir + "\"\r\n";
-		scriptContent += "set \"destinationDirectory=" + winDestDir + "\"\r\n";
-		scriptContent += "if not exist \"!sourceDirectory!\" (\r\n";
-		scriptContent += "   echo Source directory does not exist: !sourceDirectory!\r\n";
-		scriptContent += "   pause\r\n";
-		scriptContent += "   exit /b\r\n";
-		scriptContent += ")\r\n";
-		scriptContent += "taskkill /F /IM " + winExeName + " >nul 2>&1\r\n"; // >nul 2>&1 to suppress success messages
-		scriptContent += "echo Waiting for 5 seconds to ensure application is closed...\r\n";
-		scriptContent += "timeout /t 5 /nobreak >nul\r\n";
-		scriptContent += "echo Copying files from !sourceDirectory! to !destinationDirectory!...\r\n";
-		scriptContent += "xcopy /e /y /i \"!sourceDirectory!\" \"!destinationDirectory!\"\r\n"; // /i assumes dest is dir if missing
-		scriptContent += "echo Cleaning up temporary update files...\r\n";
-		scriptContent += "rd /s /q \"!sourceDirectory!\" >nul 2>&1\r\n"; // Delete raw folder
-		scriptContent += "rd /s /q \"%~dp0\\update\" >nul 2>&1\r\n"; // Delete parent update folder
-		scriptContent += "echo Restarting application...\r\n";
-		scriptContent += "start /b \"\" \"!destinationDirectory!\\" + winExeName + "\"\r\n"; // Use /b to prevent new window, empty "" for title
-		scriptContent += "del \"%~f0\" >nul 2>&1\r\n"; // Delete self
-		scriptContent += "endlocal\r\n";
-		#else
-		// Fallback for unsupported platforms or just exit
-		Application.current.window.alert("Automatic update is not supported on this platform.");
-		Sys.exit(0);
-		return; // Exit the function early
-		#end
-
-		// Save the script file
-		var scriptPath = Path.join([exeDir, scriptFileName]);
-		File.saveContent(scriptPath, scriptContent);
-
-		// Execute the script
-		new Process(scriptPath, []);
-		Sys.exit(0); // Exit the current game instance
-	}
-
 	public static function checkForOBS():Bool
 	{
 		var fs:Bool = FlxG.fullscreen;
