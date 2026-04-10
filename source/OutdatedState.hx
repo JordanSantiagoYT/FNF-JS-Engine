@@ -54,7 +54,7 @@ class OutdatedState extends MusicBeatState
 		add(changelog);
 
 		updateText = new FlxText(0, 10, FlxG.width,
-			"Press SPACE to view the full changelog, ENTER to update or ESCAPE to ignore this!"
+			"Press SPACE/ENTER to go to GitHub to update, or ESCAPE to ignore this!"
 			,24);
 		updateText.setFormat("VCR OSD Mono", 24, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			updateText.y = 710 - updateText.height;
