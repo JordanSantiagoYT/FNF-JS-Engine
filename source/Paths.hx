@@ -482,7 +482,7 @@ class Paths
         final musicName = 'freakyMenu-' + ClientPrefs.daMenuMusic;
 
         #if MODS_ALLOWED
-        playModMusic('freakyMenu', musicName, volume); // TODO: add HScript support here
+        playModMusic(musicName, 'freakyMenu', volume); // TODO: add HScript support here
         #else
         FlxG.sound.playMusic(music(musicName), volume);
         #end
@@ -888,15 +888,16 @@ class Paths
 
   public static function playModMusic(file:String, fallback:String, volume:Float = 1):Void
   {
-    final path = Paths.modFolders('music/' + file + '.ogg');
-    if (FileSystem.exists(path))
-    {
-      final sound = Sound.fromFile(path);
-      FlxG.sound.playMusic(sound, volume, true);
-    } else
-    {
+    final moddedNew = Paths.modFolders('music/' + file + '.ogg');
+    final moddedLegacy = Paths.modFolders('music/${fallback}.ogg');
+    for (track in [moddedNew, moddedLegacy])
+      if (FileSystem.exists(track))
+      {
+        FlxG.sound.playMusic(Sound.fromFile(track), volume, true);
+        return;
+      }
+
       FlxG.sound.playMusic(Paths.music(fallback), volume);
-    }
   }
 
   static public function modFolders(key:String)
