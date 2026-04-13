@@ -480,6 +480,7 @@ class Paths
       } else
       {
         final musicName = 'freakyMenu-' + ClientPrefs.daMenuMusic;
+        // trace(musicName);
 
         #if MODS_ALLOWED
         playModMusic(musicName, 'freakyMenu', volume); // TODO: add HScript support here
@@ -891,13 +892,25 @@ class Paths
     final moddedNew = Paths.modFolders('music/' + file + '.ogg');
     final moddedLegacy = Paths.modFolders('music/${fallback}.ogg');
     for (track in [moddedNew, moddedLegacy])
+    {
+      // trace('track: ' + track);
       if (FileSystem.exists(track))
       {
         FlxG.sound.playMusic(Sound.fromFile(track), volume, true);
+        // trace('curTrack: ' + track);
         return;
       }
-
+    }
+    final basePath = Paths.getPath('music/' + file + '.ogg', SOUND);
+    if (OpenFlAssets.exists(basePath))
+    {
+      FlxG.sound.playMusic(Paths.music(file), volume);
+      trace('fallback to base selected theme: ' + file);
+    } else
+    {
       FlxG.sound.playMusic(Paths.music(fallback), volume);
+      trace('fallback to default: ' + fallback);
+    }
   }
 
   static public function modFolders(key:String)
