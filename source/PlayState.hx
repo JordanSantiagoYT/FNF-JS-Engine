@@ -1877,9 +1877,9 @@ class PlayState extends MusicBeatState
 	public static function formatCompactNumber(number:Float):String
 	{
 		var suffixes1:Array<String> = ['', 'mi', 'bi', 'tri', 'quadri', 'quinti', 'sexti', 'septi', 'octi', 'noni'];
-	var tenSuffixes:Array<Array<String>> = [['', '', ''], ['deci', 'n', ''], ['viginti', 'm', 's'], ['trigenti', 'n', 's'], ['quadraginti', 'n', 's'], ['quinquaginti', 'n', 's'], ['sexaginti', 'n', ''], ['septuaginti', 'n', ''],['octoginti', 'm', 'x'], ['nonaginti', '', '']];
-	var decSuffixes:Array<Array<Dynamic>> = [['', false], ['un', false], ['duo', false], ['tre', true], ['quattuor', false], ['quin', false], ['se', true], ['septe', true], ['octo', false], ['nove', true]];
-	var centiSuffixes:Array<Array<String>> = [['', '', ''], ['centi', 'n', 'x'], ['ducenti', 'n', ''], ['trecenti', 'n', 's'], ['quadringenti', 'n', 's'], ['quingenti', 'n', 's'], ['sescenti', 'n', ''], ['septingenti', 'n', ''], ['octingenti', 'm', 'x'], ['nongenti', '', '']];
+		var tenSuffixes:Array<Array<String>> = [['', '', ''], ['deci', 'n', ''], ['viginti', 'm', 's'], ['trigenti', 'n', 's'], ['quadraginti', 'n', 's'], ['quinquaginti', 'n', 's'], ['sexaginti', 'n', ''], ['septuaginti', 'n', ''],['octoginti', 'm', 'x'], ['nonaginti', '', '']];
+		var decSuffixes:Array<Array<Dynamic>> = [['', false], ['un', false], ['duo', false], ['tre', true], ['quattuor', false], ['quin', false], ['se', true], ['septe', true], ['octo', false], ['nove', true]];
+		var centiSuffixes:Array<Array<String>> = [['', '', ''], ['centi', 'n', 'x'], ['ducenti', 'n', ''], ['trecenti', 'n', 's'], ['quadringenti', 'n', 's'], ['quingenti', 'n', 's'], ['sescenti', 'n', ''], ['septingenti', 'n', ''], ['octingenti', 'm', 'x'], ['nongenti', '', '']];
 
 		var magnitude:Int = -1;
 		var num:Float = number;
@@ -1887,7 +1887,7 @@ class PlayState extends MusicBeatState
 		while (num >= 1000.0)
 		{
 			num /= 1000.0;
-      magnitude++;
+			magnitude++;
 		}
 
 		// Determine which suffixes to use
@@ -3352,7 +3352,7 @@ class PlayState extends MusicBeatState
 				setSongTime(Conductor.songPosition + 10000);
 				clearNotesBefore(Conductor.songPosition);
 			}
-			if(FlxG.keys.justPressed.THREE) { //Go 10 seconds into the future :O
+			if(FlxG.keys.justPressed.THREE) { //Go 10 seconds back into the past :O
 				setSongTime(Conductor.songPosition - 10000);
 				clearNotesBefore(Conductor.songPosition);
 			}

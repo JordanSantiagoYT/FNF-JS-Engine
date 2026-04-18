@@ -285,8 +285,21 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 					if(holdTime > 0.5 || pressed) {
 						if(pressed) {
 							var add:Dynamic = null;
+
 							if(curOption.type != 'string') {
-								add = controls.UI_LEFT ? (FlxG.keys.pressed.CONTROL ? -curOption.slowChangeVal : -curOption.changeValue) : (FlxG.keys.pressed.CONTROL ? curOption.slowChangeVal : curOption.changeValue);
+								var step:Float = curOption.changeValue;
+
+								if (FlxG.keys.pressed.CONTROL)
+									step = curOption.slowChangeVal;
+								else if (FlxG.keys.pressed.SHIFT)
+								{
+									if(curOption.type == 'int')
+										step = 5;
+									else
+										step = 1;
+								}
+
+								add = controls.UI_LEFT ? -step : step;
 							}
 
 							switch(curOption.type)
