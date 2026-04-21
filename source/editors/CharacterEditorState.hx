@@ -169,6 +169,7 @@ class CharacterEditorState extends MusicBeatState
 		var tabs = [
 			{name: 'Character', label: 'Character'},
 			{name: 'Animations', label: 'Animations'},
+			{name: 'Crossfades', label: 'Crossfades'},
 			{name: 'Misc', label: 'Misc'},
 		];
 		UI_characterbox = new FlxUITabMenu(null, tabs, true);
@@ -187,6 +188,7 @@ class CharacterEditorState extends MusicBeatState
 		addCharacterUI();
 		addAnimationsUI();
 		addMiscUI();
+		addCrossfadesUI();
 
 		UI_box.selected_tab_id = 'Settings';
 		UI_characterbox.selected_tab_id = 'Character';
@@ -530,7 +532,7 @@ class CharacterEditorState extends MusicBeatState
 
 		for (i in tab_group.members)
 			i.cameras = [camMenu];
-		
+
 		UI_box.addGroup(tab_group);
 	}
 
@@ -813,6 +815,56 @@ class CharacterEditorState extends MusicBeatState
 		UI_characterbox.addGroup(tab_group);
 	}
 
+	var trailLengthStepper:FlxUINumericStepper;
+	var trailDelayStepper:FlxUINumericStepper;
+	var trailAlphaStepper:FlxUINumericStepper;
+	var trailDiffStepper:FlxUINumericStepper;
+
+	var flixelTrailCheckBox:FlxUICheckBox;
+
+	function addCrossfadesUI()
+	{
+		var tab_group = new FlxUI(null, UI_box);
+		tab_group.name = "Crossfades";
+
+		flixelTrailCheckBox = new FlxUICheckBox(15, 60, null, null, "Trail", 50);
+		flixelTrailCheckBox.checked = char.flixelTrail;
+		flixelTrailCheckBox.callback = function()
+		{
+			char.flixelTrail = false;
+			if (flixelTrailCheckBox.checked)
+			{
+				char.flixelTrail = true;
+			}
+			char.flixelTrail = flixelTrailCheckBox.checked;
+			ghostChar.flixelTrail = char.flixelTrail;
+		};
+
+		trailLengthStepper = new FlxUINumericStepper(flixelTrailCheckBox.x + 60, flixelTrailCheckBox.y, 1, 4, 1, 24, 1);
+		if (Reflect.getProperty(trailLengthStepper, 'name') == null)
+			Reflect.setProperty(trailLengthStepper, 'name', 'trailLengthStepper');
+		trailDelayStepper = new FlxUINumericStepper(trailLengthStepper.x + 70, flixelTrailCheckBox.y, 1, 24, 0, 90, 1);
+		if (Reflect.getProperty(trailDelayStepper, 'name') == null)
+			Reflect.setProperty(trailDelayStepper, 'name', 'trailDelayStepper');
+		trailAlphaStepper = new FlxUINumericStepper(trailDelayStepper.x + 70, flixelTrailCheckBox.y, 0.1, 0.3, 0, 1, 3);
+		if (Reflect.getProperty(trailAlphaStepper, 'name') == null)
+			Reflect.setProperty(trailAlphaStepper, 'name', 'trailAlphaStepper');
+		trailDiffStepper = new FlxUINumericStepper(trailAlphaStepper.x + 70, flixelTrailCheckBox.y, 0.05, 0.069, 0, 1, 4);
+		if (Reflect.getProperty(trailDiffStepper, 'name') == null)
+			Reflect.setProperty(trailDiffStepper, 'name', 'trailDiffStepper');
+
+		tab_group.add(new FlxText(trailLengthStepper.x, trailLengthStepper.y - 18, 0, 'Trail Length:'));
+		tab_group.add(new FlxText(trailDelayStepper.x, trailDelayStepper.y - 18, 0, 'Trail Delay:'));
+		tab_group.add(new FlxText(trailAlphaStepper.x, trailAlphaStepper.y - 18, 0, 'Trail Alpha:'));
+		tab_group.add(new FlxText(trailDiffStepper.x, trailDiffStepper.y - 18, 0, 'Trail Diff:'));
+		tab_group.add(trailLengthStepper);
+		tab_group.add(trailDelayStepper);
+		tab_group.add(trailAlphaStepper);
+		tab_group.add(trailDiffStepper);
+		tab_group.add(flixelTrailCheckBox);
+		UI_characterbox.addGroup(tab_group);
+	}
+
 	var animationDropDown:FlxUIDropDownMenuCustom;
 	var animationInputText:FlxUIInputText;
 	var animationNameInputText:FlxUIInputText;
@@ -1019,6 +1071,26 @@ class CharacterEditorState extends MusicBeatState
 				char.healthColorArray[2] = Math.round(healthColorStepperB.value);
 				if (barToUse == 1) healthBarBG.color = FlxColor.fromRGB(char.healthColorArray[0], char.healthColorArray[1], char.healthColorArray[2]);
 			}
+			else if(sender == trailLengthStepper)
+			{
+				char.trailLength = Std.int(trailLengthStepper.value);
+				ghostChar.trailLength = char.trailLength;
+			}
+			else if(sender == trailDelayStepper)
+			{
+				char.trailDelay = Std.int(sender.value);
+				ghostChar.trailDelay = char.trailDelay;
+			}
+			else if(sender == trailAlphaStepper)
+			{
+				char.trailLength = trailAlphaStepper.value;
+				ghostChar.trailAlpha = char.trailAlpha;
+			}
+			else if(sender == trailDiffStepper)
+			{
+				char.trailLength = trailDiffStepper.value;
+				ghostChar.trailDiff = char.trailDiff;
+			}
 		}
 	}
 
@@ -1165,6 +1237,11 @@ class CharacterEditorState extends MusicBeatState
 			vocalsInputText.text = char.vocalsFile != null ? char.vocalsFile : '';
 			singDurationStepper.value = char.singDuration;
 			scaleStepper.value = char.jsonScale;
+			trailLengthStepper.value = char.trailLength;
+			trailDelayStepper.value = char.trailDelay;
+			trailAlphaStepper.value = char.trailAlpha;
+			trailDiffStepper.value = char.trailDiff;
+			flixelTrailCheckBox.checked = char.flixelTrail;
 			flipXCheckBox.checked = char.originalFlipX;
 			noAntialiasingCheckBox.checked = char.noAntialiasing;
 			resetHealthBarColor();
