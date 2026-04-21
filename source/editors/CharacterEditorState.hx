@@ -29,7 +29,7 @@ class CharacterEditorState extends MusicBeatState
 {
 	var music:EditingMusic;
 	var char:Character;
-	var ghostChar:FlxSprite;
+	var ghostChar:Character;
 	var animateGhost:FlxAnimate;
 	var animateGhostImage:String;
 	var bgLayer:FlxTypedGroup<FlxSprite>;
@@ -124,7 +124,7 @@ class CharacterEditorState extends MusicBeatState
 		add(leHealthIcon);
 		leHealthIcon.cameras = [camHUD];
 
-		ghostChar = new FlxSprite();
+		ghostChar = new Character(0, 0, _char, !isDad);
 		ghostChar.visible = false;
 		ghostChar.alpha = ghostAlpha;
 		ghostLayer.add(ghostChar);
@@ -1083,7 +1083,7 @@ class CharacterEditorState extends MusicBeatState
 			}
 			else if(sender == trailAlphaStepper)
 			{
-				char.trailLength = trailAlphaStepper.value;
+				char.trailLength = Std.int(trailAlphaStepper.value);
 				ghostChar.trailAlpha = char.trailAlpha;
 			}
 			else if(sender == trailDiffStepper)

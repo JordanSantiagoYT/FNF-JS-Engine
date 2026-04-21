@@ -36,10 +36,14 @@
 	],
 	"no_antialiasing": false,
 	"image": "characters/bfHoldingGF-DEAD",
+	"trail_length": 4,
+	"trail_delay": 24,
 	"position": [
 		0,
 		350
 	],
+	"trail_diff": 0,
+	"trail_alpha": 1,
 	"healthicon": "bf",
 	"flip_x": true,
 	"healthbar_colors": [
@@ -52,5 +56,6 @@
 		0
 	],
 	"sing_duration": 4,
-	"scale": 1.05
+	"scale": 1.05,
+	"flixel_trail": false
 }

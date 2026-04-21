@@ -190,10 +190,14 @@
 	"no_antialiasing": false,
 	"image": "characters/bfCar",
 	"shake_duration": 0,
+	"trail_length": 4,
+	"trail_delay": 24,
 	"position": [
 		0,
 		350
 	],
+	"trail_diff": 0,
+	"trail_alpha": 1,
 	"health_drain": false,
 	"shake_intensity": 0,
 	"healthicon": "bf",
@@ -217,5 +221,6 @@
 		176,
 		209
 	],
-	"scale": 1
+	"scale": 1,
+	"flixel_trail": false
 }

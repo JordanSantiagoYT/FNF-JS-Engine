@@ -171,5 +171,6 @@
 	"camera_position": [0, -500],
 	"sing_duration": 999,
 	"scale": 1.75,
-	"_editor_isPlayer": true
+	"_editor_isPlayer": true,
+	"flixel_trail": false
 }

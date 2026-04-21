@@ -5216,14 +5216,25 @@ class PlayState extends MusicBeatState
 						if(canPlay) playerChar.playAnim(animToPlay, true);
 						playerChar.holdTimer = 0;
 
-						if(note.noteType == 'Hey!')
+						switch (note.noteType)
 						{
-							if(playerChar.hasAnimation(animCheck))
-							{
-								playerChar.playAnim(animCheck, true);
-								playerChar.specialAnim = true;
-								playerChar.heyTimer = 0.6;
-							}
+							case 'Hey!':
+								if(playerChar.hasAnimation(animCheck))
+								{
+									playerChar.playAnim(animCheck, true);
+									playerChar.specialAnim = true;
+									playerChar.heyTimer = 0.6;
+								}
+							case 'Cross Fade': // CF note
+								if (ClientPrefs.crossFadeMode != 'Off')
+								{
+									new CrossFade(boyfriend, grpBFCrossFade, false);
+								}
+							case 'GF Cross Fade': // GFCF note
+								if (ClientPrefs.crossFadeMode != 'Off')
+								{
+									new CrossFade(gf, grpGFCrossFade, false);
+								}
 						}
 					}
 				}
@@ -5238,20 +5249,6 @@ class PlayState extends MusicBeatState
 							new CrossFade(boyfriend, grpBFCrossFade, false);
 						}
 					}
-				}
-
-				switch (note.noteType)
-				{
-					case 'Cross Fade': // CF note
-						if (ClientPrefs.crossFadeMode != 'Off')
-						{
-							new CrossFade(boyfriend, grpBFCrossFade, false);
-						}
-					case 'GF Cross Fade': // GFCF note
-						if (ClientPrefs.crossFadeMode != 'Off')
-						{
-							new CrossFade(gf, grpGFCrossFade, false);
-						}
 				}
 
 				if((cpuControlled || usingBotEnergy && strumsHeld[note.noteData]) && ClientPrefs.botLightStrum && !strumsHit[(note.noteData % 4) + 4]) {
