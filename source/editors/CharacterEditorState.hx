@@ -124,7 +124,7 @@ class CharacterEditorState extends MusicBeatState
 		add(leHealthIcon);
 		leHealthIcon.cameras = [camHUD];
 
-		ghostChar = new Character(0, 0, _char, !isDad);
+		ghostChar = new Character(0, 0, _char, isPlayer);
 		ghostChar.visible = false;
 		ghostChar.alpha = ghostAlpha;
 		ghostLayer.add(ghostChar);
@@ -1088,7 +1088,7 @@ class CharacterEditorState extends MusicBeatState
 			}
 			else if(sender == trailDiffStepper)
 			{
-				char.trailLength = trailDiffStepper.value;
+				char.trailLength = Std.int(trailDiffStepper.value);
 				ghostChar.trailDiff = char.trailDiff;
 			}
 		}

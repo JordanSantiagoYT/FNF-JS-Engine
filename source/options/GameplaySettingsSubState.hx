@@ -223,7 +223,7 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		// credits to the denpa engine team
 		// don't support arcadia though
 		var option:Option = new Option('CrossFade Mode:', "What mode should CrossFade be in?", 'crossFadeMode', 'string',
-			['Mid-Fight Masses', 'Static', 'Eccentric', 'Off'], 'Mid-Fight Masses');
+			'Mid-Fight Masses', ['Mid-Fight Masses', 'Static', 'Eccentric', 'Off']);
 		addOption(option);
 
 		var option:Option = new Option('BF CrossFade Limit', "Determines the maximium amount of frames of CrossFade the player can have.",

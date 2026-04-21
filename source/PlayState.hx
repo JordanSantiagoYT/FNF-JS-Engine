@@ -5395,7 +5395,7 @@ class PlayState extends MusicBeatState
 					}
 				}
 
-				if (note.noteType == 'Cross Fade')
+				if (daNote.noteType == 'Cross Fade')
 				{
 					if (ClientPrefs.crossFadeMode != 'Off')
 					{
@@ -5403,7 +5403,7 @@ class PlayState extends MusicBeatState
 					}
 				}
 
-				if (note.noteType == 'GF Cross Fade')
+				if (daNote.noteType == 'GF Cross Fade')
 				{
 					if (ClientPrefs.crossFadeMode != 'Off')
 					{
