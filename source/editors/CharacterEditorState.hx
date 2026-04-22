@@ -124,7 +124,7 @@ class CharacterEditorState extends MusicBeatState
 		add(leHealthIcon);
 		leHealthIcon.cameras = [camHUD];
 
-		ghostChar = new Character(0, 0, _char, _char.isPlayer);
+		ghostChar = new Character(0, 0, _char, char.isPlayer);
 		ghostChar.visible = false;
 		ghostChar.alpha = ghostAlpha;
 		ghostLayer.add(ghostChar);
