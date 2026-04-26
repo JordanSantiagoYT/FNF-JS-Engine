@@ -4662,7 +4662,7 @@ class PlayState extends MusicBeatState
 		var plrInputNotes:Array<Note> = notes.members.filter(function(n:Note):Bool {
 			var canHit:Bool = !usingBotEnergy && !strumsBlocked[n.noteData] && n.canBeHit && n.mustPress && !n.tooLate && !n.wasGoodHit && !n.blockHit;
 			// trace('[keyPressed] Note? ${n != null}, noteData=${n.noteData}, strumTime=${n.strumTime}, canHit=$canHit, mustPress=${n.mustPress}, tooLate=${n.tooLate}, wasGoodHit=${n.wasGoodHit}, Conductor=${Conductor.songPosition}');
-			return n != null && canHit && !n.isSustainNote && n.noteData == key;
+			return n != null && n.exists && canHit && !n.isSustainNote && n.noteData == key;
 		});
 		plrInputNotes.sort(sortHitNotes);
 
