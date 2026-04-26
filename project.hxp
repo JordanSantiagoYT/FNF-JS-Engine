@@ -500,6 +500,8 @@ class Project extends HXProject
 		var shouldEmbedSplash = true;
 		addAssetPath("assets/splash", null, "default", ["*"], exclude, shouldEmbedSplash);
 
+		addAssetPath("assets/embed", "assets", "default", ["*"], exclude, true);
+
 		// Shared asset libraries
 		addAssetLibrary("songs", shouldEmbed, shouldPreload);
 		addAssetPath("assets/songs", "assets/songs", "songs", ["*"], exclude, shouldEmbed);

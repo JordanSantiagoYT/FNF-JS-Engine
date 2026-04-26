@@ -69,7 +69,7 @@ class MainMenuState extends MusicBeatState
     #if FUNNY_ALLOWED
     if ((FlxG.random.bool(1) && DateUtils.date.getHours() == 3))
     {
-      funnycatperson = new FlxSprite().loadGraphic(Paths.image('catto', 'embed'));
+      funnycatperson = new FlxSprite().loadGraphic(Paths.image('catto'));
       funnycatperson.setPosition(-60, FlxG.height - funnycatperson.height + 850); // I wanna die
       funnycatperson.scale.set(0.2, 0.2);
       funnycatperson.updateHitbox();
