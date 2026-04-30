@@ -483,28 +483,6 @@ class FlxGame extends Sprite
 
 		if (!_lostFocus || !FlxG.autoPause)
 		{
-			if (FlxG.vcr.paused)
-			{
-				if (FlxG.vcr.stepRequested)
-				{
-					FlxG.vcr.stepRequested = false;
-				}
-				else if (_nextState == null) // don't pause a state switch request
-				{
-					#if FLX_DEBUG
-					debugger.update();
-					// If the interactive debug is active, the screen must
-					// be rendered because the user might be doing changes
-					// to game objects (e.g. moving things around).
-					if (debugger.interaction.isActive())
-					{
-						draw();
-					}
-					#end
-					return;
-				}
-			}
-
 			if (FlxG.fixedTimestep)
 			{
 				_accumulator += _elapsedMS;
