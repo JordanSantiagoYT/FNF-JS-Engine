@@ -508,9 +508,9 @@ class Project extends HXProject
 		addAssetPath("assets/shared", "assets/shared", "shared", ["*"], exclude, shouldEmbed);
 		if (VIDEOS_ALLOWED.isEnabled(this))
 		{
-			var shouldEmbedVideos = false;
-			addAssetLibrary("videos", shouldEmbedVideos, shouldPreload);
-			addAssetPath("assets/videos", "assets/videos", "videos", ["*"], exclude, shouldEmbedVideos);
+			// var shouldEmbedVideos = false;
+			addAssetLibrary("videos", false, shouldPreload);
+			addAssetPath("assets/videos", "assets/videos", "videos", ["*"], exclude, false);
 		}
 
 		// Level asset libraries
