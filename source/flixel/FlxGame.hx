@@ -28,7 +28,10 @@ import flixel.system.ui.FlxSoundTray;
 #if FLX_FOCUS_LOST_SCREEN
 import flixel.system.ui.FlxFocusLostScreen;
 #end
-
+#if FLX_RECORD
+import flixel.math.FlxRandom;
+import flixel.system.replay.FlxReplay;
+#end
 /**
  * `FlxGame` is the heart of all Flixel games, and contains a bunch of basic game loops and things.
  * It is a long and sloppy file that you shouldn't have to worry about too much!
