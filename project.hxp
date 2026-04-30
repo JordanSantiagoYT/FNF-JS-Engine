@@ -378,8 +378,7 @@ class Project extends HXProject
 		setHaxedef("HXCPP_STACK_LINE");
 		setHaxedef("HXCPP_STACK_TRACE");
 		setHaxedef("hscriptPos");
-		if (!isDebug())
-			setHaxedef("no-deprecation-warnings");
+		setHaxedef("no-deprecation-warnings");
 		setHaxedef("FLX_NO_FOCUS_LOST_SCREEN"); // I FORGOT LMAFOAOO
 
 		// setHaxedef("NO_PRECOMPILED_HEADERS");

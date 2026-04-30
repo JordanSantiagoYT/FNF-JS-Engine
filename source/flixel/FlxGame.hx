@@ -28,10 +28,6 @@ import flixel.system.ui.FlxSoundTray;
 #if FLX_FOCUS_LOST_SCREEN
 import flixel.system.ui.FlxFocusLostScreen;
 #end
-#if FLX_RECORD
-import flixel.math.FlxRandom;
-import flixel.system.replay.FlxReplay;
-#end
 
 /**
  * `FlxGame` is the heart of all Flixel games, and contains a bunch of basic game loops and things.
@@ -46,20 +42,6 @@ class FlxGame extends Sprite
 	 * Framerate to use on focus lost. Default is `10`.
 	 */
 	public var focusLostFramerate:Int = 10;
-
-	#if FLX_RECORD
-	/**
-	 * Flag for whether a replay is currently playing.
-	 */
-	@:allow(flixel.system.frontEnds.VCRFrontEnd)
-	public var replaying(default, null):Bool = false;
-
-	/**
-	 * Flag for whether a new recording is being made.
-	 */
-	@:allow(flixel.system.frontEnds.VCRFrontEnd)
-	public var recording(default, null):Bool = false;
-	#end
 
 	#if FLX_SOUND_TRAY
 	/**
@@ -212,26 +194,6 @@ class FlxGame extends Sprite
 	 */
 	var _resetGame:Bool = false;
 
-	#if FLX_RECORD
-	/**
-	 * Container for a game replay object.
-	 */
-	@:allow(flixel.system.frontEnds.VCRFrontEnd)
-	var _replay:FlxReplay;
-
-	/**
-	 * Flag for whether a playback of a recording was requested.
-	 */
-	@:allow(flixel.system.frontEnds.VCRFrontEnd)
-	var _replayRequested:Bool = false;
-
-	/**
-	 * Flag for whether a new recording was requested.
-	 */
-	@:allow(flixel.system.frontEnds.VCRFrontEnd)
-	var _recordingRequested:Bool = false;
-	#end
-
 	#if FLX_POST_PROCESS
 	/**
 	 * `Sprite` for postprocessing effects
@@ -289,10 +251,6 @@ class FlxGame extends Sprite
 		_accumulator = _stepMS;
 		_startCounter = System.getPerformanceCounter();
 		_skipSplash = skipSplash;
-
-		#if FLX_RECORD
-		_replay = new FlxReplay();
-		#end
 
 		// Then get ready to create the game object for real
 		_initialState = (initialState == null) ? FlxState.new : initialState.toNextState();
@@ -620,10 +578,6 @@ class FlxGame extends Sprite
 
 		FlxG.signals.preStateSwitch.dispatch();
 
-		#if FLX_RECORD
-		FlxRandom.updateStateSeed();
-		#end
-
 		// Destroy the old state (if there is an old state)
 		if (_state != null)
 			_state.destroy();
@@ -674,8 +628,6 @@ class FlxGame extends Sprite
 			_resetGame = false;
 		}
 
-		handleReplayRequests();
-
 		#if FLX_DEBUG
 		// Finally actually step through the game physics
 		FlxBasic.activeCount = 0;
@@ -685,36 +637,6 @@ class FlxGame extends Sprite
 
 		#if FLX_DEBUG
 		debugger.stats.activeObjects(FlxBasic.activeCount);
-		#end
-	}
-
-	function handleReplayRequests():Void
-	{
-		#if FLX_RECORD
-		// Handle replay-related requests
-		if (_recordingRequested)
-		{
-			_recordingRequested = false;
-			_replay.create(FlxRandom.getRecordingSeed());
-			recording = true;
-
-			#if FLX_DEBUG
-			debugger.vcr.recording();
-			FlxG.log.notice("Starting new flixel gameplay record.");
-			#end
-		}
-		else if (_replayRequested)
-		{
-			_replayRequested = false;
-			_replay.rewind();
-			FlxG.random.initialSeed = _replay.seed;
-
-			#if FLX_DEBUG
-			debugger.vcr.playingReplay();
-			#end
-
-			replaying = true;
-		}
 		#end
 	}
 
@@ -786,62 +708,7 @@ class FlxGame extends Sprite
 
 	function updateInput():Void
 	{
-		#if FLX_RECORD
-		if (replaying)
-		{
-			_replay.playNextFrame();
-
-			if (FlxG.vcr.timeout > 0)
-			{
-				FlxG.vcr.timeout -= _stepMS;
-
-				if (FlxG.vcr.timeout <= 0)
-				{
-					if (FlxG.vcr.replayCallback != null)
-					{
-						FlxG.vcr.replayCallback();
-						FlxG.vcr.replayCallback = null;
-					}
-					else
-					{
-						FlxG.vcr.stopReplay();
-					}
-				}
-			}
-
-			if (replaying && _replay.finished)
-			{
-				FlxG.vcr.stopReplay();
-
-				if (FlxG.vcr.replayCallback != null)
-				{
-					FlxG.vcr.replayCallback();
-					FlxG.vcr.replayCallback = null;
-				}
-			}
-
-			#if FLX_DEBUG
-			debugger.vcr.updateRuntime(_stepMS);
-			#end
-		}
-		else
-		{
-			FlxG.inputs.update();
-		}
-		#else
 		FlxG.inputs.update();
-		#end
-
-		#if FLX_RECORD
-		if (recording)
-		{
-			_replay.recordFrame();
-
-			#if FLX_DEBUG
-			debugger.vcr.updateRuntime(_stepMS);
-			#end
-		}
-		#end
 	}
 
 	/**
