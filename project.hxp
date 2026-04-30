@@ -496,8 +496,8 @@ class Project extends HXProject
 		addAssetPath("assets/soundtray", null, "default", ["*"], exclude, shouldEmbedVolume);
 
 		// splash stuff
-		var shouldEmbedSplash = true;
-		addAssetPath("assets/splash", null, "default", ["*"], exclude, shouldEmbedSplash);
+		// var shouldEmbedSplash = true;
+		addAssetPath("assets/splash", null, "default", ["*"], exclude, false);
 
 		addAssetPath("assets/embed", "assets", "default", ["*"], exclude, true);
 
