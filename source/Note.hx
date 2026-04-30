@@ -602,15 +602,15 @@ class Note extends FlxSprite
 		}
 		if (noteType == 'Hurt Note' && rgbShader != null)
 		{
-				// note colors
-				rgbShader.r = 0xFF101010;
-				rgbShader.g = 0xFFFF0000;
-				rgbShader.b = 0xFF990022;
+			// note colors
+			rgbShader.r = 0xFF101010;
+			rgbShader.g = 0xFFFF0000;
+			rgbShader.b = 0xFF990022;
 
-				// splash data and colors
-				noteSplashData.r = 0xFFFF0000;
-				noteSplashData.g = 0xFF101010;
-				noteSplashData.texture = 'noteSplashes/noteSplashes-electric';
+			// splash data and colors
+			noteSplashData.r = 0xFFFF0000;
+			noteSplashData.g = 0xFF101010;
+			noteSplashData.texture = 'noteSplashes/noteSplashes-electric';
 		}
 		else if (rgbShader != null)
 		{
