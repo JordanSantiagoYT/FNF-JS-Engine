@@ -104,5 +104,6 @@
 		0,
 		77
 	],
-	"scale": 1
+	"scale": 1,
+	"flixel_trail": false
 }

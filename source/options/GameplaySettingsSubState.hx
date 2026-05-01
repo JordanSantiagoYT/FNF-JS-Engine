@@ -220,6 +220,24 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 			['Disabled', 'Lowest', 'Lower', 'Low', 'Medium', 'High', 'Highest']);
 		addOption(option);
 
+		// credits to the denpa engine team
+		// don't support arcadia though
+		var option:Option = new Option('CrossFade Mode:', "What mode should CrossFade be in?", 'crossFadeMode', 'string',
+			'Mid-Fight Masses', ['Mid-Fight Masses', 'Static', 'Eccentric', 'Off']);
+		addOption(option);
+
+		var option:Option = new Option('BF CrossFade Limit', "Determines the maximium amount of frames of CrossFade the player can have.",
+			'boyfriendCrossFadeLimit', 'int', 1);
+		addOption(option);
+		option.minValue = 1;
+		option.maxValue = 10;
+
+		var option:Option = new Option('Opponent CrossFade Limit', "Determines the maximium amount of frames of CrossFade the opponent can have.",
+			'crossFadeLimit', 'int', 4);
+		addOption(option);
+		option.minValue = 1;
+		option.maxValue = 10;
+
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
 
 		super();

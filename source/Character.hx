@@ -19,6 +19,14 @@ typedef CharacterFile = {
 	var flip_x:Bool;
 	var no_antialiasing:Bool;
 	var healthbar_colors:Array<Int>;
+
+	@:optional var trail_length:Null<Int>;
+	@:optional var trail_delay:Null<Int>;
+	@:optional var trail_alpha:Null<Float>;
+	@:optional var trail_diff:Null<Float>;
+
+	@:optional var flixel_trail:Bool;
+
 	@:optional var noteskin:String;
 	@:optional var vocals_file:String;
 
@@ -90,6 +98,13 @@ class Character extends FlxSprite
 	public var editorIsPlayer:Null<Bool> = null;
 	public var healthColorArray:Array<Int> = [255, 0, 0];
 
+	public var trailLength:Null<Int> = 4;
+	public var trailDelay:Null<Int> = 24;
+	public var trailAlpha:Null<Float> = 0.3;
+	public var trailDiff:Null<Float> = 0.069;
+
+	public var flixelTrail:Bool = false;
+
 	public static var DEFAULT_CHARACTER:String = 'bf'; //In case a character is missing, it will use BF on its place
 	public function new(x:Float, y:Float, ?character:String = 'bf', ?isPlayer:Bool = false, ?isDeathCharacter:Bool = false)
 	{
@@ -159,7 +174,7 @@ class Character extends FlxSprite
 	public function loadCharacterFile(json:CharacterFile)
 	{
 		isAnimateAtlas = false;
-		
+
 		#if flxanimate
 		if (Paths.fileExists('images/' + json.image + '/Animation.json', TEXT))
 			isAnimateAtlas = true;
@@ -203,6 +218,14 @@ class Character extends FlxSprite
 		healthIcon = json.healthicon;
 		singDuration = json.sing_duration;
 		flipX = !!json.flip_x;
+
+		trailLength = json.trail_length;
+		trailDelay = json.trail_delay;
+		trailAlpha = json.trail_alpha;
+		trailDiff = json.trail_diff;
+
+		flixelTrail = json.flixel_trail;
+
 		if(json.no_antialiasing) {
 			antialiasing = false;
 			noAntialiasing = true;

@@ -131,5 +131,6 @@
 	"camera_position": [200, 40],
 	"sing_duration": 4,
 	"scale": 1,
-	"_editor_isPlayer": true
+	"_editor_isPlayer": true,
+	"flixel_trail": false
 }

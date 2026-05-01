@@ -1,5 +1,6 @@
 package;
 
+import CrossFade;
 import Achievements;
 import Character.Boyfriend;
 import Conductor.Rating;
@@ -18,6 +19,7 @@ import objects.*;
 import openfl.events.KeyboardEvent;
 import openfl.system.System;
 import play.objects.*;
+import flixel.addons.effects.FlxTrail;
 #if SHADERS_ALLOWED
 import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
@@ -78,6 +80,9 @@ class PlayState extends MusicBeatState
 	public var boyfriendGroup:FlxSpriteGroup;
 	public var dadGroup:FlxSpriteGroup;
 	public var gfGroup:FlxSpriteGroup;
+	public var grpCrossFade:FlxTypedGroup<CrossFade>;
+	public var grpGFCrossFade:FlxTypedGroup<CrossFade>;
+	public var grpBFCrossFade:FlxTypedGroup<CrossFade>;
 	public var shaderUpdates:Array<Float->Void> = [];
 	var botplayUsed:Bool = false;
 	public static var curStage:String = '';
@@ -616,6 +621,26 @@ class PlayState extends MusicBeatState
 		if(isPixelStage) {
 			introSoundsSuffix = '-pixel';
 		}
+
+		if (ClientPrefs.crossFadeLimit != null)
+			grpCrossFade = new FlxTypedGroup<CrossFade>(ClientPrefs.crossFadeLimit); // limit
+		else
+			grpCrossFade = new FlxTypedGroup<CrossFade>(4); // limit
+
+		if (ClientPrefs.crossFadeLimit != null)
+			grpGFCrossFade = new FlxTypedGroup<CrossFade>(ClientPrefs.crossFadeLimit); // limit
+		else
+			grpGFCrossFade = new FlxTypedGroup<CrossFade>(4); // limit
+
+		if (ClientPrefs.boyfriendCrossFadeLimit != null)
+			grpBFCrossFade = new FlxTypedGroup<CrossFade>(ClientPrefs.boyfriendCrossFadeLimit); // limit
+		else
+			grpBFCrossFade = new FlxTypedGroup<CrossFade>(1); // limit
+
+		add(grpCrossFade);
+		add(grpGFCrossFade);
+		add(grpBFCrossFade);
+
 		add(gfGroup); //Needed for blammed lights
 
 		add(dadGroup);
@@ -1056,6 +1081,20 @@ class PlayState extends MusicBeatState
 		opponentStrums = new FlxTypedGroup<StrumNote>();
 
 		trace ('Loading chart...');
+
+		if (dad.flixelTrail && dad.trailLength != null && dad.trailDelay != null && dad.trailAlpha != null && dad.trailDiff != null)
+		{
+			var dadTrail = new FlxTrail(dad, null, dad.trailLength, dad.trailDelay, dad.trailAlpha,
+				dad.trailDiff); // nice //target, graphic, length, delay, alpha, diff
+			insert(members.indexOf(dadGroup) - 1, dadTrail);
+		}
+
+		if (boyfriend.flixelTrail && boyfriend.trailLength != null && boyfriend.trailDelay != null && boyfriend.trailAlpha != null
+			&& boyfriend.trailDiff != null)
+		{
+			var bfTrail = new FlxTrail(boyfriend, null, boyfriend.trailLength, boyfriend.trailDelay, boyfriend.trailAlpha, boyfriend.trailDiff); // nice
+			insert(members.indexOf(boyfriendGroup) - 1, bfTrail);
+		}
 		generateSong(startOnTime);
 
 		callOnLuas('onCreate');
@@ -2958,6 +2997,24 @@ class PlayState extends MusicBeatState
 
 	override public function update(elapsed:Float)
 	{
+		grpCrossFade.update(elapsed);
+		grpCrossFade.forEachDead(function(img:CrossFade)
+		{
+			grpCrossFade.remove(img, true);
+		});
+
+		grpGFCrossFade.update(elapsed);
+		grpGFCrossFade.forEachDead(function(img:CrossFade)
+		{
+			grpGFCrossFade.remove(img, true);
+		});
+
+		grpBFCrossFade.update(elapsed);
+		grpBFCrossFade.forEachDead(function(img:CrossFade)
+		{
+			grpBFCrossFade.remove(img, true);
+		});
+
 		if (ffmpegMode) elapsed = 1 / ClientPrefs.targetFPS;
 		if (screenshader.enabled)
 		{
@@ -2968,7 +3025,7 @@ class PlayState extends MusicBeatState
 			{
 				screenshader.shader.waveAmplitude -= (elapsed / 2);
 			}
-			
+
 			if (screenshader.waveAmplitude > 0)
 				screenshader.update(elapsed);
 			else {
@@ -5159,14 +5216,37 @@ class PlayState extends MusicBeatState
 						if(canPlay) playerChar.playAnim(animToPlay, true);
 						playerChar.holdTimer = 0;
 
-						if(note.noteType == 'Hey!')
+						switch (note.noteType)
 						{
-							if(playerChar.hasAnimation(animCheck))
-							{
-								playerChar.playAnim(animCheck, true);
-								playerChar.specialAnim = true;
-								playerChar.heyTimer = 0.6;
-							}
+							case 'Hey!':
+								if(playerChar.hasAnimation(animCheck))
+								{
+									playerChar.playAnim(animCheck, true);
+									playerChar.specialAnim = true;
+									playerChar.heyTimer = 0.6;
+								}
+							case 'Cross Fade': // CF note
+								if (ClientPrefs.crossFadeMode != 'Off')
+								{
+									new CrossFade(boyfriend, grpBFCrossFade, false);
+								}
+							case 'GF Cross Fade': // GFCF note
+								if (ClientPrefs.crossFadeMode != 'Off')
+								{
+									new CrossFade(gf, grpGFCrossFade, false);
+								}
+						}
+					}
+				}
+
+				var curSection:Int = Math.floor(curStep / 16);
+				if (SONG.notes[curSection] != null)
+				{
+					if (SONG.notes[curSection].crossFade)
+					{
+						if (ClientPrefs.crossFadeMode != 'Off')
+						{
+							new CrossFade(boyfriend, grpBFCrossFade, false);
 						}
 					}
 				}
@@ -5304,6 +5384,32 @@ class PlayState extends MusicBeatState
 					oppChar.heyTimer = 0.6;
 				}
 			} else if(!daNote.noAnimation && ClientPrefs.charsAndBG) {
+				if (SONG.notes[curSection] != null)
+				{
+					if (SONG.notes[curSection].crossFade)
+					{
+						if (ClientPrefs.crossFadeMode != 'Off')
+						{
+							new CrossFade(dad, grpCrossFade);
+						}
+					}
+				}
+
+				if (daNote.noteType == 'Cross Fade')
+				{
+					if (ClientPrefs.crossFadeMode != 'Off')
+					{
+						new CrossFade(dad, grpCrossFade);
+					}
+				}
+
+				if (daNote.noteType == 'GF Cross Fade')
+				{
+					if (ClientPrefs.crossFadeMode != 'Off')
+					{
+						new CrossFade(gf, grpGFCrossFade, false);
+					}
+				}
 				oppChar = !daNote.gfNote ? !opponentChart ? dad : boyfriend : gf;
 				animToPlay = singAnimations[Std.int(Math.abs(daNote.noteData))];
 
