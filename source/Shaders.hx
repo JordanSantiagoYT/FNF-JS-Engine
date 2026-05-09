@@ -20,7 +20,7 @@ class BuildingEffect
 
   public function new()
   {
-    shader.alphaShit.value = [0];
+    shader.alphaShit.value = [0.0];
   }
 
   public function addAlpha(alpha:Float)
@@ -74,7 +74,6 @@ class ChromaticAberrationShader extends FlxShader
 			toUse.r = col1.r;
 			toUse.g = col2.g;
 			toUse.b = col3.b;
-			//float someshit = col4.r + col4.g + col4.b;
 
 			gl_FragColor = toUse;
 		}')
@@ -120,7 +119,7 @@ class Scanline extends FlxShader
   @:glFragmentSource('
 		#pragma header
 		const float scale = 1.0;
-	uniform bool lockAlpha = false;
+	uniform bool lockAlpha;
 		void main()
 		{
 			if (mod(floor(openfl_TextureCoordv.y * openfl_TextureSize.y / scale), 2.0) == 0.0 ){
@@ -136,6 +135,7 @@ class Scanline extends FlxShader
   public function new()
   {
     super();
+    lockAlpha.value = [false];
   }
 }
 
@@ -192,8 +192,8 @@ class Tiltshift extends FlxShader
 
 		// I am hardcoding the constants like a jerk
 
-		uniform float bluramount  = 1.0;
-		uniform float center      = 1.0;
+		uniform float bluramount;
+		uniform float center;
 		const float stepSize    = 0.004;
 		const float steps       = 3.0;
 
@@ -235,6 +235,8 @@ class Tiltshift extends FlxShader
   public function new()
   {
     super();
+    bluramount.value = [1.0];
+    center.value = [1.0];
   }
 }
 
@@ -315,10 +317,10 @@ class Grain extends FlxShader
 
 		const float grainamount = 0.05; //grain amount
 		bool colored = false; //colored noise?
-		uniform float coloramount = 0.6;
-		uniform float grainsize = 1.6; //grain particle size (1.5 - 2.5)
-		uniform float lumamount = 1.0; //
-	uniform bool lockAlpha = false;
+		uniform float coloramount;
+		uniform float grainsize; //grain particle size (1.5 - 2.5)
+		uniform float lumamount; //
+	uniform bool lockAlpha;
 
 		//a random texture generator, but you can also use a pre-computed perturbation texture
 
@@ -432,6 +434,8 @@ class Grain extends FlxShader
   public function new()
   {
     super();
+    coloramount.value = [0.6];
+    lockAlpha.value = [false];
   }
 }
 
@@ -441,7 +445,7 @@ class VCRDistortionEffect extends Effect
 
   public function new(glitchFactor:Float, distortion:Bool = true, perspectiveOn:Bool = true, vignetteMoving:Bool = true)
   {
-    shader.iTime.value = [0];
+    shader.iTime.value = [0.0];
     shader.vignetteOn.value = [true];
     shader.perspectiveOn.value = [perspectiveOn];
     shader.distortionOn.value = [distortion];
@@ -500,7 +504,6 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
     uniform bool distortionOn;
     uniform bool scanlinesOn;
     uniform bool vignetteMoving;
-   // uniform sampler2D noiseTex;
     uniform float glitchModifier;
     uniform vec3 iResolution;
 
@@ -513,24 +516,27 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
     {
     	float inside = step(start,y) - step(end,y);
     	float fact = (y-start)/(end-start)*inside;
-    	return (1.-fact) * inside;
-
+    	// FIX: 1. -> 1.0
+    	return (1.0-fact) * inside;
     }
 
     vec4 getVideo(vec2 uv)
-      {
-      	vec2 look = uv;
+    {
+    	vec2 look = uv;
         if(distortionOn){
-        	float window = 1./(1.+20.*(look.y-mod(iTime/4.,1.))*(look.y-mod(iTime/4.,1.)));
-        	look.x = look.x + (sin(look.y*10. + iTime)/50.*onOff(4.,4.,.3)*(1.+cos(iTime*80.))*window)*(glitchModifier*2);
-        	float vShift = 0.4*onOff(2.,3.,.9)*(sin(iTime)*sin(iTime*20.) +
-        										 (0.5 + 0.1*sin(iTime*200.)*cos(iTime)));
-        	look.y = mod(look.y + vShift*glitchModifier, 1.);
+        	// FIX: 1./(1.+20.*... -> 1.0/(1.0+20.0*..., mod(iTime/4.,1.) -> mod(iTime/4.0,1.0)
+        	float window = 1.0/(1.0+20.0*(look.y-mod(iTime/4.0,1.0))*(look.y-mod(iTime/4.0,1.0)));
+        	// FIX: 10. -> 10.0, /50. -> /50.0, onOff(4.,4.,.3) -> onOff(4.0,4.0,0.3), 1.+ -> 1.0+, *2) -> *2.0)
+        	look.x = look.x + (sin(look.y*10.0 + iTime)/50.0*onOff(4.0,4.0,0.3)*(1.0+cos(iTime*80.0))*window)*(glitchModifier*2.0);
+        	// FIX: onOff(2.,3.,.9) -> onOff(2.0,3.0,0.9)
+        	float vShift = 0.4*onOff(2.0,3.0,0.9)*(sin(iTime)*sin(iTime*20.0) +
+        									 (0.5 + 0.1*sin(iTime*200.0)*cos(iTime)));
+        	// FIX: mod(..., 1.) -> mod(..., 1.0)
+        	look.y = mod(look.y + vShift*glitchModifier, 1.0);
         }
-      	vec4 video = flixel_texture2D(bitmap,look);
-
-      	return video;
-      }
+    	vec4 video = flixel_texture2D(bitmap,look);
+    	return video;
+    }
 
     vec2 screenDistort(vec2 uv)
     {
@@ -545,37 +551,36 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
       }
     	return uv;
     }
+
     float random(vec2 uv)
     {
      	return fract(sin(dot(uv, vec2(15.5151, 42.2561))) * 12341.14122 * sin(iTime * 0.03));
     }
+
     float noise(vec2 uv)
     {
      	vec2 i = floor(uv);
         vec2 f = fract(uv);
 
         float a = random(i);
-        float b = random(i + vec2(1.,0.));
-    	float c = random(i + vec2(0., 1.));
-        float d = random(i + vec2(1.));
+        // FIX: vec2(1.,0.) -> vec2(1.0,0.0), vec2(0.,1.) -> vec2(0.0,1.0), vec2(1.) -> vec2(1.0)
+        float b = random(i + vec2(1.0, 0.0));
+    	float c = random(i + vec2(0.0, 1.0));
+        float d = random(i + vec2(1.0));
 
-        vec2 u = smoothstep(0., 1., f);
+        // FIX: smoothstep(0.,1.,f) -> smoothstep(0.0,1.0,f)
+        vec2 u = smoothstep(0.0, 1.0, f);
 
-        return mix(a,b, u.x) + (c - a) * u.y * (1. - u.x) + (d - b) * u.x * u.y;
-
+        return mix(a,b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
     }
-
 
     vec2 scandistort(vec2 uv) {
     	float scan1 = clamp(cos(uv.y * 2.0 + iTime), 0.0, 1.0);
-    	float scan2 = clamp(cos(uv.y * 2.0 + iTime + 4.0) * 10.0, 0.0, 1.0) ;
+    	float scan2 = clamp(cos(uv.y * 2.0 + iTime + 4.0) * 10.0, 0.0, 1.0);
     	float amount = scan1 * scan2 * uv.x;
-
-    	//uv.x -= 0.05 * mix(flixel_texture2D(noiseTex, vec2(uv.x, amount)).r * amount, amount, 0.9);
-
     	return uv;
-
     }
+
     void main()
     {
     	vec2 uv = openfl_TextureCoordv;
@@ -583,30 +588,37 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
     	uv = scandistort(curUV);
     	vec4 video = getVideo(uv);
       float vigAmt = 1.0;
-      float x =  0.;
+      // FIX: 0. -> 0.0
+      float x = 0.0;
 
       video.r = getVideo(vec2(x+uv.x+0.001,uv.y+0.001)).x+0.05;
       video.g = getVideo(vec2(x+uv.x+0.000,uv.y-0.002)).y+0.05;
       video.b = getVideo(vec2(x+uv.x-0.002,uv.y+0.000)).z+0.05;
       video.r += 0.08*getVideo(0.75*vec2(x+0.025, -0.027)+vec2(uv.x+0.001,uv.y+0.001)).x;
-      video.g += 0.05*getVideo(0.75*vec2(x+-0.022, -0.02)+vec2(uv.x+0.000,uv.y-0.002)).y;
-      video.b += 0.08*getVideo(0.75*vec2(x+-0.02, -0.018)+vec2(uv.x-0.002,uv.y+0.000)).z;
+      // FIX: x+-0.022 -> x-0.022 (invalid operator combination)
+      video.g += 0.05*getVideo(0.75*vec2(x-0.022, -0.02)+vec2(uv.x+0.000,uv.y-0.002)).y;
+      // FIX: x+-0.02 -> x-0.02 (invalid operator combination)
+      video.b += 0.08*getVideo(0.75*vec2(x-0.02, -0.018)+vec2(uv.x-0.002,uv.y+0.000)).z;
 
       video = clamp(video*0.6+0.4*video*video*1.0,0.0,1.0);
       if(vignetteMoving)
-    	  vigAmt = 3.+.3*sin(iTime + 5.*cos(iTime*5.));
+    	  // FIX: 3.+ -> 3.0+, .3* -> 0.3*, 5.* -> 5.0*, iTime*5. -> iTime*5.0
+    	  vigAmt = 3.0+0.3*sin(iTime + 5.0*cos(iTime*5.0));
 
-    	float vignette = (1.-vigAmt*(uv.y-.5)*(uv.y-.5))*(1.-vigAmt*(uv.x-.5)*(uv.x-.5));
+    	// FIX: 1.- -> 1.0-, .5 -> 0.5
+    	float vignette = (1.0-vigAmt*(uv.y-0.5)*(uv.y-0.5))*(1.0-vigAmt*(uv.x-0.5)*(uv.x-0.5));
 
       if(vignetteOn)
     	 video *= vignette;
 
-      gl_FragColor = mix(video,vec4(noise(uv * 75.)),.05);
+      // FIX: 75. -> 75.0, .05 -> 0.05
+      gl_FragColor = mix(video, vec4(noise(uv * 75.0)), 0.05);
 
-      if(curUV.x<0 || curUV.x>1 || curUV.y<0 || curUV.y>1){
-        gl_FragColor = vec4(0,0,0,0);
+      // FIX: <0 -> <0.0, >1 -> >1.0 (integer comparisons with float)
+      if(curUV.x<0.0 || curUV.x>1.0 || curUV.y<0.0 || curUV.y>1.0){
+        // FIX: vec4(0,0,0,0) -> vec4(0.0,0.0,0.0,0.0) (integer args in vector constructor)
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
       }
-
     }
   ')
   public function new()
@@ -704,6 +716,7 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
     super();
   }
 }*/
+
 class ThreeDEffect extends Effect
 {
   public var shader:ThreeDShader = new ThreeDShader();
@@ -724,11 +737,13 @@ class ThreeDShader extends FlxShader
 {
   @:glFragmentSource('
 	#pragma header
-	uniform float xrot = 0.0;
-	uniform float yrot = 0.0;
-	uniform float zrot = 0.0;
-	uniform float dept = 0.0;
-	float alph = 0;
+	uniform float xrot;
+	uniform float yrot;
+	uniform float zrot;
+	uniform float dept;
+	// FIX: float alph = 0 -> float alph = 0.0 (integer init for float)
+	float alph = 0.0;
+
 float plane( in vec3 norm, in vec3 po, in vec3 ro, in vec3 rd ) {
     float de = dot(norm, rd);
     de = sign(de)*max( abs(de), 0.001);
@@ -749,7 +764,8 @@ vec2 raytraceTexturedQuad(in vec3 rayOrigin, in vec3 rayDirection, in vec3 quadC
     //--------------------------------------
 
     vec3 right = RotationMatrix * vec3(quadDimensions.x, 0.0, 0.0);
-    vec3 up = RotationMatrix * vec3(0, quadDimensions.y, 0);
+    // FIX: vec3(0, quadDimensions.y, 0) -> vec3(0.0, quadDimensions.y, 0.0) (integer args in vector constructor)
+    vec3 up = RotationMatrix * vec3(0.0, quadDimensions.y, 0.0);
     vec3 normal = cross(right, up);
     normal /= length(normal);
 
@@ -766,7 +782,8 @@ void main() {
     //Screen UV goes from 0 - 1 along each axis
     vec2 screenUV = openfl_TextureCoordv;
     vec2 p = (2.0 * screenUV) - 1.0;
-    float screenAspect = 1280/720;
+    // FIX: 1280/720 -> 1280.0/720.0 (integer division would give wrong result)
+    float screenAspect = 1280.0/720.0;
     p.x *= screenAspect;
 
     //Normalized Ray Dir
@@ -778,7 +795,8 @@ void main() {
     vec3 planeRotation = vec3(xrot, yrot, zrot);//this the shit you needa change
     vec2 planeDimension = vec2(-screenAspect, 1.0);
 
-    vec2 uv = raytraceTexturedQuad(vec3(0), dir, planePosition, planeRotation, planeDimension);
+    // FIX: vec3(0) -> vec3(0.0, 0.0, 0.0) (integer arg in vector constructor)
+    vec2 uv = raytraceTexturedQuad(vec3(0.0, 0.0, 0.0), dir, planePosition, planeRotation, planeDimension);
 
     //If we hit the rectangle, sample the texture
     if (abs(uv.x - 0.5) < 0.5 && abs(uv.y - 0.5) < 0.5) {
@@ -798,6 +816,10 @@ void main() {
   public function new()
   {
     super();
+    xrot.value = [0.0];
+    yrot.value = [0.0];
+    zrot.value = [0.0];
+    dept.value = [0.0];
   }
 }
 
@@ -816,136 +838,150 @@ class FuckingTriangleEffect extends Effect
 
 class FuckingTriangle extends FlxShader
 {
+  // FIX: removed const arrays (arrays unsupported on some platforms)
+  // FIX: removed default values from uniforms
+  // FIX: replaced arrays with getVertex/getTexCoord lookup functions using if-else
+  // FIX: unrolled the for loop (used arrays internally, now gone)
+  // FIX: fixed many half-float literals
   @:glFragmentSource('
-
 
 			#pragma header
 
-			const vec3 vertices[18] = vec3[18] (
-			vec3(-0.5, 0.0, -0.5),
-			vec3( 0.5, 0.0, -0.5),
-			vec3(-0.5, 0.0,  0.5),
-
-			vec3(-0.5, 0.0,  0.5),
-			vec3( 0.5, 0.0, -0.5),
-			vec3( 0.5, 0.0,  0.5),
-
-			vec3(-0.5, 0.0, -0.5),
-			vec3( 0.5, 0.0, -0.5),
-			vec3( 0.0, 1.0,  0.0),
-
-			vec3(-0.5, 0.0,  0.5),
-			vec3( 0.5, 0.0,  0.5),
-			vec3( 0.0, 1.0,  0.0),
-
-			vec3(-0.5, 0.0, -0.5),
-			vec3(-0.5, 0.0,  0.5),
-			vec3( 0.0, 1.0,  0.0),
-
-			vec3( 0.5, 0.0, -0.5),
-			vec3( 0.5, 0.0,  0.5),
-			vec3( 0.0, 1.0,  0.0)
-		);
-
-		const vec2 texCoords[18] = vec2[18] (
-			vec2(0., 1.),
-			vec2(1., 1.),
-			vec2(0., 0.),
-
-			vec2(0., 0.),
-			vec2(1., 1.),
-			vec2(1., 0.),
-
-			vec2(0., 1.),
-			vec2(1., 1.),
-			vec2(.5, 0.),
-
-			vec2(0., 1.),
-			vec2(1., 1.),
-			vec2(.5, 0.),
-
-			vec2(0., 1.),
-			vec2(1., 1.),
-			vec2(.5, 0.),
-
-			vec2(0., 1.),
-			vec2(1., 1.),
-			vec2(.5, 0.)
-		);
-
-		vec4 vertexShader(in vec3 vertex, in mat4 transform) {
-			return transform * vec4(vertex, 1.);
-		}
-
-		vec4 fragmentShader(in vec2 uv) {
-			return flixel_texture2D(bitmap, uv);
-		}
-
-
-		const float fov  = 70.0;
-		const float near = 0.1;
-		const float far  = 10.;
-
-		const vec3 cameraPos = vec3(0., 0.3, 2.);
-
-			uniform float rotX = -25.;
-			uniform float rotY = 45.;
-		vec4 pixel(in vec2 ndc, in float aspect, inout float depth, in int vertexIndex) {
-
-
-
-
-			mat4 proj  = perspective(fov, aspect, near, far);
-			mat4 view  = translate(-cameraPos);
-			mat4 model = rotateX(rotX) * rotateY(rotY);
-
-			mat4 mvp  = proj * view * model;
-
-			vec4 v0 = vertexShader(vertices[vertexIndex  ], mvp);
-			vec4 v1 = vertexShader(vertices[vertexIndex+1], mvp);
-			vec4 v2 = vertexShader(vertices[vertexIndex+2], mvp);
-
-			vec2 t0 = texCoords[vertexIndex  ] / v0.w; float oow0 = 1. / v0.w;
-			vec2 t1 = texCoords[vertexIndex+1] / v1.w; float oow1 = 1. / v1.w;
-			vec2 t2 = texCoords[vertexIndex+2] / v2.w; float oow2 = 1. / v2.w;
-
-			v0 /= v0.w;
-			v1 /= v1.w;
-			v2 /= v2.w;
-
-			vec3 tri = bary(v0.xy, v1.xy, v2.xy, ndc);
-
-			if(tri.x < 0. || tri.x > 1. || tri.y < 0. || tri.y > 1. || tri.z < 0. || tri.z > 1.) {
-				return vec4(0.);
+			// FIX: replaced vec3 vertices[18] and vec2 texCoords[18] arrays with lookup functions
+			vec3 getVertex(int idx) {
+				if (idx == 0)  return vec3(-0.5, 0.0, -0.5);
+				if (idx == 1)  return vec3( 0.5, 0.0, -0.5);
+				if (idx == 2)  return vec3(-0.5, 0.0,  0.5);
+				if (idx == 3)  return vec3(-0.5, 0.0,  0.5);
+				if (idx == 4)  return vec3( 0.5, 0.0, -0.5);
+				if (idx == 5)  return vec3( 0.5, 0.0,  0.5);
+				if (idx == 6)  return vec3(-0.5, 0.0, -0.5);
+				if (idx == 7)  return vec3( 0.5, 0.0, -0.5);
+				if (idx == 8)  return vec3( 0.0, 1.0,  0.0);
+				if (idx == 9)  return vec3(-0.5, 0.0,  0.5);
+				if (idx == 10) return vec3( 0.5, 0.0,  0.5);
+				if (idx == 11) return vec3( 0.0, 1.0,  0.0);
+				if (idx == 12) return vec3(-0.5, 0.0, -0.5);
+				if (idx == 13) return vec3(-0.5, 0.0,  0.5);
+				if (idx == 14) return vec3( 0.0, 1.0,  0.0);
+				if (idx == 15) return vec3( 0.5, 0.0, -0.5);
+				if (idx == 16) return vec3( 0.5, 0.0,  0.5);
+				if (idx == 17) return vec3( 0.0, 1.0,  0.0);
+				return vec3(0.0, 0.0, 0.0);
 			}
 
-			float triDepth = baryLerp(v0.z, v1.z, v2.z, tri);
-			if(triDepth > depth || triDepth < -1. || triDepth > 1.) {
-				return vec4(0.);
+			// FIX: all half-float literals in texCoords expanded (e.g. 0. -> 0.0, 1. -> 1.0, .5 -> 0.5)
+			vec2 getTexCoord(int idx) {
+				if (idx == 0)  return vec2(0.0, 1.0);
+				if (idx == 1)  return vec2(1.0, 1.0);
+				if (idx == 2)  return vec2(0.0, 0.0);
+				if (idx == 3)  return vec2(0.0, 0.0);
+				if (idx == 4)  return vec2(1.0, 1.0);
+				if (idx == 5)  return vec2(1.0, 0.0);
+				if (idx == 6)  return vec2(0.0, 1.0);
+				if (idx == 7)  return vec2(1.0, 1.0);
+				if (idx == 8)  return vec2(0.5, 0.0);
+				if (idx == 9)  return vec2(0.0, 1.0);
+				if (idx == 10) return vec2(1.0, 1.0);
+				if (idx == 11) return vec2(0.5, 0.0);
+				if (idx == 12) return vec2(0.0, 1.0);
+				if (idx == 13) return vec2(1.0, 1.0);
+				if (idx == 14) return vec2(0.5, 0.0);
+				if (idx == 15) return vec2(0.0, 1.0);
+				if (idx == 16) return vec2(1.0, 1.0);
+				if (idx == 17) return vec2(0.5, 0.0);
+				return vec2(0.0, 0.0);
 			}
 
-			depth = triDepth;
+			vec4 vertexShader(in vec3 vertex, in mat4 transform) {
+				// FIX: 1. -> 1.0
+				return transform * vec4(vertex, 1.0);
+			}
 
-			float oneOverW = baryLerp(oow0, oow1, oow2, tri);
-			vec2 uv        = uvLerp(t0, t1, t2, tri) / oneOverW;
-			return fragmentShader(uv);
+			vec4 fragmentShader(in vec2 uv) {
+				return flixel_texture2D(bitmap, uv);
+			}
 
-		}
+			const float fov  = 70.0;
+			const float near = 0.1;
+			// FIX: 10. -> 10.0
+			const float far  = 10.0;
 
+			// FIX: vec3(0., 0.3, 2.) -> vec3(0.0, 0.3, 2.0)
+			const vec3 cameraPos = vec3(0.0, 0.3, 2.0);
+
+			// FIX: removed default values from uniforms, removed -25. -> will be set in constructor
+			uniform float rotX;
+			uniform float rotY;
+
+			vec4 pixel(in vec2 ndc, in float aspect, inout float depth, in int vertexIndex) {
+				mat4 proj  = perspective(fov, aspect, near, far);
+				mat4 view  = translate(-cameraPos);
+				mat4 model = rotateX(rotX) * rotateY(rotY);
+				mat4 mvp  = proj * view * model;
+
+				// FIX: use getVertex/getTexCoord instead of array indexing
+				vec4 v0 = vertexShader(getVertex(vertexIndex  ), mvp);
+				vec4 v1 = vertexShader(getVertex(vertexIndex+1), mvp);
+				vec4 v2 = vertexShader(getVertex(vertexIndex+2), mvp);
+
+				// FIX: 1. / v0.w -> 1.0 / v0.w
+				vec2 t0 = getTexCoord(vertexIndex  ) / v0.w; float oow0 = 1.0 / v0.w;
+				vec2 t1 = getTexCoord(vertexIndex+1) / v1.w; float oow1 = 1.0 / v1.w;
+				vec2 t2 = getTexCoord(vertexIndex+2) / v2.w; float oow2 = 1.0 / v2.w;
+
+				v0 /= v0.w;
+				v1 /= v1.w;
+				v2 /= v2.w;
+
+				vec3 tri = bary(v0.xy, v1.xy, v2.xy, ndc);
+
+				// FIX: 0. -> 0.0, 1. -> 1.0
+				if(tri.x < 0.0 || tri.x > 1.0 || tri.y < 0.0 || tri.y > 1.0 || tri.z < 0.0 || tri.z > 1.0) {
+					// FIX: vec4(0.) -> vec4(0.0)
+					return vec4(0.0);
+				}
+
+				float triDepth = baryLerp(v0.z, v1.z, v2.z, tri);
+				// FIX: -1. -> -1.0, 1. -> 1.0
+				if(triDepth > depth || triDepth < -1.0 || triDepth > 1.0) {
+					return vec4(0.0);
+				}
+
+				depth = triDepth;
+
+				float oneOverW = baryLerp(oow0, oow1, oow2, tri);
+				vec2 uv        = uvLerp(t0, t1, t2, tri) / oneOverW;
+				return fragmentShader(uv);
+			}
 
 void main()
 {
-    vec2 ndc = ((gl_FragCoord.xy * 2.) / openfl_TextureSize.xy) - vec2(1.);
+    // FIX: 2. -> 2.0, vec2(1.) -> vec2(1.0)
+    vec2 ndc = ((gl_FragCoord.xy * 2.0) / openfl_TextureSize.xy) - vec2(1.0);
     float aspect = openfl_TextureSize.x / openfl_TextureSize.y;
-    vec3 outColor = vec3(.4,.6,.9);
+    // FIX: vec3(.4,.6,.9) -> vec3(0.4, 0.6, 0.9)
+    vec3 outColor = vec3(0.4, 0.6, 0.9);
 
     float depth = 1.0;
-    for(int i = 0; i < 18; i += 3) {
-        vec4 tri = pixel(ndc, aspect, depth, i);
-        outColor = mix(outColor.rgb, tri.rgb, tri.a);
-    }
 
-    gl_FragColor = vec4(outColor, 1.);
+    // FIX: replaced for(int i = 0; i < 18; i += 3) loop with unrolled calls
+    // (loop used array indexing which is now replaced with getVertex/getTexCoord)
+    vec4 triResult0 = pixel(ndc, aspect, depth, 0);
+    outColor = mix(outColor.rgb, triResult0.rgb, triResult0.a);
+    vec4 triResult1 = pixel(ndc, aspect, depth, 3);
+    outColor = mix(outColor.rgb, triResult1.rgb, triResult1.a);
+    vec4 triResult2 = pixel(ndc, aspect, depth, 6);
+    outColor = mix(outColor.rgb, triResult2.rgb, triResult2.a);
+    vec4 triResult3 = pixel(ndc, aspect, depth, 9);
+    outColor = mix(outColor.rgb, triResult3.rgb, triResult3.a);
+    vec4 triResult4 = pixel(ndc, aspect, depth, 12);
+    outColor = mix(outColor.rgb, triResult4.rgb, triResult4.a);
+    vec4 triResult5 = pixel(ndc, aspect, depth, 15);
+    outColor = mix(outColor.rgb, triResult5.rgb, triResult5.a);
+
+    // FIX: 1. -> 1.0
+    gl_FragColor = vec4(outColor, 1.0);
 }
 
 
@@ -954,6 +990,8 @@ void main()
   public function new()
   {
     super();
+    rotX.value = [-25.0];
+    rotY.value = [45.0];
   }
 }
 
@@ -974,14 +1012,15 @@ class BloomShader extends FlxShader
 
 	#pragma header
 
-	uniform float intensity = 0.35;
-	uniform float blurSize = 1.0/512.0;
+	uniform float intensity;
+	uniform float blurSize;
+
 void main()
 {
-   vec4 sum = vec4(0);
+   // FIX: vec4(0) -> vec4(0.0) (integer arg in vector constructor)
+   vec4 sum = vec4(0.0);
    vec2 texcoord = openfl_TextureCoordv;
-   int j;
-   int i;
+   // FIX: removed unused int j; int i; declarations
 
    //thank you! http://www.gamerendering.com/2008/10/11/gaussian-blur-filter-shader/ for the
    //blur tutorial
@@ -1011,10 +1050,6 @@ void main()
 
    //increase blur with intensity!
   gl_FragColor = sum*intensity + flixel_texture2D(bitmap, texcoord);
-  // if(sin(iTime) > 0.0)
-   //    fragColor = sum * sin(iTime)+ texture(iChannel0, texcoord);
-  // else
-	//   fragColor = sum * -sin(iTime)+ texture(iChannel0, texcoord);
 }
 
 
@@ -1022,6 +1057,8 @@ void main()
   public function new()
   {
     super();
+    intensity.value = [0.35];
+    blurSize.value = [1.0 / 512.0];
   }
 }
 
@@ -1051,7 +1088,7 @@ class GlitchEffect extends Effect
 
   public function new(waveSpeed:Float, waveFrequency:Float, waveAmplitude:Float):Void
   {
-    shader.uTime.value = [0];
+    shader.uTime.value = [0.0];
     this.waveSpeed = waveSpeed;
     this.waveFrequency = waveFrequency;
     this.waveAmplitude = waveAmplitude;
@@ -1098,7 +1135,7 @@ class DistortBGEffect extends Effect
     this.waveSpeed = waveSpeed;
     this.waveFrequency = waveFrequency;
     this.waveAmplitude = waveAmplitude;
-    shader.uTime.value = [0];
+    shader.uTime.value = [0.0];
     PlayState.instance.shaderUpdates.push(update);
   }
 
@@ -1364,7 +1401,8 @@ class DistortBGShader extends FlxShader
 
     vec4 makeBlack(vec4 pt)
     {
-        return vec4(0, 0, 0, pt.w);
+        // FIX: vec4(0, 0, 0, pt.w) -> vec4(0.0, 0.0, 0.0, pt.w) (integer args in vector constructor)
+        return vec4(0.0, 0.0, 0.0, pt.w);
     }
 
     void main()
@@ -1550,7 +1588,7 @@ class WiggleEffectLua extends Effect
   public function new(typeOfEffect:String = 'DREAMY', waveSpeed:Float = 0, waveFrequency:Float = 0, waveAmplitude:Float = 0, ?verticalStrength:Float = 1,
       ?horizontalStrength:Float = 1):Void
   {
-    shader.uTime.value = [0];
+    shader.uTime.value = [0.0];
     this.waveSpeed = waveSpeed;
     this.waveFrequency = waveFrequency;
     this.waveAmplitude = waveAmplitude;
@@ -1565,18 +1603,17 @@ class WiggleEffectLua extends Effect
     shader.uTime.value[0] += elapsed;
   }
 
+  // FIX: converted switch statement to if-else (switch cases unsupported on macOS/miscellaneous platforms)
   private function effectTypeFromString(effectType:String):WiggleEffectType
   {
-    return switch (effectType.trim().replace('_', '').replace('-', '').toLowerCase())
-    {
-      case 'dreamy': DREAMY;
-      case 'wavy': WAVY;
-      case 'horizontal' | 'heatwavehorizontal': HEAT_WAVE_HORIZONTAL;
-      case 'vertical' | 'heatwavevertical': HEAT_WAVE_VERTICAL;
-      case 'flag': FLAG;
-      case 'both' | 'heatwaveboth': HEAT_WAVE_BOTH;
-      default: DREAMY;
-    }
+    var normalized:String = effectType.trim().replace('_', '').replace('-', '').toLowerCase();
+    if (normalized == 'dreamy') return DREAMY;
+    if (normalized == 'wavy') return WAVY;
+    if (normalized == 'horizontal' || normalized == 'heatwavehorizontal') return HEAT_WAVE_HORIZONTAL;
+    if (normalized == 'vertical' || normalized == 'heatwavevertical') return HEAT_WAVE_VERTICAL;
+    if (normalized == 'flag') return FLAG;
+    if (normalized == 'both' || normalized == 'heatwaveboth') return HEAT_WAVE_BOTH;
+    return DREAMY;
   }
 
   function set_effectType(v:WiggleEffectType):WiggleEffectType
