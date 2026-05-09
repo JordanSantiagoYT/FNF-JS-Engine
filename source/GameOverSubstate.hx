@@ -256,8 +256,8 @@ class GameOverSubstate extends MusicBeatSubstate
 				}
 
 				coolStartDeath();
+				justPlayedLoop = true;
 			}
-			justPlayedLoop = true;
 		}
 
 		if(!isEnding)
