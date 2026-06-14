@@ -220,6 +220,54 @@ class CoolUtil
 		}
 		return shit;
 	}
+	
+	private static final SUFFIXES1:Array<String> = ['', 'mi', 'bi', 'tri', 'quadri', 'quinti', 'sexti', 'septi', 'octi', 'noni'];
+	private static final TEN_SUFFIXES:Array<Array<String>> = [['', '', ''], ['deci', 'n', ''], ['viginti', 'm', 's'], ['trigenti', 'n', 's'], ['quadraginti', 'n', 's'], ['quinquaginti', 'n', 's'], ['sexaginti', 'n', ''], ['septuaginti', 'n', ''],['octoginti', 'm', 'x'], ['nonaginti', '', '']];
+	private static final DEC_SUFFIXES:Array<Array<Dynamic>> = [['', false], ['un', false], ['duo', false], ['tre', true], ['quattuor', false], ['quin', false], ['se', true], ['septe', true], ['octo', false], ['nove', true]];
+	private static final CENTI_SUFFIXES:Array<Array<String>> = [['', '', ''], ['centi', 'n', 'x'], ['ducenti', 'n', ''], ['trecenti', 'n', 's'], ['quadringenti', 'n', 's'], ['quingenti', 'n', 's'], ['sescenti', 'n', ''], ['septingenti', 'n', ''], ['octingenti', 'm', 'x'], ['nongenti', '', '']];
+	
+	public static function formatCompactNumber(number:Float):String
+	{
+		var magnitude:Int = -1;
+		var num:Float = number;
+
+		while (num >= 1000.0)
+		{
+			num /= 1000.0;
+			magnitude++;
+		}
+
+		// Determine which suffixes to use
+		var unitIndex:Int = Math.floor(magnitude % 10);
+		var tenIndex:Int = Math.floor((magnitude / 10) % 10);
+		var centiIndex:Int = Math.floor(magnitude / 100);
+
+		var unitSubSuffix1:String = tenIndex == 0 && centiIndex > 0 ? CENTI_SUFFIXES[centiIndex][1] : TEN_SUFFIXES[tenIndex][1];
+		var unitSubSuffix2:String = tenIndex == 0 && centiIndex > 0 ? CENTI_SUFFIXES[centiIndex][2] : TEN_SUFFIXES[tenIndex][2];
+		var unitSubSuffix3:String = unitIndex != 3 && unitIndex != 6 ? unitSubSuffix1 : unitIndex == 3 && unitSubSuffix2 == 'x' ? 's' : unitSubSuffix2;
+
+		var unitSuffix:String = magnitude <= 10 ? SUFFIXES1[unitIndex] : DEC_SUFFIXES[unitIndex][0];
+		if (magnitude > 10 && DEC_SUFFIXES[unitIndex][1]) unitSuffix += unitSubSuffix3;
+		var tenSuffix:String = TEN_SUFFIXES[tenIndex][0];
+		var centiSuffix:String = CENTI_SUFFIXES[centiIndex][0];
+
+		var finalSuffix:String = unitSuffix + tenSuffix + centiSuffix;
+		var compactValue:Float = Math.floor(num * 100) / 100; // Use the floor value for the compact representation
+
+		if (compactValue <= 0.001) {
+			return "0"; // Return 0 if compactValue = null
+		} else {
+			var illionRepresentation:String = "";
+
+			if (magnitude > -1) {
+				illionRepresentation += finalSuffix;
+			}
+
+				if (magnitude > 0) illionRepresentation += "llion";
+
+			return compactValue + (magnitude == -1 ? "" : " ") + (magnitude == 0 ? 'thousand' : illionRepresentation);
+		}
+	}
 
 	public static function zeroFill(value:Int, digits:Int)
 	{

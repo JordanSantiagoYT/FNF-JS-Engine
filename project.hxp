@@ -425,6 +425,9 @@ class Project extends HXProject
 
 			setHaxedef("absolute-paths"); // Fix source locations so Tracy can see them
 		}
+		
+		// setHaxedef("HXCPP_PROFILER");
+		setHaxedef("HXCPP_GC_CHECK_LEAKS"); // Idk if this does anything
 	}
 
 	function configureOutputDir()
