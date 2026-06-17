@@ -1099,6 +1099,8 @@ class PlayState extends MusicBeatState
 		}
 		generateSong(startOnTime);
 
+		if (curSong.toLowerCase() == 'tutorial') defaultCamZoom = 1.0;
+
 		callOnLuas('onCreate');
 
 		if (SONG.event7 == null || SONG.event7 == '') SONG.event7 == 'None';
@@ -4229,7 +4231,6 @@ class PlayState extends MusicBeatState
 			);
 			camFollow.x += (char == boyfriend ? -1 : 1) * char.cameraPosition[0] + charCamOffset[0];
 			camFollow.y += char.cameraPosition[1] + charCamOffset[1];
-			if (char == dad || char == gf) tweenCamIn();
 		}
 	}
 
