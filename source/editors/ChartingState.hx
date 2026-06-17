@@ -141,6 +141,10 @@ class ChartingState extends MusicBeatState
       "Value 1: Camera shake\nValue 2: HUD shake\n\nEvery value works as the following example: \"1, 0.05\".\nThe first number (1) is the duration.\nThe second number (0.05) is the intensity."
     ],
     [
+      'Tween Camera Zoom',
+      "Cool Camera Zoom Tween\n\nValue 1: Zoom level(leave empty OR put 'default' for default)\nValue 2: Duration\nValue 3 (split value 2 with a ','): Ease"
+    ],
+    [
       'Camera Bopping',
       "Makes the camera do funny bopping\n\nValue 1: Bopping Speed (how many beats you want before it bops)\nValue 2: Bopping Intensity (how hard you want it to bop, default is 1)\n\nTo reset camera bopping, place a new event and put both values as '4' and '1' respectively."
     ],

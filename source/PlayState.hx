@@ -168,6 +168,8 @@ class PlayState extends MusicBeatState
 
 	var endingTimeLimit:Int = 20;
 
+	//current zoom factor for camGame. Affects how much camGame is zoomed by, so tweening can actually be used.
+	var camBopFactor:Float = 0;
 	var camBopInterval:Float = 4;
 	var camBopIntensity:Float = 1;
 
@@ -1129,7 +1131,7 @@ class PlayState extends MusicBeatState
 			prevCamFollowPos = null;
 		}
 		add(camFollowPos);
-		if (!ClientPrefs.charsAndBG) FlxG.camera.zoom = 100; //zoom it in very big to avoid high RAM usage!!
+		if (!ClientPrefs.charsAndBG) defaultCamZoom = 100; //zoom it in very big to avoid high RAM usage!!
 		if (ClientPrefs.charsAndBG)
 		{
 			FlxG.camera.follow(camFollowPos, LOCKON, 1);
@@ -3299,7 +3301,9 @@ class PlayState extends MusicBeatState
 
 		if (camZooming)
 		{
-			FlxG.camera.zoom = FlxMath.lerp(defaultCamZoom, FlxG.camera.zoom, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
+			camBopFactor = FlxMath.lerp(0, camBopFactor, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
+
+			FlxG.camera.zoom = defaultCamZoom + camBopFactor;
 			camHUD.zoom = FlxMath.lerp(1, camHUD.zoom, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
 		}
 
@@ -3733,6 +3737,25 @@ class PlayState extends MusicBeatState
 				if (_interval != 4) usingBopIntervalEvent = true;
 					else usingBopIntervalEvent = false;
 
+			case 'Tween Camera Zoom':
+				var zoom:Float = ogCamZoom;
+				if (value1 != 'default')
+					zoom = Std.parseFloat(value1) ?? ogCamZoom;
+
+				var split:Array<String> = value2.split(',');
+				var duration:Float = 0;
+				var ease:Dynamic = FlxEase.linear;
+				if (split.length > 0) duration = Std.parseFloat(split[0].trim()) ?? 0;
+				if (split.length > 1) ease = Reflect.field(FlxEase, split[1].trim()) ?? FlxEase.linear;
+
+				cameraTwn?.cancel();
+
+				cameraTwn = FlxTween.tween(this, {defaultCamZoom: zoom}, duration, {ease: ease, onComplete:
+					function (twn:FlxTween) {
+						cameraTwn = null;
+					}
+				});
+
 			case 'Camera Twist':
 				camTwist = true;
 				var _intensity:Float = Std.parseFloat(value1);
@@ -3785,13 +3808,13 @@ class PlayState extends MusicBeatState
 				songLength = fakelength;
 
 			case 'Add Camera Zoom':
-				if(ClientPrefs.camZooms && FlxG.camera.zoom < 1.35) {
+				if(ClientPrefs.camZooms && camHUD.zoom < 1.35) {
 					var camZoom:Float = Std.parseFloat(value1);
 					var hudZoom:Float = Std.parseFloat(value2);
 					if(Math.isNaN(camZoom)) camZoom = 0.015;
 					if(Math.isNaN(hudZoom)) hudZoom = 0.03;
 
-					FlxG.camera.zoom += camZoom;
+					camBopFactor += camZoom;
 					camHUD.zoom += hudZoom;
 				}
 
@@ -4207,26 +4230,6 @@ class PlayState extends MusicBeatState
 			camFollow.x += (char == boyfriend ? -1 : 1) * char.cameraPosition[0] + charCamOffset[0];
 			camFollow.y += char.cameraPosition[1] + charCamOffset[1];
 			if (char == dad || char == gf) tweenCamIn();
-
-			if (char == boyfriend && songName == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1)
-			{
-				cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1}, (Conductor.stepCrochet * 4 / 1000), {ease: FlxEase.elasticInOut, onComplete:
-					function (twn:FlxTween)
-					{
-						cameraTwn = null;
-					}
-				});
-			}
-		}
-	}
-
-	public function tweenCamIn() {
-		if (songName == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1.3) {
-			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1.3}, (Conductor.stepCrochet * 4 / 1000), {ease: FlxEase.elasticInOut, onComplete:
-				function (twn:FlxTween) {
-					cameraTwn = null;
-				}
-			});
 		}
 	}
 
@@ -5705,9 +5708,9 @@ class PlayState extends MusicBeatState
 			var randomShit = FlxMath.roundDecimal(FlxG.random.float(minSpeed, maxSpeed), 2);
 			lerpSongSpeed(randomShit, 1);
 		}
-		if (camZooming && !endingSong && !startingSong && FlxG.camera.zoom < 1.35 && usingBopIntervalEvent && ClientPrefs.camZooms && (curBeat % camBopInterval == 0))
+		if (camZooming && !endingSong && !startingSong && camHUD.zoom < 1.35 && usingBopIntervalEvent && ClientPrefs.camZooms && (curBeat % camBopInterval == 0))
 		{
-			FlxG.camera.zoom += 0.015 * camBopIntensity;
+			camBopFactor += 0.015 * camBopIntensity;
 			camHUD.zoom += 0.03 * camBopIntensity;
 		} /// WOOO YOU CAN NOW MAKE IT AWESOME
 
@@ -5784,9 +5787,9 @@ class PlayState extends MusicBeatState
 			setOnLuas('mustHitSection', SONG.notes[curSection].mustHitSection);
 			setOnLuas('altAnim', SONG.notes[curSection].altAnim);
 			setOnLuas('gfSection', SONG.notes[curSection].gfSection);
-			if (camZooming && !endingSong && !startingSong && FlxG.camera.zoom < 1.35 && !usingBopIntervalEvent && ClientPrefs.camZooms)
+			if (camZooming && !endingSong && !startingSong && camHUD.zoom < 1.35 && !usingBopIntervalEvent && ClientPrefs.camZooms)
 			{
-				FlxG.camera.zoom += 0.015 * camBopIntensity;
+				camBopFactor += 0.015 * camBopIntensity;
 				camHUD.zoom += 0.03 * camBopIntensity;
 			}
 		}
