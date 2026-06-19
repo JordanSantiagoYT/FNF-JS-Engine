@@ -45,8 +45,8 @@
       "name": "hxcpp",
       "type": "git",
       "dir": null,
-      "ref": "funkin",
-      "url": "https://github.com/FunkinCrew/hxcpp"
+      "ref": "main",
+      "url": "https://github.com/ShadowEngineTeam/hxcpp"
     },
     {
       "name": "hxvlc",
