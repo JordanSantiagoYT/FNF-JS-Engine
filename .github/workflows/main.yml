@@ -60,7 +60,6 @@ jobs:
           cd ./hxcpp
           haxe compile.hxml
           cd ../..
-          lime rebuild linux
       - name: Compile
         run: |
           rm -f assets/preload/gameRenders/renderlol.bat
@@ -140,7 +139,6 @@ jobs:
           cd ./hxcpp
           haxe compile.hxml
           cd ../..
-          lime rebuild cpp
       - name: Compile
         run: |
           Remove-Item -Force assets/preload/gameRenders/renderlinux.sh
@@ -219,7 +217,6 @@ jobs:
           cd ./hxcpp
           haxe compile.hxml
           cd ../..
-          lime rebuild cpp
       - name: Compile
         run: |
           rm -f assets/preload/gameRenders/renderlol.bat
@@ -299,7 +296,6 @@ jobs:
           cd ./hxcpp
           haxe compile.hxml
           cd ../..
-          lime rebuild cpp
       - name: Compile
         run: |
           rm -f assets/preload/gameRenders/renderlol.bat
