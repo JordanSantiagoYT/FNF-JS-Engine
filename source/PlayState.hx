@@ -3799,7 +3799,7 @@ class PlayState extends MusicBeatState
 
 				cameraTwn?.cancel();
 
-				cameraTwn = FlxTween.tween(this, {defaultCamZoom: zoom}, duration, {ease: FlxEase.expoOut, onComplete:
+				cameraTwn = FlxTween.tween(this, {defaultCamZoom: newZoom}, 1.5, {ease: FlxEase.expoOut, onComplete:
 					function (twn:FlxTween) {
 						cameraTwn = null;
 					}
