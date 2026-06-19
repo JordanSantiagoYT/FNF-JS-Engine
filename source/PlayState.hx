@@ -323,7 +323,10 @@ class PlayState extends MusicBeatState
 
 	public static var shouldDrainHealth:Bool = false;
 
-	public var defaultCamZoom:Float = 1.05;
+	//Private value for defaultCamZoom. This is so tweening can be used without calling a 'set' function every frame.
+	private var _defaultCamZoom:Float = 1.05;
+
+	public var defaultCamZoom(get, set):Float;
 
 	public var ogCamZoom:Float = 1.05;
 
@@ -566,7 +569,7 @@ class PlayState extends MusicBeatState
 		else if (stageData.isPixelStage)
 			stageUI = "pixel";
 
-		defaultCamZoom = ogCamZoom = stageData.defaultZoom;
+		_defaultCamZoom = ogCamZoom = stageData.defaultZoom;
 		isPixelStage = stageData.isPixelStage;
 		BF_X = stageData.boyfriend[0];
 		BF_Y = stageData.boyfriend[1];
@@ -1099,8 +1102,6 @@ class PlayState extends MusicBeatState
 		}
 		generateSong(startOnTime);
 
-		if (curSong.toLowerCase() == 'tutorial') defaultCamZoom = 1.0;
-
 		callOnLuas('onCreate');
 
 		if (SONG.event7 == null || SONG.event7 == '') SONG.event7 == 'None';
@@ -1133,8 +1134,8 @@ class PlayState extends MusicBeatState
 			prevCamFollowPos = null;
 		}
 		add(camFollowPos);
-		if (!ClientPrefs.charsAndBG) defaultCamZoom = 100; //zoom it in very big to avoid high RAM usage!!
-		if (ClientPrefs.charsAndBG)
+		if (!ClientPrefs.charsAndBG) _defaultCamZoom = 100;
+		else
 		{
 			FlxG.camera.follow(camFollowPos, LOCKON, 1);
 			FlxG.camera.zoom = defaultCamZoom;
@@ -1584,6 +1585,32 @@ class PlayState extends MusicBeatState
 		    default:
 				polyphonyOppo = value;
 		        polyphonyBF = value;
+		}
+		return value;
+	}
+
+	inline function get_defaultCamZoom():Float
+	{
+		return _defaultCamZoom;
+	}
+
+	inline function set_defaultCamZoom(value:Float):Float
+	{
+		cameraTwn?.cancel();
+
+		if (camZooming) {
+			cameraTwn = FlxTween.tween(this, {_defaultCamZoom: value}, 1.5, {ease: FlxEase.expoOut, onComplete:
+				function (twn:FlxTween) {
+					cameraTwn = null;
+				}
+			});
+		} else {
+			_defaultCamZoom = value;
+			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: value}, 1.5, {ease: FlxEase.expoOut, onComplete:
+				function (twn:FlxTween) {
+					cameraTwn = null;
+				}
+			});
 		}
 		return value;
 	}
@@ -3751,12 +3778,20 @@ class PlayState extends MusicBeatState
 				if (split.length > 1) ease = Reflect.field(FlxEase, split[1].trim()) ?? FlxEase.linear;
 
 				cameraTwn?.cancel();
-
-				cameraTwn = FlxTween.tween(this, {defaultCamZoom: zoom}, duration, {ease: ease, onComplete:
-					function (twn:FlxTween) {
-						cameraTwn = null;
-					}
-				});
+				if (camZooming) {
+					cameraTwn = FlxTween.tween(this, {_defaultCamZoom: zoom}, duration, {ease: ease, onComplete:
+						function (twn:FlxTween) {
+							cameraTwn = null;
+						}
+					});
+				} else {
+					_defaultCamZoom = zoom;
+					cameraTwn = FlxTween.tween(FlxG.camera, {zoom: zoom}, duration, {ease: ease, onComplete:
+						function (twn:FlxTween) {
+							cameraTwn = null;
+						}
+					});
+				}
 
 			case 'Camera Twist':
 				camTwist = true;
@@ -3797,13 +3832,7 @@ class PlayState extends MusicBeatState
 				if (value1 != 'default')
 					newZoom = Std.parseFloat(value1);
 
-				cameraTwn?.cancel();
-
-				cameraTwn = FlxTween.tween(this, {defaultCamZoom: newZoom}, 1.5, {ease: FlxEase.expoOut, onComplete:
-					function (twn:FlxTween) {
-						cameraTwn = null;
-					}
-				});
+				defaultCamZoom = newZoom;
 
 			case 'Fake Song Length':
 				var fakelength:Float = Std.parseFloat(value1);
