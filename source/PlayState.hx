@@ -146,7 +146,7 @@ class PlayState extends MusicBeatState
 
 	public var camZooming:Bool = false;
 	public var camZoomingMult:Float = 1;
-	public var camZoomingDecay:Float = 1;
+	public var camZoomingDecay:Float = 2.5;
 	private var curSong:String = "";
 
 	public var gfSpeed:Int = 1;
@@ -1599,14 +1599,14 @@ class PlayState extends MusicBeatState
 		cameraTwn?.cancel();
 
 		if (camZooming) {
-			cameraTwn = FlxTween.tween(this, {_defaultCamZoom: value}, 1.5, {ease: FlxEase.expoOut, onComplete:
+			cameraTwn = FlxTween.tween(this, {_defaultCamZoom: value}, 2 / playbackRate / camZoomingDecay, {ease: FlxEase.expoOut, onComplete:
 				function (twn:FlxTween) {
 					cameraTwn = null;
 				}
 			});
 		} else {
 			_defaultCamZoom = value;
-			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: value}, 1.5, {ease: FlxEase.expoOut, onComplete:
+			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: value}, 2 / playbackRate / camZoomingDecay, {ease: FlxEase.expoOut, onComplete:
 				function (twn:FlxTween) {
 					cameraTwn = null;
 				}
@@ -3774,7 +3774,7 @@ class PlayState extends MusicBeatState
 				var split:Array<String> = value2.split(',');
 				var duration:Float = 0;
 				var ease:Dynamic = FlxEase.linear;
-				if (split.length > 0) duration = Std.parseFloat(split[0].trim()) ?? 0;
+				if (split.length > 0) duration = (Std.parseFloat(split[0].trim()) ?? 0) / playbackRate;
 				if (split.length > 1) ease = Reflect.field(FlxEase, split[1].trim()) ?? FlxEase.linear;
 
 				cameraTwn?.cancel();
