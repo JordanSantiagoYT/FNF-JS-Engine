@@ -3791,13 +3791,19 @@ class PlayState extends MusicBeatState
 						case "2": polyphonyBF = noteMultiplier;
 					}
 				}
-				//trace(value2 + " | " + polyphonyBF + ", " + polyphonyOppo);
 
-			case 'Set Camera Zoom':
-				var newZoom:Float = Std.parseFloat(value1);
-				if (Math.isNaN(newZoom))
-					newZoom = ogCamZoom;
-				defaultCamZoom = newZoom;
+			case 'Set Camera Zoom', 'Set Cam Zoom': //Set Cam Zoom was added just to make it cross-compatible with the mod i use that has this specific event
+				var newZoom:Float = ogCamZoom;
+				if (value1 != 'default')
+					newZoom = Std.parseFloat(value1);
+
+				cameraTwn?.cancel();
+
+				cameraTwn = FlxTween.tween(this, {defaultCamZoom: zoom}, duration, {ease: FlxEase.expoOut, onComplete:
+					function (twn:FlxTween) {
+						cameraTwn = null;
+					}
+				});
 
 			case 'Fake Song Length':
 				var fakelength:Float = Std.parseFloat(value1);
