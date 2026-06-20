@@ -21,7 +21,6 @@ import openfl.events.KeyboardEvent;
 import openfl.system.System;
 import play.objects.*;
 #if SHADERS_ALLOWED
-import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
 #end
 
@@ -1711,14 +1710,11 @@ class PlayState extends MusicBeatState
 	public function addShaderToCamera(cam:String,effect:Dynamic){//STOLE FROM ANDROMEDA	// actually i got it from old psych engine
 		switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud':
-				if (camHUD.filters == null) camHUD.filters = [];
-				camHUD.filters?.push(new ShaderFilter(effect.shader));
+				camHUD.addShader(effect.shader);
 			case 'camother' | 'other':
-				if (camOther.filters == null) camOther.filters = [];
-				camOther.filters?.push(new ShaderFilter(effect.shader));
+				camOther.addShader(effect.shader);
 			case 'camgame' | 'game':
-				if (camGame.filters == null) camGame.filters = [];
-				camGame.filters?.push(new ShaderFilter(effect.shader));
+				camGame.addShader(effect.shader);
 			default:
 				if(modchartSprites.exists(cam)) {
 					Reflect.setProperty(modchartSprites.get(cam),"shader",effect.shader);
@@ -1732,14 +1728,13 @@ class PlayState extends MusicBeatState
  	}
 
 	public function removeShaderFromCamera(cam:String,effect:Dynamic){
-		var filter = new ShaderFilter(effect.shader);
 		switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud':
-				camHUD.filters?.remove(filter);
+				camHUD.removeShader(effect.shader);
 			case 'camother' | 'other':
-				camOther.filters?.remove(filter);
+				camOther.removeShader(effect.shader);
 			case 'camgame' | 'game':
-				camGame.filters?.remove(filter);
+				camGame.removeShader(effect.shader);
 			default:
 				if(modchartSprites.exists(cam)) {
 					Reflect.setProperty(modchartSprites.get(cam),"shader",null);
@@ -1782,7 +1777,7 @@ class PlayState extends MusicBeatState
 	}
 
 	/***************/
-  /*    VIDEO    */
+	/*    VIDEO    */
 	/***************/
 	public var videoCutscene:VideoSprite = null;
 	public function startVideo(name:String, ?library:String = null, ?callback:Void->Void = null, forMidSong:Bool = false, canSkip:Bool = true, loop:Bool = false, playOnLoad:Bool = true)
@@ -3718,11 +3713,10 @@ class PlayState extends MusicBeatState
 					if (usingBotEnergy) usingBotEnergy = false;
 					var varsFadeIn:Array<Dynamic> = [energyBarBG, energyBar, energyTxt];
 					for (i in 0...varsFadeIn.length)
-						FlxTween.tween(varsFadeIn[i], {alpha: 0}, 0.75, {
-							ease: FlxEase.expoOut,
-								onComplete: function(_){
-									varsFadeIn[i].visible = false;
-								}});
+						FlxTween.tween(varsFadeIn[i], {alpha: 0}, 0.75, {ease: FlxEase.expoOut, onComplete: function(_)
+						{
+							varsFadeIn[i].visible = false;
+						}});
 				}
 
 			case 'Set Bot Energy Speeds':
@@ -3750,8 +3744,8 @@ class PlayState extends MusicBeatState
 					FlxTween.tween(creditsPopup, {x: creditsPopup.width * -1} , 1, {ease: FlxEase.backIn, onComplete: function(tween:FlxTween)
 					{
 						creditsPopup.destroy();
-							}, startDelay: 3});
-						}});
+					}, startDelay: 3});
+				}});
 			}
 			case 'Camera Bopping':
 				var _interval:Int = Std.parseInt(value1);
@@ -4083,7 +4077,7 @@ class PlayState extends MusicBeatState
 				if(ClientPrefs.flashing && ClientPrefs.shaders && curStep < Std.parseInt(value1)) {
 					disableTheTripper = false;
 					disableTheTripperAt = Std.parseInt(value1);
-					FlxG.camera.filters = [new ShaderFilter(screenshader.shader)];
+					FlxG.camera.addShader(screenshader.shader);
 					screenshader.waveAmplitude = 1;
 					screenshader.waveFrequency = 2;
 					screenshader.waveSpeed = val2 * playbackRate;
