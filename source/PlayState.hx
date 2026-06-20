@@ -1,9 +1,9 @@
 package;
 
-import CrossFade;
 import Achievements;
 import Character.Boyfriend;
 import Conductor.Rating;
+import CrossFade;
 import DialogueBoxPsych;
 import Note;
 import Section.SwagSection;
@@ -12,6 +12,7 @@ import Song.SwagSong;
 import StageData;
 import editors.CharacterEditorState;
 import editors.ChartingState;
+import flixel.addons.effects.FlxTrail;
 import flixel.input.keyboard.FlxKey;
 import flixel.ui.FlxBar;
 import flixel.util.FlxSort;
@@ -19,7 +20,6 @@ import objects.*;
 import openfl.events.KeyboardEvent;
 import openfl.system.System;
 import play.objects.*;
-import flixel.addons.effects.FlxTrail;
 #if SHADERS_ALLOWED
 import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
@@ -3768,29 +3768,40 @@ class PlayState extends MusicBeatState
 
 			case 'Tween Camera Zoom':
 				var zoom:Float = ogCamZoom;
-				if (value1 != 'default')
-					zoom = Std.parseFloat(value1) ?? ogCamZoom;
+
+				if (value1 != 'default' && value1.trim() != '') {
+				  var parsedZoom:Float = Std.parseFloat(value1);
+				  if (!Math.isNaN(parsedZoom)) {
+					zoom = parsedZoom;
+				  }
+				}
 
 				var split:Array<String> = value2.split(',');
 				var duration:Float = 0;
 				var ease:Dynamic = FlxEase.linear;
-				if (split.length > 0) duration = (Std.parseFloat(split[0].trim()) ?? 0) / playbackRate;
+
+				if (split.length > 0 && split[0].trim() != '') {
+				  var parsedDuration:Float = Std.parseFloat(split[0].trim());
+				  if (!Math.isNaN(parsedDuration)) {
+					duration = parsedDuration / playbackRate;
+				  }
+				}
 				if (split.length > 1) ease = Reflect.field(FlxEase, split[1].trim()) ?? FlxEase.linear;
 
 				cameraTwn?.cancel();
 				if (camZooming) {
-					cameraTwn = FlxTween.tween(this, {_defaultCamZoom: zoom}, duration, {ease: ease, onComplete:
-						function (twn:FlxTween) {
-							cameraTwn = null;
-						}
-					});
+				  cameraTwn = FlxTween.tween(this, {_defaultCamZoom: zoom}, duration, {ease: ease, onComplete:
+					function (twn:FlxTween) {
+					  cameraTwn = null;
+					}
+				  });
 				} else {
-					_defaultCamZoom = zoom;
-					cameraTwn = FlxTween.tween(FlxG.camera, {zoom: zoom}, duration, {ease: ease, onComplete:
-						function (twn:FlxTween) {
-							cameraTwn = null;
-						}
-					});
+				  _defaultCamZoom = zoom;
+				  cameraTwn = FlxTween.tween(FlxG.camera, {zoom: zoom}, duration, {ease: ease, onComplete:
+					function (twn:FlxTween) {
+					  cameraTwn = null;
+					}
+				  });
 				}
 
 			case 'Camera Twist':
@@ -3829,8 +3840,12 @@ class PlayState extends MusicBeatState
 
 			case 'Set Camera Zoom', 'Set Cam Zoom': //Set Cam Zoom was added just to make it cross-compatible with the mod i use that has this specific event
 				var newZoom:Float = ogCamZoom;
-				if (value1 != 'default')
-					newZoom = Std.parseFloat(value1);
+				if (value1 != 'default' && value1.trim() != '') {
+				  var parsedZoom:Float = Std.parseFloat(value1);
+				  if (!Math.isNaN(parsedZoom)) {
+					newZoom = parsedZoom;
+				  }
+				}
 
 				defaultCamZoom = newZoom;
 
