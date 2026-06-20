@@ -1730,11 +1730,32 @@ class PlayState extends MusicBeatState
 	public function removeShaderFromCamera(cam:String,effect:Dynamic){
 		switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud':
-				camHUD.removeShader(effect.shader);
+				if(camHUD.removeShader(effect.shader))
+				{
+					trace("Removed successfully");
+				}
+				else
+				{
+					trace("Shader wasn't found");
+				}
 			case 'camother' | 'other':
-				camOther.removeShader(effect.shader);
+				if(camOther.removeShader(effect.shader))
+				{
+					trace("Removed successfully");
+				}
+				else
+				{
+					trace("Shader wasn't found");
+				}
 			case 'camgame' | 'game':
-				camGame.removeShader(effect.shader);
+				if(camGame.removeShader(effect.shader))
+				{
+					trace("Removed successfully");
+				}
+				else
+				{
+					trace("Shader wasn't found");
+				}
 			default:
 				if(modchartSprites.exists(cam)) {
 					Reflect.setProperty(modchartSprites.get(cam),"shader",null);
@@ -3004,12 +3025,14 @@ class PlayState extends MusicBeatState
 				screenshader.shader.waveAmplitude -= (elapsed / 2);
 			}
 
-			if (screenshader.waveAmplitude > 0)
+			if (screenshader.shader.waveAmplitude > 0)
 				screenshader.update(elapsed);
-			else {
+			else 
+			{
 				removeShaderFromCamera('camGame', screenshader);
 				screenshader.enabled = false;
 			}
+			// FlxG.watch.addQuick("RainbowShaderAmp", screenshader.shader.waveAmplitude);
 		}
 
 		if (!cpuControlled && canUseBotEnergy)

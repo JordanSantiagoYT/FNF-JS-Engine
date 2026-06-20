@@ -477,7 +477,8 @@ class Paths
       if (playAprilFools)
       {
         FlxG.sound.playMusic(Paths.music('aprilFools'), volume);
-      } else
+      } 
+	  else
       {
         final musicName = 'freakyMenu-' + ClientPrefs.daMenuMusic;
         // trace(musicName);
@@ -515,6 +516,8 @@ class Paths
 
   // Loads images.
   public static var currentTrackedAssets:Map<String, FlxGraphic> = [];
+  // because the trace is so damn annoying sometimes
+  public static var warnedMissingAssets:Map<String, Bool> = [];
 
   static public function image(key:String, ?parentFolder:String = null):FlxGraphic
   {
@@ -538,8 +541,12 @@ class Paths
 
       if (bitmap == null)
       {
-        trace('oh no its returning null NOOOO ($file)');
-        return null;
+ 		if (!warnedMissingAssets.exists(file))
+		{
+			warnedMissingAssets.set(file, true);
+			trace('oh no its returning null NOOOO ($file)');
+		}
+		return null;
       }
     }
 
