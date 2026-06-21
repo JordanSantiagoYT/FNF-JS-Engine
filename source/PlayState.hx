@@ -1108,7 +1108,7 @@ class PlayState extends MusicBeatState
 		if (curSong.toLowerCase() == "guns") // added this to bring back the old 2021 fnf vibes, i wish the fnf fandom revives one day :(
 		{
 			final randomVar:Int = (ClientPrefs.noGunsRNG) ? 8 : Std.random(15);
-			trace(randomVar);
+			// trace(randomVar);
 			if (randomVar == 8)
 			{
 				trace('AWW YEAH, ITS ASCENDING TIME');
@@ -1561,7 +1561,9 @@ class PlayState extends MusicBeatState
 		}
 		playbackRate = value;
 		FlxG.animationTimeScale = value;
+		#if debug
 		trace('Anim speed: ' + FlxG.animationTimeScale);
+		#end
 		Conductor.safeZoneOffset = (ClientPrefs.safeFrames / 60) * 1000 * value;
 		setOnLuas('playbackRate', playbackRate);
 		#else
@@ -1732,7 +1734,7 @@ class PlayState extends MusicBeatState
 			case 'camhud' | 'hud':
 				if(camHUD.removeShader(effect.shader))
 				{
-					trace("Removed successfully");
+					trace("Removed shader successfully");
 				}
 				else
 				{
@@ -1741,7 +1743,7 @@ class PlayState extends MusicBeatState
 			case 'camother' | 'other':
 				if(camOther.removeShader(effect.shader))
 				{
-					trace("Removed successfully");
+					trace("Removed shader successfully");
 				}
 				else
 				{
@@ -1750,7 +1752,7 @@ class PlayState extends MusicBeatState
 			case 'camgame' | 'game':
 				if(camGame.removeShader(effect.shader))
 				{
-					trace("Removed successfully");
+					trace("Removed shader successfully");
 				}
 				else
 				{
@@ -4902,9 +4904,10 @@ class PlayState extends MusicBeatState
 					char.specialAnim = true;
 					char.heyTimer = 0.59;
 					FlxG.sound.play(Paths.sound('hey'));
-					trace("HEY!!");
+					// trace("HEY!!");
 				}
-				else trace ('Character doesnt have a hey animation!');
+				else 
+					trace('Character doesnt have a hey animation!');
 			}
 
 			if (!holdArray.contains(true) || endingSong) {
