@@ -82,7 +82,9 @@ class TitleState extends MusicBeatState
         updateVersion = returnedData[0];
         final curVersion:String = MainMenuState.psychEngineJSVersion.trim();
         final cleanVersion:String = curVersion.split(" (")[0]; // Removes everything after " ("
+		#if debug
         trace(cleanVersion);
+		#end
         trace('Current version online: ' + updateVersion + ', your version: ' + cleanVersion);
         if (updateVersion != cleanVersion && CoolUtil.isVersionNewer(updateVersion, cleanVersion))
         {

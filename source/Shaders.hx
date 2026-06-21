@@ -1426,15 +1426,7 @@ class PulseShader extends ErrorHandledRuntimeShader
 
   public function new()
   {
-    var shaderSource:String = Assets.getText(Paths.shaderFragment('pulseEffect', 'preload'));
-
-    if (shaderSource == null || shaderSource.length == 0) {
-        trace("CRITICAL ERROR: Shader file 'pulseEffect' NOT FOUND or EMPTY!");
-    } else {
-        trace("Shader loaded successfully. Length: " + shaderSource.length);
-    }
-
-    super('Pulse Effect', shaderSource);
+    super('Pulse Effect', shaders.RuntimeShaders.pulseEffect);
 
     // Initialize with default values
     this.setFloat('uWaveAmplitude', waveAmplitude);

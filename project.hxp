@@ -131,13 +131,6 @@ class Project extends HXProject
 	 */
 	static final FEATURE_DEBUG_TRACY:FeatureFlag = "FEATURE_DEBUG_TRACY";
 
-	/**
-	 * `-DFEATURE_LOG_TRACE`
-	 * If this flag is enabled, the game will print debug traces to the console.
-	 * Disable to improve performance a bunch.
-	 */
-	static final FEATURE_LOG_TRACE:FeatureFlag = "FEATURE_LOG_TRACE";
-
 	public function new()
 	{
 		super();
@@ -348,7 +341,6 @@ class Project extends HXProject
 		CRASH_HANDLER.apply(this, true);
 		ACHIEVEMENTS_ALLOWED.apply(this, true);
 		CHECK_FOR_UPDATES.apply(this, true);
-		FEATURE_LOG_TRACE.apply(this, isDebug());
 		HSCRIPT_ALLOWED.apply(this, (isDesktop() || isMobile() || isWeb()));
 		DISCORD_ALLOWED.apply(this, (isDesktop() || isMobile()));
 		SHADERS_ALLOWED.apply(this, true);
