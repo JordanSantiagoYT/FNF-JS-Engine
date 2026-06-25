@@ -1,9 +1,9 @@
 package;
 
-import CrossFade;
 import Achievements;
 import Character.Boyfriend;
 import Conductor.Rating;
+import CrossFade;
 import DialogueBoxPsych;
 import Note;
 import Section.SwagSection;
@@ -12,6 +12,7 @@ import Song.SwagSong;
 import StageData;
 import editors.CharacterEditorState;
 import editors.ChartingState;
+import flixel.addons.effects.FlxTrail;
 import flixel.input.keyboard.FlxKey;
 import flixel.ui.FlxBar;
 import flixel.util.FlxSort;
@@ -19,9 +20,7 @@ import objects.*;
 import openfl.events.KeyboardEvent;
 import openfl.system.System;
 import play.objects.*;
-import flixel.addons.effects.FlxTrail;
 #if SHADERS_ALLOWED
-import openfl.filters.ShaderFilter;
 import shaders.ErrorHandledShader;
 #end
 
@@ -146,7 +145,7 @@ class PlayState extends MusicBeatState
 
 	public var camZooming:Bool = false;
 	public var camZoomingMult:Float = 1;
-	public var camZoomingDecay:Float = 1;
+	public var camZoomingDecay:Float = 2.5;
 	private var curSong:String = "";
 
 	public var gfSpeed:Int = 1;
@@ -168,6 +167,8 @@ class PlayState extends MusicBeatState
 
 	var endingTimeLimit:Int = 20;
 
+	//current zoom factor for camGame. Affects how much camGame is zoomed by, so tweening can actually be used.
+	var camBopFactor:Float = 0;
 	var camBopInterval:Float = 4;
 	var camBopIntensity:Float = 1;
 
@@ -321,7 +322,10 @@ class PlayState extends MusicBeatState
 
 	public static var shouldDrainHealth:Bool = false;
 
-	public var defaultCamZoom:Float = 1.05;
+	//Private value for defaultCamZoom. This is so tweening can be used without calling a 'set' function every frame.
+	private var _defaultCamZoom:Float = 1.05;
+
+	public var defaultCamZoom(get, set):Float;
 
 	public var ogCamZoom:Float = 1.05;
 
@@ -564,7 +568,7 @@ class PlayState extends MusicBeatState
 		else if (stageData.isPixelStage)
 			stageUI = "pixel";
 
-		defaultCamZoom = ogCamZoom = stageData.defaultZoom;
+		_defaultCamZoom = ogCamZoom = stageData.defaultZoom;
 		isPixelStage = stageData.isPixelStage;
 		BF_X = stageData.boyfriend[0];
 		BF_Y = stageData.boyfriend[1];
@@ -1080,7 +1084,7 @@ class PlayState extends MusicBeatState
 		playerStrums = new FlxTypedGroup<StrumNote>();
 		opponentStrums = new FlxTypedGroup<StrumNote>();
 
-		trace ('Loading chart...');
+		// trace ('Loading chart...');
 
 		if (dad.flixelTrail && dad.trailLength != null && dad.trailDelay != null && dad.trailAlpha != null && dad.trailDiff != null)
 		{
@@ -1104,7 +1108,7 @@ class PlayState extends MusicBeatState
 		if (curSong.toLowerCase() == "guns") // added this to bring back the old 2021 fnf vibes, i wish the fnf fandom revives one day :(
 		{
 			final randomVar:Int = (ClientPrefs.noGunsRNG) ? 8 : Std.random(15);
-			trace(randomVar);
+			// trace(randomVar);
 			if (randomVar == 8)
 			{
 				trace('AWW YEAH, ITS ASCENDING TIME');
@@ -1129,8 +1133,8 @@ class PlayState extends MusicBeatState
 			prevCamFollowPos = null;
 		}
 		add(camFollowPos);
-		if (!ClientPrefs.charsAndBG) FlxG.camera.zoom = 100; //zoom it in very big to avoid high RAM usage!!
-		if (ClientPrefs.charsAndBG)
+		if (!ClientPrefs.charsAndBG) _defaultCamZoom = 100;
+		else
 		{
 			FlxG.camera.follow(camFollowPos, LOCKON, 1);
 			FlxG.camera.zoom = defaultCamZoom;
@@ -1557,7 +1561,9 @@ class PlayState extends MusicBeatState
 		}
 		playbackRate = value;
 		FlxG.animationTimeScale = value;
+		#if debug
 		trace('Anim speed: ' + FlxG.animationTimeScale);
+		#end
 		Conductor.safeZoneOffset = (ClientPrefs.safeFrames / 60) * 1000 * value;
 		setOnLuas('playbackRate', playbackRate);
 		#else
@@ -1580,6 +1586,32 @@ class PlayState extends MusicBeatState
 		    default:
 				polyphonyOppo = value;
 		        polyphonyBF = value;
+		}
+		return value;
+	}
+
+	inline function get_defaultCamZoom():Float
+	{
+		return _defaultCamZoom;
+	}
+
+	inline function set_defaultCamZoom(value:Float):Float
+	{
+		cameraTwn?.cancel();
+
+		if (camZooming) {
+			cameraTwn = FlxTween.tween(this, {_defaultCamZoom: value}, 2 / playbackRate / camZoomingDecay, {ease: FlxEase.expoOut, onComplete:
+				function (twn:FlxTween) {
+					cameraTwn = null;
+				}
+			});
+		} else {
+			_defaultCamZoom = value;
+			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: value}, 2 / playbackRate / camZoomingDecay, {ease: FlxEase.expoOut, onComplete:
+				function (twn:FlxTween) {
+					cameraTwn = null;
+				}
+			});
 		}
 		return value;
 	}
@@ -1680,14 +1712,11 @@ class PlayState extends MusicBeatState
 	public function addShaderToCamera(cam:String,effect:Dynamic){//STOLE FROM ANDROMEDA	// actually i got it from old psych engine
 		switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud':
-				if (camHUD.filters == null) camHUD.filters = [];
-				camHUD.filters?.push(new ShaderFilter(effect.shader));
+				camHUD.addShader(effect.shader);
 			case 'camother' | 'other':
-				if (camOther.filters == null) camOther.filters = [];
-				camOther.filters?.push(new ShaderFilter(effect.shader));
+				camOther.addShader(effect.shader);
 			case 'camgame' | 'game':
-				if (camGame.filters == null) camGame.filters = [];
-				camGame.filters?.push(new ShaderFilter(effect.shader));
+				camGame.addShader(effect.shader);
 			default:
 				if(modchartSprites.exists(cam)) {
 					Reflect.setProperty(modchartSprites.get(cam),"shader",effect.shader);
@@ -1701,14 +1730,34 @@ class PlayState extends MusicBeatState
  	}
 
 	public function removeShaderFromCamera(cam:String,effect:Dynamic){
-		var filter = new ShaderFilter(effect.shader);
 		switch(cam.toLowerCase()) {
 			case 'camhud' | 'hud':
-				camHUD.filters?.remove(filter);
+				if(camHUD.removeShader(effect.shader))
+				{
+					trace("Removed shader successfully");
+				}
+				else
+				{
+					trace("Shader wasn't found");
+				}
 			case 'camother' | 'other':
-				camOther.filters?.remove(filter);
+				if(camOther.removeShader(effect.shader))
+				{
+					trace("Removed shader successfully");
+				}
+				else
+				{
+					trace("Shader wasn't found");
+				}
 			case 'camgame' | 'game':
-				camGame.filters?.remove(filter);
+				if(camGame.removeShader(effect.shader))
+				{
+					trace("Removed shader successfully");
+				}
+				else
+				{
+					trace("Shader wasn't found");
+				}
 			default:
 				if(modchartSprites.exists(cam)) {
 					Reflect.setProperty(modchartSprites.get(cam),"shader",null);
@@ -2978,12 +3027,14 @@ class PlayState extends MusicBeatState
 				screenshader.shader.waveAmplitude -= (elapsed / 2);
 			}
 
-			if (screenshader.waveAmplitude > 0)
+			if (screenshader.shader.waveAmplitude > 0)
 				screenshader.update(elapsed);
-			else {
+			else 
+			{
 				removeShaderFromCamera('camGame', screenshader);
 				screenshader.enabled = false;
 			}
+			// FlxG.watch.addQuick("RainbowShaderAmp", screenshader.shader.waveAmplitude);
 		}
 
 		if (!cpuControlled && canUseBotEnergy)
@@ -3299,7 +3350,9 @@ class PlayState extends MusicBeatState
 
 		if (camZooming)
 		{
-			FlxG.camera.zoom = FlxMath.lerp(defaultCamZoom, FlxG.camera.zoom, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
+			camBopFactor = FlxMath.lerp(0, camBopFactor, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
+
+			FlxG.camera.zoom = defaultCamZoom + camBopFactor;
 			camHUD.zoom = FlxMath.lerp(1, camHUD.zoom, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
 		}
 
@@ -3685,11 +3738,10 @@ class PlayState extends MusicBeatState
 					if (usingBotEnergy) usingBotEnergy = false;
 					var varsFadeIn:Array<Dynamic> = [energyBarBG, energyBar, energyTxt];
 					for (i in 0...varsFadeIn.length)
-						FlxTween.tween(varsFadeIn[i], {alpha: 0}, 0.75, {
-							ease: FlxEase.expoOut,
-								onComplete: function(_){
-									varsFadeIn[i].visible = false;
-								}});
+						FlxTween.tween(varsFadeIn[i], {alpha: 0}, 0.75, {ease: FlxEase.expoOut, onComplete: function(_)
+						{
+							varsFadeIn[i].visible = false;
+						}});
 				}
 
 			case 'Set Bot Energy Speeds':
@@ -3717,8 +3769,8 @@ class PlayState extends MusicBeatState
 					FlxTween.tween(creditsPopup, {x: creditsPopup.width * -1} , 1, {ease: FlxEase.backIn, onComplete: function(tween:FlxTween)
 					{
 						creditsPopup.destroy();
-							}, startDelay: 3});
-						}});
+					}, startDelay: 3});
+				}});
 			}
 			case 'Camera Bopping':
 				var _interval:Int = Std.parseInt(value1);
@@ -3732,6 +3784,44 @@ class PlayState extends MusicBeatState
 				camBopInterval = _interval;
 				if (_interval != 4) usingBopIntervalEvent = true;
 					else usingBopIntervalEvent = false;
+
+			case 'Tween Camera Zoom':
+				var zoom:Float = ogCamZoom;
+
+				if (value1 != 'default' && value1.trim() != '') {
+				  var parsedZoom:Float = Std.parseFloat(value1);
+				  if (!Math.isNaN(parsedZoom)) {
+					zoom = parsedZoom;
+				  }
+				}
+
+				var split:Array<String> = value2.split(',');
+				var duration:Float = 0;
+				var ease:Dynamic = FlxEase.linear;
+
+				if (split.length > 0 && split[0].trim() != '') {
+				  var parsedDuration:Float = Std.parseFloat(split[0].trim());
+				  if (!Math.isNaN(parsedDuration)) {
+					duration = parsedDuration / playbackRate;
+				  }
+				}
+				if (split.length > 1) ease = Reflect.field(FlxEase, split[1].trim()) ?? FlxEase.linear;
+
+				cameraTwn?.cancel();
+				if (camZooming) {
+				  cameraTwn = FlxTween.tween(this, {_defaultCamZoom: zoom}, duration, {ease: ease, onComplete:
+					function (twn:FlxTween) {
+					  cameraTwn = null;
+					}
+				  });
+				} else {
+				  _defaultCamZoom = zoom;
+				  cameraTwn = FlxTween.tween(FlxG.camera, {zoom: zoom}, duration, {ease: ease, onComplete:
+					function (twn:FlxTween) {
+					  cameraTwn = null;
+					}
+				  });
+				}
 
 			case 'Camera Twist':
 				camTwist = true;
@@ -3766,12 +3856,16 @@ class PlayState extends MusicBeatState
 						case "2": polyphonyBF = noteMultiplier;
 					}
 				}
-				//trace(value2 + " | " + polyphonyBF + ", " + polyphonyOppo);
 
-			case 'Set Camera Zoom':
-				var newZoom:Float = Std.parseFloat(value1);
-				if (Math.isNaN(newZoom))
-					newZoom = ogCamZoom;
+			case 'Set Camera Zoom', 'Set Cam Zoom': //Set Cam Zoom was added just to make it cross-compatible with the mod i use that has this specific event
+				var newZoom:Float = ogCamZoom;
+				if (value1 != 'default' && value1.trim() != '') {
+				  var parsedZoom:Float = Std.parseFloat(value1);
+				  if (!Math.isNaN(parsedZoom)) {
+					newZoom = parsedZoom;
+				  }
+				}
+
 				defaultCamZoom = newZoom;
 
 			case 'Fake Song Length':
@@ -3785,13 +3879,13 @@ class PlayState extends MusicBeatState
 				songLength = fakelength;
 
 			case 'Add Camera Zoom':
-				if(ClientPrefs.camZooms && FlxG.camera.zoom < 1.35) {
+				if(ClientPrefs.camZooms && camHUD.zoom < 1.35) {
 					var camZoom:Float = Std.parseFloat(value1);
 					var hudZoom:Float = Std.parseFloat(value2);
 					if(Math.isNaN(camZoom)) camZoom = 0.015;
 					if(Math.isNaN(hudZoom)) hudZoom = 0.03;
 
-					FlxG.camera.zoom += camZoom;
+					camBopFactor += camZoom;
 					camHUD.zoom += hudZoom;
 				}
 
@@ -4008,7 +4102,7 @@ class PlayState extends MusicBeatState
 				if(ClientPrefs.flashing && ClientPrefs.shaders && curStep < Std.parseInt(value1)) {
 					disableTheTripper = false;
 					disableTheTripperAt = Std.parseInt(value1);
-					FlxG.camera.filters = [new ShaderFilter(screenshader.shader)];
+					FlxG.camera.addShader(screenshader.shader);
 					screenshader.waveAmplitude = 1;
 					screenshader.waveFrequency = 2;
 					screenshader.waveSpeed = val2 * playbackRate;
@@ -4206,27 +4300,6 @@ class PlayState extends MusicBeatState
 			);
 			camFollow.x += (char == boyfriend ? -1 : 1) * char.cameraPosition[0] + charCamOffset[0];
 			camFollow.y += char.cameraPosition[1] + charCamOffset[1];
-			if (char == dad || char == gf) tweenCamIn();
-
-			if (char == boyfriend && songName == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1)
-			{
-				cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1}, (Conductor.stepCrochet * 4 / 1000), {ease: FlxEase.elasticInOut, onComplete:
-					function (twn:FlxTween)
-					{
-						cameraTwn = null;
-					}
-				});
-			}
-		}
-	}
-
-	public function tweenCamIn() {
-		if (songName == 'tutorial' && cameraTwn == null && FlxG.camera.zoom != 1.3) {
-			cameraTwn = FlxTween.tween(FlxG.camera, {zoom: 1.3}, (Conductor.stepCrochet * 4 / 1000), {ease: FlxEase.elasticInOut, onComplete:
-				function (twn:FlxTween) {
-					cameraTwn = null;
-				}
-			});
 		}
 	}
 
@@ -4831,9 +4904,10 @@ class PlayState extends MusicBeatState
 					char.specialAnim = true;
 					char.heyTimer = 0.59;
 					FlxG.sound.play(Paths.sound('hey'));
-					trace("HEY!!");
+					// trace("HEY!!");
 				}
-				else trace ('Character doesnt have a hey animation!');
+				else 
+					trace('Character doesnt have a hey animation!');
 			}
 
 			if (!holdArray.contains(true) || endingSong) {
@@ -5705,9 +5779,9 @@ class PlayState extends MusicBeatState
 			var randomShit = FlxMath.roundDecimal(FlxG.random.float(minSpeed, maxSpeed), 2);
 			lerpSongSpeed(randomShit, 1);
 		}
-		if (camZooming && !endingSong && !startingSong && FlxG.camera.zoom < 1.35 && usingBopIntervalEvent && ClientPrefs.camZooms && (curBeat % camBopInterval == 0))
+		if (camZooming && !endingSong && !startingSong && camHUD.zoom < 1.35 && usingBopIntervalEvent && ClientPrefs.camZooms && (curBeat % camBopInterval == 0))
 		{
-			FlxG.camera.zoom += 0.015 * camBopIntensity;
+			camBopFactor += 0.015 * camBopIntensity;
 			camHUD.zoom += 0.03 * camBopIntensity;
 		} /// WOOO YOU CAN NOW MAKE IT AWESOME
 
@@ -5784,9 +5858,9 @@ class PlayState extends MusicBeatState
 			setOnLuas('mustHitSection', SONG.notes[curSection].mustHitSection);
 			setOnLuas('altAnim', SONG.notes[curSection].altAnim);
 			setOnLuas('gfSection', SONG.notes[curSection].gfSection);
-			if (camZooming && !endingSong && !startingSong && FlxG.camera.zoom < 1.35 && !usingBopIntervalEvent && ClientPrefs.camZooms)
+			if (camZooming && !endingSong && !startingSong && camHUD.zoom < 1.35 && !usingBopIntervalEvent && ClientPrefs.camZooms)
 			{
-				FlxG.camera.zoom += 0.015 * camBopIntensity;
+				camBopFactor += 0.015 * camBopIntensity;
 				camHUD.zoom += 0.03 * camBopIntensity;
 			}
 		}

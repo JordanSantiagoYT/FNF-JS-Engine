@@ -79,9 +79,9 @@ class Limo extends BaseStage
 	{
 		resetFastCar();
 		addBehindGF(fastCar);
-		
+
 		var limo:BGSprite = new BGSprite('limo/limoDrive', -120, 550, 1, 1, ['Limo stage'], true);
-		addBehindGF(limo); //Shitty layering but whatev it works LOL
+		insert(members.indexOf(game.gfGroup)+1, limo);
 	}
 
 	var limoSpeed:Float = 0;
@@ -181,7 +181,7 @@ class Limo extends BaseStage
 		if (FlxG.random.bool(10) && fastCarCanDrive)
 			fastCarDrive();
 	}
-	
+
 	// Substates for pausing/resuming tweens and timers
 	override function closeSubState()
 	{
@@ -215,7 +215,7 @@ class Limo extends BaseStage
 			dancers[i].x = (370 * i) + dancersDiff + bgLimo.x;
 		}
 	}
-	
+
 	function resetLimoKill():Void
 	{
 		limoMetalPole.x = -500;

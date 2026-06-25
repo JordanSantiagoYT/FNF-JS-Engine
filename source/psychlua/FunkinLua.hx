@@ -3290,6 +3290,7 @@ class FunkinLua {
 			if (result == null) result = Function_Continue;
 
 			Lua.pop(lua, 1);
+			if(closed) stop();
 			return result;
 		}
 		catch (e:Dynamic) {
@@ -3389,6 +3390,7 @@ class FunkinLua {
 
 	public function stop() {
 		#if LUA_ALLOWED
+		closed = true;
 		if(lua == null) {
 			return;
 		}

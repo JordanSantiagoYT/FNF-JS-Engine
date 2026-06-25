@@ -148,7 +148,8 @@ class Conductor
 			totalSteps += deltaSteps;
 			totalPos += ((60 / curBPM) * 1000 / 4) * deltaSteps;
 		}
-		trace("new BPM map BUDDY " + bpmChangeMap);
+		if (bpmChangeMap.length > 0)
+			trace("new BPM map BUDDY " + bpmChangeMap);
 	}
 
 	static function getSectionBeats(song:SwagSong, section:Int)

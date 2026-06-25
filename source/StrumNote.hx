@@ -6,7 +6,7 @@ import shaders.RGBPalette;
 class StrumNote extends FlxSprite
 {
 	public var rgbShader:RGBShaderReference;
-    	public var notes_angle:Null<Float> = null;
+	public var notes_angle:Null<Float> = null;
 	public var resetAnim:Float = 0;
 	public var noteData:Int = 0;
 	public var direction:Float = 90;//plan on doing scroll directions soon -bb

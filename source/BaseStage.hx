@@ -181,11 +181,11 @@ class BaseStage extends FlxBasic
 	inline private function get_camHUD():FlxCamera return game.camHUD;
 	inline private function get_camOther():FlxCamera return game.camOther;
 
-	inline private function get_defaultCamZoom():Float return game.defaultCamZoom;
+	inline private function get_defaultCamZoom():Float return PlayState.instance.defaultCamZoom;
 	inline private function set_defaultCamZoom(value:Float):Float
 	{
-		game.defaultCamZoom = value;
-		return game.defaultCamZoom;
+		PlayState.instance.defaultCamZoom = value;
+		return PlayState.instance.defaultCamZoom;
 	}
 	inline private function get_camFollow():FlxPoint return game.camFollow;
 	inline private function get_camFollowPos():FlxObject return game.camFollowPos;
