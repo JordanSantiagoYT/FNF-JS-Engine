@@ -1751,7 +1751,7 @@ class PlayState extends MusicBeatState
 	}
 
 	/***************/
-  /*    VIDEO    */
+	/*    VIDEO    */
 	/***************/
 	public var videoCutscene:VideoSprite = null;
 	public function startVideo(name:String, ?library:String = null, ?callback:Void->Void = null, forMidSong:Bool = false, canSkip:Bool = true, loop:Bool = false, playOnLoad:Bool = true)
