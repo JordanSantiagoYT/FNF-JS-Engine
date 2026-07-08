@@ -369,6 +369,7 @@ class Project extends HXProject
 		setHaxedef("HXCPP_CHECK_POINTER");
 		setHaxedef("HXCPP_STACK_LINE");
 		setHaxedef("HXCPP_STACK_TRACE");
+		setHaxedef("HXCPP_CATCH_SEGV");
 		if (HSCRIPT_ALLOWED.isEnabled(this))
 			setHaxedef("hscriptPos");
 
@@ -462,7 +463,7 @@ class Project extends HXProject
 			addHaxelib('hxdiscord_rpc'); // Discord API
 
 		if (isDesktop() && LUA_ALLOWED.isEnabled(this))
-			addHaxelib('hxluajit'); // Lua API
+			addHaxelib('hxluau'); // Lua API
 
 		if (isDebug() && isCPP())
 			addHaxelib("hxcpp-debug-server");

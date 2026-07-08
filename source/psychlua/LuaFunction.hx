@@ -1,6 +1,6 @@
 package psychlua;
 
-import hxluajit.Types;
+import hxluau.Types;
 
 /**
  * Holds a Lua function that can be called from Haxe.
@@ -55,7 +55,7 @@ class LuaFunction
 	{
 		if (l != null)
 		{
-			LuaL.unref(l.raw, Lua.REGISTRYINDEX, ref);
+			Lua.unref(l.raw, ref);
 			l = null;
 		}
 	}

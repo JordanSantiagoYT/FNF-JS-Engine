@@ -86,7 +86,7 @@
       "type": "git",
       "dir": null,
       "ref": "main",
-      "url": "https://github.com/JS-Engine-things/hxluajit"
+      "url": "https://github.com/JS-Engine-things/hxluau"
     },
     {
       "name": "funkin.vis",
