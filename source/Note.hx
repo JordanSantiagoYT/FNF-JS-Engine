@@ -31,7 +31,7 @@ typedef EventNote = {
 	public var parentSL:Float = 0;
 	public var hitHealth:Float = 0;
 	public var missHealth:Float = 0;
-	public var hitCausesMiss:Null<Bool> = null;
+	public var hitCausesMiss:Bool = false;
 	public var wasHit:Bool = false;
 	public var multSpeed:Float = 1;
 	public var multAlpha:Float = 1;
@@ -568,7 +568,9 @@ class Note extends FlxSprite
 	var rainbowTime = 0.0;
 	public function updateRGBColors()
 	{
-		if (rgbShader == null && useRGBShader) rgbShader = new RGBShaderReference(this, initializeGlobalRGBShader(noteData, this));
+		if (!useRGBShader) return;
+
+		if (rgbShader == null) rgbShader = new RGBShaderReference(this, initializeGlobalRGBShader(noteData, this));
 		else switch(ClientPrefs.noteColorStyle)
 		{
 			case 'Rainbow':

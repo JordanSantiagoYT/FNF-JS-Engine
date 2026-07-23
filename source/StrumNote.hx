@@ -180,8 +180,9 @@ class StrumNote extends FlxSprite
 			if (noteskin != null && noteskin.length > 0) texture = "noteskins/" + noteskin;
 			else texture = "noteskins/NOTE_assets" + Note.getNoteSkinPostfix();
 	}
+
 	public function updateRGBColors(?r:FlxColor, ?g:FlxColor, ?b:FlxColor) {
-        if (rgbShader != null)
+        if (rgbShader != null && useRGBShader)
 		{
 			rgbShader.r = r;
 			rgbShader.g = g;
