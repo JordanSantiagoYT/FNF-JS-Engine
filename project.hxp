@@ -387,6 +387,9 @@ class Project extends HXProject
         setHaxedef("HXCPP_CPP17");
         // setHaxedef("HXCPP_ALIGN_ALLOC");
         setHaxedef("HXCPP_FAST_LINK");
+		// this is part of ShadowEngines HXCPP
+		// should be fine to keep if you don't use it, but makes it so it doesn't use AVX2
+        setHaxedef("HXCPP_NO_ARCH_LEVEL");
 
 		// If we aren't using the Flixel debugger, strip it out.
 		if (!isDebug())
