@@ -3805,7 +3805,7 @@ class PlayState extends MusicBeatState
 					duration = parsedDuration / playbackRate;
 				  }
 				}
-				if (split.length > 1) ease = Reflect.field(FlxEase, split[1].trim()) ?? FlxEase.linear;
+				if (split.length > 1) ease = psychlua.LuaUtils.getFlxEaseByString(split[1]);
 
 				cameraTwn?.cancel();
 				if (camZooming) {
