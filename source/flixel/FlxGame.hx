@@ -84,6 +84,11 @@ class FlxGame extends Sprite
 	var _state:FlxState;
 
 	/**
+	 * Cached flag indicating whether the current state is `PlayState`.
+	 */
+	var _isPlayState:Bool = false;
+
+	/**
 	 * Total number of milliseconds elapsed since game start.
 	 */
 	var _total:Float = 0;
@@ -565,6 +570,7 @@ class FlxGame extends Sprite
 
 		// Finally assign and create the new state
 		_state = _nextState.createInstance();
+		_isPlayState = Std.isOfType(_state, PlayState);
 		_state._constructor = _nextState;
 		_nextState = null;
 
@@ -681,7 +687,8 @@ class FlxGame extends Sprite
 			if (FlxG.elapsed > max)
 				FlxG.elapsed = max;
 		}
-		if (Type.getClassName(Type.getClass(FlxG.state)) == 'PlayState' && ClientPrefs.ffmpegMode) FlxG.elapsed = 1 / ClientPrefs.targetFPS;
+		//BOTTLENECK: high Type.getClassName(Type.getClass(FlxG.state)) + string compare runs on EVERY update tick (~60-120/s) in the core loop | FIX: cache an isPlayState Bool set in switchState()
+		if (_isPlayState && ClientPrefs.ffmpegMode) FlxG.elapsed = 1 / ClientPrefs.targetFPS;
 	}
 
 	function updateInput():Void
