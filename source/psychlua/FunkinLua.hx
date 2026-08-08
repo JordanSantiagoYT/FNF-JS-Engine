@@ -59,6 +59,10 @@ class FunkinLua {
 	public static var customFunctions:Map<String, Dynamic> = [];
 	public static var registeredFunctions:Map<String, Dynamic> = [];
 
+	#if LUA_ALLOWED
+	private var _missingCalls:Map<String, Bool> = new Map();
+	#end
+
 	public function new(scriptName:String, ?scriptCode:String) {
 		#if LUA_ALLOWED
 		lua = LuaL.newstate();
@@ -234,8 +238,10 @@ class FunkinLua {
 		#end
 
 		for (name => func in customFunctions) {
-			if (func != null)
+			if (func != null) {
+				_missingCalls.remove(name);
 				Convert.addCallback(lua, name, func);
+			}
 		}
 
 		// shader shit
@@ -2961,8 +2967,10 @@ class FunkinLua {
 		});
 
 		for (name => func in registeredFunctions) {
-			if (func != null)
+			if (func != null) {
+				_missingCalls.remove(name);
 				Convert.addCallback(lua, name, func);
+			}
 		}
 
 		call('onCreate', []);
@@ -2971,6 +2979,9 @@ class FunkinLua {
 
 	public function addLocalCallback(name:String, myFunction:Dynamic)
 	{
+		#if LUA_ALLOWED
+		_missingCalls.remove(name);
+		#end
 		callbacks.set(name, myFunction);
 		Convert.addCallback(lua, name, null); // just so that it gets called
 	}
@@ -2989,6 +3000,19 @@ class FunkinLua {
 
 	public static function setVarInArray(instance:Dynamic, variable:String, value:Dynamic):Any
 	{
+		//BOTTLENECK: high setVarInArray/getVarInArray do variable.split('[') Array alloc (2992/3030) + PlayState.variables string Map lookup + Reflect.getProperty per call — hit every frame by modchart getProperty/setProperty paths | FIX: fast-path no-bracket vars without split; precompile dotted path to cached (obj,key) chain once
+		if(variable.indexOf('[') == -1)
+		{
+			if(PlayState.instance.variables.exists(variable))
+			{
+				PlayState.instance.variables.set(variable, value);
+				return true;
+			}
+
+			Reflect.setProperty(instance, variable, value);
+			return true;
+		}
+
 		var shit:Array<String> = variable.split('[');
 		if(shit.length > 1)
 		{
@@ -3027,6 +3051,18 @@ class FunkinLua {
 	}
 	public static function getVarInArray(instance:Dynamic, variable:String):Any
 	{
+		if(variable.indexOf('[') == -1)
+		{
+			if(PlayState.instance.variables.exists(variable))
+			{
+				var retVal:Dynamic = PlayState.instance.variables.get(variable);
+				if(retVal != null)
+					return retVal;
+			}
+
+			return Reflect.getProperty(instance, variable);
+		}
+
 		var shit:Array<String> = variable.split('[');
 		if(shit.length > 1)
 		{
@@ -3264,6 +3300,9 @@ class FunkinLua {
 		try {
 			if(lua == null) return Function_Continue;
 
+			//BOTTLENECK: ultra call() runs per-frame per-script for onUpdate/onUpdatePost (PlayState.callOnLuas fires 2x/frame): string getglobal hash lookup + type check + arg pushes + pcall for EVERY script EVERY frame | FIX: cache resolved Lua function ref per (script,event) at first call; skip getglobal+type when func missing
+			if(_missingCalls.exists(func)) return Function_Continue;
+
 			Lua.getglobal(lua, func);
 			var type:Int = Lua.type(lua, -1);
 
@@ -3271,6 +3310,7 @@ class FunkinLua {
 				if (type > Lua.TNIL)
 					LuaUtils.luaTrace(lua, "ERROR (" + func + "): attempt to call a " + typeToString(type) + " value", false, false, FlxColor.RED);
 
+				_missingCalls.set(func, true);
 				Lua.pop(lua, 1);
 				return Function_Continue;
 			}
@@ -3378,11 +3418,13 @@ class FunkinLua {
 
 		if (Reflect.isFunction(data)) {
 			// Bind as a callable Lua function
+			_missingCalls.remove(variable);
 			Convert.addCallback(lua, variable, data);
 			return;
 		}
 
 		// Otherwise, treat it like a variable
+		_missingCalls.remove(variable);
 		Convert.toLua(lua, data);
 		Lua.setglobal(lua, variable);
 		#end
@@ -3409,5 +3451,7 @@ class FunkinLua {
 		return PlayState.instance.isDead ? GameOverSubstate.instance : PlayState.instance;
 	}
 }
+#if LUA_ALLOWED
 typedef State = cpp.RawPointer<Lua_State>;
+#end
 // hi guys, my name is "secret"!
