@@ -392,7 +392,9 @@ class FreeplayState extends MusicBeatState
 		}
 
 		try {
-			scoreText.text = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit?.join('.') + '%)';
+			//BOTTLENECK: high scoreText.text rebuilt every frame (ratingSplit split/join at 385, padding while-loop at 390-392, unconditional set) -> FlxText bitmap regen + array/string allocs per frame, no change guard | FIX: cache last rendered string; assign only when scoreText.text != newText
+			var newScoreText:String = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit?.join('.') + '%)';
+			if (scoreText.text != newScoreText) scoreText.text = newScoreText;
 		}
 		catch(e){}
 		positionHighscore();
