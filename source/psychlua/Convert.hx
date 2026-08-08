@@ -280,6 +280,7 @@ class Convert
 		try
 		{
 			var callbackName:String = Lua.tostring(l, Lua.upvalueindex(1));
+			//BOTTLENECK: high every Lua->Haxe bridge call (setProperty/getProperty/etc per-frame in modcharts): string callbacks map lookup (283) + fresh args Array alloc (309) + fromLua per arg (313) + Reflect.callMethod dynamic invoke (316) | FIX: cache resolved callback per closure upvalue, reuse pooled arg array, direct invoke instead of Reflect.callMethod
 			var callbackMethod:Dynamic = callbacks.get(callbackName);
 
 			if (callbackMethod == null)
@@ -313,7 +314,17 @@ class Convert
 				args[i] = fromLua(l, i + 1);
 			}
 
-			var ret:Dynamic = Reflect.callMethod(null, callbackMethod, args);
+			var ret:Dynamic;
+			if (nparams == 0) ret = callbackMethod();
+			else if (nparams == 1) ret = callbackMethod(args[0]);
+			else if (nparams == 2) ret = callbackMethod(args[0], args[1]);
+			else if (nparams == 3) ret = callbackMethod(args[0], args[1], args[2]);
+			else if (nparams == 4) ret = callbackMethod(args[0], args[1], args[2], args[3]);
+			else if (nparams == 5) ret = callbackMethod(args[0], args[1], args[2], args[3], args[4]);
+			else if (nparams == 6) ret = callbackMethod(args[0], args[1], args[2], args[3], args[4], args[5]);
+			else if (nparams == 7) ret = callbackMethod(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+			else if (nparams == 8) ret = callbackMethod(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+			else ret = Reflect.callMethod(null, callbackMethod, args);
 
 			if (ret != null)
 			{
