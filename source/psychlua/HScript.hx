@@ -18,6 +18,7 @@ class HScript
 {
 	public static var parser:Parser = new Parser();
 	public var interp:Interp;
+	var _parsedCache:Map<String, Expr> = new Map();
 
 	public var variables(get, never):Map<String, Dynamic>;
 	public var parentLua:FunkinLua;
@@ -127,12 +128,21 @@ class HScript
 	#if HSCRIPT_ALLOWED
 	public function execute(codeToRun:String, ?funcToRun:String = null, ?funcArgs:Array<Dynamic>):Dynamic
 	{
-		@:privateAccess
-		parser.line = 1;
-		parser.allowTypes = true;
-		var expr:Expr = parser.parseString(codeToRun);
+		//BOTTLENECK: ultra codeToRun is parsed TWICE (line 133 result discarded) and the AST is never cached, so per-frame modchart runHaxeCode re-parses full source 2x/frame on JS | FIX: parse once into expr, interp.execute(expr), and cache parsed Expr keyed by code string
 		try {
-			var value:Dynamic = interp.execute(parser.parseString(codeToRun));
+			var expr:Expr;
+			if (_parsedCache.exists(codeToRun))
+				expr = _parsedCache.get(codeToRun);
+			else
+			{
+				@:privateAccess
+				parser.line = 1;
+				parser.allowTypes = true;
+				expr = parser.parseString(codeToRun);
+				_parsedCache.set(codeToRun, expr);
+			}
+
+			var value:Dynamic = interp.execute(expr);
 			return (funcToRun != null) ? executeFunction(funcToRun, funcArgs) : value;
 		}
 		catch(e:Exception)
