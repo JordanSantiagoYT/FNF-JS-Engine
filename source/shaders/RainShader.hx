@@ -474,10 +474,20 @@ class RainShader extends FlxFixedShader
 		}
 	}*/
 
+	var _size:Array<Float> = [0, 0];
+	var _view:Array<Float> = [0, 0, 0, 0];
+
 	public function updateViewInfo(screenWidth:Float, screenHeight:Float, camera:FlxCamera):Void
 	{
-		uScreenResolution.value = [screenWidth, screenHeight];
-		uCameraBounds.value = [camera.viewLeft, camera.viewTop, camera.viewRight, camera.viewBottom];
+		_size[0] = screenWidth;
+		_size[1] = screenHeight;
+		uScreenResolution.value = _size;
+
+		_view[0] = camera.viewLeft;
+		_view[1] = camera.viewTop;
+		_view[2] = camera.viewRight;
+		_view[3] = camera.viewBottom;
+		uCameraBounds.value = _view;
 	}
 
 	/*override function __createGLProgram(vertexSource:String, fragmentSource:String):GLProgram

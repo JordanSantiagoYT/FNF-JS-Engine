@@ -75,7 +75,7 @@ class PhillyBlazin extends BaseStage
 		abot = new ABotSpeaker(gfGroup.x, gfGroup.y + 550);
 		add(abot);
 
-		if(ClientPrefs.shaders)
+		if(ClientPrefs.shaders && ClientPrefs.rainFX)
 			setupRainShader();
 
 		var _song = PlayState.SONG;
@@ -167,7 +167,7 @@ class PhillyBlazin extends BaseStage
 	{
 		if(scrollingSky != null) scrollingSky.scrollX -= elapsed * 35;
 
-		if(rainShader != null)
+		if(ClientPrefs.rainFX && rainShader != null)
 		{
 			rainShader.updateViewInfo(FlxG.width, FlxG.height, FlxG.camera);
 			rainShader.update(elapsed * rainTimeScale);

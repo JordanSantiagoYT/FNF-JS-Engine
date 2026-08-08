@@ -15,6 +15,13 @@ class OptimizationSubState extends BaseOptionsMenu
 			true); //Default value
 		addOption(option);
 
+		var option:Option = new Option('Rain FX',
+			'Disables the expensive full-screen rain effect on Philly Streets/Blazin/Sunset stages.',
+			'rainFX',
+			'bool',
+			true);
+		addOption(option);
+
 		var option:Option = new Option('Enable GC',
 			"If checked, then the game will be allowed to garbage collect, reducing RAM usage I suppose.\nIf you experience memory leaks, turn this on, and\nif you experience lag with it on then turn it off.",
 			'enableGC',

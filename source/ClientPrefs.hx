@@ -89,6 +89,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 
 	//Optimization
 	public static var charsAndBG:Bool = true;
+	public static var rainFX:Bool = true;
 	public static var enableGC:Bool = true;
 	public static var opponentLightStrum:Bool = true;
 	public static var botLightStrum:Bool = true;
