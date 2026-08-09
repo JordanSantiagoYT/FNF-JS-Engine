@@ -124,6 +124,29 @@ class Project extends HXProject
 	static final CHECK_FOR_UPDATES:FeatureFlag = "CHECK_FOR_UPDATES";
 
 	/**
+	 * `-DULTRA_OPTIMIZED` (WIP / EXPERIMENTAL max-speed build flag).
+	 * Strips debug instrumentation and forces the fastest codegen the
+	 * installed toolchain supports. Enabled with `-DULTRA_OPTIMIZED`.
+	 * Defines this flag toggles (see the ULTRA_OPTIMIZED block in
+	 * configureCompileDefines):
+	 *   ON:  analyzer-optimize, HXCPP_OPTIMIZE_LINK (/GL + /LTCG or -flto)
+	 *   OFF: HXCPP_CHECK_POINTER, HXCPP_STACK_LINE, HXCPP_STACK_TRACE,
+	 *        HXCPP_GC_CHECK_LEAKS, HXCPP_FAST_LINK
+	 *   KEPT: HXCPP_CATCH_SEGV (CrashHandler needs it), fast GC defines,
+	 *        HXCPP_CPP17, HXCPP_NO_ARCH_LEVEL, -dce no
+	 * WIP: may crash code that relied on null-pointer checks / stack traces.
+	 * See ULTRA_BUILD.md.
+	 */
+	static final ULTRA_OPTIMIZED:FeatureFlag = "ULTRA_OPTIMIZED";
+
+	/**
+	 * `-DULTRA_HTML5` (WIP / EXPERIMENTAL max-speed HTML5/JS build flag).
+	 * Sets analyzer-optimize + js-es=6 for the web target only. Independent
+	 * of ULTRA_OPTIMIZED (which is for native). See ULTRA_BUILD.md.
+	 */
+	static final ULTRA_HTML5:FeatureFlag = "ULTRA_HTML5";
+
+	/**
 	 * `-DFEATURE_DEBUG_TRACY`
 	 * If this flag is enabled, the game will have the necessary hooks for the Tracy profiler.
 	 * Only enable this if you're using the correct fork of Haxe to support this.
@@ -424,6 +447,71 @@ class Project extends HXProject
 		
 		// setHaxedef("HXCPP_PROFILER");
 		setHaxedef("HXCPP_GC_CHECK_LEAKS"); // Idk if this does anything
+
+		if (ULTRA_OPTIMIZED.isEnabled(this) && !isWeb())
+		{
+			// WIP: experimental max-speed build. See the flag doc above.
+			// hxcpp 4.3.2 has NO HXCPP_OPTIMIZE_SPEED/SIZE/O3 defines (grep
+			// toolchain + tools = zero hits): MSVC already emits /O2 in
+			// release (msvc-toolchain.xml:67,79) which is max-speed for cl,
+			// and gcc/clang already use -O2 (linux-toolchain.xml:35). So the
+			// real speed levers are: enable whole-program link-time codegen
+			// (HXCPP_OPTIMIZE_LINK → /GL + /LTCG, or -flto) and drop the
+			// fast-link default that forces INCREMENTAL LTCG.
+
+			// UNSET: debug instrumentation overhead (hxcpp toolchain applies
+			// each by emitting -D flags to haxe in common-defines.xml).
+			unsetHaxedef("HXCPP_CHECK_POINTER"); // null-pointer checks
+			unsetHaxedef("HXCPP_STACK_LINE"); // line info in stack traces
+			unsetHaxedef("HXCPP_STACK_TRACE"); // stack frame tracking
+			unsetHaxedef("HXCPP_GC_CHECK_LEAKS"); // GC leak scanning
+
+			// KEEP: HXCPP_CATCH_SEGV — CrashHandler.init() registers
+			// __hxcpp_set_critical_error_handler and CallStack.exceptionStack()
+			// in onUncaughtError; HXCPP_CATCH_SEGV enables SEH translation
+			// in hxcpp (Debug.cpp:273-279, StackContext.h:448) that keeps
+			// segfaults catchable as haxe exceptions instead of hard crashes.
+			// Removing it would crash the game instead of showing the crash
+			// screen; the overhead is negligible so we keep it.
+
+			// ENABLE: link-time codegen (whole-program LTCG/LTO).
+			// msvc-toolchain.xml:83 → -GL (compile), :123/:148 → -LTCG (link).
+			// linux-toolchain.xml:31, mac-toolchain.xml:51 → -flto.
+			// HXCPP_FAST_LINK must be unset first so hxcpp uses full LTCG
+			// rather than HXCPP_LTCG_INCREMENTAL (finish-setup.xml:34).
+			unsetHaxedef("HXCPP_FAST_LINK");
+			setHaxedef("HXCPP_OPTIMIZE_LINK");
+
+			// FORCE: analyzer-optimize is normally only set in !isDebug(); ensure it
+			// regardless of build type when ULTRA is on.
+			setHaxedef("analyzer-optimize");
+
+			// DCE: keep "-dce no" (already in haxeflags above). This game
+			// is moddable with heavy runtime reflection (128+ Reflect.* calls
+			// across 15+ source files, plus hscript-improved dynamic dispatch).
+			// -dce full would strip dead code that mods may reference via
+			// Reflect.field/callMethod at runtime → null-access crashes.
+			// Safer to keep -dce no and rely on analyzer-optimize instead.
+
+			info("ULTRA_OPTIMIZED: experimental max-speed build enabled (native target)");
+		}
+
+		if (ULTRA_HTML5.isEnabled(this) && isWeb())
+		{
+			// WIP: experimental max-speed build for the HTML5/JS target.
+			// The JS backend ignores the hxcpp defines above; it has its own
+			// speed knobs (DCE, JS ES level, analyzer).
+			setHaxedef("analyzer-optimize");
+			setHaxedef("js-es", "6");
+			// -dce std is the safest DCE for the JS target: removes truly
+			// unreachable code without stripping the reflection-accessed
+			// surface that ClientPrefs/HScript/Lua depend on.
+			// Keep "no" if you need full mod safety; switch to "std" if your
+			// mod library is small / static. WIP.
+			// addHaxeFlag("-dce std");  // uncomment when you're sure
+
+			info("ULTRA_HTML5: experimental max-speed HTML5 build enabled");
+		}
 	}
 
 	function configureOutputDir()
