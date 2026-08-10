@@ -466,7 +466,7 @@ class Project extends HXProject
 			addHaxelib('hxdiscord_rpc'); // Discord API
 
 		if (isDesktop() && LUA_ALLOWED.isEnabled(this))
-			addHaxelib('hxluau'); // Lua API
+			addHaxelib('hxluajit'); // Lua API
 
 		if (isDebug() && isCPP())
 			addHaxelib("hxcpp-debug-server");
