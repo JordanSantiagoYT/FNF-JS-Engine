@@ -1,125 +1,125 @@
-{
-  "dependencies": [
-    {
-      "name": "lime",
-      "type": "git",
-      "dir": null,
-      "ref": null,
-      "url": "https://github.com/JS-Engine-things/lime-8.1.2"
-    },
-    {
-      "name": "openfl",
-      "type": "git",
-      "dir": null,
-      "ref": null,
-      "url": "https://github.com/JS-Engine-things/openfl"
-    },
-    {
-      "name": "flixel",
-      "type": "git",
-      "dir": null,
-      "ref": null,
-      "url": "https://github.com/JS-Engine-things/flixel-JS-Engine"
-    },
-    {
-      "name": "flixel-addons",
-      "type": "haxelib",
-      "version": "3.2.3"
-    },
-    {
-      "name": "flixel-tools",
-      "type": "haxelib",
-      "version": null
-    },
-    {
-      "name": "flixel-ui",
-      "type": "haxelib",
-      "version": "2.6.0"
-    },
-    {
-      "name": "hxp",
-      "type": "haxelib",
-      "version": null
-    },
-    {
-      "name": "hxcpp",
-      "type": "git",
-      "dir": null,
-      "ref": "main",
-      "url": "https://github.com/JS-Engine-things/hxcpp"
-    },
-    {
-      "name": "hxvlc",
-      "type": "git",
-      "dir": null,
-      "ref": null,
-      "url": "https://github.com/JS-Engine-things/hxvlc"
-    },
-    {
-      "name": "hscript-improved",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://github.com/CodenameCrew/hscript-improved"
-    },
-    {
-      "name": "hxcpp-debug-server",
-      "type": "haxelib",
-      "version": null
-    },
-    {
-      "name": "flxanimate",
-      "type": "git",
-      "dir": null,
-      "ref": "768740a56b26aa0c072720e0d1236b94afe68e3e",
-      "url": "https://github.com/Dot-Stuff/flxanimate"
-    },
-    {
-      "name": "hxdiscord_rpc",
-      "type": "git",
-      "dir": null,
-      "ref": "main",
-      "url": "https://github.com/MAJigsaw77/hxdiscord_rpc"
-    },
-    {
-      "name": "hxluajit",
-      "type": "git",
-      "dir": null,
-      "ref": "main",
-      "url": "https://github.com/JS-Engine-things/hxluau"
-    },
-    {
-      "name": "funkin.vis",
-      "type": "git",
-      "dir": null,
-      "ref": "main",
-      "url": "https://github.com/JS-Engine-things/funkVis-FrequencyFixed"
-    },
-    {
-      "name": "grig.audio",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://github.com/JS-Engine-things/grig.audio"
-    },
-    {
-      "name": "tjson",
-      "type": "git",
-      "dir": null,
-      "ref": "master",
-      "url": "https://github.com/moxie-coder/tjson"
-    },
-    {
-      "name": "hxnativefiledialog",
-      "type": "git",
-      "dir": null,
-      "ref": "main",
-      "url": "https://github.com/MAJigsaw77/hxnativefiledialog"
-    },
-    {
-      "name": "hxgamemode",
-      "type": "haxelib",
-      "version": null
-    }
-  ]
+﻿{
+    "dependencies":  [
+                         {
+                             "name":  "lime",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  null,
+                             "url":  "https://github.com/JS-Engine-things/lime-8.1.2"
+                         },
+                         {
+                             "name":  "openfl",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  null,
+                             "url":  "https://github.com/JS-Engine-things/openfl"
+                         },
+                         {
+                             "name":  "flixel",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  null,
+                             "url":  "https://github.com/JS-Engine-things/flixel-JS-Engine"
+                         },
+                         {
+                             "name":  "flixel-addons",
+                             "type":  "haxelib",
+                             "version":  "3.2.3"
+                         },
+                         {
+                             "name":  "flixel-tools",
+                             "type":  "haxelib",
+                             "version":  null
+                         },
+                         {
+                             "name":  "flixel-ui",
+                             "type":  "haxelib",
+                             "version":  "2.6.0"
+                         },
+                         {
+                             "name":  "hxp",
+                             "type":  "haxelib",
+                             "version":  null
+                         },
+                         {
+                             "name":  "hxcpp",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "main",
+                             "url":  "https://github.com/JS-Engine-things/hxcpp"
+                         },
+                         {
+                             "name":  "hxvlc",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  null,
+                             "url":  "https://github.com/JS-Engine-things/hxvlc"
+                         },
+                         {
+                             "name":  "hscript-improved",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "master",
+                             "url":  "https://github.com/CodenameCrew/hscript-improved"
+                         },
+                         {
+                             "name":  "hxcpp-debug-server",
+                             "type":  "haxelib",
+                             "version":  null
+                         },
+                         {
+                             "name":  "flxanimate",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "768740a56b26aa0c072720e0d1236b94afe68e3e",
+                             "url":  "https://github.com/Dot-Stuff/flxanimate"
+                         },
+                         {
+                             "name":  "hxdiscord_rpc",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "main",
+                             "url":  "https://github.com/MAJigsaw77/hxdiscord_rpc"
+                         },
+                         {
+                             "name":  "hxluajit",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "main",
+                             "url":  "https://github.com/JS-Engine-things/hxluau"
+                         },
+                         {
+                             "name":  "funkin.vis",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "main",
+                             "url":  "https://github.com/JS-Engine-things/funkVis-FrequencyFixed"
+                         },
+                         {
+                             "name":  "grig.audio",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "master",
+                             "url":  "https://github.com/JS-Engine-things/grig.audio"
+                         },
+                         {
+                             "name":  "tjson",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "master",
+                             "url":  "https://github.com/moxie-coder/tjson"
+                         },
+                         {
+                             "name":  "hxnativefiledialog",
+                             "type":  "git",
+                             "dir":  null,
+                             "ref":  "main",
+                             "url":  "https://github.com/MAJigsaw77/hxnativefiledialog"
+                         },
+                         {
+                             "name":  "hxgamemode",
+                             "type":  "haxelib",
+                             "version":  null
+                         }
+                     ]
 }
