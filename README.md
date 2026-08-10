@@ -3,18 +3,12 @@
   <br>
   <a href="https://github.com/JordanSantiagoYT/FNF-JS-Engine"><img src="/art/iconOG.png" alt="JSengine" width="150"></a>
   <br>
-  <b>JS Engine [LIGHT] (Pato's Remix)</b>
+  <b>JS Engine</b>
   <br>
   <i>(Jordan Santiago Engine)</i>
   <br>
 </h1>
 <h3 align="center">
-  <b>Hi, you are on the <code>main</code> branch of FNF-JS-Engine-Light, the Pato's fork of JS Engine.</b>
-  <br>
-  <b>This repo is made in a way that every branch is a PR to JS Engine, and the <code>main</code> branch are all PRs combined.</b>
-  <br>
-  <i>(including the ones that are not merged, converted to draft or closed.)</i>
-  <br>
   <b>JS Engine is a heavily modified Psych Engine fork, with lower-end devices and more customization in mind.</b>
 </h3>
 
