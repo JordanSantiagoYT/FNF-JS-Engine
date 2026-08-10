@@ -1,1 +1,183 @@
-﻿{"animations":[{"loop":false,"offsets":[0,0],"anim":"idle","fps":24,"name":"monster idle","indices":[]},{"loop":false,"offsets":[0,0],"anim":"singUP","fps":24,"name":"monster up note","indices":[]},{"loop":false,"offsets":[-30,0],"anim":"singLEFT","fps":24,"name":"Monster left note","indices":[]},{"loop":false,"offsets":[-51,0],"anim":"singRIGHT","fps":24,"name":"Monster Right note","indices":[]},{"loop":false,"offsets":[-40,-94],"anim":"singDOWN","fps":24,"name":"monster down","indices":[]},{"loop":true,"offsets":[-20,50],"anim":"singUP-loop","fps":24,"name":"monster up note","indices":[21,22,23]},{"loop":true,"offsets":[-40,-94],"anim":"singDOWN-loop","fps":24,"name":"monster down","indices":[27,28,29]},{"loop":true,"offsets":[-51,0],"anim":"singRIGHT-loop","fps":24,"name":"Monster Right note","indices":[12,13,14]},{"loop":true,"offsets":[-30,0],"anim":"singLEFT-loop","fps":24,"name":"Monster left note","indices":[17,18,19]},{"loop":true,"offsets":[1,0],"anim":"idle-loop","fps":24,"name":"monster idle","indices":[12,13,14]}],"vocals_file":"monster-christmas","losing_colors":[243,255,110],"isPlayer":false,"no_antialiasing":false,"image":"characters/monsterChristmas","shake_duration":0,"position":[0,130],"health_drain":false,"shake_intensity":0,"healthicon":"monster","shake_screen":false,"drain_floor":0,"flip_x":false,"healthbar_colors":[243,255,110],"drain_amount":0,"camera_position":[0,0],"sing_duration":4,"noteskin":null,"winning_colors":[243,255,110],"scale":1,"flixel_trail":false}
+﻿{
+    "animations":  [
+                       {
+                           "loop":  false,
+                           "offsets":  [
+                                           0,
+                                           0
+                                       ],
+                           "anim":  "idle",
+                           "fps":  24,
+                           "name":  "monster idle",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "loop":  false,
+                           "offsets":  [
+                                           0,
+                                           0
+                                       ],
+                           "anim":  "singUP",
+                           "fps":  24,
+                           "name":  "monster up note",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "loop":  false,
+                           "offsets":  [
+                                           -30,
+                                           0
+                                       ],
+                           "anim":  "singLEFT",
+                           "fps":  24,
+                           "name":  "Monster left note",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "loop":  false,
+                           "offsets":  [
+                                           -51,
+                                           0
+                                       ],
+                           "anim":  "singRIGHT",
+                           "fps":  24,
+                           "name":  "Monster Right note",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "loop":  false,
+                           "offsets":  [
+                                           -40,
+                                           -94
+                                       ],
+                           "anim":  "singDOWN",
+                           "fps":  24,
+                           "name":  "monster down",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "loop":  true,
+                           "offsets":  [
+                                           -20,
+                                           50
+                                       ],
+                           "anim":  "singUP-loop",
+                           "fps":  24,
+                           "name":  "monster up note",
+                           "indices":  [
+                                           21,
+                                           22,
+                                           23
+                                       ]
+                       },
+                       {
+                           "loop":  true,
+                           "offsets":  [
+                                           -40,
+                                           -94
+                                       ],
+                           "anim":  "singDOWN-loop",
+                           "fps":  24,
+                           "name":  "monster down",
+                           "indices":  [
+                                           27,
+                                           28,
+                                           29
+                                       ]
+                       },
+                       {
+                           "loop":  true,
+                           "offsets":  [
+                                           -51,
+                                           0
+                                       ],
+                           "anim":  "singRIGHT-loop",
+                           "fps":  24,
+                           "name":  "Monster Right note",
+                           "indices":  [
+                                           12,
+                                           13,
+                                           14
+                                       ]
+                       },
+                       {
+                           "loop":  true,
+                           "offsets":  [
+                                           -30,
+                                           0
+                                       ],
+                           "anim":  "singLEFT-loop",
+                           "fps":  24,
+                           "name":  "Monster left note",
+                           "indices":  [
+                                           17,
+                                           18,
+                                           19
+                                       ]
+                       },
+                       {
+                           "loop":  true,
+                           "offsets":  [
+                                           1,
+                                           0
+                                       ],
+                           "anim":  "idle-loop",
+                           "fps":  24,
+                           "name":  "monster idle",
+                           "indices":  [
+                                           12,
+                                           13,
+                                           14
+                                       ]
+                       }
+                   ],
+    "vocals_file":  "monster-christmas",
+    "losing_colors":  [
+                          243,
+                          255,
+                          110
+                      ],
+    "isPlayer":  false,
+    "no_antialiasing":  false,
+    "image":  "characters/monsterChristmas",
+    "shake_duration":  0,
+    "position":  [
+                     0,
+                     130
+                 ],
+    "health_drain":  false,
+    "shake_intensity":  0,
+    "healthicon":  "monster",
+    "shake_screen":  false,
+    "drain_floor":  0,
+    "flip_x":  false,
+    "healthbar_colors":  [
+                             243,
+                             255,
+                             110
+                         ],
+    "drain_amount":  0,
+    "camera_position":  [
+                            0,
+                            0
+                        ],
+    "sing_duration":  4,
+    "noteskin":  null,
+    "winning_colors":  [
+                           243,
+                           255,
+                           110
+                       ],
+    "scale":  1,
+    "flixel_trail":  false
+}
