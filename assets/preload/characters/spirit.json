@@ -1,98 +1,108 @@
-{
-	"animations": [
-		{
-			"offsets": [
-				-217,
-				-275
-			],
-			"loop": false,
-			"anim": "idle",
-			"fps": 24,
-			"name": "idle spirit_",
-			"indices": []
-		},
-		{
-			"offsets": [
-				-200,
-				-280
-			],
-			"loop": false,
-			"anim": "singLEFT",
-			"fps": 24,
-			"name": "left_",
-			"indices": []
-		},
-		{
-			"offsets": [
-				170,
-				110
-			],
-			"loop": false,
-			"anim": "singDOWN",
-			"fps": 24,
-			"name": "spirit down_",
-			"indices": []
-		},
-		{
-			"offsets": [
-				-220,
-				-280
-			],
-			"loop": false,
-			"anim": "singRIGHT",
-			"fps": 24,
-			"name": "right_",
-			"indices": []
-		},
-		{
-			"offsets": [
-				-220,
-				-240
-			],
-			"loop": false,
-			"anim": "singUP",
-			"fps": 24,
-			"name": "up_",
-			"indices": []
-		}
-	],
-	"vocals_file": "spirit",
-	"losing_colors": [
-		255,
-		60,
-		110
-	],
-	"isPlayer": false,
-	"no_antialiasing": true,
-	"image": "characters/spirit",
-	"shake_duration": 0,
-	"position": [
-		-150,
-		100
-	],
-	"health_drain": false,
-	"shake_intensity": 0,
-	"healthicon": "spirit-pixel",
-	"shake_screen": false,
-	"drain_floor": 0,
-	"flip_x": false,
-	"healthbar_colors": [
-		255,
-		60,
-		110
-	],
-	"drain_amount": 0,
-	"camera_position": [
-		0,
-		0
-	],
-	"sing_duration": 4,
-	"noteskin": null,
-	"winning_colors": [
-		255,
-		60,
-		110
-	],
-	"scale": 6,
-	"flixel_trail": false
+﻿{
+    "animations":  [
+                       {
+                           "offsets":  [
+                                           -217,
+                                           -275
+                                       ],
+                           "loop":  false,
+                           "anim":  "idle",
+                           "fps":  24,
+                           "name":  "idle spirit_",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "offsets":  [
+                                           -200,
+                                           -280
+                                       ],
+                           "loop":  false,
+                           "anim":  "singLEFT",
+                           "fps":  24,
+                           "name":  "left_",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "offsets":  [
+                                           170,
+                                           110
+                                       ],
+                           "loop":  false,
+                           "anim":  "singDOWN",
+                           "fps":  24,
+                           "name":  "spirit down_",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "offsets":  [
+                                           -220,
+                                           -280
+                                       ],
+                           "loop":  false,
+                           "anim":  "singRIGHT",
+                           "fps":  24,
+                           "name":  "right_",
+                           "indices":  [
+
+                                       ]
+                       },
+                       {
+                           "offsets":  [
+                                           -220,
+                                           -240
+                                       ],
+                           "loop":  false,
+                           "anim":  "singUP",
+                           "fps":  24,
+                           "name":  "up_",
+                           "indices":  [
+
+                                       ]
+                       }
+                   ],
+    "vocals_file":  "spirit",
+    "losing_colors":  [
+                          255,
+                          60,
+                          110
+                      ],
+    "isPlayer":  false,
+    "no_antialiasing":  true,
+    "image":  "characters/spirit",
+    "shake_duration":  0,
+    "position":  [
+                     -150,
+                     100
+                 ],
+    "health_drain":  false,
+    "shake_intensity":  0,
+    "healthicon":  "spirit-pixel",
+    "shake_screen":  false,
+    "drain_floor":  0,
+    "flip_x":  false,
+    "healthbar_colors":  [
+                             255,
+                             60,
+                             110
+                         ],
+    "drain_amount":  0,
+    "camera_position":  [
+                            0,
+                            0
+                        ],
+    "sing_duration":  4,
+    "noteskin":  null,
+    "winning_colors":  [
+                           255,
+                           60,
+                           110
+                       ],
+    "scale":  6,
+    "flixel_trail":  false
 }
