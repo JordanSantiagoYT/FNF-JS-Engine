@@ -894,7 +894,7 @@ class PhillyStreets extends BaseStage
 				lightCanSnd.play(true, sndTime - 65);
 
 				game.isCameraOnForcedPos = true;
-				game.defaultCamZoom += 0.1;
+				defaultCamZoom += 0.1;
 				game.moveCamera('dad');
 				game.cameraSpeed = 2;
 				camFollowPos.x -= 100;
@@ -906,7 +906,7 @@ class PhillyStreets extends BaseStage
 				spraycan.playCanStart();
 				camFollow.x += 250;
 				game.cameraSpeed = 1.5;
-				game.defaultCamZoom -= 0.1;
+				defaultCamZoom -= 0.1;
 
 				new FlxTimer().start(1.1, function(_) {
 					game.isCameraOnForcedPos = false;
