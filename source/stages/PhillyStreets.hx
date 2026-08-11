@@ -130,7 +130,7 @@ class PhillyStreets extends BaseStage
 		updateABotEye(true);
 		add(abot);
 
-		if(ClientPrefs.shaders && ClientPrefs.rainFX)
+		if(ClientPrefs.shaders)
 			setupRainShader();
 
 		var _song = PlayState.SONG;
@@ -522,7 +522,7 @@ class PhillyStreets extends BaseStage
 	{
 		if(scrollingSky != null) scrollingSky.scrollX -= elapsed * 22;
 
-		if(ClientPrefs.rainFX && rainShader != null)
+		if(rainShader != null)
 		{
 			var remappedIntensityValue:Float = FlxMath.remapToRange(Conductor.songPosition, 0, (FlxG.sound.music != null ? FlxG.sound.music.length : 0), rainShaderStartIntensity, rainShaderEndIntensity);
 			rainShader.intensity = remappedIntensityValue;

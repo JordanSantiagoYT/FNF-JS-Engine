@@ -94,7 +94,7 @@ class PhillyStreetsBF extends BaseStage
 		var phillyForeground:BGSprite = new BGSprite('phillyStreets/phillyForeground', 88, 317, 1, 1);
 		add(phillyForeground);
 
-		if(ClientPrefs.shaders && ClientPrefs.rainFX)
+		if(ClientPrefs.shaders)
 			setupRainShader();
 	}
 
@@ -122,7 +122,7 @@ class PhillyStreetsBF extends BaseStage
 	{
 		if(scrollingSky != null) scrollingSky.scrollX -= elapsed * 22;
 
-		if(ClientPrefs.rainFX && rainShader != null)
+		if(rainShader != null)
 		{
 			var remappedIntensityValue:Float = FlxMath.remapToRange(Conductor.songPosition, 0, (FlxG.sound.music != null ? FlxG.sound.music.length : 0), rainShaderStartIntensity, rainShaderEndIntensity);
 			rainShader.intensity = remappedIntensityValue;
