@@ -56,7 +56,7 @@
       "url": "https://github.com/JS-Engine-things/hxvlc"
     },
     {
-      "name": "hscript-improved",
+      "name": "hscript",
       "type": "git",
       "dir": null,
       "ref": "master",
