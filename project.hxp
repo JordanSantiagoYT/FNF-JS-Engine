@@ -453,7 +453,7 @@ class Project extends HXProject
 
 		addHaxelib('flixel-addons'); // Additional utilities for Flixel
 		if (HSCRIPT_ALLOWED.isEnabled(this))
-			addHaxelib('hscript-improved'); // Scripting
+			addHaxelib('hscript'); // Scripting
 
 		addHaxelib('flixel-ui'); // UI framework
 		addHaxelib('grig.audio');

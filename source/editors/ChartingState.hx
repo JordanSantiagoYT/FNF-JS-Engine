@@ -45,8 +45,8 @@ class ChartingState extends MusicBeatState
       'Hurt Note',
       'GF Sing',
       'No Animation',
-			'Cross Fade',
-			'GF Cross Fade'
+	  'Cross Fade',
+	  'GF Cross Fade'
     ];
 
   private var noteTypeIntMap:Map<Int, String> = new Map<Int, String>();
