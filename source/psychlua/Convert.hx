@@ -282,10 +282,7 @@ class Convert
 				args[i] = fromLua(l, i + 1);
 			}
 
-			var ret:Dynamic = null;
-			/* return the number of results */
-
-			ret = Reflect.callMethod(null, callbackMethod, args);
+			var ret:Dynamic = Reflect.callMethod(null, callbackMethod, args);
 
 			if (ret != null)
 			{
