@@ -4399,7 +4399,6 @@ class ChartingState extends MusicBeatState
     return GRID_SIZE * beats * 4 * zoomList[curZoom] * value + gridBG.y;
   }
 
-  //BOTTLENECK: high saveUndo() runs Json.stringify + Song.parseJSON over the WHOLE song on every note placed/deleted/select (addNote, deleteNote, doANoteThing) | FIX: snapshot only the edited section; throttle; cap song size
   public function saveUndo(_song:SwagSong)
   {
     if (CoolUtil.getNoteAmount(_song) <= 50000 && FlxG.save.data.allowUndo)
