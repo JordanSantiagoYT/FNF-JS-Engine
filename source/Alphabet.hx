@@ -429,7 +429,6 @@ class AlphaCharacter extends FlxSprite
 
 	private function set_image(name:String)
 	{
-		//BOTTLENECK: high every new AlphaCharacter (one per letter, per setText) re-parses the alphabet atlas XML via Paths.getSparrowAtlas -> FlxAtlasFrames.fromSparrow (Xml.parse + ~160 FlxFrame objects per letter) | FIX: static-cache the 'alphabet' FlxAtlasFrames once (like noteSkinFramesMap) and share frames across all letters
 		if(frames == null) //first setup
 		{
 			image = name;
