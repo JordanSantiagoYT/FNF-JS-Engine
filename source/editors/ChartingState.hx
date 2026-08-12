@@ -4407,7 +4407,6 @@ class ChartingState extends MusicBeatState
         { // doin this so it doesnt act as a reference
           "song": _song
         });
-      //BOTTLENECK fix: dedupe — skip pushing when the snapshot is byte-identical to the last one, and cap the undo stack size
       if (lastUndoShit == shit) return;
       lastUndoShit = shit;
       var song:SwagSong = Song.parseJSON(shit);
