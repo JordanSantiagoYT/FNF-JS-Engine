@@ -3388,7 +3388,6 @@ class ChartingState extends MusicBeatState
         var nextHeight:Int = Std.int(GRID_SIZE * nextBeats * 4 * zoomList[curZoom]);
         if (nextHeight == Std.int(gridBG.height))
         {
-          //BOTTLENECK fix: reuse the current section's grid bitmap when the next section's grid is identical (clone the sprite, share the graphic)
           nextGridBG = new FlxSprite(gridBG.x, gridBG.height, gridBG.graphic);
         } else
         {
