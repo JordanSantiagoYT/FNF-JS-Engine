@@ -2,7 +2,6 @@ package debug;
 
 import debug.mem.GetTotalMemory;
 import lime.system.System as LimeSystem;
-import openfl.display.Bitmap;
 import openfl.events.Event;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
@@ -11,8 +10,6 @@ import openfl.text.TextFormatAlign;
 class FPSCounter extends TextField
 {
   public var currentFPS(default, null):Float;
-
-  public var bitmap:Bitmap;
 
   var lastText:String = "";
   var outlineDirty:Bool = true;
@@ -111,34 +108,6 @@ class FPSCounter extends TextField
     }
 
     updateColors();
-
-    if (ClientPrefs.fpsBorder)
-    {
-      var newText = text;
-
-      visible = true;
-
-      _outlineTimer += deltaTime * 0.001;
-
-      if (outlineDirty || (_outlineTimer >= 0.5 && newText != lastText))
-      {
-        if (bitmap != null && Main.instance.contains(bitmap)) Main.instance.removeChild(bitmap);
-
-        //BOTTLENECK: high ImageOutline.renderImage re-rasterizes the whole FPS text every text/memory change (~1s) via nested per-pixel getPixel32 + fillRect over the entire BitmapData -> once-per-second stutter on JS | FIX: cache outline bitmap keyed by text; skip re-render when text unchanged
-        bitmap = ImageOutline.renderImage(this, 2, 0x000000, 1);
-        Main.instance.addChild(bitmap);
-
-        lastText = newText;
-        outlineDirty = false;
-        _outlineTimer = 0;
-      }
-
-      visible = false;
-    } else
-    {
-      visible = true;
-      if (bitmap != null && Main.instance.contains(bitmap)) Main.instance.removeChild(bitmap);
-    }
   }
 
   public dynamic function updateColors():Void
