@@ -246,7 +246,6 @@ class Convert
 		try
 		{
 			var callbackName:String = Lua.tostring(l, Lua.upvalueindex(1));
-			//BOTTLENECK: high every Lua->Haxe bridge call (setProperty/getProperty/etc per-frame in modcharts): string callbacks map lookup (283) + fresh args Array alloc (309) + fromLua per arg (313) + Reflect.callMethod dynamic invoke (316) | FIX: cache resolved callback per closure upvalue, reuse pooled arg array, direct invoke instead of Reflect.callMethod
 			var callbackMethod:Dynamic = callbacks.get(callbackName);
 
 			if (callbackMethod == null)
