@@ -334,7 +334,6 @@ class BaseOptionsMenu extends MusicBeatSubstate
 								case 'float' | 'percent':
 									curOption.setValue(FlxMath.roundDecimal(holdValue, curOption.decimals));
 							}
-						//BOTTLENECK: high updateTextFrom() runs every frame while holding Left/Right; setting AttachedText.text triggers Alphabet set_text -> full clearLetters/createLetters sprite rebuild PER FRAME | FIX: skip rebuild when value string unchanged, or update only on discrete press
 						_textThrottle += elapsed;
 						if(_textThrottle >= 0.08) {
 							_textThrottle = 0;
