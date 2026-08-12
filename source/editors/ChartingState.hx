@@ -3354,7 +3354,6 @@ class ChartingState extends MusicBeatState
 
   function reloadGridLayer()
   {
-    //BOTTLENECK: high grid recreated every zoom/section change via FlxGridOverlay.create — height reaches ~122,880px at max zoom, duplicated for nextGridBG (line 3364) | FIX: pre-render a tiled grid tile and stretch; cap resolution
     var curBeats:Float = getSectionBeats();
     var hasNextSec:Bool = sectionStartTime(1) <= FlxG.sound.music.length;
     var nextBeats:Float = hasNextSec ? getSectionBeats(curSec + 1) : 0;
