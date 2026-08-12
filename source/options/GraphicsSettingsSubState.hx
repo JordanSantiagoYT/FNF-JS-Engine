@@ -31,7 +31,7 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		addOption(option);
 
 		var option:Option = new Option('Shaders', //Name
-			'If unchecked, disables shaders.\nIt\'s used for some visual effects, and also CPU intensive for weaker PCs.\nThis includes the rain effect on Philly Streets/Blazin/Sunset stages.', //Description
+			'If unchecked, disables shaders.\nIt\'s used for some visual effects, and also CPU intensive for weaker PCs.', //Description
 			'shaders', //Save data variable name
 			'bool', //Variable type
 			true); //Default value
