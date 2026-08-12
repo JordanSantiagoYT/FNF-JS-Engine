@@ -3000,7 +3000,6 @@ class FunkinLua {
 
 	public static function setVarInArray(instance:Dynamic, variable:String, value:Dynamic):Any
 	{
-		//BOTTLENECK: high setVarInArray/getVarInArray do variable.split('[') Array alloc (2992/3030) + PlayState.variables string Map lookup + Reflect.getProperty per call — hit every frame by modchart getProperty/setProperty paths | FIX: fast-path no-bracket vars without split; precompile dotted path to cached (obj,key) chain once
 		if(variable.indexOf('[') == -1)
 		{
 			if(PlayState.instance.variables.exists(variable))
