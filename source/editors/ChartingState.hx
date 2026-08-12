@@ -2367,7 +2367,6 @@ class ChartingState extends MusicBeatState
       opponentVocals.destroy();
     }
 
-    //BOTTLENECK fix: invalidate cached waveform bytes whenever audio is (re)loaded
     waveformCacheSound = null;
     waveformCacheBytes = null;
     waveformCacheBuffer = null;
