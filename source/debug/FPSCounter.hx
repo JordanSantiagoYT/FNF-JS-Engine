@@ -2,7 +2,6 @@ package debug;
 
 import debug.mem.GetTotalMemory;
 import lime.system.System as LimeSystem;
-import openfl.display.Bitmap;
 import openfl.events.Event;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
@@ -11,8 +10,6 @@ import openfl.text.TextFormatAlign;
 class FPSCounter extends TextField
 {
   public var currentFPS(default, null):Float;
-
-  public var bitmap:Bitmap;
 
   var lastText:String = "";
   var outlineDirty:Bool = true;
@@ -109,30 +106,6 @@ class FPSCounter extends TextField
     }
 
     updateColors();
-
-    if (ClientPrefs.fpsBorder)
-    {
-      var newText = text;
-
-      visible = true;
-
-      if (outlineDirty || newText != lastText)
-      {
-        if (bitmap != null && Main.instance.contains(bitmap)) Main.instance.removeChild(bitmap);
-
-        bitmap = ImageOutline.renderImage(this, 2, 0x000000, 1);
-        Main.instance.addChild(bitmap);
-
-        lastText = newText;
-        outlineDirty = false;
-      }
-
-      visible = false;
-    } else
-    {
-      visible = true;
-      if (bitmap != null && Main.instance.contains(bitmap)) Main.instance.removeChild(bitmap);
-    }
   }
 
   public dynamic function updateColors():Void

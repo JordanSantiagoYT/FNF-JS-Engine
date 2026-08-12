@@ -341,6 +341,30 @@ class VisualsUISubState extends BaseOptionsMenu
 		addOption(option);
 		option.onChange = onChangeFPSCounter;
 		#end
+		
+		var option:Option = new Option('Show RAM Usage',
+			"If checked, the game will show your RAM usage.",
+			'showRamUsage',
+			'bool',
+			true);
+		addOption(option);
+		option.onChange = updateFPSText;
+
+		var option:Option = new Option('Show Peak RAM Usage',
+			"If checked, the game will show your maximum RAM usage.",
+			'showMaxRamUsage',
+			'bool',
+			true);
+		addOption(option);
+		option.onChange = updateFPSText;
+
+		var option:Option = new Option('Show Debug Info',
+			"If checked, the game will show additional debug info.\nNote: Turn on FPS Counter before using this!",
+			'debugInfo',
+			'bool',
+			false);
+		addOption(option);
+		option.onChange = updateFPSText;
 
 		var option:Option = new Option('Botplay Text Fading',
 			"If checked, the botplay text will do cool fading.",
@@ -383,37 +407,6 @@ class VisualsUISubState extends BaseOptionsMenu
 			'comboStacking',
 			'bool',
 			true);
-		addOption(option);
-
-		var option:Option = new Option('Show RAM Usage',
-			"If checked, the game will show your RAM usage.",
-			'showRamUsage',
-			'bool',
-			true);
-		addOption(option);
-		option.onChange = updateFPSText;
-
-		var option:Option = new Option('Show Peak RAM Usage',
-			"If checked, the game will show your maximum RAM usage.",
-			'showMaxRamUsage',
-			'bool',
-			true);
-		addOption(option);
-		option.onChange = updateFPSText;
-
-		var option:Option = new Option('Show Debug Info',
-			"If checked, the game will show additional debug info.\nNote: Turn on FPS Counter before using this!",
-			'debugInfo',
-			'bool',
-			false);
-		addOption(option);
-		option.onChange = updateFPSText;
-
-		var option:Option = new Option('Counter Border',
-			'If unchecked, disables the Counter Border, increases performance at the cost of readability.',
-			'fpsBorder',
-			'bool',
-			false);
 		addOption(option);
 
 		var option:Option = new Option('Main Menu Tips',
