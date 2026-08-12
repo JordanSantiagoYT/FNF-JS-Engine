@@ -3299,7 +3299,6 @@ class FunkinLua {
 		try {
 			if(lua == null) return Function_Continue;
 
-			//BOTTLENECK: ultra call() runs per-frame per-script for onUpdate/onUpdatePost (PlayState.callOnLuas fires 2x/frame): string getglobal hash lookup + type check + arg pushes + pcall for EVERY script EVERY frame | FIX: cache resolved Lua function ref per (script,event) at first call; skip getglobal+type when func missing
 			if(_missingCalls.exists(func)) return Function_Continue;
 
 			Lua.getglobal(lua, func);
