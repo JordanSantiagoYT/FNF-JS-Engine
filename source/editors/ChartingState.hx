@@ -3358,7 +3358,6 @@ class ChartingState extends MusicBeatState
     var hasNextSec:Bool = sectionStartTime(1) <= FlxG.sound.music.length;
     var nextBeats:Float = hasNextSec ? getSectionBeats(curSec + 1) : 0;
 
-    //BOTTLENECK fix: skip the expensive rebuild when nothing the grid depends on actually changed (zoom, beats, grid visibility, vortex, next-section presence)
     if (gridBG != null && gridLayer != null && curZoom == lastGridZoom && curBeats == lastGridBeats && nextBeats == lastGridBeatsNext
       && showTheGrid == lastGridShow && vortex == lastGridVortex && hasNextSec == lastGridHasNext && Std.int(gridBG.height) == lastGridBGHeight)
     {
