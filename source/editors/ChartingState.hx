@@ -3490,7 +3490,6 @@ class ChartingState extends MusicBeatState
     else if (FlxG.save.data.chart_waveformOppVoices) sound = opponentVocals;
     if (sound._sound != null && sound._sound.__buffer != null)
     {
-      //BOTTLENECK fix: cache the raw buffer bytes once per loaded sound/buffer; only re-copy when the audio source actually changes
       if (waveformCacheBytes == null || waveformCacheSound != sound || waveformCacheBuffer != sound._sound.__buffer)
       {
         waveformCacheBytes = sound._sound.__buffer.data.toBytes();
