@@ -4425,7 +4425,7 @@ class ChartingState extends MusicBeatState
       _song.notes = undos[0];
       redos.unshift(undos[0]);
       undos.splice(0, 1);
-      lastUndoShit = null; //BOTTLENECK fix: re-arm dedupe after undo so a re-created identical state still snapshots
+      lastUndoShit = null;
       trace("Performed an Undo! Undos remaining: " + undos.length);
       unsavedChanges = true;
       if (curSection > _song.notes.length) changeSection(_song.notes.length - 1);
