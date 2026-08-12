@@ -526,7 +526,6 @@ class PhillyStreets extends BaseStage
 		{
 			var remappedIntensityValue:Float = FlxMath.remapToRange(Conductor.songPosition, 0, (FlxG.sound.music != null ? FlxG.sound.music.length : 0), rainShaderStartIntensity, rainShaderEndIntensity);
 			rainShader.intensity = remappedIntensityValue;
-			//BOTTLENECK: high RainShader re-renders the FULL frame buffer per-pixel every frame (4-layer simplex-noise + buffer sampling; also PhillyBlazin.hx:172 and PhillyStreetsBF.hx:129), and updateViewInfo allocates 2 fresh uniform arrays per frame (RainShader.hx:479-480) | FIX: pre-render rain to a small offscreen buffer, gate behind lowQuality, skip when camera static
 			rainShader.updateViewInfo(FlxG.width, FlxG.height, FlxG.camera);
 			rainShader.update(elapsed);
 		}
