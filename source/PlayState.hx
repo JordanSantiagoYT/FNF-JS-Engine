@@ -4857,7 +4857,6 @@ class PlayState extends MusicBeatState
 	private function keyShit():Void
 	{
 		// HOLDING
-		//BOTTLENECK: high keyShit() runs parseKeys() 3x EVERY frame — each does 8 Reflect.getProperty(controls) calls (24/frame) and allocates a new Bool array; strumHeldAmount filter() allocates another array + closure | FIX: preallocate 3 persistent Bool arrays, read controls.keyA... directly, track held-key count incrementally
 		parseKeys(holdArray);
 		parseKeys(pressArray, '_P');
 		parseKeys(releaseArray, '_R');
