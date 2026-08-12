@@ -128,7 +128,6 @@ class HScript
 	#if HSCRIPT_ALLOWED
 	public function execute(codeToRun:String, ?funcToRun:String = null, ?funcArgs:Array<Dynamic>):Dynamic
 	{
-		//BOTTLENECK: ultra codeToRun is parsed TWICE (line 133 result discarded) and the AST is never cached, so per-frame modchart runHaxeCode re-parses full source 2x/frame on JS | FIX: parse once into expr, interp.execute(expr), and cache parsed Expr keyed by code string
 		try {
 			var expr:Expr;
 			if (_parsedCache.exists(codeToRun))
