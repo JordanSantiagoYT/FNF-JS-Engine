@@ -687,7 +687,6 @@ class FlxGame extends Sprite
 			if (FlxG.elapsed > max)
 				FlxG.elapsed = max;
 		}
-		//BOTTLENECK: high Type.getClassName(Type.getClass(FlxG.state)) + string compare runs on EVERY update tick (~60-120/s) in the core loop | FIX: cache an isPlayState Bool set in switchState()
 		if (_isPlayState && ClientPrefs.ffmpegMode) FlxG.elapsed = 1 / ClientPrefs.targetFPS;
 	}
 
