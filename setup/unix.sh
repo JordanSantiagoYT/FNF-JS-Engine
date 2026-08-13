@@ -1,7 +1,8 @@
 #!/bin/sh
-# SETUP FOR MAC AND LINUX SYSTEMS!!!
-# REMINDER THAT YOU NEED HAXE INSTALLED PRIOR TO USING THIS
-# https://haxe.org/download
+echo SETUP FOR MAC AND LINUX SYSTEMS!!!
+echo REMINDER THAT YOU NEED HAXE INSTALLED PRIOR TO USING THIS
+echo https://haxe.org/download
+echo ------------------------------
 echo Installing dependencies...
 echo This might take a few moments depending on your internet speed.
 sudo apt update
@@ -25,4 +26,5 @@ haxelib git hxdiscord_rpc https://github.com/MAJigsaw77/hxdiscord_rpc --quiet --
 haxelib git hxvlc https://github.com/JS-Engine-things/hxvlc --quiet --skip-dependencies
 haxelib git hxnativefiledialog https://github.com/MAJigsaw77/hxnativefiledialog --quiet --skip-dependencies
 haxelib install hxp
+echo ------------------------------
 echo Finished!
