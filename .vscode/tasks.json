@@ -8,6 +8,20 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "type": "lime",
+      "command": "test",
+      "args": ["windows", "-DULTRA_OPTIMIZED"],
+      "label": "Windows (ULTRA_OPTIMIZED)",
+      "group": "build"
+    },
+    {
+      "type": "lime",
+      "command": "test",
+      "args": ["html5", "-DULTRA_HTML5"],
+      "label": "HTML5 (ULTRA_HTML5)",
+      "group": "build"
     }
   ]
 }

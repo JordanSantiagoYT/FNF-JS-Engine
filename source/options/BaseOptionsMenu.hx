@@ -233,6 +233,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 	var nextAccept:Int = 5;
 	var holdTime:Float = 0;
 	var holdValue:Float = 0;
+	var _textThrottle:Float = 0;
 	override function update(elapsed:Float)
 	{
 		if (!optionSearchText.hasFocus)
@@ -333,8 +334,12 @@ class BaseOptionsMenu extends MusicBeatSubstate
 								case 'float' | 'percent':
 									curOption.setValue(FlxMath.roundDecimal(holdValue, curOption.decimals));
 							}
+						_textThrottle += elapsed;
+						if(_textThrottle >= 0.08) {
+							_textThrottle = 0;
 							updateTextFrom(curOption);
-							curOption.change();
+						}
+						curOption.change();
 						}
 					}
 
@@ -398,7 +403,9 @@ class BaseOptionsMenu extends MusicBeatSubstate
 		var val:Dynamic = option.getValue();
 		if(option.type == 'percent') val *= 100;
 		var def:Dynamic = option.defaultValue;
-		option.text = text.replace('%v', val).replace('%d', def);
+		var newText:String = text.replace('%v', val).replace('%d', def);
+		if(option.text != null && option.text == newText) return;
+		option.text = newText;
 	}
 
 	function refreshDescription(option:Option)

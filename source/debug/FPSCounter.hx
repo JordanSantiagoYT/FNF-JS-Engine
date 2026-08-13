@@ -13,6 +13,7 @@ class FPSCounter extends TextField
 
   var lastText:String = "";
   var outlineDirty:Bool = true;
+  var _outlineTimer:Float = 0;
 
   /*
    * The current memory usage (WARNING: This might NOT your total memory usage, rather it might show the garbage collector memory if you aren't running on a C++ platform.)
@@ -62,6 +63,7 @@ class FPSCounter extends TextField
   }
 
   var timeColor:Float = 0.0;
+  var _lastRainbowPhase:Float = -1.0;
 
   var fpsMultiplier:Float = 1.0;
   var deltaTimeout:Float = 0.0;
@@ -115,14 +117,21 @@ class FPSCounter extends TextField
     if (ClientPrefs.rainbowFPS)
     {
       timeColor = (timeColor % 360.0) + (1.0 / (ClientPrefs.framerate / 120));
-      textColor = FlxColor.fromHSB(timeColor, 1, 1);
+      if (timeColor != _lastRainbowPhase)
+      {
+        _lastRainbowPhase = timeColor;
+        var newColor:Int = FlxColor.fromHSB(timeColor, 1, 1);
+        if (newColor != textColor) textColor = newColor;
+      }
     } else
     {
-      if (currentFPS <= ClientPrefs.framerate / 4) textColor = 0xFFFF0000;
-      else if (currentFPS <= ClientPrefs.framerate / 3) textColor = 0xFFFF8000;
-      else if (currentFPS <= ClientPrefs.framerate / 2) textColor = 0xFFFFFF00;
-      else
-        textColor = 0xFFFFFFFF;
+      var newColor:Int = textColor;
+      if (currentFPS <= ClientPrefs.framerate / 4) newColor = 0xFFFF0000;
+      else if (currentFPS <= ClientPrefs.framerate / 3) newColor = 0xFFFF8000;
+      else if (currentFPS <= ClientPrefs.framerate / 2) newColor = 0xFFFFFF00;
+      else newColor = 0xFFFFFFFF;
+
+      if (newColor != textColor) textColor = newColor;
     }
   }
 

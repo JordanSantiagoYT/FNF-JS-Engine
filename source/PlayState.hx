@@ -2988,6 +2988,9 @@ class PlayState extends MusicBeatState
 	var holdingBotEnergyBind:Bool = false;
 	var strumsHeld:Array<Bool> = [false, false, false, false];
 	var strumHeldAmount:Int = 0;
+	var holdArray:Array<Bool> = [false, false, false, false];
+	var pressArray:Array<Bool> = [false, false, false, false];
+	var releaseArray:Array<Bool> = [false, false, false, false];
 	var notesBeingHit:Bool = false;
 	var notesBeingMissed:Bool = false;
 	var hitResetTimer:Float = 0;
@@ -3378,14 +3381,12 @@ class PlayState extends MusicBeatState
 				else if (ClientPrefs.charsAndBG) playerDance();
 
 				amountOfRenderedNotes = 0;
-				for (group in [notes, sustainNotes])
-				{
-					group.forEach(function(daNote)
-					{
-						updateNote(daNote);
-					});
-					group.sort(FlxSort.byY, ClientPrefs.downScroll ? FlxSort.ASCENDING : FlxSort.DESCENDING);
-				}
+				notes.forEach(updateNote);
+				if (notes.length > 1)
+					notes.sort(FlxSort.byY, ClientPrefs.downScroll ? FlxSort.ASCENDING : FlxSort.DESCENDING);
+				sustainNotes.forEach(updateNote);
+				if (sustainNotes.length > 1)
+					sustainNotes.sort(FlxSort.byY, ClientPrefs.downScroll ? FlxSort.ASCENDING : FlxSort.DESCENDING);
 			}
 
 			destroyNotes();
@@ -4856,11 +4857,15 @@ class PlayState extends MusicBeatState
 	private function keyShit():Void
 	{
 		// HOLDING
-		var holdArray:Array<Bool> = parseKeys();
-		var pressArray:Array<Bool> = parseKeys('_P');
-		var releaseArray:Array<Bool> = parseKeys('_R');
+		parseKeys(holdArray);
+		parseKeys(pressArray, '_P');
+		parseKeys(releaseArray, '_R');
 		strumsHeld = holdArray;
-		strumHeldAmount = strumsHeld.filter(function(value) return value).length;
+		strumHeldAmount = 0;
+		for (i in 0...strumsHeld.length)
+		{
+			if (strumsHeld[i]) strumHeldAmount++;
+		}
 
 		// TO DO: Find a better way to handle controller inputs, this should work for now
 		if(ClientPrefs.controllerMode)
@@ -4933,14 +4938,29 @@ class PlayState extends MusicBeatState
 		}
 	}
 
-	public function parseKeys(?suffix:String = ''):Array<Bool>
+	public function parseKeys(ret:Array<Bool>, ?suffix:String = ''):Void
 	{
-		var ret:Array<Bool> = [];
-		for (i in 0...controlArray.length)
+		switch (suffix)
 		{
-			ret[i] = Reflect.getProperty(controls, controlArray[i] + suffix);
+			case '_P':
+				ret[0] = controls.NOTE_LEFT_P;
+				ret[1] = controls.NOTE_DOWN_P;
+				ret[2] = controls.NOTE_UP_P;
+				ret[3] = controls.NOTE_RIGHT_P;
+			case '_R':
+				ret[0] = controls.NOTE_LEFT_R;
+				ret[1] = controls.NOTE_DOWN_R;
+				ret[2] = controls.NOTE_UP_R;
+				ret[3] = controls.NOTE_RIGHT_R;
+			case '':
+				ret[0] = controls.NOTE_LEFT;
+				ret[1] = controls.NOTE_DOWN;
+				ret[2] = controls.NOTE_UP;
+				ret[3] = controls.NOTE_RIGHT;
+			default:
+				for (i in 0...controlArray.length)
+					ret[i] = Reflect.getProperty(controls, controlArray[i] + suffix);
 		}
-		return ret;
 	}
 
 	function noteMiss(daNote:Note = null, daNoteAlt:PreloadedChartNote = null):Void { //You didn't hit the key and let it go offscreen, also used by Hurt Notes

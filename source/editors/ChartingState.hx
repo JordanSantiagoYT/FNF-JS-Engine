@@ -56,6 +56,7 @@ class ChartingState extends MusicBeatState
   public var showTheGrid = false;
   public var undos = [];
   public var redos = [];
+  var lastUndoShit:String = null;
 
   var eventStuff:Array<Dynamic> = [
     ['', "Nothing. Yep, that's right."],
@@ -2366,6 +2367,10 @@ class ChartingState extends MusicBeatState
       opponentVocals.destroy();
     }
 
+    waveformCacheSound = null;
+    waveformCacheBytes = null;
+    waveformCacheBuffer = null;
+
     var diff:String = (specialAudioName.length > 1 ? specialAudioName : difficulty).toLowerCase();
     vocals = new FlxSound();
     opponentVocals = new FlxSound();
@@ -3339,13 +3344,32 @@ class ChartingState extends MusicBeatState
 
   var lastSecBeats:Float = 0;
   var lastSecBeatsNext:Float = 0;
+  var lastGridZoom:Int = -1;
+  var lastGridBeats:Float = -1;
+  var lastGridBeatsNext:Float = -1;
+  var lastGridShow:Bool = false;
+  var lastGridVortex:Bool = false;
+  var lastGridHasNext:Bool = false;
+  var lastGridBGHeight:Int = -1;
 
   function reloadGridLayer()
   {
+    var curBeats:Float = getSectionBeats();
+    var hasNextSec:Bool = sectionStartTime(1) <= FlxG.sound.music.length;
+    var nextBeats:Float = hasNextSec ? getSectionBeats(curSec + 1) : 0;
+
+    if (gridBG != null && gridLayer != null && curZoom == lastGridZoom && curBeats == lastGridBeats && nextBeats == lastGridBeatsNext
+      && showTheGrid == lastGridShow && vortex == lastGridVortex && hasNextSec == lastGridHasNext && Std.int(gridBG.height) == lastGridBGHeight)
+    {
+      lastSecBeats = curBeats;
+      lastSecBeatsNext = nextBeats;
+      return;
+    }
+
     gridLayer.clear();
-    if (showTheGrid) gridBG = FlxGridOverlay.create(GRID_SIZE, GRID_SIZE, GRID_SIZE * 9, Std.int(GRID_SIZE * getSectionBeats() * 4 * zoomList[curZoom]));
+    if (showTheGrid) gridBG = FlxGridOverlay.create(GRID_SIZE, GRID_SIZE, GRID_SIZE * 9, Std.int(GRID_SIZE * curBeats * 4 * zoomList[curZoom]));
     else
-      gridBG = new FlxSprite().makeGraphic(Std.int(GRID_SIZE * 9), Std.int(GRID_SIZE * getSectionBeats() * 4 * zoomList[curZoom]), 0xffe7e6e6);
+      gridBG = new FlxSprite().makeGraphic(Std.int(GRID_SIZE * 9), Std.int(GRID_SIZE * curBeats * 4 * zoomList[curZoom]), 0xffe7e6e6);
 
     #if desktop
     if (FlxG.save.data.chart_waveformInst || FlxG.save.data.chart_waveformVoices || FlxG.save.data.chart_waveformOppVoices)
@@ -3356,12 +3380,19 @@ class ChartingState extends MusicBeatState
 
     var leHeight:Int = Std.int(gridBG.height);
     var foundNextSec:Bool = false;
-    if (sectionStartTime(1) <= FlxG.sound.music.length)
+    if (hasNextSec)
     {
       if (showTheGrid)
       {
         // If showTheGrid is enabled, create a grid overlay for the next section
-        nextGridBG = FlxGridOverlay.create(GRID_SIZE, GRID_SIZE, GRID_SIZE * 9, Std.int(GRID_SIZE * getSectionBeats(curSec + 1) * 4 * zoomList[curZoom]));
+        var nextHeight:Int = Std.int(GRID_SIZE * nextBeats * 4 * zoomList[curZoom]);
+        if (nextHeight == Std.int(gridBG.height))
+        {
+          nextGridBG = new FlxSprite(gridBG.x, gridBG.height, gridBG.graphic);
+        } else
+        {
+          nextGridBG = FlxGridOverlay.create(GRID_SIZE, GRID_SIZE, GRID_SIZE * 9, nextHeight);
+        }
         leHeight = Std.int(gridBG.height + nextGridBG.height);
         foundNextSec = true;
       } else
@@ -3397,10 +3428,15 @@ class ChartingState extends MusicBeatState
     gridLayer.add(gridBlackLine);
     updateGrid(false);
 
-    lastSecBeats = getSectionBeats();
-    if (sectionStartTime(1) > FlxG.sound.music.length) lastSecBeatsNext = 0;
-    else
-      getSectionBeats(curSec + 1);
+    lastSecBeats = curBeats;
+    lastSecBeatsNext = nextBeats;
+    lastGridZoom = curZoom;
+    lastGridBeats = curBeats;
+    lastGridBeatsNext = nextBeats;
+    lastGridShow = showTheGrid;
+    lastGridVortex = vortex;
+    lastGridHasNext = hasNextSec;
+    lastGridBGHeight = Std.int(gridBG.height);
   }
 
   function strumLineUpdateY()
@@ -3412,6 +3448,9 @@ class ChartingState extends MusicBeatState
   var wavData:Array<Array<Array<Float>>> = [[[0], [0]], [[0], [0]]];
 
   var lastWaveformHeight:Int = 0;
+  var waveformCacheSound:FlxSound = null;
+  var waveformCacheBuffer:AudioBuffer = null;
+  var waveformCacheBytes:Bytes = null;
 
   function updateWaveform()
   {
@@ -3451,9 +3490,14 @@ class ChartingState extends MusicBeatState
     else if (FlxG.save.data.chart_waveformOppVoices) sound = opponentVocals;
     if (sound._sound != null && sound._sound.__buffer != null)
     {
-      var bytes:Bytes = sound._sound.__buffer.data.toBytes();
+      if (waveformCacheBytes == null || waveformCacheSound != sound || waveformCacheBuffer != sound._sound.__buffer)
+      {
+        waveformCacheBytes = sound._sound.__buffer.data.toBytes();
+        waveformCacheSound = sound;
+        waveformCacheBuffer = sound._sound.__buffer;
+      }
 
-      wavData = waveformData(sound._sound.__buffer, bytes, st, et, 1, wavData, Std.int(gridBG.height));
+      wavData = waveformData(sound._sound.__buffer, waveformCacheBytes, st, et, 1, wavData, Std.int(gridBG.height));
     }
 
     // Draws
@@ -4363,12 +4407,14 @@ class ChartingState extends MusicBeatState
         { // doin this so it doesnt act as a reference
           "song": _song
         });
+      if (lastUndoShit == shit) return;
+      lastUndoShit = shit;
       var song:SwagSong = Song.parseJSON(shit);
 
       undos.unshift(song.notes);
       redos = []; // Reset redos
-      if (undos.length >= 100) // if you save more than 100 times, remove the oldest undo
-        undos.remove(undos[100]);
+      if (undos.length > 50) // keep at most 50 undos, drop the oldest (last element after unshift)
+        undos.pop();
     }
   }
 
@@ -4379,6 +4425,7 @@ class ChartingState extends MusicBeatState
       _song.notes = undos[0];
       redos.unshift(undos[0]);
       undos.splice(0, 1);
+      lastUndoShit = null;
       trace("Performed an Undo! Undos remaining: " + undos.length);
       unsavedChanges = true;
       if (curSection > _song.notes.length) changeSection(_song.notes.length - 1);
