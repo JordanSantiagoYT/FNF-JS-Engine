@@ -392,7 +392,7 @@ class FreeplayState extends MusicBeatState
 		}
 
 		try {
-			var newScoreText:String = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit?.join('.') + '%)';
+			final newScoreText:String = 'PERSONAL BEST: ' + lerpScore + ' (' + ratingSplit?.join('.') + '%)';
 			if (scoreText.text != newScoreText) scoreText.text = newScoreText;
 		}
 		catch(e){}
@@ -715,10 +715,8 @@ class FreeplayState extends MusicBeatState
 
 		lastDifficultyName = CoolUtil.difficulties[curDifficulty];
 
-		#if !switch
 		intendedScore = Highscore.getScore(songs[curSelected].songName, curDifficulty);
 		intendedRating = Highscore.getRating(songs[curSelected].songName, curDifficulty);
-		#end
 
 		PlayState.storyDifficulty = curDifficulty;
 		diffText.text = '< ' + CoolUtil.difficultyString() + ' >';

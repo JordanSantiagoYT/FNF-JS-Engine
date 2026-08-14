@@ -16,6 +16,7 @@ import flixel.addons.effects.FlxTrail;
 import flixel.input.keyboard.FlxKey;
 import flixel.ui.FlxBar;
 import flixel.util.FlxSort;
+import flixel.system.FlxAssets;
 import objects.*;
 import openfl.events.KeyboardEvent;
 import openfl.system.System;
@@ -2443,12 +2444,15 @@ class PlayState extends MusicBeatState
 		{
 			inst.loadEmbedded(Paths.inst(SONG.song, diff));
 		}
-		catch (e:Dynamic) {}
+		catch (e:Dynamic) {
+			trace('Error loading instrumental of song "' + SONG.song + '": ' + e.toString());
+			inst.loadEmbedded(FlxAssets.getSound('flixel/sounds/beep'));
+		}
 		FlxG.sound.list.add(inst);
 
 		final noteData:Array<SwagSection> = SONG.notes;
 
-		var eventsToLoad:String = (SONG.specialEventsName.length > 1 ? SONG.specialEventsName : CoolUtil.difficultyString()).toLowerCase();
+		final eventsToLoad:String = (SONG.specialEventsName.length > 1 ? SONG.specialEventsName : CoolUtil.difficultyString()).toLowerCase();
 
 		final songName:String = Paths.formatToSongPath(SONG.song);
 		final file:String = Paths.songEvents(songName, eventsToLoad);
