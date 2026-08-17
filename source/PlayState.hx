@@ -4475,6 +4475,8 @@ class PlayState extends MusicBeatState
 						FlxG.save.flush();
 					}
 					changedDifficulty = false;
+					
+					playerIsCheating = false;
 				}
 				else
 				{
@@ -4511,6 +4513,8 @@ class PlayState extends MusicBeatState
 				}
 				Paths.playMenuMusic(true);
 				changedDifficulty = false;
+				
+				playerIsCheating = false;
 			}
 			transitioning = true;
 		}

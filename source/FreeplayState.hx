@@ -68,7 +68,7 @@ class FreeplayState extends MusicBeatState
 		{
 			FlxTransitionableState.skipNextTransIn = true;
 			persistentUpdate = false;
-			var msg:String = "NO WEEKS ADDED FOR FREEPLAY\n\nPress " + accept + " to go to the Week Editor Menu.\nPress " + reject + " to return to Main Menu.";
+			final msg:String = "NO WEEKS ADDED FOR FREEPLAY\n\nPress " + accept + " to go to the Week Editor Menu.\nPress " + reject + " to return to Main Menu.";
 			FlxG.switchState(new ErrorState(msg,
 				function() FlxG.switchState(new editors.WeekEditorState()),
 				function() FlxG.switchState(new MainMenuState())));
@@ -78,9 +78,9 @@ class FreeplayState extends MusicBeatState
 		for (i in 0...WeekData.weeksList.length) {
 			if(weekIsLocked(WeekData.weeksList[i])) continue;
 
-			var leWeek:WeekData = WeekData.weeksLoaded.get(WeekData.weeksList[i]);
-			var leSongs:Array<String> = [];
-			var leChars:Array<String> = [];
+			final leWeek:WeekData = WeekData.weeksLoaded.get(WeekData.weeksList[i]);
+			final leSongs:Array<String> = [];
+			final leChars:Array<String> = [];
 
 			for (j in 0...leWeek.songs.length)
 			{
@@ -496,17 +496,17 @@ class FreeplayState extends MusicBeatState
 						destroyFreeplayVocals();
 						FlxG.sound.music.volume = 0;
 						Mods.currentModDirectory = songs[curSelected].folder;
-						var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
+						final poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
 						PlayState.SONG = Song.loadFromJson(poop, songs[curSelected].songName.toLowerCase());
 
-						var diff:String = (PlayState.SONG.specialAudioName.length > 1 ? PlayState.SONG.specialAudioName : CoolUtil.difficulties[curDifficulty]).toLowerCase();
+						final diff:String = (PlayState.SONG.specialAudioName.length > 1 ? PlayState.SONG.specialAudioName : CoolUtil.difficulties[curDifficulty]).toLowerCase();
 
 						if (PlayState.SONG.needsVoices)
 						{
 							vocals = new FlxSound();
 							try
 							{
-								var playerVocals:String = getVocalFromCharacter(PlayState.SONG.player1);
+								final playerVocals:String = getVocalFromCharacter(PlayState.SONG.player1);
 								var loadedVocals:openfl.media.Sound = Paths.voices(PlayState.SONG.song, diff, (playerVocals != null && playerVocals.length > 0) ? playerVocals : 'Player');
 								if(loadedVocals == null) loadedVocals = Paths.voices(PlayState.SONG.song, diff);
 
@@ -530,8 +530,8 @@ class FreeplayState extends MusicBeatState
 							try
 							{
 								//trace('please work...');
-								var oppVocals:String = getVocalFromCharacter(PlayState.SONG.player2);
-								var loadedVocals:openfl.media.Sound = Paths.voices(PlayState.SONG.song, diff, (oppVocals != null && oppVocals.length > 0) ? oppVocals : 'Opponent');
+								final oppVocals:String = getVocalFromCharacter(PlayState.SONG.player2);
+								final loadedVocals:openfl.media.Sound = Paths.voices(PlayState.SONG.song, diff, (oppVocals != null && oppVocals.length > 0) ? oppVocals : 'Opponent');
 
 								if(loadedVocals != null && loadedVocals.length > 0)
 								{
@@ -580,11 +580,11 @@ class FreeplayState extends MusicBeatState
 						player.pauseOrResume(true);
 					}
 					function songJsonPopup() { //you pressed space, but the song's ogg files don't exist
-						var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
+						final poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
 						trace(poop + '\'s .ogg does not exist!');
 						FlxG.sound.play(Paths.sound('invalidJSON'));
 						FlxG.camera.shake(0.05, 0.05);
-						var funnyText = new FlxText(12, FlxG.height - 24, 0, "Invalid Song!");
+						final funnyText = new FlxText(12, FlxG.height - 24, 0, "Invalid Song!");
 						funnyText.scrollFactor.set();
 						funnyText.screenCenter();
 						funnyText.x = 5;
@@ -598,8 +598,8 @@ class FreeplayState extends MusicBeatState
 							}
 						});
 					}
-					var poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
-					var songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
+					final poop:String = Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty);
+					final songLowercase:String = Paths.formatToSongPath(songs[curSelected].songName);
 					#if MODS_ALLOWED
 					if(instPlaying != curSelected && !player.playingMusic)
 					{
@@ -736,7 +736,7 @@ class FreeplayState extends MusicBeatState
 		if (curSelected >= songs.length)
 			curSelected = 0;
 
-		var newColor:Int = songs[curSelected].color;
+		final newColor:Int = songs[curSelected].color;
 		if(newColor != intendedColor) {
 			if(colorTween != null) {
 				colorTween.cancel();
@@ -853,7 +853,7 @@ class FreeplayState extends MusicBeatState
 		if (curPlaying)
 			if (grpIcons.members[instPlaying] != null && grpIcons.members[instPlaying].canBounce) grpIcons.members[instPlaying].bounce();
 	}
-	var _drawDistance:Int = 4;
+	final _drawDistance:Int = 4;
 	var _lastVisibles:Array<Int> = [];
 	public function updateTexts(elapsed:Float = 0.0)
 	{
@@ -865,16 +865,16 @@ class FreeplayState extends MusicBeatState
 		}
 		_lastVisibles = [];
 
-		var min:Int = Math.round(Math.max(0, Math.min(songs.length, lerpSelected - _drawDistance)));
-		var max:Int = Math.round(Math.max(0, Math.min(songs.length, lerpSelected + _drawDistance)));
+		final min:Int = Math.round(Math.max(0, Math.min(songs.length, lerpSelected - _drawDistance)));
+		final max:Int = Math.round(Math.max(0, Math.min(songs.length, lerpSelected + _drawDistance)));
 		for (i in min...max)
 		{
-			var item:Alphabet = grpSongs.members[i];
+			final item:Alphabet = grpSongs.members[i];
 			item.visible = item.active = true;
 			item.x = ((item.targetY - lerpSelected) * item.distancePerItem.x) + item.startPosition.x;
 			item.y = ((item.targetY - lerpSelected) * 1.3 * item.distancePerItem.y) + item.startPosition.y;
 
-			var icon:HealthIcon = grpIcons.members[i];
+			final icon:HealthIcon = grpIcons.members[i];
 			icon.visible = icon.active = true;
 			_lastVisibles.push(i);
 		}
