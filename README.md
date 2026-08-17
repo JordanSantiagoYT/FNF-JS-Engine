@@ -20,8 +20,6 @@
 
 README.md revamped by [Nael2xd](https://youtube.com/@nael2xd?si=axwJrY_8jdlXUwSm)
 
-<b>IMPORTANT: if you want to clone the repo (for making a pull request or for building locally), use <code>git clone -b main --single-branch https://github.com/JordanSantiagoYT/FNF-JS-Engine.git</code> so you only git clone _only the main branch_, the other ones are for experiments or are extremely old.</b>
-
 <!-- _If you're looking for the Mobile port, [go here](https://github.com/JordanSantiagoYT/FNF-JS-Engine/tree/mobile)._ -->
 
 ## Welcome
