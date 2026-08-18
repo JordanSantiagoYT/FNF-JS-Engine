@@ -52,15 +52,6 @@ class GameplaySettingsSubState extends BaseOptionsMenu
     final option:Option = new Option('More Spammable Inputs', 'If checked, the input system is more spammable.', 'ezSpam', 'bool', false);
     addOption(option);
 
-    final option:Option = new Option('Enable Taunt Key', "If checked, pressing the Taunt key will make BF go HEY!!", 'spaceVPose', 'bool', true);
-    addOption(option);
-
-    final option:Option = new Option('Ghost Tapping Plays Anim', "If checked, Ghost Tapping will play BF's animations.", 'ghostTapAnim', 'bool', true);
-    addOption(option);
-
-    final option:Option = new Option('Enable Miss Sound', "If checked, re-enables the miss sound when you miss a note.", 'missSoundShit', 'bool', false);
-    addOption(option);
-
     final option:Option = new Option('Hitsound Volume', 'Funny notes does \"Tick!\" when you hit them."', 'hitsoundVolume', 'percent', 0);
     addOption(option);
     option.scrollSpeed = 1.6;

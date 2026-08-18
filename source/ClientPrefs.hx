@@ -16,13 +16,10 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var noReset:Bool = false;
 	public static var antiCheatEnable:Bool = false;
 	public static var ezSpam:Bool = false;
-	public static var spaceVPose:Bool = true;
-	public static var ghostTapAnim:Bool = true;
 	public static var hitsoundVolume:Float = 0;
 	public static var hitsoundType:String = 'osu!mania';
 	public static var voiidTrollMode:Bool = false;
 	public static var trollMaxSpeed:String = 'Medium';
-	public static var missSoundShit:Bool = false;
 	public static var crossFadeLimit:Null<Int> = 4;
 	public static var boyfriendCrossFadeLimit:Null<Int> = 1;
 	public static var crossFadeMode:String = 'Mid-Fight Masses';
@@ -240,8 +237,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 		'volume_down'	=> [NUMPADMINUS, MINUS],
 
 		'debug_1'		=> [SEVEN, NONE],
-		'debug_2'		=> [EIGHT, NONE],
-		'taunt'		    => [SPACE, NONE]
+		'debug_2'		=> [EIGHT, NONE]
 	];
 	public static var defaultKeys:Map<String, Array<FlxKey>> = null;
 

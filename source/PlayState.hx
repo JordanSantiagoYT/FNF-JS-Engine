@@ -39,8 +39,6 @@ class PlayState extends MusicBeatState
 
 	public static var ratingStuff:Array<Dynamic> = [];
 
-	private var tauntKey:Array<FlxKey>;
-
 	var lastUpdateTime:Float = 0.0;
 
 	//event variables
@@ -465,7 +463,6 @@ class PlayState extends MusicBeatState
 		debugKeysCharacter = ClientPrefs.copyKey(ClientPrefs.keyBinds.get('debug_2'));
 		PauseSubState.songName = null; //Reset to default
 		playbackRate = ClientPrefs.getGameplaySetting('songspeed', 1);
-		tauntKey = ClientPrefs.copyKey(ClientPrefs.keyBinds.get('taunt'));
 
 		keysArray = [];
 
@@ -4783,19 +4780,7 @@ class PlayState extends MusicBeatState
 		}
 		else {
 			callOnLuas('onGhostTap', [key]);
-			if (!opponentChart && ClientPrefs.ghostTapAnim && ClientPrefs.charsAndBG)
-			{
-				boyfriend.playAnim(singAnimations[Std.int(Math.abs(key))], true);
-				boyfriend.holdTimer = 0;
-			}
-			if (opponentChart && ClientPrefs.ghostTapAnim && ClientPrefs.charsAndBG)
-			{
-				dad.playAnim(singAnimations[Std.int(Math.abs(key))], true);
-				dad.holdTimer = 0;
-			}
-			if (canMiss) {
-				noteMissPress(key);
-			}
+			if (canMiss) noteMissPress(key);
 		}
 
 		keysPressed[key] = true;
@@ -4908,19 +4893,6 @@ class PlayState extends MusicBeatState
 						}
 					}
 				}
-			}
-
-			if(ClientPrefs.charsAndBG && FlxG.keys.anyJustPressed(tauntKey) && !char.animation.curAnim.name.endsWith('miss') && char.specialAnim == false && ClientPrefs.spaceVPose){
-				if (char.animOffsets.exists('hey'))
-				{
-					char.playAnim('hey', true);
-					char.specialAnim = true;
-					char.heyTimer = 0.59;
-					FlxG.sound.play(Paths.sound('hey'));
-					// trace("HEY!!");
-				}
-				else 
-					trace('Character doesnt have a hey animation!');
 			}
 
 			if (!holdArray.contains(true) || endingSong) {
@@ -5173,10 +5145,6 @@ class PlayState extends MusicBeatState
 			{
 				if (daNote.mustPress && (!(cpuControlled || usingBotEnergy && strumsHeld[daNote.noteData]) || cpuControlled) && !daNote.ignoreNote && !endingSong && !daNote.wasGoodHit) {
 					noteMiss(daNote);
-					if (ClientPrefs.missSoundShit)
-					{
-						FlxG.sound.play(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.1, 0.2));
-					}
 				}
 				invalidateNote(daNote);
 			}
