@@ -153,7 +153,7 @@ class DialogueCharacterEditorState extends MusicBeatState
 		UI_typebox.x = 900;
 		UI_typebox.y = FlxG.height - UI_typebox.height - 50;
 		UI_typebox.scrollFactor.set();
-		UI_typebox.camera = camHUD;
+		UI_typebox.cameras = [camHUD];
 		addTypeUI();
 		add(UI_typebox);
 
@@ -166,7 +166,7 @@ class DialogueCharacterEditorState extends MusicBeatState
 		UI_mainbox.x = UI_typebox.x + UI_typebox.width;
 		UI_mainbox.y = FlxG.height - UI_mainbox.height - 50;
 		UI_mainbox.scrollFactor.set();
-		UI_mainbox.camera = camHUD;
+		UI_mainbox.cameras = [camHUD];
 		addAnimationsUI();
 		addCharacterUI();
 		add(UI_mainbox);
@@ -205,6 +205,10 @@ class DialogueCharacterEditorState extends MusicBeatState
 		tab_group.add(leftCheckbox);
 		tab_group.add(centerCheckbox);
 		tab_group.add(rightCheckbox);
+
+		for (i in tab_group.members)
+			i.cameras = [camHUD];
+
 		UI_typebox.addGroup(tab_group);
 	}
 
@@ -234,6 +238,7 @@ class DialogueCharacterEditorState extends MusicBeatState
 				idleInputText.text = animShit.idle_name;
 			}
 		});
+		animationDropDown.header.cameras = [camHUD]; //haxe is stupid, i have to set the header manually or it renders on camGame
 
 		animationInputText = new FlxUIInputText(15, 85, 80, '', 8);
 		blockPressWhileTypingOn.push(animationInputText);
@@ -320,6 +325,10 @@ class DialogueCharacterEditorState extends MusicBeatState
 		tab_group.add(addUpdateButton);
 		tab_group.add(removeUpdateButton);
 		tab_group.add(animationDropDown);
+		
+		for (i in tab_group.members)
+			i.cameras = [camHUD];
+		
 		UI_mainbox.addGroup(tab_group);
 		reloadAnimationsDropDown();
 	}
@@ -380,6 +389,10 @@ class DialogueCharacterEditorState extends MusicBeatState
 		tab_group.add(reloadImageButton);
 		tab_group.add(loadButton);
 		tab_group.add(saveButton);
+
+		for (i in tab_group.members)
+			i.cameras = [camHUD];
+
 		UI_mainbox.addGroup(tab_group);
 	}
 
