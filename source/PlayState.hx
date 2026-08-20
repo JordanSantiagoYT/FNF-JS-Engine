@@ -1944,14 +1944,14 @@ class PlayState extends MusicBeatState
 
 	function cacheCountdown()
 	{
-		var introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
-		var introImagesArray:Array<String> = switch(stageUI) {
+		final introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
+		final introImagesArray:Array<String> = switch(stageUI) {
 			case "pixel": ['${stageUI}UI/ready-pixel', '${stageUI}UI/set-pixel', '${stageUI}UI/date-pixel'];
 			case "normal": ["ready", "set" ,"go"];
 			default: ['${stageUI}UI/ready', '${stageUI}UI/set', '${stageUI}UI/go'];
 		}
 		introAssets.set(stageUI, introImagesArray);
-		var introAlts:Array<String> = introAssets.get(stageUI);
+		final introAlts:Array<String> = introAssets.get(stageUI);
 		for (asset in introAlts) Paths.image(asset);
 
 		intro3 = new FlxSound().loadEmbedded(Paths.sound('intro3' + introSoundsSuffix));
@@ -1973,7 +1973,7 @@ class PlayState extends MusicBeatState
 		}
 
 		inCutscene = false;
-		var ret:Dynamic = callOnLuas('onStartCountdown');
+		final ret:Dynamic = callOnLuas('onStartCountdown');
 
 		if (SONG.song.toLowerCase() == 'anti-cheat-song')
 		{
@@ -2026,8 +2026,8 @@ class PlayState extends MusicBeatState
 			{
 				if (ClientPrefs.charsAndBG) characterBopper(tmr.loopsLeft);
 
-				var introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
-				var introImagesArray:Array<String> = switch(stageUI) {
+				final introAssets:Map<String, Array<String>> = new Map<String, Array<String>>();
+				final introImagesArray:Array<String> = switch(stageUI) {
 					case "pixel": ['${stageUI}UI/ready-pixel', '${stageUI}UI/set-pixel', '${stageUI}UI/date-pixel'];
 					case "normal": ["ready", "set" ,"go"];
 					default: ['${stageUI}UI/ready', '${stageUI}UI/set', '${stageUI}UI/go'];
@@ -3613,7 +3613,7 @@ class PlayState extends MusicBeatState
 	function doDeathCheck(?skipHealthCheck:Bool = false) {
 		if ((skipHealthCheck || health <= 0) && !practiceMode && !isDead)
 		{
-			var ret:Dynamic = callOnLuas('onGameOver', [], false);
+			final ret:Dynamic = callOnLuas('onGameOver', [], false);
 			stagesFunc(function(stage:BaseStage) stage.onGameOver());
 			if(ret != FunkinLua.Function_Stop) {
 				boyfriend.stunned = true;
@@ -4425,7 +4425,7 @@ class PlayState extends MusicBeatState
 		checkForAchievement([weekNoMiss, 'ur_bad', 'ur_good', 'hype', 'two_keys', 'toastie', 'debugger']);
 		#end
 
-		var ret:Dynamic = callOnLuas('onEndSong', [], true);
+		final ret:Dynamic = callOnLuas('onEndSong', [], true);
 		if(ret != FunkinLua.Function_Stop && !transitioning) {
 			if (!cpuControlled && !playerIsCheating && ClientPrefs.safeFrames <= 10)
 			{
@@ -6046,7 +6046,7 @@ class PlayState extends MusicBeatState
 		setOnLuas('combo', combo);
 		if (badHit) missRecalcsPerFrame += 1;
 
-		var ret:Dynamic = callOnLuas('onRecalculateRating');
+		final ret:Dynamic = callOnLuas('onRecalculateRating');
 		if(ret != FunkinLua.Function_Stop)
 		{
 			if(totalPlayed < 1) //Prevent divide by 0
