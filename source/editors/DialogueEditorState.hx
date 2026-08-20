@@ -104,7 +104,7 @@ class DialogueEditorState extends MusicBeatState
 		UI_box.x = FlxG.width - UI_box.width - 10;
 		UI_box.y = 10;
 		UI_box.scrollFactor.set();
-		UI_box.alpha = 0.8;
+		UI_box.alpha = 1;
 		addDialogueLineUI();
 		add(UI_box);
 	}

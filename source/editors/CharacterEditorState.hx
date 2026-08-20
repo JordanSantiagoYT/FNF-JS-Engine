@@ -862,6 +862,10 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.add(trailAlphaStepper);
 		tab_group.add(trailDiffStepper);
 		tab_group.add(flixelTrailCheckBox);
+
+		for (i in tab_group.members)
+			i.cameras = [camMenu];
+		
 		UI_characterbox.addGroup(tab_group);
 	}
 
