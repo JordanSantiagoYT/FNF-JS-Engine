@@ -24,11 +24,11 @@ class RenderingDoneSubState extends MusicBeatSubstate {
 		super.create();
 		PlayState.stopRender();
 
-		var leDate = Date.now();
+		final leDate = Date.now();
 		if (leDate.getHours() >= 6 && leDate.getHours() <= 18) {
 			FlxG.sound.playMusic(Paths.music('PeggleCreditsOST'), 0);
 		} else {
-		FlxG.sound.playMusic(Paths.music('PeggleNightsProgressOST'), 0);
+			FlxG.sound.playMusic(Paths.music('PeggleNightsProgressOST'), 0);
 		}
 		FlxG.sound.music.fadeIn(2, 0, 0.5);
 
@@ -59,7 +59,7 @@ class RenderingDoneSubState extends MusicBeatSubstate {
 		RenderText.screenCenter(X);
 		add(RenderText);
 
-		saveTxt = new FlxText(0, 540, 0, "Press ENTER to continue.\n" + #if windows "You can find your video in assets/gameRenders!" #else "You can find your song to render in 'assets/gameRenders'!\nThe command to render can be found\nin the readme file, also located there!" #end, 124);
+		saveTxt = new FlxText(0, 540, 0, "Press ENTER to continue.\n" + #if windows 'You can find your video in ${ClientPrefs.renderPath}!' #else 'You can find your song to render in ${ClientPrefs.renderPath}!\nThe command to render can be found\nin the readme file, also located there!' #end, 124);
 		saveTxt.scrollFactor.set();
 		saveTxt.setFormat(Paths.font("vcr.ttf"), 30, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		saveTxt.updateHitbox();

@@ -19,7 +19,7 @@ class ErrorState extends MusicBeatState
 	public var errorText:FlxText;
 	override function create()
 	{
-		var bg = new FlxSprite().loadGraphic(Paths.image('menuDesat', 'preload'));
+		final bg = new FlxSprite().loadGraphic(Paths.image('menuDesat', 'preload'));
 		bg.color = FlxColor.GRAY;
 		bg.antialiasing = ClientPrefs.globalAntialiasing;
 		add(bg);

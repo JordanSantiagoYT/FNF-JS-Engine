@@ -1960,7 +1960,7 @@ class PlayState extends MusicBeatState
 		introGo = new FlxSound().loadEmbedded(Paths.sound('introGo' + introSoundsSuffix));
 	}
 
-	public static function formatNumber(number:Float, ?decimals:Bool = false):String //simplified number formatting
+	public static function formatNumber(number:Float):String //simplified number formatting
 	{
 		return (number < 10e11 ? FlxStringUtil.formatMoney(number, false) : CoolUtil.formatCompactNumber(number));
 	}
@@ -3356,9 +3356,9 @@ class PlayState extends MusicBeatState
 		{
 			camBopFactor = FlxMath.lerp(0, camBopFactor, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
 
-			FlxG.camera.zoom = defaultCamZoom + camBopFactor;
 			camHUD.zoom = FlxMath.lerp(1, camHUD.zoom, CoolUtil.boundTo(1 - (elapsed * 3.125 * camZoomingDecay * playbackRate), 0, 1));
 		}
+		FlxG.camera.zoom = defaultCamZoom + camBopFactor;
 
 		// RESET = Quick Game Over Screen
 		if (!ClientPrefs.noReset && controls.RESET && canReset && !inCutscene && startedCountdown && !endingSong && !heyStopTrying)

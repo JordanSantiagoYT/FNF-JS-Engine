@@ -255,7 +255,23 @@ class FreeplayState extends MusicBeatState
     if (foundSongs > 0 || start == '')
     {
       if (txt != null) remove(txt); // don't do destroy/kill on this btw
-      regenerateSongs(start);
+			var selectedName = songs[curSelected].songName;
+
+			regenerateSongs(start);
+
+			var newSelected = -1;
+			for (i in 0...songs.length)
+				if (songs[i].songName == selectedName)
+				{
+					newSelected = i;
+					break;
+				}
+
+			if (newSelected != -1)
+			{
+				curSelected = newSelected;
+				changeSelection();
+			}
     } else if (foundSongs <= 0)
     {
       add(txt);
