@@ -54,12 +54,12 @@ jobs:
           haxelib run hxpkg install
       - name: Compile hxcpp
         run: |
-          cd ~/haxelib/hxcpp/git/tools/run
+          cd .haxelib/hxcpp/git/tools/run
           haxe compile.hxml
           cd ..
           cd ./hxcpp
           haxe compile.hxml
-          cd ../..
+          cd ../../../../..
       - name: Compile
         run: |
           rm -f assets/preload/gameRenders/renderlol.bat
@@ -210,12 +210,12 @@ jobs:
           haxelib run hxpkg install
       - name: Compile hxcpp
         run: |
-          cd ~/haxelib/hxcpp/git/tools/run
+          cd .haxelib/hxcpp/git/tools/run
           haxe compile.hxml
           cd ..
           cd ./hxcpp
           haxe compile.hxml
-          cd ../..
+          cd ../../../../..
       - name: Compile
         run: |
           rm -f assets/preload/gameRenders/renderlol.bat
@@ -289,12 +289,12 @@ jobs:
           haxelib run hxpkg install
       - name: Compile hxcpp
         run: |
-          cd ~/haxelib/hxcpp/git/tools/run
+          cd .haxelib/hxcpp/git/tools/run
           haxe compile.hxml
           cd ..
           cd ./hxcpp
           haxe compile.hxml
-          cd ../..
+          cd ../../../../..
       - name: Compile
         run: |
           rm -f assets/preload/gameRenders/renderlol.bat
