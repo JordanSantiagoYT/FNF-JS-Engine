@@ -45,7 +45,7 @@ class CreditsState extends MusicBeatState
 			['JS Engine People'],
 			['Jordan Santiago',			'jor',				'Coded everything into JS Engine',								'https://twitter.com/JordansTweetsYT',			'FF9300'],
 			['Stinko',			'stinkern',				'Coder, a very stupid one..',								'https://stinkernn.carrd.co/',			'555555'],
-			['MoxieCoder',			'moxie',				'Coder',								'https://github.com/moxie-coder',			'33B3BB'],
+			['Moxie-Coder',			'moxie',				'Coder',								'https://github.com/moxie-coder',			'33B3BB'],
 			[''],
 			['Special Thanks'],
 			['Denpa Engine',			'denpeak',				'The crossfade code used for this engine\n(Currently not implemented yet!)',								'https://github.com/UmbratheUmbreon/PublicDenpaEngine',			'FF9300'],

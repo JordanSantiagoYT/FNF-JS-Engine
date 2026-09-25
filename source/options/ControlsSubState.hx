@@ -17,7 +17,6 @@ class ControlsSubState extends MusicBeatSubstate
     ['Down', 'note_down'],
     ['Up', 'note_up'],
     ['Right', 'note_right'],
-    ['Taunt', 'taunt'],
     ['Use BE', 'bot_energy'],
     [''],
     ['UI'],

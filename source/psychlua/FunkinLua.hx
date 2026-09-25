@@ -1131,9 +1131,21 @@ class FunkinLua {
 			}
 		});
 		registerFunction("doTweenZoom", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
+			// check if it's camGame, in this case tween defaultCamZoom instead
+			if (vars.toLowerCase() == 'game' || vars.toLowerCase() == 'camgame') {
+				PlayState.instance.modchartTweens.set(tag, FlxTween.tween(game, {defaultCamZoom: value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
+					onComplete: function(twn:FlxTween) {
+						PlayState.instance.callOnLuas('onTweenCompleted', [tag]);
+						PlayState.instance.modchartTweens.remove(tag);
+					}
+				}));
+				return;
+			}
+
+			//if it wasn't camGame specifically, THEN.. the actual code
 			var penisExam:Dynamic = tweenPrepare(tag, vars);
 			if(penisExam != null) {
-				if(vars == 'camHud' || vars == 'camGame' || vars == 'Hud' || vars == 'Game') {
+				if(Std.isOfType(penisExam, FlxCamera)) {
 					PlayState.instance.modchartTweens.set(tag, FlxTween.tween(penisExam, {zoom: value}, duration / PlayState.instance.playbackRate, {ease: LuaUtils.getFlxEaseByString(ease),
 						onComplete: function(twn:FlxTween) {
 							PlayState.instance.callOnLuas('onTweenCompleted', [tag]);

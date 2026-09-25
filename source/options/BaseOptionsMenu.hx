@@ -260,19 +260,22 @@ class BaseOptionsMenu extends MusicBeatSubstate
 
       if (nextAccept <= 0)
       {
-        if (curOption.type != 'bool' || curOption.specialOption)
+        if (curOption.type == 'bool' || curOption.specialOption)
         {
-          if (controls.ACCEPT && !curOption.specialOption)
+          if (controls.ACCEPT)
           {
-            FlxG.sound.play(Paths.sound((curOption.type == 'link' ? 'confirmMenu' : 'scrollMenu')));
-            if (curOption.type == 'bool') curOption.setValue((curOption.getValue() == true) ? false : true);
-            curOption.change();
-            reloadCheckboxes();
-          } else if (controls.ACCEPT && curOption.specialOption)
-          { // since it's not an checkbox
-            FlxG.sound.play(Paths.sound('confirmMenu'));
-            // curOption.setValue(curOption.getValue());
-            curOption.change();
+            if (!curOption.specialOption) {
+              FlxG.sound.play(Paths.sound((curOption.type == 'link' ? 'confirmMenu' : 'scrollMenu')));
+              if (curOption.type == 'bool') curOption.setValue((curOption.getValue() == true) ? false : true);
+              curOption.change();
+              reloadCheckboxes();
+            }
+            else
+            { // since it's not an checkbox
+              FlxG.sound.play(Paths.sound('confirmMenu'));
+              // curOption.setValue(curOption.getValue());
+              curOption.change();
+            }
           }
         } else
         {

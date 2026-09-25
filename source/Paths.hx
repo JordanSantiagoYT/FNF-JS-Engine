@@ -165,6 +165,8 @@ class Paths
     'assets/shared/music/breakfast.$SOUND_EXT',
     'assets/shared/music/tea-time.$SOUND_EXT',
   ];
+  
+  public static var pixelReadExclusions:Array<String> = ['images/noteColorMenu/palette.png'];
 
   @:noCompletion private inline static function _gc(major:Bool)
   {
@@ -535,7 +537,7 @@ class Paths
   {
     if (bitmap == null)
     {
-      var file:String = getPath(key, IMAGE, parentFolder, true);
+      final file:String = getPath(key, IMAGE, parentFolder, true);
       #if MODS_ALLOWED if (FileSystem.exists(file)) bitmap = BitmapData.fromFile(file);
       else #end if (OpenFlAssets.exists(file, IMAGE)) bitmap = OpenFlAssets.getBitmapData(file);
 
@@ -550,7 +552,7 @@ class Paths
       }
     }
 
-    if (ClientPrefs.cacheOnGPU && bitmap.image != null)
+    if (ClientPrefs.cacheOnGPU && bitmap.image != null && !pixelReadExclusions.contains(key))
     {
       bitmap.lock();
       if (bitmap.__texture == null)
@@ -565,7 +567,7 @@ class Paths
       bitmap.readable = true;
     }
 
-    var graph:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, key);
+    final graph:FlxGraphic = FlxGraphic.fromBitmapData(bitmap, false, key);
     graph.persist = true;
     graph.destroyOnNoUse = false;
 
