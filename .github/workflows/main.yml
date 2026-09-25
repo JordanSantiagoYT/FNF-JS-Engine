@@ -131,7 +131,7 @@ jobs:
         run: |
           haxelib setup C:/haxelib
           haxelib install hxpkg --quiet
-          haxelib run hxpkg install
+          haxelib run hxpkg install --force
         shell: cmd
       - name: Compile hxcpp
         run: |
@@ -209,7 +209,7 @@ jobs:
           haxelib setup ~/haxelib
           haxelib install hxcpp > /dev/null --quiet
           haxelib install hxpkg --quiet
-          haxelib run hxpkg install
+          haxelib run hxpkg install --force
       - name: Compile hxcpp
         run: |
           cd .haxelib/hxcpp/git/tools/run
@@ -288,7 +288,7 @@ jobs:
           haxelib setup ~/haxelib
           haxelib install hxcpp > /dev/null --quiet
           haxelib install hxpkg --quiet
-          haxelib run hxpkg install
+          haxelib run hxpkg install --force
       - name: Compile hxcpp
         run: |
           cd .haxelib/hxcpp/git/tools/run
