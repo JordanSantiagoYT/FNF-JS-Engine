@@ -1,0 +1,88 @@
+[
+  {
+    "profile": "default",
+    "pkgs": [
+      {
+        "name": "lime",
+        "link": "https://github.com/JS-Engine-things/lime-8.1.2"
+      },
+      {
+        "name": "openfl",
+        "link": "https://github.com/JS-Engine-things/openfl"
+      },
+      {
+        "name": "flixel",
+        "link": "https://github.com/JS-Engine-things/flixel-JS-Engine"
+      },
+      {
+        "name": "flixel-addons",
+        "version": "3.2.3"
+      },
+      {
+        "name": "flixel-tools"
+      },
+      {
+        "name": "flixel-ui",
+        "version": "2.6.0"
+      },
+      {
+        "name": "hxp"
+      },
+      {
+        "name": "hxcpp",
+        "link": "https://github.com/JS-Engine-things/hxcpp",
+        "branch": "main"
+      },
+      {
+        "name": "hxvlc",
+        "link": "https://github.com/JS-Engine-things/hxvlc"
+      },
+      {
+        "name": "hscript",
+        "link": "https://github.com/CodenameCrew/hscript-improved",
+        "branch": "master"
+      },
+      {
+        "name": "hxcpp-debug-server"
+      },
+      {
+        "name": "flxanimate",
+        "link": "https://github.com/Dot-Stuff/flxanimate",
+        "branch": "768740a56b26aa0c072720e0d1236b94afe68e3e"
+      },
+      {
+        "name": "hxdiscord_rpc",
+        "link": "https://github.com/MAJigsaw77/hxdiscord_rpc",
+        "branch": "main"
+      },
+      {
+        "name": "hxluajit",
+        "link": "https://github.com/ShadowEngineTeam/hxluajit",
+        "branch": "main"
+      },
+      {
+        "name": "funkin.vis",
+        "link": "https://github.com/JS-Engine-things/funkVis-FrequencyFixed",
+        "branch": "main"
+      },
+      {
+        "name": "grig.audio",
+        "link": "https://github.com/JS-Engine-things/grig.audio",
+        "branch": "master"
+      },
+      {
+        "name": "tjson",
+        "link": "https://github.com/moxie-coder/tjson",
+        "branch": "master"
+      },
+      {
+        "name": "hxnativefiledialog",
+        "link": "https://github.com/MAJigsaw77/hxnativefiledialog",
+        "branch": "main"
+      },
+      {
+        "name": "hxgamemode"
+      }
+    ]
+  }
+]

@@ -74,23 +74,38 @@ sudo emerge --ask dev-vcs/git-sh dev-lang/haxe media-video/vlc
 
 ---
 
+<!-- Shoutouts to the Nightmare Vision team! Go check out their engine, it's pretty cool. -->
+# Installing Libraries
+
+For installing the library manager used, run
+`haxelib git hxpkg https://github.com/ADA-Funni/hxpkg add-hmm-compatibility`
+
+For installing libraries, you will need to run (on the project root!)
+`haxelib run hxpkg install`
+
+It takes a bit of time, so be patient.
+
+### ALTERNATE METHOD:
+In the project root, run
+
+```sh
+haxelib git hxpkg https://github.com/ADA-Funni/hxpkg add-hmm-compatibility
+haxelib run hxpkg to-hmm
+
+cargo install --git https://github.com/ninjamuffin99/hmm-rs hmm-rs
+hmm-rs clean
+hmm-rs install
+
+haxelib fixrepo
+```
+
 # Building
 
-for Building the actual game, in pretty much EVERY system, you're going to want to execute `haxelib setup`
-
-particularly in Mac and Linux, you may need to create a folder to put your haxe stuff into, try `mkdir ~/haxelib && haxelib setup ~/haxelib`
-
-head into the `setup` folder located in the root directory of this repository, and execute the `setup` file
-
-### "Which setup file?"
-
-It depends on your Operating System. for Windows, run `windows.bat`, for anything else, `unix.sh`
-
-sit back, relax, wait for haxelib to do its magic, and once everything is done, run
+Once hxpkg is done with installing libraries, run
 
 `lime test <platform>`
 
-where `<platform>` gets replaced with `windows`, `linux`, or `mac`
+Where `<platform>` gets replaced with `windows`, `linux`, or `mac`.
 
 ---
 

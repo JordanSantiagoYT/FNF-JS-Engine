@@ -1,4 +1,4 @@
-<!-- this is an secret -->
+<!-- this is a secret -->
 <h1 align="center">
   <br>
   <a href="https://github.com/JordanSantiagoYT/FNF-JS-Engine"><img src="/art/iconOG.png" alt="JSengine" width="150"></a>
@@ -19,8 +19,6 @@
 </p>
 
 README.md revamped by [Nael2xd](https://youtube.com/@nael2xd?si=axwJrY_8jdlXUwSm)
-
-<!-- _If you're looking for the Mobile port, [go here](https://github.com/JordanSantiagoYT/FNF-JS-Engine/tree/mobile)._ -->
 
 ## Welcome
 
@@ -85,7 +83,7 @@ A: Send [here.](https://github.com/JordanSantiagoYT/FNF-JS-Engine/pulls)
 
 # Compiling JS Engine
 
-Refer to [the Build Instructions](./BUILDING.md)
+Refer to [the Build Instructions](./docs/BUILDING.md)
 
 If you get an error while Compiling, go [here](https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues/359) to see if the issue is on there, if not, make an issue
 
@@ -125,7 +123,7 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 <details>
   <summary><h2>OG Psych Engine Credits and Stuff</h2></summary>
-  
+
 * Shadow Mario - Programmer
 * RiverOaken - Artist
 

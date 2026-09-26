@@ -320,20 +320,8 @@ class Project extends HXProject
 					info('Architecture: x86');
 				case Architecture.X64:
 					info('Architecture: x64');
-				case Architecture.ARMV5:
-					info('Architecture: ARMv5');
-				case Architecture.ARMV6:
-					info('Architecture: ARMv6');
-				case Architecture.ARMV7:
-					info('Architecture: ARMv7');
-				case Architecture.ARMV7S:
-					info('Architecture: ARMv7S');
 				case Architecture.ARM64:
 					info('Architecture: ARMx64');
-				case Architecture.MIPS:
-					info('Architecture: MIPS');
-				case Architecture.MIPSEL:
-					info('Architecture: MIPSEL');
 				case null:
 					if (!isWeb())
 					{
@@ -428,7 +416,7 @@ class Project extends HXProject
 
 		// Cleaner looking compiler errors.
 		setHaxedef("message.reporting", "pretty");
-		
+
 		// HaxeUI configuration.
 		setHaxedef("haxeui_no_mouse_reset");
 		setHaxedef("haxeui_focus_out_on_click"); // Unfocus a dialog when clicking out of it
@@ -444,7 +432,7 @@ class Project extends HXProject
 
 			setHaxedef("absolute-paths"); // Fix source locations so Tracy can see them
 		}
-		
+
 		// setHaxedef("HXCPP_PROFILER");
 		setHaxedef("HXCPP_GC_CHECK_LEAKS"); // Idk if this does anything
 
@@ -543,10 +531,12 @@ class Project extends HXProject
 		if (HSCRIPT_ALLOWED.isEnabled(this))
 			addHaxelib('hscript'); // Scripting
 
+    	// TODO: use haxeui instead of flixel-ui
 		addHaxelib('flixel-ui'); // UI framework
+
 		addHaxelib('grig.audio');
 		addHaxelib('funkin.vis');
-		addHaxelib('flxanimate'); // Texture atlas rendering
+		addHaxelib('flxanimate'); // Texture atlas rendering // We need to use flixel-animate, not flxanimate
 		addHaxelib('hxnativefiledialog');
 		addHaxelib('tjson');
 
@@ -631,9 +621,9 @@ class Project extends HXProject
 		// Art asset library (where README and CHANGELOG pull from)
 		var shouldEmbedArt = false;
 		var shouldPreloadArt = false;
-		// addAsset("art/readme.txt", "do NOT readme.txt", "art", shouldEmbedArt);
+		// addAsset("include/readme.txt", "do NOT readme.txt", "art", shouldEmbedArt);
 		// addAsset("CHANGELOG.md", "changelog.txt", "/", shouldEmbedArt);
-		addAssetPath("example_mods", "mods", "default", ["*"], exclude, shouldEmbed); // lololololoolollo
+		addAssetPath("include/example_mods", "mods", "default", ["*"], exclude, shouldEmbed); // lololololoolollo
 
 		if (isLinux() && !isDebug())
 			addAsset("gamemode.ini");
@@ -645,8 +635,8 @@ class Project extends HXProject
 	function configureIcons()
 	{
 		for (size in [16, 32, 64])
-			addIcon('art/icon${size}.png', size);
-		addIcon("art/iconOG.png");
+			addIcon('include/icon${size}.png', size);
+		addIcon("include/iconOG.png");
 	}
 
 	//
