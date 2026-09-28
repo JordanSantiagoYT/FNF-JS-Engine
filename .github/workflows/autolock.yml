@@ -6,6 +6,8 @@ on:
 jobs:
   lock-closed-issues:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -15,10 +17,8 @@ jobs:
 
       - name: Lock closed issues
         run: |
-          # Get a list of all closed issues in the repository
           issues=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues?state=closed" | jq -r '.[] | .number')
 
-          # Loop through each closed issue and lock it
           for issue in $issues; do
             curl -s -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"locked":true}' "https://api.github.com/repos/${{ github.repository }}/issues/$issue/lock"
           done

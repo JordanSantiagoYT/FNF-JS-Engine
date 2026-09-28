@@ -15,7 +15,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const labelToRemove = "status: pending triage"; // <<< replace with your label name
+            const labelToRemove = "status: pending triage";
 
             // Check if it's an issue (not a PR)
             if (context.payload.issue.pull_request) {
