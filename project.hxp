@@ -436,6 +436,9 @@ class Project extends HXProject
 		// setHaxedef("HXCPP_PROFILER");
 		setHaxedef("HXCPP_GC_CHECK_LEAKS"); // Idk if this does anything
 
+		//Set the max unroll cost of for loops to 1000 unrolls.
+		haxedefs.set("loop-unroll-max-cost", "1000");
+
 		if (ULTRA_OPTIMIZED.isEnabled(this) && !isWeb())
 		{
 			// WIP: experimental max-speed build. See the flag doc above.

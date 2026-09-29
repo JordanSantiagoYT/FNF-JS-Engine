@@ -554,7 +554,7 @@ class PlayState extends MusicBeatState
 		curStage = (!ClientPrefs.charsAndBG ? "" : SONG.stage);
 		//trace('stage is: ' + curStage);
 		if(SONG.stage == null || SONG.stage.length < 1)
-			curStage = StageData.vanillaSongStage(Song.loadedSongName);
+			curStage = StageData.vanillaSongStage(Song.loadedSongName.toLowerCase());
 
 		SONG.stage = curStage;
 
@@ -1131,6 +1131,7 @@ class PlayState extends MusicBeatState
 			prevCamFollowPos = null;
 		}
 		add(camFollowPos);
+		trace(camFollowPos.x + ', ' + camFollowPos.y);
 		if (!ClientPrefs.charsAndBG) _defaultCamZoom = 100;
 		else
 		{
@@ -1831,7 +1832,7 @@ class PlayState extends MusicBeatState
 						moveCameraSection();
 						FlxG.camera.snapToTarget();
 					}
-					canPause = false;
+					canPause = true;
 					inCutscene = false;
 					startAndEnd();
 				}
@@ -1884,7 +1885,7 @@ class PlayState extends MusicBeatState
 			} else {
 				psychDialogue.finishThing = function() {
 					psychDialogue = null;
-					startCountdown();
+					startCallback();
 				}
 			}
 			psychDialogue.nextDialogueThing = startNextDialogue;
@@ -1972,20 +1973,9 @@ class PlayState extends MusicBeatState
 			return;
 		}
 
+		seenCutscene = true;
 		inCutscene = false;
 		final ret:Dynamic = callOnLuas('onStartCountdown');
-
-		if (SONG.song.toLowerCase() == 'anti-cheat-song')
-		{
-			final secretsong:FlxSprite = new FlxSprite().loadGraphic(Paths.image('secretSong'));
-			secretsong.antialiasing = ClientPrefs.globalAntialiasing;
-			secretsong.scrollFactor.set();
-			secretsong.setGraphicSize(Std.int(secretsong.width / FlxG.camera.zoom));
-			secretsong.updateHitbox();
-			secretsong.screenCenter();
-			secretsong.cameras = [camGame];
-			add(secretsong);
-		}
 
 		if(ret != FunkinLua.Function_Stop) {
 			if (skipCountdown || startOnTime > 0) skipArrowStartTween = true;
@@ -2301,7 +2291,7 @@ class PlayState extends MusicBeatState
 			vocals.play(); vocals.volume = 0;
 			opponentVocals.play(); opponentVocals.volume = 0;
 		}
-		if (!ffmpegMode && (!trollingMode || SONG.song.toLowerCase() != 'anti-cheat-song'))
+		if (!ffmpegMode && !trollingMode)
 			FlxG.sound.music.onComplete = finishSong.bind();
 
 		FlxG.sound.music.pitch = playbackRate;
@@ -3209,15 +3199,7 @@ class PlayState extends MusicBeatState
 			switch(SONG.event7)
 				{
 				case "---" | null | '' | 'None':
-				if (!ClientPrefs.antiCheatEnable)
-				{
-				openChartEditor();
-				}
-				else
-				{
-				PlayState.SONG = Song.loadFromJson('Anti-cheat-song', 'Anti-cheat-song');
-				LoadingState.loadAndSwitchState(PlayState.new);
-				}
+					openChartEditor();
 				case "Game Over":
 					health = 0;
 				case "Go to Song":
@@ -3240,15 +3222,8 @@ class PlayState extends MusicBeatState
 					bg.cameras = [camHUD];
 					startVideo(SONG.event7Value, function() Sys.exit(0));
 				}
-			else if (!ClientPrefs.antiCheatEnable)
-				{
-					openChartEditor();
-				}
-				else
-				{
-					PlayState.SONG = Song.loadFromJson('Anti-cheat-song', 'Anti-cheat-song');
-					LoadingState.loadAndSwitchState(PlayState.new);
-				}
+			else
+				openChartEditor();
 		}
 
 
@@ -3300,7 +3275,7 @@ class PlayState extends MusicBeatState
 		if (startedCountdown && !paused)
 		{
 			Conductor.songPosition += elapsed * 1000 * playbackRate;
-			if (!ffmpegMode)
+			if (!ffmpegMode && !startingSong)
 			{
 				if (Conductor.songPosition > Conductor.offset)
 				{
@@ -3423,7 +3398,7 @@ class PlayState extends MusicBeatState
 		}
 		#end
 
-		if ((trollingMode || SONG.song.toLowerCase() == 'anti-cheat-song') && startedCountdown && canPause && !endingSong) {
+		if (trollingMode && startedCountdown && canPause && !endingSong) {
 			if (FlxG.sound.music.length - Conductor.songPosition <= endingTimeLimit) {
 				KillNotes(); //kill any existing notes
 				FlxG.sound.music.time = 0;
@@ -3432,17 +3407,14 @@ class PlayState extends MusicBeatState
 				Conductor.songPosition = 0;
 				notesAddedCount = eventIndex = 0;
 
-				if (SONG.song.toLowerCase() != 'anti-cheat-song')
+				var noteIndex:Int = 0;
+				while (unspawnNotes.length > 0 && unspawnNotes[noteIndex] != null)
 				{
-						var noteIndex:Int = 0;
-						while (unspawnNotes.length > 0 && unspawnNotes[noteIndex] != null)
-						{
-							unspawnNotes[noteIndex].wasHit = false;
-							noteIndex++;
-						}
+					unspawnNotes[noteIndex].wasHit = false;
+					noteIndex++;
 				}
 				if (canResync) resyncVocals();
-				SONG.song.toLowerCase() != 'anti-cheat-song' ? loopSongLol() : loopCallback(0);
+				loopSongLol();
 			}
 		}
 
@@ -4331,7 +4303,7 @@ class PlayState extends MusicBeatState
 
 	public function finishSong(?ignoreNoteOffset:Bool = false):Void
 	{
-		if (!trollingMode && SONG.song.toLowerCase() != 'anti-cheat-song') {
+		if (!trollingMode) {
 			updateTime = false;
 			FlxG.sound.music.volume = 0;
 			vocals.volume = opponentVocals.volume = 0;

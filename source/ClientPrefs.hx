@@ -14,7 +14,6 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var complexAccuracy:Bool = false;
 	public static var noMarvJudge:Bool = false;
 	public static var noReset:Bool = false;
-	public static var antiCheatEnable:Bool = false;
 	public static var ezSpam:Bool = false;
 	public static var hitsoundVolume:Float = 0;
 	public static var hitsoundType:String = 'osu!mania';

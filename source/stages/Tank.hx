@@ -155,7 +155,7 @@ class Tank extends BaseStage
 		{
 			var timeForStuff:Float = Conductor.crochet / 1000 * 4.5;
 			FlxG.sound.music.fadeOut(timeForStuff);
-			FlxTween.tween(FlxG.camera, {zoom: defaultCamZoom}, timeForStuff, {ease: FlxEase.quadInOut});
+			FlxTween.tween(PlayState.instance, {defaultCamZoom: 0.9}, timeForStuff, {ease: FlxEase.quadInOut});
 			startCountdown();
 
 			dadGroup.alpha = 1;
@@ -163,6 +163,7 @@ class Tank extends BaseStage
 			boyfriend.animation.finishCallback = null;
 			gf.animation.finishCallback = null;
 			gf.dance();
+			game.moveCameraSection();
 		};
 
 		cutsceneHandler.skipCallback = function()
@@ -185,7 +186,7 @@ class Tank extends BaseStage
 			FlxTween.cancelTweensOf(camFollow);
 			game.moveCameraSection();
 			FlxG.camera.scroll.set(camFollow.x - FlxG.width/2, camFollow.y - FlxG.height/2);
-			FlxG.camera.zoom = defaultCamZoom;
+			defaultCamZoom = 0.9;
 			startCountdown();
 		};
 		camFollow.set(dad.x + 280, dad.y + 170);
@@ -208,7 +209,7 @@ class Tank extends BaseStage
 		tankman.anim.addBySymbol('wellWell', 'TANK TALK 1 P1', 24, false);
 		tankman.anim.addBySymbol('killYou', 'TANK TALK 1 P2', 24, false);
 		tankman.anim.play('wellWell', true);
-		FlxG.camera.zoom *= 1.2;
+		defaultCamZoom *= 1.2;
 
 		// Well well well, what do we got here?
 		cutsceneHandler.timer(0.1, function()
@@ -262,9 +263,9 @@ class Tank extends BaseStage
 		{
 			tightBars.play(true);
 			audioPlaying = tightBars;
-			FlxTween.tween(FlxG.camera, {zoom: defaultCamZoom * 1.2}, 4, {ease: FlxEase.quadInOut});
-			FlxTween.tween(FlxG.camera, {zoom: defaultCamZoom * 1.2 * 1.2}, 0.5, {ease: FlxEase.quadInOut, startDelay: 4});
-			FlxTween.tween(FlxG.camera, {zoom: defaultCamZoom * 1.2}, 1, {ease: FlxEase.quadInOut, startDelay: 4.5});
+			FlxTween.tween(PlayState.instance, {defaultCamZoom: 0.9 * 1.2}, 4, {ease: FlxEase.quadInOut});
+			FlxTween.tween(PlayState.instance, {defaultCamZoom: 0.9 * 1.2 * 1.2}, 0.5, {ease: FlxEase.quadInOut, startDelay: 4});
+			FlxTween.tween(PlayState.instance, {defaultCamZoom: 0.9 * 1.2}, 1, {ease: FlxEase.quadInOut, startDelay: 4.5});
 		};
 
 		cutsceneHandler.timer(4, function()
@@ -285,7 +286,7 @@ class Tank extends BaseStage
 		gfGroup.alpha = 0.00001;
 		boyfriendGroup.alpha = 0.00001;
 		camFollow.set(dad.x + 400, dad.y + 170);
-		FlxTween.tween(FlxG.camera, {zoom: 0.9 * 1.2}, 1, {ease: FlxEase.quadInOut});
+		FlxTween.tween(PlayState.instance, {defaultCamZoom: 0.9 * 1.2}, 1, {ease: FlxEase.quadInOut});
 		foregroundSprites.forEach(function(spr:BGSprite)
 		{
 			spr.y += 100;
@@ -356,7 +357,7 @@ class Tank extends BaseStage
 		cutsceneHandler.timer(15.2, function()
 		{
 			FlxTween.tween(camFollow, {x: 650, y: 300}, 1, {ease: FlxEase.sineOut});
-			FlxTween.tween(FlxG.camera, {zoom: 0.9 * 1.2 * 1.2}, 2.25, {ease: FlxEase.quadInOut});
+			FlxTween.tween(PlayState.instance, {defaultCamZoom: 0.9 * 1.2 * 1.2}, 2.25, {ease: FlxEase.quadInOut});
 			pico.anim.play('dieBitch', true);
 		});
 
@@ -390,7 +391,7 @@ class Tank extends BaseStage
 			camFollow.set(boyfriend.x + 280, boyfriend.y + 200);
 			FlxG.camera.snapToTarget();
 			game.cameraSpeed = 12;
-			FlxTween.tween(FlxG.camera, {zoom: 0.9 * 1.2 * 1.2}, 0.25, {ease: FlxEase.elasticOut});
+			FlxTween.tween(PlayState.instance, {defaultCamZoom: 0.9 * 1.2 * 1.2}, 0.25, {ease: FlxEase.elasticOut});
 		});
 
 		cutsceneHandler.timer(32.2, function()
@@ -402,9 +403,9 @@ class Tank extends BaseStage
 	function zoomBack()
 	{
 		var calledTimes:Int = 0;
-		camFollow.set(630, 425);
+		camFollowPos.setPosition(630, 425);
 		FlxG.camera.snapToTarget();
-		FlxG.camera.zoom = 0.8;
+		defaultCamZoom = 0.8;
 		game.cameraSpeed = 1;
 
 		calledTimes++;

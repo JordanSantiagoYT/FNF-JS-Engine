@@ -45,10 +45,6 @@ class GameplaySettingsSubState extends BaseOptionsMenu
     final option:Option = new Option('Disable Reset Button', "If checked, pressing Reset won't do anything.", 'noReset', 'bool', false);
     addOption(option);
 
-    final option:Option = new Option('Disable Chart Editor',
-      "If checked, disables the Chart Editor. Try opening it with this option enabled and see what happens!", 'antiCheatEnable', 'bool', false);
-    addOption(option);
-
     final option:Option = new Option('More Spammable Inputs', 'If checked, the input system is more spammable.', 'ezSpam', 'bool', false);
     addOption(option);
 
