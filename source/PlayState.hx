@@ -1131,7 +1131,6 @@ class PlayState extends MusicBeatState
 			prevCamFollowPos = null;
 		}
 		add(camFollowPos);
-		trace(camFollowPos.x + ', ' + camFollowPos.y);
 		if (!ClientPrefs.charsAndBG) _defaultCamZoom = 100;
 		else
 		{
@@ -4222,26 +4221,22 @@ class PlayState extends MusicBeatState
 		#end
 	}
 
-	public function moveCameraSection():Void {
-		if(SONG.notes[curSection] == null) return;
+	public function moveCameraSection(?sec:Null<Int>):Void {
+		if(sec == null) sec = curSection;
+		if(sec < 0) sec = 0;
 
-		if (gf != null && SONG.notes[curSection].gfSection)
+		if(SONG.notes[sec] == null) return;
+
+		if (gf != null && SONG.notes[sec].gfSection)
 		{
 			moveCamera('gf');
 			callOnLuas('onMoveCamera', ['gf']);
 			return;
 		}
 
-		if (!SONG.notes[curSection].mustHitSection)
-		{
-			moveCamera('dad');
-			callOnLuas('onMoveCamera', ['dad']);
-		}
-		else
-		{
-			moveCamera('bf');
-			callOnLuas('onMoveCamera', ['boyfriend']);
-		}
+		var isDad:Bool = (SONG.notes[sec].mustHitSection != true);
+		moveCamera(isDad ? 'dad' : 'bf');
+		callOnLuas('onMoveCamera', isDad ? ['dad'] : ['boyfriend']);
 	}
 
 	var cameraTwn:FlxTween;
@@ -5596,8 +5591,6 @@ class PlayState extends MusicBeatState
 		FunkinLua.customFunctions.clear();
 		FunkinLua.registeredFunctions.clear();
 		#end
-
-		if (camFollow != null) camFollow.put();
 
 		/*
 		#if HSCRIPT_ALLOWED

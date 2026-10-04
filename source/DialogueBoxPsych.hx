@@ -220,6 +220,8 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		skipText.borderSize = 2;
 		add(skipText);
 
+		daText.cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]]; //box render fix
+
 		startNextDialog();
 	}
 
