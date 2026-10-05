@@ -39,6 +39,7 @@ typedef EventNote = {
 	public var ignoreNote:Bool = false;
 	public var blockHit:Bool = false;
 	public var lowPriority:Bool = false;
+	@:optional public var rgbShader:RGBData;
 
 	public function dispose() {
 		// will be cleared by the GC later
@@ -48,6 +49,12 @@ typedef EventNote = {
 	}
 }
 
+
+typedef RGBData = {
+	r:FlxColor,
+	g:FlxColor,
+	b:FlxColor
+}
 
 typedef NoteSplashData = {
 	disabled:Bool,
@@ -566,7 +573,7 @@ class Note extends FlxSprite
 	var superCoolColor = null;
 	var arr:Array<Int> = [255, 255, 255];
 	var rainbowTime = 0.0;
-	public function updateRGBColors()
+	public function updateRGBColors(?r:FlxColor, ?g:FlxColor, ?b:FlxColor)
 	{
 		if (!useRGBShader) return;
 
@@ -620,6 +627,9 @@ class Note extends FlxSprite
 			noteSplashData.g = -1;
 			noteSplashData.b = -1;
 		}
+		rgbShader.r = r ?? rgbShader.r;
+		rgbShader.g = g ?? rgbShader.g;
+		rgbShader.b = b ?? rgbShader.b;
 	}
 
 	// this is used for note recycling
@@ -677,7 +687,11 @@ class Note extends FlxSprite
 		if (ClientPrefs.enableColorShader && useRGBShader)
 		{
 			if (rgbShader == null) rgbShader = new RGBShaderReference(this, initializeGlobalRGBShader(noteData, this));
-			updateRGBColors();
+			updateRGBColors(
+				chartNoteData.rgbShader?.r,
+				chartNoteData.rgbShader?.g,
+				chartNoteData.rgbShader?.b
+			);
 		}
 
 		if(!inEditor) strumTime += ClientPrefs.noteOffset;
