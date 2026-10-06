@@ -205,8 +205,8 @@ class VisualsUISubState extends BaseOptionsMenu
       "If checked, the rating popup will be a much simpler popup.\nEasy on the eyes, and less clutter for the HUD!", 'simplePopups', 'bool', false);
     addOption(option);
 
-    final option:Option = new Option('Icon Bounce:', "Which icon bounce would you like?", 'iconBounceType', 'string', 'Golden Apple', [
-      'Golden Apple',
+    final option:Option = new Option('Icon Bounce:', "Which icon bounce would you like?", 'iconBounceType', 'string', 'New Psych', [
+      'Swing',
       'Dave and Bambi',
       'Old Psych',
       'New Psych',

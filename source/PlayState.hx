@@ -3496,7 +3496,7 @@ class PlayState extends MusicBeatState
 		}
 
 		for (i in [iconP1, iconP2]) {
-			if (ClientPrefs.iconBounceType == 'Golden Apple') i.centerOffsets();
+			if (ClientPrefs.iconBounceType == 'Swing') i.centerOffsets();
 			i.updateHitbox();
 		}
 	}
@@ -5886,7 +5886,7 @@ class PlayState extends MusicBeatState
 				for (i in [iconP1, iconP2])
 					i.scale.set(1.2, 1.2);
 
-			case 'Golden Apple':
+			case 'Swing':
 				curBeat % (gfSpeed * 2) == 0 * playbackRate ? {
 					iconP1.scale.set(1.1, 0.8);
 					iconP2.scale.set(1.1, 1.3);
