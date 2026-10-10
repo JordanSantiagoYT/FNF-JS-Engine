@@ -345,12 +345,17 @@ class PlayStateRating
 	public static function updateNps(state:PlayState)
 	{
 		if (ClientPrefs.showNPS && (state.notesHitDateArray.length > 0 || state.oppNotesHitDateArray.length > 0)) {
+			var threshold = Conductor.songPosition - 1000 * state.npsSpeedMult;
 			state.notesToRemoveCount = 0;
 			var i = 0;
 
 			while (i < state.notesHitDateArray.length) {
-				if (!Math.isNaN(state.notesHitDateArray[i]) && (state.notesHitDateArray[i] + 1000 * state.npsSpeedMult < Conductor.songPosition)) {
+				if (Math.isNaN(state.notesHitDateArray[i])) {
 					state.notesToRemoveCount++;
+				} else if (state.notesHitDateArray[i] < threshold) {
+					state.notesToRemoveCount++;
+				} else {
+					break;
 				}
 				i++;
 			}
@@ -368,8 +373,12 @@ class PlayStateRating
 			i = 0;
 
 			while (i < state.oppNotesHitDateArray.length) {
-				if (!Math.isNaN(state.oppNotesHitDateArray[i]) && (state.oppNotesHitDateArray[i] + 1000 * state.npsSpeedMult < Conductor.songPosition)) {
+				if (Math.isNaN(state.oppNotesHitDateArray[i])) {
 					state.oppNotesToRemoveCount++;
+				} else if (state.oppNotesHitDateArray[i] < threshold) {
+					state.oppNotesToRemoveCount++;
+				} else {
+					break;
 				}
 				i++;
 			}
