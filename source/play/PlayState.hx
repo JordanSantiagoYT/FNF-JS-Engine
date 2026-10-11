@@ -3143,8 +3143,20 @@ class PlayState extends MusicBeatState
 		return returnVal;
 	}
 
+	public inline function hasActiveScripts():Bool {
+		var hasScripts = false;
+		#if LUA_ALLOWED
+		if (luaArray.length > 0) hasScripts = true;
+		#end
+		#if PYTHON_ALLOWED
+		if (pythonArray.length > 0) hasScripts = true;
+		#end
+		return hasScripts;
+	}
+
 	// Kept for compatibility: dispatches to both Lua and Python scripts.
 	public function callOnLuas(event:String, args:Array<Dynamic> = null, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
+		if (!hasActiveScripts()) return null;
 		return callOnScripts(event, args, ignoreStops, exclusions, excludeValues);
 	}
 

@@ -76,7 +76,8 @@ class PlayStateNotes
 			}
 
 			state.stagesFunc(function(stage:BaseStage) stage.noteMiss(daNote));
-			state.callOnLuas('noteMiss', [(daNote.isSustainNote ? state.sustainNotes : state.notes).members.indexOf(daNote), daNote.noteData, daNote.noteType, daNote.isSustainNote]);
+			if (state.hasActiveScripts())
+				state.callOnLuas('noteMiss', [(daNote.isSustainNote ? state.sustainNotes : state.notes).members.indexOf(daNote), daNote.noteData, daNote.noteType, daNote.isSustainNote]);
 			if (ClientPrefs.missRating && ClientPrefs.ratingPopups) PlayStateRating.popUpScore(state, daNote, true);
 		}
 		if (daNoteAlt != null)
@@ -184,7 +185,7 @@ class PlayStateNotes
 					state.spawnedNote = (state.targetNote.isSustainNote ? state.sustainNotes : state.notes).recycle(Note);
 					state.spawnedNote.setupNoteData(state.targetNote);
 
-					if (!ClientPrefs.noSpawnFunc) state.callOnLuas('onSpawnNote', [(!state.spawnedNote.isSustainNote ? state.notes.members.indexOf(state.spawnedNote) : state.sustainNotes.members.indexOf(state.spawnedNote)), state.targetNote.noteData, state.targetNote.noteType, state.targetNote.isSustainNote]);
+					if (!ClientPrefs.noSpawnFunc && state.hasActiveScripts()) state.callOnLuas('onSpawnNote', [(!state.spawnedNote.isSustainNote ? state.notes.members.indexOf(state.spawnedNote) : state.sustainNotes.members.indexOf(state.spawnedNote)), state.targetNote.noteData, state.targetNote.noteType, state.targetNote.isSustainNote]);
 					state.notesAddedCount++; state.limitNC++;
 					if (state.unspawnNotes[state.notesAddedCount+1] != null) state.targetNote = state.unspawnNotes[state.notesAddedCount];
 					else break;
@@ -411,7 +412,8 @@ class PlayStateNotes
 
 			if (!ClientPrefs.noHitFuncs)
 			{
-				state.callOnLuas((state.oppTrigger ? 'opponentNoteHit' : 'goodNoteHit'), [(note.isSustainNote ? state.sustainNotes : state.notes).members.indexOf(note), Math.abs(note.noteData), note.noteType, note.isSustainNote]);
+				if (state.hasActiveScripts())
+					state.callOnLuas((state.oppTrigger ? 'opponentNoteHit' : 'goodNoteHit'), [(note.isSustainNote ? state.sustainNotes : state.notes).members.indexOf(note), Math.abs(note.noteData), note.noteType, note.isSustainNote]);
 				state.stagesFunc(function(stage:BaseStage) (state.oppTrigger ? stage.opponentNoteHit(note) : stage.goodNoteHit(note)));
 			}
 
@@ -565,7 +567,8 @@ class PlayStateNotes
 
 			if (!ClientPrefs.noHitFuncs)
 			{
-				state.callOnLuas((!PlayState.opponentChart ? 'opponentNoteHit' : 'goodNoteHit'), [(daNote.isSustainNote ? state.sustainNotes : state.notes).members.indexOf(daNote), Math.abs(daNote.noteData), daNote.noteType, daNote.isSustainNote]);
+				if (state.hasActiveScripts())
+					state.callOnLuas((!PlayState.opponentChart ? 'opponentNoteHit' : 'goodNoteHit'), [(daNote.isSustainNote ? state.sustainNotes : state.notes).members.indexOf(daNote), Math.abs(daNote.noteData), daNote.noteType, daNote.isSustainNote]);
 				state.stagesFunc(function(stage:BaseStage) (!PlayState.opponentChart ? stage.opponentNoteHit(daNote) : stage.goodNoteHit(daNote)));
 			}
 
