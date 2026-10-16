@@ -4,7 +4,7 @@ Code style is enforced using Visual Studio Code extensions. (specifically for JS
 
 ### Rules that apply to every language
 * LF line endings, no trailing whitespace, exactly one final newline. (`.vscode/settings.json` sets `files.eol`, `files.trimTrailingWhitespace` and `files.insertFinalNewline` for all files.)
-* **Generated code is not repo code.** Everything under `export/` and `build/` is produced by Haxe, hxcpp and Lime and is gitignored. Never hand-edit or reformat it; change the `.hx`/`.hxp` source (or add a `source-haxelib-patches/` override) and rebuild.
+* **Generated code is not repo code.** Everything under `export/` and `build/` is produced by Haxe, hxcpp and Lime and is gitignored. Never hand-edit or reformat it; change the `.hx`/`.hxp` source (or add a `source/source-haxelib-patches/` override) and rebuild.
 * Naming is consistent across languages: types `UpperCamelCase`, members/functions `lowerCamelCase`, true constants `UPPER_SNAKE_CASE`.
 * Comments: `//` for implementation notes, `/** ... */` doc comments on every public member worth documenting. Commented-out code gets deleted — Git history is the archive.
 * No orphan debug output (`trace()`, `Log.d`, `NSLog`, `console.log`, `printf`) in committed code; gate diagnostics behind a define.

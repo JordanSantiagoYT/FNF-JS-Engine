@@ -11,7 +11,7 @@ description: Every folder in the repository and the package layout of source/.
 | Path | Contents |
 |---|---|
 | `source/` | all engine Haxe code — 284 modules in 36 packages |
-| `source-haxelib-patches/` | whole-file overrides of `flixel`, `openfl`, `funkin.vis` ([details](./haxelib-patches.md)) |
+| `source/source-haxelib-patches/` | whole-file overrides of `flixel`, `openfl`, `funkin.vis` ([details](./haxelib-patches.md)) |
 | `assets/` | asset libraries: `preload/`, `shared/`, `songs/`, `week*/`, `videos/`, `fonts/`, `embed/` |
 | `mods/` | user mods; ships with the `bf-clicker` example |
 | `example_mods/` | `modTemplate.zip` and script templates |

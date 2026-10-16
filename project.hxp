@@ -236,12 +236,12 @@ class Project extends HXProject
 		// If for some reason we have multiple source directories, we can add more entries here.
 		this.sources.push(SOURCE_DIR);
 
-    if (isIOS()) this.templatePaths.push("templates");
+    if (isIOS()) this.templatePaths.push("source/templates");
     if (isWindows())
       addAssetPath("setup/uri", "uri", "default", ["*.ps1"]);
 
 		// Haxelib classpath overrides (shadow machine-local haxelib edits for CI/fresh builds).
-		this.sources.push("source-haxelib-patches");
+		this.sources.push("source/source-haxelib-patches");
 
 		// Configure the window.
 		// Automatically configure FPS.
@@ -679,11 +679,11 @@ class Project extends HXProject
 
 		// Java sources of the native platform bridge (extensions). Lime copies
 		// these into the generated Gradle project's java source set.
-		this.javaPaths.push("android/src");
+		this.javaPaths.push("source/android/src");
 
 		// Engine platform templates (MainActivity, AndroidManifest overrides).
 		// Pushed so they take priority over haxelib template paths.
-		this.templatePaths.push("templates");
+		this.templatePaths.push("source/templates");
 
 		// Register the native bridge extensions with Lime's Android build.
 		// Each one extends org.haxe.extension.Extension and is instantiated by

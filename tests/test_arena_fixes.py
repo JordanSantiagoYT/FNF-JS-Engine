@@ -160,7 +160,7 @@ class TestEngineCode(unittest.TestCase):
                       "flixel/addons/ui/FlxSlider.hx",
                       "flixel/addons/ui/FlxUIDropDownMenu.hx",
                       "flixel/addons/ui/FlxUIInputText.hx"):
-            self.assertTrue((ROOT / "source-haxelib-patches" / patch).exists(), patch)
+            self.assertTrue((ROOT / "source" / "source-haxelib-patches" / patch).exists(), patch)
 
     def test_no_dead_prebuild_hooks(self):  # #50
         self.assertNotIn("PREBUILD_HX", read("project.hxp"))
