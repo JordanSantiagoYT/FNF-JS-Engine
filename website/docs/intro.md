@@ -43,7 +43,7 @@ Two goals drive every decision in the codebase:
 | [Contributing](./contributing/workflow.md) | send a pull request that gets merged |
 | [Code reference](./reference/index.md) | look up a class, field or method — generated from the Haxe sources |
 
-:::tip Pick your entry point
+:::tip[Pick your entry point]
 
 - *"I just want to compile it."* → [Requirements](./getting-started/requirements.md) then [Building](./getting-started/building.md).
 - *"I'm making a mod."* → [Modding overview](./modding/overview.md) and the
@@ -58,7 +58,7 @@ Two goals drive every decision in the codebase:
 ```text
 FNF-Phoenix-Engine/
 ├── source/                    # all engine Haxe code (284 modules, 36 packages)
-├── source-haxelib-patches/    # whole-file overrides of flixel/openfl/funkin.vis
+├── source/source-haxelib-patches/    # whole-file overrides of flixel/openfl/funkin.vis
 ├── assets/                    # preload/shared/embed asset libraries, fonts, songs
 ├── mods/                      # user mods (soft modding); ships with bf-clicker
 ├── example_mods/              # mod template zip + script templates

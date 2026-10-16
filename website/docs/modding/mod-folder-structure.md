@@ -128,7 +128,9 @@ shadows an active-mod script of the same name — the opposite of asset lookup, 
 Zip the mod folder itself (so the zip contains `MyMod/`, not its contents), and tell users
 to extract into `mods/`. `example_mods/modTemplate.zip` is a ready-made skeleton.
 
-:::warning Custom songs must live in a mod
+:::warning[Custom songs must live in a mod]
+
 Songs added to `assets/` require recompiling the game. Put custom songs — chart **and**
 audio **and** week JSON — inside a mod folder, or they will not be found.
+
 :::

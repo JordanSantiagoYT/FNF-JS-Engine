@@ -18,7 +18,7 @@ cross-platform API and compile to no-ops elsewhere.
 | Mobile storage, permissions, touch | `mobile/` |
 | Android services | `android/platform/*.hx` + `android/src/quack/fnf/phoenix/android/*.java` |
 | Window behaviour | `backend.WindowBackend`, `backend.WindowColorMode`, `backend.FunkinGame` |
-| Library-level fixes | `source-haxelib-patches/` ([details](./haxelib-patches.md)) |
+| Library-level fixes | `source/source-haxelib-patches/` ([details](./haxelib-patches.md)) |
 
 ## Desktop
 
@@ -81,14 +81,14 @@ These targets lose whole feature flags: no `MODS_ALLOWED`, no `LUA_ALLOWED` /
 `PYTHON_ALLOWED`, no `VIDEOS_ALLOWED`, and on SWF no `SHADERS_ALLOWED`. HTML5 embeds
 assets (`EMBED_ASSETS`) and uses `mp3` rather than `ogg`.
 
-Flash/AIR additionally rely on the seven files in `source-haxelib-patches/`, which gate out
+Flash/AIR additionally rely on the seven files in `source/source-haxelib-patches/`, which gate out
 library APIs that only exist on the Lime/OpenFL renderers.
 
 ## Adding platform-specific behaviour
 
 1. If it can be expressed in Haxe against an existing library API → write it in the
    relevant `utils/`, `mobile/` or `android/platform/` module, behind `#if`.
-2. If it needs *library* changes → add a patch in `source-haxelib-patches/`.
+2. If it needs *library* changes → add a patch in `source/source-haxelib-patches/`.
 3. If it needs C/C++, Java/Kotlin, Objective-C or Win32 → put the native source under
    `android/src/`, `templates/` or an inline `@:cppFileCode` block, and wire it up from
    `project.hxp` (build callbacks, `setup/` scripts).

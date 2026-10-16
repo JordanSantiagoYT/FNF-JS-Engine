@@ -38,6 +38,23 @@ Generated from full repo audit. Priority: `[P0]` critical/blocker, `[P1]` high, 
 - **[P3] iOS** — likely needs `#if ios` nuances (video/hxvlc below). ([#80](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/80))
 - LOW importance menu to set in-game keybinds to fire on hardware triggers (e.g.: on VOL_UP/VOL_DOWN) ([#81](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/81))
 
+### WINDOWS / LOW-LEVEL WINDOW MANAGEMENT
+
+Top 10 inventory of the engine's native window-manipulation paths and the Windows APIs they use:
+
+| # | Feature / source code | APIs / mechanisms | What it does |
+|---|---|---|---|
+| 1 | Window transparency — `Windows.__setWindowTransparencyAlpha()`, `Windows.__setWindowTransparencyColor()`, and `PlatformUtil.setWindowOpacity()` | `SetWindowLong`, `WS_EX_LAYERED`, `SetLayeredWindowAttributes` | Changes native window styles and applies alpha transparency or color-key transparency. Related: transparent-window support is also tracked in §2.1. |
+| 2 | Dark title bar/frame — `Windows.setDarkMode()` and `system.Window.setDarkMode()` | `DwmSetWindowAttribute`, `DWMWA_USE_IMMERSIVE_DARK_MODE` | Requests a dark frame from DWM; this does not change the game's rendered graphics. |
+| 3 | Window border and title-bar colors — `Windows.setWindowBorderColor()` and `setWindowTitleColor()` | `DwmSetWindowAttribute`, attributes 34, 35, and 36 | Customizes the border, title-bar, and title-bar text colors, subject to Windows-version support. |
+| 4 | Close-button control — `Windows.setCloseButtonEnabled()` | `GetSystemMenu`, `EnableMenuItem`, `SC_CLOSE` | Enables or disables the native Close command in the system menu. |
+| 5 | Window blur — `Windows.test()` | `DwmEnableBlurBehindWindow`, `DWM_BLURBEHIND` | Requests a DWM-provided blur effect. This is an older API and its effect can vary on modern Windows versions. |
+| 6 | Windows 11 window corners — `Main.setupGame()` | `DwmSetWindowAttribute`, `DWMWA_WINDOW_CORNER_PREFERENCE` | When `NO_W11_CORNERS` is defined, requests square (non-rounded) window corners. |
+| 7 | Native window lookup/access — `Windows.setDarkMode()`, `setWindowBorderColor()`, `setWindowTitleColor()`, and related methods | `HWND`, `GetActiveWindow`, `GetForegroundWindow`, `FindWindowA`, `FindWindowExA` | Finds window handles for native operations. Selecting the wrong `HWND` can affect another window or cause the operation to have no effect. |
+| 8 | Lime border toggling — `system.Window.darkMode()` | `Application.current.window.borderless` | Switches the window between bordered and borderless states to try to force a visual refresh, using Lime's higher-level API rather than the Win32 calls above. |
+| 9 | Native dialog boxes — `Dialog.showYesNoWindows()`, `Windows.alert()`, and `CoolUtil.sendMsgBox()` | `MessageBoxW`, `MessageBoxA`, `MultiByteToWideChar` | Opens native Windows dialogs; `Dialog` converts UTF-8 text to UTF-16 before calling the Unicode API. |
+| 10 | Native Windows notifications — `Windows.sendWindowsNotification()` and `PlatformUtil.sendNotification()` | `NOTIFYICONDATA`, `Shell_NotifyIcon` | Interacts with the Windows notification-area icon and notification infrastructure. |
+
 ## 4. VIDEO / AUDIO
 
 - **[P1] ~~hxvlc video gated desktop-only~~ DONE** — `VideoSprite` body is now gated `#if (VIDEOS_ALLOWED && hxvlc)` with an `#else` fallback class keeping the same public surface that immediately resolves its finish callback, so cutscenes/intros skip the video instead of failing to compile or hanging on platforms without the hxvlc backend (mobile/AIR/Flash).
@@ -145,7 +162,7 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 
 ### NATIVE BRIDGE / ARCHITECTURE
 
-- **[P1] ~~Android Haxe ↔ Java/Kotlin bridge~~ DONE** (`AndroidBridge` JNI helpers; Java extensions in `android/src/` register through `config.set("android.extension", ...)`) — Provide a clean native bridge for calling Android Java/Kotlin APIs from Haxe without scattering Android-specific implementation details throughout the engine.
+- **[P1] ~~Android Haxe ↔ Java/Kotlin bridge~~ DONE** (`AndroidBridge` JNI helpers; Java extensions in `source/android/src/` register through `config.set("android.extension", ...)`) — Provide a clean native bridge for calling Android Java/Kotlin APIs from Haxe without scattering Android-specific implementation details throughout the engine.
 - **[P1] ~~Android platform API abstraction~~ DONE** (13 modules in `source/android/platform/`, see docs/ANDROID_PLATFORM.md) — Group native Android functionality into dedicated APIs/modules (e.g. `AndroidMedia`, `AndroidIntents`, `AndroidStorage`, `AndroidGamepad`, `AndroidHaptics`, `AndroidDisplay`) instead of directly calling platform APIs from gameplay code.
 - **[P2] ~~Android platform-specific patch system~~ DONE** (`templates/` + `javaPaths` + `android.extension` injected only for the Android target; Java sources never touch other targets) — Allow Android-only patches and native implementations to be injected into builds without requiring unrelated cross-platform engine code to contain Android-specific logic.
 - **[P2] ~~Android native dependency isolation~~ DONE** (hxdiscord_rpc/hxvlc/hxluajit/hxnativefiledialog haxelibs gated per-platform; Android-only Haxe code behind `#if android`) — Keep Java/Kotlin dependencies and Android-specific source isolated from other targets so desktop, web, Flash/AIR, HashLink, and iOS builds do not require Android-only libraries.

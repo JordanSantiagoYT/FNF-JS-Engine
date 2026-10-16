@@ -46,7 +46,7 @@ A good PR:
 4. **Keeps the helper split.** New gameplay logic goes into `play/helpers/`, new menu
    logic into `states/helpers/` — not into `PlayState.update()`.
 5. **Does not reformat untouched code.** Especially never reformat anything in
-   `source-haxelib-patches/`.
+   `source/source-haxelib-patches/`.
 6. **Has no stray `trace()`.** Gate diagnostics behind `#if debug`.
 7. **Documents public API** with `/** ... */` — those comments end up in the
    [code reference](../reference/index.md) automatically.
@@ -59,7 +59,7 @@ A good PR:
 | New feature flag | add it to `project.hxp` *and* [Project configuration](../getting-started/project-configuration.md) |
 | New Lua callback | add the Python twin in `pystdlib/`, then run `npm run gen:scripts` in `website/` |
 | New preference | add the `Option` entry and check the save/load blacklists |
-| Dependency bump in `hmm.json` | re-diff every file in `source-haxelib-patches/` |
+| Dependency bump in `hmm.json` | re-diff every file in `source/source-haxelib-patches/` |
 | Version bump | change `VERSION` in `project.hxp` only |
 
 ## Commit messages

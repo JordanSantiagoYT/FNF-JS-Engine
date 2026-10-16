@@ -62,7 +62,7 @@ For example:
 
 Haxe already provides `#if`s that can be useful on making small patches, but it becames a problem when theres issues that can only be solved using non-Haxe code. (e.g.: `C`/`C++` low-level patches)
 
-The Haxe-level patches (the ones that fix files *inside* haxelibs like `flixel`, `openfl`, `funkin.vis`) live in `source-haxelib-patches/` and get compiled in as class-path overrides — what they fix, why they exist and how the compiler picks them up is explained in [Source patches](#source-patches-source-haxelib-patches).
+The Haxe-level patches (the ones that fix files *inside* haxelibs like `flixel`, `openfl`, `funkin.vis`) live in `source/source-haxelib-patches/` and get compiled in as class-path overrides — what they fix, why they exist and how the compiler picks them up is explained in [Source patches](#source-patches-source/source-haxelib-patches).
 
 # KNOW MOBILE (Android) ISSUES
 
@@ -168,9 +168,9 @@ Phoenix Engine currently has those additions (and more!) that vanilla JSE (Jorda
 - flixel and lime updates
 - hxvlc CPU rendering optimizations
 
-## Source patches (`source-haxelib-patches/`)
+## Source patches (`source/source-haxelib-patches/`)
 
-`source-haxelib-patches/` holds the engine's **haxelib overrides**: complete copies of library files
+`source/source-haxelib-patches/` holds the engine's **haxelib overrides**: complete copies of library files
 (`flixel`, `openfl`, `funkin.vis`) with a few lines changed, kept in the repo instead of being applied by hand
 into the haxelib install folder. They are the Haxe-level counterpart of the platform patches listed above.
 
@@ -195,20 +195,20 @@ into the haxelib install folder. They are the Haxe-level counterpart of the plat
 // Tell Lime where to look for the game's source code.
 this.sources.push(SOURCE_DIR);                 // -> source/
 // Haxelib classpath overrides (shadow machine-local haxelib edits for CI/fresh builds).
-this.sources.push("source-haxelib-patches");   // -> source-haxelib-patches/
+this.sources.push("source/source-haxelib-patches");   // -> source/source-haxelib-patches/
 ```
 
 Lime writes each entry of `sources` as a `-cp` line in the generated hxml, after the `-lib` class paths, and a
 module that exists in more than one class path is taken from the *last* one declared. So
-`source-haxelib-patches/flixel/sound/FlxSound.hx` **shadows** `flixel/sound/FlxSound.hx` from the haxelib: the
+`source/source-haxelib-patches/flixel/sound/FlxSound.hx` **shadows** `flixel/sound/FlxSound.hx` from the haxelib: the
 library copy is never even opened by the compiler. That is the same mechanism that already lets
-`source-haxelib-patches/flixel/FlxGame.hx` and `source-haxelib-patches/flixel/addons/ui/*` replace the library files — it just lives in its own folder
+`source/source-haxelib-patches/flixel/FlxGame.hx` and `source/source-haxelib-patches/flixel/addons/ui/*` replace the library files — it just lives in its own folder
 so library fixes stay visible and diffable. Two consequences:
 
 - **A patch is a whole file, not a `.patch`/diff.** The folder mirrors the library's package layout
   (`flixel/util/FlxSave.hx` *is* module `flixel.util.FlxSave`); the path, the case of every letter and the file
   name must match exactly, and the file has to compile on its own.
-- **Precedence is `source-haxelib-patches/` > `source/` > haxelib** (it is pushed last). A module patched in both
+- **Precedence is `source/source-haxelib-patches/` > `source/` > haxelib** (it is pushed last). A module patched in both
   places would be silently taken from this folder, so keep the two lists disjoint — today they are.
 
 Because the substitution happens at Haxe compile time, the patch applies to *every* target (`cpp` desktop, neko,
@@ -258,14 +258,14 @@ patched copy of those modules is what gets compiled. In practice:
 haxelib libpath flixel
 
 # 2. mirror the exact package path and copy the file (never hand-write one)
-mkdir -p source-haxelib-patches/flixel/sound
-cp "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source-haxelib-patches/flixel/sound/FlxSound.hx
+mkdir -p source/source-haxelib-patches/flixel/sound
+cp "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source/source-haxelib-patches/flixel/sound/FlxSound.hx
 
 # 3. edit only what is needed, keep upstream formatting/tabs, guard with #if,
 #    and leave a comment above the block saying WHICH TARGET needs WHY
 
 # 4. review the delta the way a reviewer will
-diff -u "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source-haxelib-patches/flixel/sound/FlxSound.hx
+diff -u "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source/source-haxelib-patches/flixel/sound/FlxSound.hx
 ```
 
 - Patch here only for **library** fixes. Engine behavior belongs in `source/` (or, better, in a PR to the fork).
@@ -273,7 +273,7 @@ diff -u "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source-haxelib-patc
 - When a library is bumped (re-running `setup/unix.sh` / `setup/windows.bat`, or a new ref in `hmm.json`),
   re-diff **every** patch: the copy is frozen at the moment it was taken, so a stale patch silently reverts the
   upstream fixes that came after it.
-- Un-applying a patch is just `git rm source-haxelib-patches/<path>` — nothing was written into the haxelib, so
+- Un-applying a patch is just `git rm source/source-haxelib-patches/<path>` — nothing was written into the haxelib, so
   there is nothing to restore (build with `-clean` if you still see old output).
 - When the set of patched files changes, update the list in `BUILDING.md`
   ("Machine-local haxelib patches") too — it is the same 7 files, still worded as if they were local edits.
@@ -282,9 +282,9 @@ Not sure whether a patch is being picked up? Check the hxml Lime generates and/o
 
 ```sh
 haxelib run lime build windows -Dofficial
-grep -rn "source-haxelib-patches" build/release/haxe/*.hxml   # must appear after the -cp for source/
+grep -rn "source/source-haxelib-patches" build/release/haxe/*.hxml   # must appear after the -cp for source/
 # brute-force proof: put a syntax error in the patch file and rebuild — the compiler should
-# stop inside source-haxelib-patches/, not inside ~/.haxelib
+# stop inside source/source-haxelib-patches/, not inside ~/.haxelib
 ```
 
 Anything that cannot be expressed in Haxe (C/C++, Java/Kotlin, Objective-C, Win32) does **not** go here: those go
@@ -426,7 +426,7 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 <details>
   <summary><h2>OG Psych Engine Credits and Stuff</h2></summary>
-  
+
 * Shadow Mario - Programmer
 * RiverOaken - Artist
 

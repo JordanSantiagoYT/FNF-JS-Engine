@@ -48,8 +48,8 @@ def parse_provider(fragment: str):
 
 class TestAndroidDocumentsProvider(unittest.TestCase):
     def setUp(self):
-        self.manifest = (ROOT / "templates/android/template/app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
-        self.provider = (ROOT / "android/src/quack/fnf/phoenix/android/PhoenixDocumentsProvider.java").read_text(encoding="utf-8")
+        self.manifest = (ROOT / "source/templates/android/template/app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
+        self.provider = (ROOT / "source/android/src/quack/fnf/phoenix/android/PhoenixDocumentsProvider.java").read_text(encoding="utf-8")
 
     def test_lime_share_files_gate_has_enabled_and_disabled_branches(self):
         disabled = render_provider_branch(self.manifest, share_files=False)
@@ -227,7 +227,7 @@ class TestAndroidDocumentsProvider(unittest.TestCase):
         if not javac or not java:
             self.skipTest("JDK is unavailable; CI installs Java 17 for this test")
 
-        source = ROOT / "android/src/quack/fnf/phoenix/android/PhoenixDocumentPathPolicy.java"
+        source = ROOT / "source/android/src/quack/fnf/phoenix/android/PhoenixDocumentPathPolicy.java"
         test_source = ROOT / "tests/java/quack/fnf/phoenix/android/PhoenixDocumentPathPolicyTest.java"
         class_name = "quack.fnf.phoenix.android.PhoenixDocumentPathPolicyTest"
         with tempfile.TemporaryDirectory(prefix="phoenix-path-policy-test-") as classes:

@@ -51,6 +51,12 @@ jobs:
         working-directory: website
         run: npm ci
 
+      # Catches content that builds fine but renders wrong (e.g. the legacy
+      # `:::note Title` admonition syntax, which CommonMark shows as plain text).
+      - name: Check markdown syntax
+        working-directory: website
+        run: npm run lint:docs
+
       - name: Build (regenerates the code reference)
         working-directory: website
         run: npm run build

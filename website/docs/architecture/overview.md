@@ -25,10 +25,10 @@ flowchart TD
 
 Pinned forks, plus **whole-file overrides** committed to the repo:
 
-- `source-haxelib-patches/flixel/FlxGame.hx`, `source-haxelib-patches/flixel/addons/ui/*`
+- `source/source-haxelib-patches/flixel/FlxGame.hx`, `source/source-haxelib-patches/flixel/addons/ui/*`
   — engine replacements for library files (moved out of `source/` in #46);
   `source/flxanimate/PsychFlxAnimate.hx` is an engine subclass in `source/`.
-- `source-haxelib-patches/**` — library fixes that shadow the haxelib copies through the
+- `source/source-haxelib-patches/**` — library fixes that shadow the haxelib copies through the
   class path. See [Haxelib patches](./haxelib-patches.md).
 
 ### 2. `backend/` — engine services

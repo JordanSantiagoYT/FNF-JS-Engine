@@ -74,6 +74,10 @@ class PyMiscLib
 		PythonScript.registerFunction("getTextFromFile", function(path:String, ?ignoreModFolders:Bool = false) {
 			return Paths.getTextFromFile(path, ignoreModFolders);
 		});
+		// Flush the engine-wide save used by scripts that write FlxG.save.data.
+		PythonScript.registerFunction("flushGlobalSave", function() {
+			if (FlxG.save != null) FlxG.save.flush();
+		});
 		PythonScript.registerFunction("flushSaveData", function(name:String) {
 			var save = Reflect.getProperty(FlxG.save, name);
 			if (save != null) save.flush();

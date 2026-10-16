@@ -59,8 +59,13 @@ class DiscordClient
 
 	private static function onReady(request:RawConstPointer<DiscordUser>):Void
 	{
-		final user = cast (request[0].username, String);
-		final discriminator = cast (request[0].discriminator, String);
+		// Discord may provide a null callback pointer when its native backend is
+		// unavailable (for example, AIR builds without hxdiscord_rpc).
+		if (request == null) return;
+		final discordUser = request[0];
+		if (discordUser == null || discordUser.username == null) return;
+		final user = cast (discordUser.username, String);
+		final discriminator = discordUser.discriminator == null ? '0' : cast (discordUser.discriminator, String);
 
 		var message = '(Discord) Connected to User ';
 		if (discriminator != '0') //Old discriminators

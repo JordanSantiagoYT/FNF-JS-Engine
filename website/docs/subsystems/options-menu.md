@@ -97,8 +97,10 @@ Saving and loading are reflective, so nothing else is required — unless the fi
 structural data (maps, arrays of defaults), in which case add it to the save/load
 blacklists in `ClientPrefs`.
 
-:::tip Gameplay modifiers
+:::tip[Gameplay modifiers]
+
 Per-song modifiers (playback rate, instakill, practice mode…) are **not** `ClientPrefs`
 options — they live in `states.substates.GameplayChangersSubstate` with
 `states.helpers.GameplayChangersHelpers`, and reset when you leave gameplay.
+
 :::

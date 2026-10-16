@@ -25,9 +25,10 @@ gameplay code never needs to know about the platform layer.
 │ Bridge                  source/android/platform/           │
 │   AndroidBridge.hx — JNI helpers + event dispatcher        │
 ├────────────────────────────────────────────────────────────┤
-│ Java services               android/src/quack/fnf/phoenix/ │
-│   PhoenixCore / PhoenixMedia / PhoenixMediaService /       │
-│   PhoenixDisplay / PhoenixStorage / PhoenixInput /         │
+│ Java services               source/android/src/                 │
+│   quack/fnf/phoenix/android/*.java                              │
+│   PhoenixCore / PhoenixMedia / PhoenixMediaService /             │
+│   PhoenixDisplay / PhoenixStorage / PhoenixInput /               │
 │   PhoenixDocumentsProvider                                 │
 │   (extensions use `android.extension`; DocumentsProvider   │
 │    is registered directly in the manifest)                │
@@ -52,12 +53,12 @@ gameplay code never needs to know about the platform layer.
 The Android pieces are injected **only for the Android target**
 (`configureAndroidRuntime()`):
 
-- `javaPaths.push("android/src")` — Lime copies the Java extensions into
+- `javaPaths.push("source/android/src")` — Lime copies the Java extensions into
   the generated Gradle project's java source set.
-- `templatePaths.push("templates")` — engine templates override Lime's:
-  - `templates/android/MainActivity.java` — deep-link intents
+- `templatePaths.push("source/templates")` — engine templates override Lime's:
+  - `source/templates/android/MainActivity.java` — deep-link intents
     (`onNewIntent`) and hardware-key interception.
-  - `templates/android/template/app/src/main/AndroidManifest.xml` —
+  - `source/templates/android/template/app/src/main/AndroidManifest.xml` —
     `phoenix://` intent filter, `PhoenixMediaService`
     (`foregroundServiceType="mediaPlayback"`), FileProvider, and the
     `PhoenixDocumentsProvider` SAF provider. Its registration remains behind
