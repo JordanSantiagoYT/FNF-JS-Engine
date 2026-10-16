@@ -179,7 +179,9 @@ function renderPage({ lang, title, sidebarLabel, position, intro, functions }) {
   out.push('');
   out.push(`# ${title}`);
   out.push('');
-  out.push(':::info Generated page');
+  // `:::type[Title]` (not `:::type Title`): `.md` files are parsed as
+  // CommonMark, where only the directive-label syntax becomes an admonition.
+  out.push(':::info[Generated page]');
   out.push('');
   out.push('This list is extracted from the `registerFunction(...)` calls in');
   out.push('`source/psychlua/` by `website/scripts/generate-script-api.mjs`. If a function');

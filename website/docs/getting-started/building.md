@@ -36,7 +36,7 @@ haxelib run lime build air     -Dofficial -D disable-version-check -DAIR_SDK=C:\
 `lime test <platform>` builds **and launches** the result. `<platform>` is `windows`,
 `linux`, `mac`, `android`, `ios`, `html5`, `neko`, `flash` or `air`.
 
-:::note First build takes a while
+:::note[First build takes a while]
 
 A cold C++ build of a Flixel game takes roughly 5–10 minutes depending on your machine.
 Subsequent builds reuse the hxcpp compile cache.

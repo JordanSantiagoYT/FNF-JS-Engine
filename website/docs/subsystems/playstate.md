@@ -34,10 +34,12 @@ instance (or that read `PlayState.instance`). They are re-exported together by
 | `PlayStateRender` | HUD assembly and per-frame HUD updates |
 | `PlayStateAndroidMedia` | pushes song metadata to the Android media session |
 
-:::tip Where should my change go?
+:::tip[Where should my change go?]
+
 If it touches a *field* of `PlayState`, add the field to the state and put the behaviour in
 the matching helper. Adding behaviour straight into `PlayState.update()` is how the file
 got to 6000 lines the first time.
+
 :::
 
 ## Lifecycle of a song

@@ -91,9 +91,11 @@ Screen effects also have dedicated helpers (`addGlitchEffect`, `addVCREffect`,
 5. Validate uniforms defensively — the *Rainbow Eyesore* shader is the cautionary tale
    (it needed validation and a `waveSpeed` fix after mods passed unexpected values).
 
-:::warning Performance
+:::warning[Performance]
+
 Post-processing is per-pixel on the whole screen. On the low-end devices this engine
 targets, a single full-screen filter can cost more than the entire note rendering. Prefer
 sprite-level shaders, and keep effects behind options where possible (as the rain effect
 is).
+
 :::
