@@ -125,7 +125,7 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 
 - **[P1] ~~Android Storage Access Framework integration~~ DONE** (`MobileFilePicker` over `ACTION_OPEN_DOCUMENT`/`ACTION_CREATE_DOCUMENT`/`ACTION_OPEN_DOCUMENT_TREE`, wired into chart/character import & export) — Use the native Android document picker for importing/exporting mods, charts, assets, replays, and other user files; support `ACTION_OPEN_DOCUMENT`, `ACTION_CREATE_DOCUMENT`, and `ACTION_OPEN_DOCUMENT_TREE`.
 - **[P1] ~~Android content URI support~~ DONE** (`AndroidStorage` read/write helpers + picker results carry `uri` alongside `path`/`data`) — Support Android `content://` URIs alongside normal filesystem paths, providing a common Haxe abstraction for resources loaded from either source.
-- **[P2] ~~Android file sharing~~ DONE** (`AndroidIntents.shareFile` via FileProvider; `StorageProvider` documents provider in the manifest) — Provide native file sharing through Android intents/`FileProvider` for screenshots, replays, exported charts, mods, and other engine-generated files.
+- **[P2] ~~Android file sharing~~ DONE** (`AndroidIntents.shareFile` via FileProvider; `PhoenixDocumentsProvider` exposes dedicated `Crash Logs` and `Mods` SAF roots) — Provide native file sharing through Android intents/`FileProvider` and let users browse/share app-generated files and mods through Android's system document picker.
 
 ### INTENTS / EXTERNAL INTEGRATION
 

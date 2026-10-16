@@ -65,21 +65,17 @@
 		</provider>
 		::end::
 
-		::if (SHARE_FILES)::
+		<!-- SAF provider exposes only app-managed crash reports and mods/. -->
 		<provider
-    		android:name="org.haxe.lime.StorageProvider"
-    		android:authorities="::APP_PACKAGE::.documentsprovider"
-    		android:exported="true"
-    		android:grantUriPermissions="true"
-			::if (ANDROID_USE_ANDROIDX)::
-			android:permission="android.permission.MANAGE_DOCUMENTS"
-			::end::
-			>
-    		<intent-filter>
-        		<action android:name="android.content.action.DOCUMENTS_PROVIDER" />
-    		</intent-filter>
+			android:name="quack.fnf.phoenix.android.PhoenixDocumentsProvider"
+			android:authorities="::APP_PACKAGE::.documentsprovider"
+			android:exported="true"
+			android:grantUriPermissions="true"
+			android:permission="android.permission.MANAGE_DOCUMENTS">
+			<intent-filter>
+				<action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+			</intent-filter>
 		</provider>
-		::end::
 
 	</application>
 

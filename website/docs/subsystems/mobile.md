@@ -50,10 +50,21 @@ Opacity and extra toggles come from `ClientPrefs.mobileCAlpha` and `mobileCEx`.
 Menus add a virtual pad; `PlayState` adds the hitbox. Both route into the same
 `backend.Controls` actions as keyboard input, so gameplay code never checks for touch.
 
-## File picking
+## File picking and app files
 
 `mobile.files.MobileFilePicker` bridges to the platform picker, used by the editors for
 loading and saving charts and characters on device.
+
+On Android, `PhoenixDocumentsProvider` adds two roots to the system Files picker:
+
+- **Crash Logs** — read-only access to crash reports written in `crash/`.
+- **Mods** — browse and manage the runtime `mods/` directory; the provider supports
+  creating folders/files, reading and writing files, renaming files, and deleting files
+  or subfolders.
+
+Both roots are backed by the app's external-files storage directory, where the game keeps
+its writable runtime data. Only these two folders are exposed; each requesting app gets
+access through the narrow URI grants issued by Android's Storage Access Framework.
 
 ## The Android platform layer
 

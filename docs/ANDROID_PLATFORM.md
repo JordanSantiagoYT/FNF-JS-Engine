@@ -25,11 +25,12 @@ gameplay code never needs to know about the platform layer.
 │ Bridge                  source/android/platform/           │
 │   AndroidBridge.hx — JNI helpers + event dispatcher        │
 ├────────────────────────────────────────────────────────────┤
-│ Java extensions            android/src/quack/fnf/phoenix/  │
+│ Java services               android/src/quack/fnf/phoenix/ │
 │   PhoenixCore / PhoenixMedia / PhoenixMediaService /       │
-│   PhoenixDisplay / PhoenixStorage / PhoenixInput           │
-│   (registered via `config.set("android.extension", ...)`;  │
-│    Lime's GameActivity instantiates + dispatches to them)  │
+│   PhoenixDisplay / PhoenixStorage / PhoenixInput /         │
+│   PhoenixDocumentsProvider                                 │
+│   (extensions use `android.extension`; DocumentsProvider   │
+│    is registered directly in the manifest)                │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -58,13 +59,14 @@ The Android pieces are injected **only for the Android target**
     (`onNewIntent`) and hardware-key interception.
   - `templates/android/template/app/src/main/AndroidManifest.xml` —
     `phoenix://` intent filter, `PhoenixMediaService`
-    (`foregroundServiceType="mediaPlayback"`), FileProvider,
-    StorageProvider.
+    (`foregroundServiceType="mediaPlayback"`), FileProvider, and the
+    `PhoenixDocumentsProvider` SAF provider.
 - `config.set("android.extension", [...])` — registers the five
   `Extension` subclasses (`PhoenixCore`, `PhoenixDisplay`,
   `PhoenixInput`, `PhoenixMedia`, `PhoenixStorage`) with Lime's
-  GameActivity. `PhoenixMediaService` is an Android `Service`, declared
-  in the manifest template instead.
+  GameActivity. `PhoenixMediaService` is an Android `Service` and
+  `PhoenixDocumentsProvider` is a framework `DocumentsProvider`; both
+  are declared directly in the manifest template.
 - `config.set("android.permission", [...])` — Lime's defaults plus
   `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`,
   `FOREGROUND_SERVICE_MEDIA_PLAYBACK`.
@@ -154,6 +156,24 @@ Wired into: chart import (`ChartingSaveLoad.promptBackup`), chart &
 event export (`saveLevel`/`saveEvents`), character import (the
 **Import Char** button in `CharacterEditorState`) and character export.
 Desktop keeps the traditional `FileReference` download flow.
+
+### System-visible app directories (`PhoenixDocumentsProvider`)
+
+The manifest registers `quack.fnf.phoenix.android.PhoenixDocumentsProvider`
+under `<application-id>.documentsprovider`, protected by
+`android.permission.MANAGE_DOCUMENTS`. Android's system document UI can use
+it through SAF; ordinary apps cannot call the provider directly. The provider
+exposes only these roots from `Context.getExternalFilesDir(null)`:
+
+| SAF root | Backing path | Access |
+| --- | --- | --- |
+| **Crash Logs** | `crash/` | Read-only, for copying reports out of the game |
+| **Mods** | `mods/` | Read/write; create folders/files, rename files, and delete files or subfolders |
+
+Document IDs are opaque, root-scoped path IDs, and requests are checked to stay
+inside the matching root (including rejecting symlink/traversal paths). This
+makes the game’s crash reports and runtime mods discoverable in Android’s Files
+picker without exposing saves or other app data.
 
 ---
 
