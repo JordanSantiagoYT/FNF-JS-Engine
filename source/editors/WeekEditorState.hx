@@ -566,7 +566,6 @@ class WeekEditorFreeplayState extends MusicBeatState
 				// item.setGraphicSize(Std.int(item.width));
 			}
 		}
-		trace(weekFile.songs[curSelected]);
 		iconInputText.text = weekFile.songs[curSelected][1];
 		bgColorStepperR.value = Math.round(weekFile.songs[curSelected][2][0]);
 		bgColorStepperG.value = Math.round(weekFile.songs[curSelected][2][1]);

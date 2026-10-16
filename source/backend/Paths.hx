@@ -58,7 +58,9 @@ class Paths
     else if (!PlayState.isPixelStage) defaultSkin = 'noteskins/NOTE_assets' + NoteHelpers.getNoteSkinPostfix();
     else
       defaultSkin = 'noteskins/NOTE_assets';
+    #if MAIN_DEBUG
     trace(defaultSkin);
+    #end
   }
 
   public static function initNote(?noteSkin:String)
@@ -560,7 +562,9 @@ class Paths
  		if (!warnedMissingAssets.exists(file))
 		{
 			warnedMissingAssets.set(file, true);
-			trace('oh no its returning null NOOOO ($file)');
+			#if MAIN_DEBUG
+			trace('Missing asset: $file');
+			#end
 		}
 		return null;
       }
@@ -863,7 +867,9 @@ class Paths
       return sound;
     }
 
-    trace('oh no its returning null NOOOO ($file)');
+    #if MAIN_DEBUG
+    trace('Missing asset: $file');
+    #end
     return null;
   }
 
