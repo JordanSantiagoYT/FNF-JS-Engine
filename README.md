@@ -202,7 +202,7 @@ Lime writes each entry of `sources` as a `-cp` line in the generated hxml, after
 module that exists in more than one class path is taken from the *last* one declared. So
 `source-haxelib-patches/flixel/sound/FlxSound.hx` **shadows** `flixel/sound/FlxSound.hx` from the haxelib: the
 library copy is never even opened by the compiler. That is the same mechanism that already lets
-`source/flixel/FlxGame.hx` and `source/flixel/addons/ui/*` replace the library files — it just lives in its own folder
+`source-haxelib-patches/flixel/FlxGame.hx` and `source-haxelib-patches/flixel/addons/ui/*` replace the library files — it just lives in its own folder
 so library fixes stay visible and diffable. Two consequences:
 
 - **A patch is a whole file, not a `.patch`/diff.** The folder mirrors the library's package layout

@@ -46,7 +46,7 @@ Two consequences:
 - **A patch is a whole file, not a diff.** The folder mirrors the library's package layout
   exactly (path, letter case and file name must match) and the file must compile on its own.
 - **Keep the two source folders disjoint.** A module patched in both would silently be
-  taken from `source-haxelib-patches/`. Today they are disjoint.
+  taken from `source-haxelib-patches/`. Today they are disjoint, and `tests/test_arena_fixes.py` fails if a library package (`flixel/`, `openfl/`, `funkin/`) reappears under `source/` (#46).
 
 Because the substitution happens at Haxe compile time, a patch applies to *every* target —
 which is why each one is wrapped in platform conditionals, so native builds behave exactly
@@ -54,7 +54,12 @@ like upstream.
 
 ## The current patches
 
-All seven exist so the **non-C++ targets (Flash / AIR)** build at all.
+The first seven exist so the **non-C++ targets (Flash / AIR)** build at all.
+The last five were previously vendored under `source/flixel/…`, where they
+shadowed the libraries invisibly; they were moved here in #46 so this table
+is the complete patch inventory. They are based on the pinned `flixel`
+revision recorded in `hmm.json` (see #58); re-diff them whenever that pin
+changes.
 
 | Patch file | Library | What breaks without it | What the patch does |
 |---|---|---|---|
@@ -65,6 +70,12 @@ All seven exist so the **non-C++ targets (Flash / AIR)** build at all.
 | `flixel/util/FlxSave.hx` | flixel | `FlxSharedObject` re-implements save directories with `sys.FileSystem`/`sys.io.File`, absent on SWF — so `FlxG.save` and `ClientPrefs` cannot build | adds `flash \|\| air` to the `#if (android \|\| ios)` branch so those targets use `SharedObject.getLocal()` |
 | `openfl/utils/Assets.hx` | openfl | `getBitmapData()` probes `.astc`/`.ktx`/`.dds` sidecars via `Context3D`, which SWF has no path for — affects essentially every asset lookup | wraps the compressed-texture probe in `#if (!flash && !air)` so SWF falls through to `LimeAssets.getImage()` |
 | `funkin/vis/dsp/SpectralAnalyzer.hx` | funkin.vis | `#if web` also matches SWF, pulling in the Web-Audio analyzer, while the `#else` branch needs a Lime `AudioSource`. Used by `stages/objects/ABotSpeaker.hx` | rewrites the guards as `#if (web && !flash)` / `#elseif !flash`, so neither backend is referenced on Flash/AIR |
+
+| `flixel/FlxGame.hx` | flixel | upstream `FlxGame` has no engine hooks: the game loop needs the cached `_isPlayState` flag, the `ClientPrefs.ffmpegMode` fixed-step branch and Flash focus-event guards | imports `backend.ClientPrefs`/`data.Section`/`objects.Note`/`play.PlayState`, caches whether the current state is `PlayState`, adds the `FLX_POST_PROCESS` blocks and the `ffmpegMode` fixed-step branch (#46) |
+| `flixel/addons/ui/FlxInputText.hx` | flixel-addons | the text field needs engine-specific character handling | vendored copy with `objects.Character` integration (#46) |
+| `flixel/addons/ui/FlxSlider.hx` | flixel-addons | the slider needs the engine's `backend.Controls` bindings | vendored copy importing `backend.Controls` (#46) |
+| `flixel/addons/ui/FlxUIDropDownMenu.hx` | flixel-addons | dropdown behaviour patched for the editors | vendored copy; no game-package imports, kept with the other UI patches so the set is inventoried together (#46) |
+| `flixel/addons/ui/FlxUIInputText.hx` | flixel-addons | `FlxUI` wrapper over the patched `FlxInputText` | vendored copy matching the patched `FlxInputText` above (#46) |
 
 Notes:
 
