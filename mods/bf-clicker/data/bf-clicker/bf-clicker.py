@@ -7,7 +7,7 @@
 
 # ---------------------------------------------------------------- //
 #                     SETTINGS / MODULE STATE                      //
-# (declared before any def so every callback shares the same refs) //
+# State is module-scoped; callbacks declare globals when they update it. //
 # ---------------------------------------------------------------- //
 ROUND_TIME = 45.0
 
@@ -19,6 +19,9 @@ g_best = 0
 g_baseY = 0.0
 g_floatPhase = 0.0
 g_lastShown = -1
+g_roundElapsed = 0.0
+g_previousMusicVolume = None
+g_previousMouseVisible = None
 
 
 # ---------------------------------------------------------------- //
@@ -34,6 +37,8 @@ def hideIfExists(target):
 #                              SETUP                              //
 # ---------------------------------------------------------------- //
 def onCreatePost():
+	global g_baseY, g_best, g_previousMusicVolume, g_previousMouseVisible
+
 	# hide the rhythm-game opponents
 	setProperty('dad.visible', False)
 	if getProperty('gf') != None:
@@ -64,8 +69,10 @@ def onCreatePost():
 	setProperty('camFollowPos.x', getPropertyFromClass('flixel.FlxG', 'width') / 2)
 	setProperty('camFollowPos.y', getPropertyFromClass('flixel.FlxG', 'height') / 2)
 
-	# keep the background music quiet
+	# keep the background music quiet, then restore the player's setting on exit
+	g_previousMusicVolume = getPropertyFromClass('flixel.FlxG', 'sound.music.volume')
 	setPropertyFromClass('flixel.FlxG', 'sound.music.volume', 0.5)
+	g_previousMouseVisible = getPropertyFromClass('flixel.FlxG', 'mouse.visible')
 
 	# HUD texts
 	makeLuaText('clicksTxt', 'CLICKS: 0', 600, 0, 16)
@@ -110,9 +117,22 @@ def onCreatePost():
 
 
 # ---------------------------------------------------------------- //
+#                            SONG START                            //
+# ---------------------------------------------------------------- //
+def onSongStart():
+	global g_started, g_roundElapsed, g_lastShown
+	g_started = True
+	g_roundElapsed = 0.0
+	g_lastShown = -1
+
+
+# ---------------------------------------------------------------- //
 #                              FRAME                               //
 # ---------------------------------------------------------------- //
 def onUpdate(elapsed):
+	global g_clicks, g_misses, g_best, g_floatPhase, g_roundElapsed
+	global g_lastShown, g_finished
+
 	if g_finished:
 		return
 
@@ -133,27 +153,25 @@ def onUpdate(elapsed):
 		dy = (2.0 - g_floatPhase) * 10.0
 	setProperty('boyfriend.y', g_baseY + dy)
 
-	# round timer
-	pos = getSongPosition()
-	if pos >= 0:
-		g_started = True
-
+	# Count actual gameplay time, starting only after the countdown/song start.
 	if g_started:
-		tLeft = ROUND_TIME - pos / 1000.0
+		g_roundElapsed = g_roundElapsed + elapsed
+		tLeft = ROUND_TIME - g_roundElapsed
 		if tLeft < 0:
 			tLeft = 0
 		if int(tLeft) != g_lastShown:
 			g_lastShown = int(tLeft)
 			setTextString('timeTxt2', 'TIME: ' + str(g_lastShown))
 
-	# clicking!
-	if g_started and mouseClicked('left'):
-		mx = getMouseX('hud')
-		my = getMouseY('hud')
-		bfx = getScreenPositionX('boyfriend')
-		bfy = getScreenPositionY('boyfriend')
-		bw = getProperty('boyfriend.width') * getProperty('boyfriend.scale.x') * 0.5
-		bh = getProperty('boyfriend.height') * getProperty('boyfriend.scale.y') * 0.5
+	# Clicking uses world coordinates from the same game camera as BF. Its hitbox
+	# was already resized by scaleObject(updateHitbox=True), so do not scale twice.
+	if g_started and g_roundElapsed < ROUND_TIME and mouseClicked('left'):
+		mx = getMouseX('game')
+		my = getMouseY('game')
+		bfx = getProperty('boyfriend.x')
+		bfy = getProperty('boyfriend.y')
+		bw = getProperty('boyfriend.width') * 0.5
+		bh = getProperty('boyfriend.height') * 0.5
 		if mx > bfx - bw and mx < bfx + bw and my > bfy - bh and my < bfy + bh:
 			g_clicks = g_clicks + 1
 			addScore(1)
@@ -181,7 +199,7 @@ def onUpdate(elapsed):
 		setProperty('boyfriend.scale.y', nsc)
 
 	# time's up! wrap up the round
-	if g_started and g_lastShown <= 0 and pos >= ROUND_TIME * 1000.0:
+	if g_started and g_roundElapsed >= ROUND_TIME:
 		g_finished = True
 		setTextString('timeTxt2', 'TIME UP!')
 		if g_clicks > g_best:
@@ -195,8 +213,13 @@ def onUpdate(elapsed):
 #                             CLEANUP                              //
 # ---------------------------------------------------------------- //
 def onDestroy():
+	global g_best
+
 	# keep the best score even if the player leaves mid-round
 	if g_clicks > g_best:
 		g_best = g_clicks
 		setPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest', g_best)
-	setPropertyFromClass('flixel.FlxG', 'mouse.visible', False)
+	if g_previousMusicVolume != None:
+		setPropertyFromClass('flixel.FlxG', 'sound.music.volume', g_previousMusicVolume)
+	if g_previousMouseVisible != None:
+		setPropertyFromClass('flixel.FlxG', 'mouse.visible', g_previousMouseVisible)
