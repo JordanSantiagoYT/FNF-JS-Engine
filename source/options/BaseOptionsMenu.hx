@@ -208,7 +208,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 				usesCheckbox = false;
 			}
 
-			if(usesCheckbox || curOption.specialOption)
+			if(usesCheckbox || curOption.specialOption || curOption.type == 'link') // #45: link = press-to-run action
 			{
 				if(controls.ACCEPT && !curOption.specialOption)
 				{

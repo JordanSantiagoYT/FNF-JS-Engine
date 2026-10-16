@@ -13,7 +13,7 @@ class Option
 	public var text(get, set):String;
 	public var onChange:Void->Void = null; //Pressed enter (on Bool type options) or pressed/held left/right (on other types)
 
-	public var type(get, default):String = 'bool'; //bool, int (or integer), float (or fl), percent, string (or str)
+	public var type(get, default):String = 'bool'; //bool, int (or integer), float (or fl), percent, string (or str), link (action-only, #45)
 	// Bool will use checkboxes
 	// Everything else will use a text
 
@@ -67,7 +67,7 @@ class Option
 			}
 		}
 
-		if(getValue() == null) {
+		if(type != 'link' && getValue() == null) { // #45
 			setValue(defaultValue);
 		}
 
@@ -99,10 +99,12 @@ class Option
 
 	public function getValue():Dynamic
 	{
+		if (type == 'link') return null; // #45: link options carry no value
 		return Reflect.getProperty(ClientPrefs, variable);
 	}
 	public function setValue(value:Dynamic)
 	{
+		if (type == 'link') return; // #45
 		Reflect.setProperty(ClientPrefs, variable, value);
 	}
 
@@ -131,6 +133,7 @@ class Option
 		var newValue:String = 'bool';
 		switch(type.toLowerCase().trim())
 		{
+			case 'link': newValue = 'link'; // #45: action-only option, no ClientPrefs field
 			case 'int' | 'float' | 'percent' | 'string': newValue = type;
 			case 'integer': newValue = 'int';
 			case 'str': newValue = 'string';
