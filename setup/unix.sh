@@ -23,6 +23,13 @@ haxelib install hxcpp-debug-server --quiet
 haxelib install hxgamemode --quiet
 haxelib git tjson https://github.com/moxie-coder/tjson 7e2b6540bee6c3d94cd3b957453ffb1e3e438c59 --quiet
 haxelib git hxcpp https://github.com/FunkinCrew/hxcpp d5bda40ac13f2823fe1bdcb5476e0eb027f1e7e9 --quiet
+# The FunkinCrew hxcpp checkout is a source/development version, so its
+# command-line tools must be built before they can drive the C++ compiler.
+HXCMP_PATH=$(haxelib path hxcpp 2>/dev/null | head -n 1)
+if [ -n "$HXCMP_PATH" ] && [ -d "$HXCMP_PATH/git/tools" ]; then
+  (cd "$HXCMP_PATH/git/tools/run" && haxe compile.hxml)
+  (cd "$HXCMP_PATH/git/tools/hxcpp" && haxe compile.hxml)
+fi
 haxelib git flxanimate https://github.com/Dot-Stuff/flxanimate 768740a56b26aa0c072720e0d1236b94afe68e3e --quiet
 haxelib install hython 0.0.352-beta --quiet
 haxelib git hxluajit https://github.com/ShadowEngineTeam/hxluajit a4b2a0a14a371dc404f3062854b8d0d6b404a0ed --quiet
