@@ -127,6 +127,9 @@ on:
 # Keep the haxelib installation inside the workspace so it can be restored on
 # subsequent runs instead of downloading and compiling dependencies every time.
 env:
+  # Single source of truth for the compiler version (#60); mobile.yml uses
+  # the same value and the regression tests assert the two cannot drift.
+  HAXE_VERSION: "4.3.7"
   HAXELIB_PATH: ${{ github.workspace }}/.haxelib
 
   # Must be named HXCPP_COMPILE_CACHE - that's the variable hxcpp itself reads
@@ -383,7 +386,7 @@ jobs:
       - uses: krdlab/setup-haxe@master
         if: steps.target-selection.outputs.enabled == 'true'
         with:
-          haxe-version: 4.3.7
+          haxe-version: ${{ env.HAXE_VERSION }}
 
       # ==========================================
       # Java 17 - Android
@@ -432,7 +435,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.HAXELIB_PATH }}
-          key: haxelib-${{ runner.os }}-haxe-4.3.7-${{ hashFiles('hmm.json', 'setup/unix.sh', 'setup/windows.bat', 'setup/windows-msvc-fix.ps1') }}
+          key: haxelib-${{ runner.os }}-${{ matrix.setup }}-haxe-${{ env.HAXE_VERSION }}-${{ hashFiles('hmm.json') }}
 
       # ==========================================
       # Install Haxelib dependencies - Unix
@@ -534,6 +537,18 @@ jobs:
           unzip -q "$AIR_SDK_DIR/air-sdk.zip" -d "$AIR_SDK_DIR"
           echo "AIR_SDK=$AIR_SDK_DIR" >> "$GITHUB_ENV"
           echo "Installed AIR SDK to $AIR_SDK_DIR"
+
+      # ==========================================
+      # Report resolved dependency revisions (#57)
+      # ==========================================
+      - name: Report resolved dependency revisions
+        if: steps.target-selection.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          for checkout in "$HAXELIB_PATH"/*/git; do
+            [ -d "$checkout/.git" ] || continue
+            echo "$(basename "$(dirname "$checkout")") $(git -C "$checkout" rev-parse HEAD 2>/dev/null || echo unknown)"
+          done
 
       # ==========================================
       # Save haxelib cache
