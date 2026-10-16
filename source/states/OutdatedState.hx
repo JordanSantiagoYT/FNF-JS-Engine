@@ -50,8 +50,8 @@ class OutdatedState extends MusicBeatState
 		checker.updateHitbox();
 
 		warnText = new FlxText(0, 10, FlxG.width,
-			"HEY! Your JS Engine is outdated!\n"
-			+ 'v' + MainMenuState.psychEngineJSVersion + ' < v' + TitleState.updateVersion + '\n'
+			"HEY! Your Phoenix Engine is outdated!\n"
+			+ 'v' + MainMenuState.phoenixEngineVersion + ' < v' + TitleState.updateVersion + '\n'
 			,32);
 		warnText.setFormat("VCR OSD Mono", 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		warnText.screenCenter(X);
@@ -79,7 +79,7 @@ class OutdatedState extends MusicBeatState
 		checker.y += (0.16 / (ClientPrefs.framerate / 60));
 		if(!leftState) {
 			if (FlxG.keys.justPressed.ENTER || FlxG.keys.justPressed.SPACE || controls.ACCEPT) {
-				CoolUtil.browserLoad("https://github.com/JordanSantiagoYT/FNF-JS-Engine/releases/latest");
+				CoolUtil.browserLoad("https://github.com/havaianasdestruido/FNF-Phoenix-Engine/releases/latest");
 			}
 			else if(controls.BACK) {
 				leftState = true;

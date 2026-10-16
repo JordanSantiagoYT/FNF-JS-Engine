@@ -194,7 +194,7 @@ class CrashHandler
 
 		if (ClientPrefs.peOGCrash)
 		{
-			errorMessage += "\n\nPlease report this error to the GitHub page: https://github.com/JordanSantiagoYT/FNF-JS-Engine"
+			errorMessage += "\n\nPlease report this error to the GitHub page: https://github.com/havaianasdestruido/FNF-Phoenix-Engine"
 				+ "\nThe engine has saved a crash log inside the crash folder, If you're making a GitHub issue you might want to send that!";
 
 			#if !flash
@@ -335,7 +335,7 @@ class Crash extends MusicBeatState
 					countText.text = countDown + "";
 					if (countDown == 0)
 					{
-						CoolUtil.browserLoad("https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues/new?template=bugs.yml");
+						CoolUtil.browserLoad("https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/new?template=bugs.yml");
 						FlxG.switchState(MainMenuState.new);
 					}
 				}, 10);

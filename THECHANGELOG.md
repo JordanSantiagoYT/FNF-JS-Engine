@@ -1,3 +1,11 @@
+0.3.2;
+
+Phoenix Engine 0.3.2 (current release; version defined by VERSION in project.hxp).
+The update checker polls this file in this repository and compares its first
+entry with the running Phoenix version, so keep the first entry equal to
+VERSION whenever a release is cut. Entries below this one pre-date the fork
+and describe the upstream JS Engine history they were inherited from.
+
 1.50.1;
 
 Fixed a bug where the opponent/bf's camera would be incredibly offset.

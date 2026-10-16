@@ -41,7 +41,14 @@ configureIcons();
 | `PREBUILD_HX` / `POSTBUILD_HX` | `source/Prebuild.hx`, `source/Postbuild.hx` |
 
 :::tip Bumping the version
-Change `VERSION` in `project.hxp` and nothing else — every other place reads it from there.
+Change `VERSION` in `project.hxp` — every in-game reader (main menu, FPS
+counter, crash reports, the Lua `phoenixVersion` global) derives the Phoenix
+version from the application metadata it sets, and `project.hxp` also
+exposes it as the `ENGINE_VERSION` compile-time define. One manual step
+remains: make the first entry of `THECHANGELOG.md` the same version, because
+the update checker polls that file from this repository and compares its
+first entry against the running Phoenix version (#53, #54).
+`tests/test_arena_fixes.py` asserts the two stay equal.
 :::
 
 ## Window

@@ -232,6 +232,9 @@ class Project extends HXProject
 	{
 		this.meta.title = TITLE;
 		this.meta.version = VERSION;
+		// Single source of truth for the engine version (#54): the game
+		// reads it back via Application.current.meta (and MainMenuState).
+		setHaxedef("ENGINE_VERSION", VERSION);
 		this.meta.packageName = PACKAGE_NAME;
 		this.meta.company = COMPANY;
 
