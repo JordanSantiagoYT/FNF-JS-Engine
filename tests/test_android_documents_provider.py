@@ -201,6 +201,7 @@ class TestAndroidDocumentsProvider(unittest.TestCase):
         self.assertIn("String renamedDocumentId = buildDocumentId(document.root, renamed)", self.provider)
         self.assertIn("java.io.File cannot make", self.provider)
         self.assertIn("refresh the parent view, including on partial failure", self.provider)
+        self.assertIn("if (document.file.exists())\n\t\t\t\tnotifyDocumentChanged(documentId, null)", self.provider)
         self.assertIn("descendants.add(new PermissionTarget(documentId, document.file))", self.provider)
         self.assertIn("COLUMN_MIME_TYPE", self.provider)
         self.assertIn("COLUMN_SIZE", self.provider)

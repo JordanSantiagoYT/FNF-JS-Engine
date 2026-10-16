@@ -369,6 +369,8 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 			// Recursive deletion can fail after removing some children. Always
 			// refresh the parent view, including on partial failure.
 			notifyDocumentChanged(parentDocumentId, null);
+			if (document.file.exists())
+				notifyDocumentChanged(documentId, null);
 		}
 
 		if (!deleted)
