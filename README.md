@@ -426,7 +426,7 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 <details>
   <summary><h2>OG Psych Engine Credits and Stuff</h2></summary>
-  
+
 * Shadow Mario - Programmer
 * RiverOaken - Artist
 

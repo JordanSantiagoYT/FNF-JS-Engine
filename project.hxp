@@ -677,6 +677,13 @@ class Project extends HXProject
 		if (!isAndroid())
 			return;
 
+		// Pin the supported Android SDK contract instead of relying on Lime's
+		// latest-installed Build Tools discovery. These values match the
+		// pinned Lime 8.1.2 defaults for min/target SDK and the Android CI image.
+		this.config.set("android.minimum-sdk-version", 21);
+		this.config.set("android.target-sdk-version", 36);
+		this.config.set("android.build-tools-version", "36.0.0");
+
 		// Java sources of the native platform bridge (extensions). Lime copies
 		// these into the generated Gradle project's java source set.
 		this.javaPaths.push("source/android/src");

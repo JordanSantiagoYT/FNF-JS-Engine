@@ -25,11 +25,13 @@ gameplay code never needs to know about the platform layer.
 │ Bridge                  source/android/platform/           │
 │   AndroidBridge.hx — JNI helpers + event dispatcher        │
 ├────────────────────────────────────────────────────────────┤
-│ Java extensions            android/src/quack/fnf/phoenix/  │
-│   PhoenixCore / PhoenixMedia / PhoenixMediaService /       │
-│   PhoenixDisplay / PhoenixStorage / PhoenixInput           │
-│   (registered via `config.set("android.extension", ...)`;  │
-│    Lime's GameActivity instantiates + dispatches to them)  │
+│ Java services               source/android/src/                 │
+│   quack/fnf/phoenix/android/*.java                              │
+│   PhoenixCore / PhoenixMedia / PhoenixMediaService /             │
+│   PhoenixDisplay / PhoenixStorage / PhoenixInput /               │
+│   PhoenixDocumentsProvider                                 │
+│   (extensions use `android.extension`; DocumentsProvider   │
+│    is registered directly in the manifest)                │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -51,20 +53,22 @@ gameplay code never needs to know about the platform layer.
 The Android pieces are injected **only for the Android target**
 (`configureAndroidRuntime()`):
 
-- `javaPaths.push("android/src")` — Lime copies the Java extensions into
+- `javaPaths.push("source/android/src")` — Lime copies the Java extensions into
   the generated Gradle project's java source set.
-- `templatePaths.push("templates")` — engine templates override Lime's:
-  - `templates/android/MainActivity.java` — deep-link intents
+- `templatePaths.push("source/templates")` — engine templates override Lime's:
+  - `source/templates/android/MainActivity.java` — deep-link intents
     (`onNewIntent`) and hardware-key interception.
-  - `templates/android/template/app/src/main/AndroidManifest.xml` —
+  - `source/templates/android/template/app/src/main/AndroidManifest.xml` —
     `phoenix://` intent filter, `PhoenixMediaService`
-    (`foregroundServiceType="mediaPlayback"`), FileProvider,
-    StorageProvider.
+    (`foregroundServiceType="mediaPlayback"`), FileProvider, and the
+    `PhoenixDocumentsProvider` SAF provider. Its registration remains behind
+    Lime's `SHARE_FILES` template condition (derived from `SHARE_MOBILE_FILES`).
 - `config.set("android.extension", [...])` — registers the five
   `Extension` subclasses (`PhoenixCore`, `PhoenixDisplay`,
   `PhoenixInput`, `PhoenixMedia`, `PhoenixStorage`) with Lime's
-  GameActivity. `PhoenixMediaService` is an Android `Service`, declared
-  in the manifest template instead.
+  GameActivity. `PhoenixMediaService` is an Android `Service` and
+  `PhoenixDocumentsProvider` is a framework `DocumentsProvider`; both
+  are declared directly in the manifest template.
 - `config.set("android.permission", [...])` — Lime's defaults plus
   `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`,
   `FOREGROUND_SERVICE_MEDIA_PLAYBACK`.
@@ -75,6 +79,65 @@ The Android pieces are injected **only for the Android target**
 - Native desktop-only haxelibs (`hxdiscord_rpc`, `hxvlc`, `hxluajit`,
   `hxnativefiledialog`) are gated to desktop builds so Android never
   links them.
+
+### Android SDK and Java compatibility
+
+The Android SDK values are pinned in `project.hxp` and match the defaults from
+the exact Lime revision pinned in `hmm.json` (`lime-8.1.2`, commit
+`45816ca456764761cbea8d3cc57701a592f892f1`):
+
+| Setting | Effective value | Source |
+| --- | ---: | --- |
+| Minimum Android API | 21 | `project.hxp`; matches Lime's default |
+| Target Android API | 36 | `project.hxp`; matches Lime's default |
+| Compile SDK | 36 | Lime passes the target SDK through as `ANDROID_BUILD_SDK_VERSION` |
+| Android Build Tools | 36.0.0 | `project.hxp`; installed by Android CI |
+| Android NDK | 27.0.12077973 (r27) | Installed and selected by both Android workflows |
+| Android Gradle Plugin / Gradle | 8.9.2 / 8.11.1 | Lime's Android template defaults |
+| Java build JDK | 17 | Android CI toolchain |
+
+The generated Gradle template does not set Java `sourceCompatibility` or
+`targetCompatibility`; the provider uses Java language constructs supported by
+the Android toolchain. `DocumentsProvider`/`DocumentsContract` are available
+before the app's API-21 floor. Rename support, root `IS_CHILD`, and grant
+revocation are API-21 behaviors and are guarded where applicable; the per-path
+external-storage state check also uses an API-21 method and fails closed below
+the floor. The CI build installs
+API 36 and Build Tools 36.0.0 to match Lime's generated project.
+
+### System-visible app directories (`PhoenixDocumentsProvider`)
+
+Lime's Android template only registers its generic `StorageProvider` when
+`SHARE_FILES` is true; Lime derives that value from the
+`SHARE_MOBILE_FILES` Haxe define. Phoenix keeps the same condition around its
+replacement provider. `project.hxp` sets `SHARE_MOBILE_FILES` for mobile builds,
+so normal Android builds continue to expose the SAF provider; builds without
+the define omit it rather than silently enabling a new exported component.
+
+The provider roots resolve from the same `Context.getExternalFilesDir(null)`
+directory that `mobile.StorageUtil.getStorageDirectory()` returns. `Main` sets
+that directory as the working directory, where `Paths.mods()` resolves to
+`mods/` and `CrashHandler` writes reports under `crash/`:
+
+| SAF root | Relative directory | Access |
+| --- | --- | --- |
+| **Mods** | `mods/` | Read/write; create folders/files, rename files, delete files/subfolders |
+| **Crash Logs** | `crash/` | Read-only; copying reports out of the game |
+
+Only these two roots are exposed. A missing `mods/` or `crash/` directory
+remains visible as an empty SAF root and is not created just by browsing; the
+mods directory is created on its first SAF write, while `CrashHandler` creates
+`crash/` when it writes a report. If `getExternalFilesDir(null)` returns no
+directory, or Android reports its volume as unavailable, no roots are returned.
+Mounted read-only storage remains browsable but cannot be written. If storage
+becomes unavailable later, document operations fail with
+`FileNotFoundException`. Static traversal and symlink escapes are rejected,
+and each path is revalidated near filesystem operations. The Android
+`java.io.File` API does not make the check/use pair atomic, so this is not a
+defense against a concurrent
+filesystem writer with independent access to the same directories. The
+provider is protected by `MANAGE_DOCUMENTS` and is intended for Android's
+system DocumentsUI through SAF grants.
 
 ---
 
@@ -154,6 +217,26 @@ Wired into: chart import (`ChartingSaveLoad.promptBackup`), chart &
 event export (`saveLevel`/`saveEvents`), character import (the
 **Import Char** button in `CharacterEditorState`) and character export.
 Desktop keeps the traditional `FileReference` download flow.
+
+### System-visible app directories (`PhoenixDocumentsProvider`)
+
+When Lime's `SHARE_FILES` condition is enabled (the normal Android project
+build sets `SHARE_MOBILE_FILES`), the manifest registers
+`quack.fnf.phoenix.android.PhoenixDocumentsProvider` under
+`<application-id>.documentsprovider`, protected by
+`android.permission.MANAGE_DOCUMENTS`. It replaces Lime's generic provider and
+exposes only these roots from `Context.getExternalFilesDir(null)`:
+
+| SAF root | Backing path | Access |
+| --- | --- | --- |
+| **Crash Logs** | `crash/` | Read-only, for copying reports out of the game |
+| **Mods** | `mods/` | Read/write; create folders/files, rename files, and delete files or subfolders |
+
+Document IDs are opaque, root-scoped path IDs. Decoded traversal, unsafe names,
+and static symlink escapes are rejected; stale or unavailable storage fails
+closed. `java.io.File` checks cannot atomically prevent a race with an
+independent concurrent filesystem writer. The system Files picker uses the
+provider through SAF grants without exposing saves or other app-private roots.
 
 ---
 

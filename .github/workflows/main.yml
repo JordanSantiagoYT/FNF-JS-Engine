@@ -405,8 +405,7 @@ jobs:
         if: steps.target-selection.outputs.enabled == 'true' && matrix.target == 'android'
         uses: android-actions/setup-android@v4
         with:
-          api-level: 33
-          ndk: r27c
+          packages: platform-tools platforms;android-36 build-tools;36.0.0 ndk;27.0.12077973
 
       # ==========================================
       # Linux packages
@@ -476,10 +475,11 @@ jobs:
         if: steps.target-selection.outputs.enabled == 'true' && matrix.target == 'android'
         shell: bash
         run: |
-          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          android_sdk="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_SDK_ROOT=$android_sdk"
 
-          haxelib run lime config ANDROID_SDK "${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          haxelib run lime config ANDROID_NDK_ROOT "${ANDROID_NDK_ROOT:-${RUNNER_TEMP}/android-ndk-r27c}"
+          haxelib run lime config ANDROID_SDK "$android_sdk"
+          haxelib run lime config ANDROID_NDK_ROOT "$android_sdk/ndk/27.0.12077973"
           haxelib run lime config JAVA_HOME "$JAVA_HOME"
           haxelib run lime config ANDROID_SETUP true
 
@@ -622,6 +622,26 @@ jobs:
           rm -rf "$HXCPP_COMPILE_CACHE" 2>/dev/null || true
 
           haxelib run lime build android ${{ inputs.buildFlags != '' && format('-D {0}', inputs.buildFlags) || '' }}
+
+      # ==========================================
+      # Verify the actual merged Android manifest
+      # ==========================================
+      - name: Verify Android SAF manifest and SDK levels
+        if: steps.target-selection.outputs.enabled == 'true' && matrix.target == 'android'
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_dir="build/release/android/bin/app"
+          merged_manifest=$(find "$app_dir/build/intermediates" -type f -name AndroidManifest.xml \
+            \( -path '*/merged_manifest/*' -o -path '*/merged_manifests/*' \) \
+            -path '*/debug/*' -print -quit)
+          if [ -z "$merged_manifest" ]; then
+            echo "::error::Could not find the merged debug AndroidManifest.xml under $app_dir/build/intermediates"
+            find "$app_dir/build/intermediates" -type f -name AndroidManifest.xml -print
+            exit 1
+          fi
+          python3 tools/check_android_documents_manifest.py "$merged_manifest" \
+            --provider present --minimum-sdk 21 --target-sdk 36
 
       # ==========================================
       # Verify the APK ships the NDK C++ runtime

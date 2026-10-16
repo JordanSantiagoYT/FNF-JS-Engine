@@ -52,10 +52,29 @@ Opacity and extra toggles come from `ClientPrefs.mobileCAlpha` and `mobileCEx`.
 Menus add a virtual pad; `PlayState` adds the hitbox. Both route into the same
 `backend.Controls` actions as keyboard input, so gameplay code never checks for touch.
 
-## File picking
+## File picking and app files
 
 `mobile.files.MobileFilePicker` bridges to the platform picker, used by the editors for
 loading and saving charts and characters on device.
+
+On Android, `PhoenixDocumentsProvider` adds two roots to the system Files picker
+when Lime's existing `SHARE_FILES` feature is enabled. Lime derives this from the
+`SHARE_MOBILE_FILES` Haxe define, which `project.hxp` sets for mobile builds, so
+normal Android builds retain the previous system-visible sharing behavior.
+
+- **Crash Logs** — read-only access to crash reports written in `crash/`.
+- **Mods** — browse and manage the runtime `mods/` directory; the provider supports
+  creating folders/files, reading and writing files, renaming files, and deleting files
+  or subfolders.
+
+Both roots use the same app-specific external-files directory as the game's runtime
+working directory. Only these two folders are exposed. Missing directories appear as
+empty roots and are created only when the game or an explicit SAF write creates them.
+If `getExternalFilesDir(null)` returns no path, or Android reports its volume as
+unavailable, no roots are returned. Mounted read-only storage remains browsable but
+cannot be written; if storage later becomes unavailable, document operations fail.
+Static traversal and symlink escapes are rejected, but Java path-based checks cannot
+make the check/use pair atomic against an independent concurrent filesystem writer.
 
 ## The Android platform layer
 
