@@ -1,7 +1,7 @@
 <!-- this is a secret -->
 <h1 align="center">
   <br>
-  <a href="https://github.com/JordanSantiagoYT/FNF-JS-Engine"><img src="/art/iconOG.png" alt="JSengine" width="150"></a>
+  <a href="https://github.com/JordanSantiagoYT/FNF-JS-Engine"><img src="/include/iconOG.png" alt="JSengine" width="150"></a>
   <br>
   <b>JS Engine</b>
   <br>
