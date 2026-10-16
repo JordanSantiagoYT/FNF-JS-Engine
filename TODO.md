@@ -27,13 +27,14 @@ Generated from full repo audit. Priority: `[P0]` critical/blocker, `[P1]` high, 
 
 - Port most of `META_HORROR` elements from here: [https://github.com/notmagniill/psych-engine-modified-build/blob/stable/source/backend/CoolUtil.hx](https://github.com/notmagniill/psych-engine-modified-build/blob/stable/source/backend/CoolUtil.hx) and from here [https://github.com/Dewott2501/Mario-Madness/blob/main/source/CppAPI.hx](https://github.com/Dewott2501/Mario-Madness/blob/main/source/CppAPI.hx), with credits, of course.
 - Add "Transparent Window" Haxe support (e.g.: [https://github.com/notmagniill/psych-engine-modified-build/blob/stable/source/backend/FlxTransWindow.hx](https://github.com/notmagniill/psych-engine-modified-build/blob/stable/source/backend/FlxTransWindow.hx)).
-- Add Lua & Python basic "sandboxing" (blocking some strings and functions if they are called by a softmod script) (e.g.: [https://github.com/Psych-Plus-Team/FNF-PlusEngine/blob/main/source/backend/ModSecurity.hx](https://github.com/Psych-Plus-Team/FNF-PlusEngine/blob/main/source/backend/ModSecurity.hx)).
+- Add Lua & Python basic "sandboxing" (disable by default mods with some strings and functions if they are called by a softmod script) (e.g.: [https://github.com/Psych-Plus-Team/FNF-PlusEngine/blob/main/source/backend/ModSecurity.hx](https://github.com/Psych-Plus-Team/FNF-PlusEngine/blob/main/source/backend/ModSecurity.hx)).
 - Port GPU/CPU driver/manufacter detection from Psych Plus: [https://github.com/Psych-Plus-Team/FNF-PlusEngine/blob/main/source/backend/Native.hx](https://github.com/Psych-Plus-Team/FNF-PlusEngine/blob/main/source/backend/Native.hx).
 
-## 3. MOBILE / PLATFORM
+## 3. PLATFORM
 
 - **[P1] ~~Mobile file picker incomplete~~ DONE** — `source/mobile/files/MobileFilePicker.hx` facade over the Android SAF (`ACTION_OPEN_DOCUMENT`/`ACTION_CREATE_DOCUMENT`/`ACTION_OPEN_DOCUMENT_TREE`) and lime `FileDialog` on desktop. Chart import (`ChartingSaveLoad.promptBackup`) and character import (new **Import Char** button in `CharacterEditorState`) plus chart/event/character export all route through it on Android; desktop keeps `FileReference`/`FileDialog`. Verify on-device.
 - **[P2] ~~Virtual pad consistency~~ DONE** — `ChartingState` (with dpad section-nav + A/B/X/Y mapped to the Enter/Backspace/Space/Esc shortcuts), `CharacterEditorState`, `DialogueCharacterEditorState`, `MenuCharacterEditorState` and `NoteSplashDebugState` now create virtual pads; `CopyState` needs no input. Verify on-device.
+- **[P2] Fix fullscreen issues on Android (and other OSes maybe)** - Phones with some cutouts currently don't launch the game with 100% fullscreen, create a toggle that can switch between "Respect cut-out" or "Real Fullscreen". Im pretty much sure this will envolve Native Kotlin/Java in order to work.
 - **[P3] iOS** — likely needs `#if ios` nuances (video/hxvlc below).
 - LOW importance menu to set in-game keybinds to fire on hardware triggers (e.g.: on VOL_UP/VOL_DOWN)
 
