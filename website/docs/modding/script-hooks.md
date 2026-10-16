@@ -17,7 +17,7 @@ Syntax below is Lua; Python is identical with `def name(args):`.
 |---|---|
 | nothing / `Function_Continue` | the engine proceeds normally |
 | `Function_Stop` | cancels the engine's default behaviour for that hook |
-| `Function_StopLua` | stops the hook propagating to further scripts |
+| `Function_StopLua` (Python: also `Function_StopAll`) | stops the hook propagating to further scripts |
 
 Only hooks documented as cancellable react to `Function_Stop`.
 

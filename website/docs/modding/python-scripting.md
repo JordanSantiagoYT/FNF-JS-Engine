@@ -94,8 +94,9 @@ def onEndSong():
     return Function_Continue
 ```
 
-`PythonScript` names the third sentinel `Function_StopAll` internally; from a script the
-Lua-compatible `Function_StopLua` global is also available.
+`PythonScript` names the third sentinel `Function_StopAll` internally; from a script both
+that name and the Lua-compatible `Function_StopLua` global are available (they are the
+same sentinel value, #51).
 
 ## Debug output
 

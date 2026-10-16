@@ -69,6 +69,10 @@ class PythonScript
 	public static var Function_Stop:Dynamic = "##PSYCHLUA_FUNCTIONSTOP";
 	public static var Function_Continue:Dynamic = "##PSYCHLUA_FUNCTIONCONTINUE";
 	public static var Function_StopAll:Dynamic = "##PSYCHLUA_FUNCTIONSTOPLUA";
+	// Lua-compatible alias (#51): the documentation and the shared hook
+	// table tell Python authors to `return Function_StopLua`; it carries the
+	// same sentinel, so PlayState's Function_StopAll comparison matches it.
+	public static var Function_StopLua:Dynamic = "##PSYCHLUA_FUNCTIONSTOPLUA";
 
 	public var scriptName:String = '';
 	public var closed:Bool = false;
@@ -125,6 +129,7 @@ class PythonScript
 
 		// Python globals
 		set('Function_StopAll', Function_StopAll);
+		set('Function_StopLua', Function_StopLua); // #51
 		set('Function_Stop', Function_Stop);
 		set('Function_Continue', Function_Continue);
 		set('pythonDebugMode', false);
