@@ -1,0 +1,5 @@
+<xml>
+  <files id="haxe">
+    <compilervalue name="-I" value="${this_dir}/include/" />
+  </files>
+</xml>
