@@ -4,6 +4,14 @@ $ErrorActionPreference = 'Stop'
 $exe = (Resolve-Path -LiteralPath $Executable).Path
 if ([IO.Path]::GetExtension($exe) -ine '.exe') { throw 'Select the Phoenix Engine executable.' }
 $key = 'HKCU:\Software\Classes\phoenix'
+# Check before writing: never clobber another copy's handler.
+if (Test-Path "$key\shell\open\command") {
+    $existing = (Get-Item "$key\shell\open\command").GetValue('')
+    $expected = '"' + $exe + '" "%1"'
+    if ($existing -ne $null -and $existing -ne $expected) {
+        throw 'Another installation owns phoenix://; refusing to overwrite its registration.'
+    }
+}
 New-Item -Path $key -Force | Out-Null
 Set-Item -Path $key -Value 'URL:Phoenix Engine Protocol'
 New-ItemProperty -Path $key -Name 'URL Protocol' -Value '' -PropertyType String -Force | Out-Null
