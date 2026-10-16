@@ -123,9 +123,12 @@ with the game foregrounded, backgrounded and terminated.
 
 ### Windows
 
-Registration is **explicit and per-user**, not an automatic registry change at
-startup. Windows builds include `uri/Register-PhoenixURI.ps1` and
-`uri/Unregister-PhoenixURI.ps1` alongside the executable. From the game directory:
+Registration is per-user. Windows builds include `uri/Register-PhoenixURI.ps1` and
+`uri/Unregister-PhoenixURI.ps1` alongside the executable. The engine also
+performs a best-effort registration on startup: it checks the registry first and
+only writes when the scheme is missing or already points at this executable, so
+it never overwrites another copy's handler. Manual registration still works and
+is required when PowerShell/registry access is restricted. From the game directory:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\uri\Register-PhoenixURI.ps1

@@ -21,6 +21,7 @@ class DeepLinks
     // Lime's SDL UIKit delegate delivers both launch and later URLs as drop events.
     lime.app.Application.current.window.onDropFile.add(receive);
     #elseif windows
+    ensureWindowsProtocolRegistration();
     for (argument in Sys.args()) receive(argument);
     // Protocol launches need not inherit the executable's working directory.
     if (pending != null) Sys.setCwd(haxe.io.Path.directory(Sys.programPath()));
@@ -58,4 +59,36 @@ class DeepLinks
     }
     return true;
   }
+
+  #if windows
+  /** Best-effort per-user registration of the phoenix:// scheme. Checks the
+      registry first and never overwrites another copy's handler. */
+  static function ensureWindowsProtocolRegistration():Void
+  {
+    try
+    {
+      var exe = Sys.programPath();
+      var expectedCommand = '"' + exe + '" "%1"';
+      var alreadyOurs = false;
+      var otherOwner = false;
+      try
+      {
+        var process = new sys.io.Process('reg', ['query', 'HKCU\\Software\\Classes\\phoenix\\shell\\open\\command', '/ve']);
+        var output = process.stdout.readAll().toString();
+        try process.close() catch (e:Dynamic) {}
+        alreadyOurs = output.indexOf(expectedCommand) >= 0;
+        if (output.indexOf('.exe') >= 0 && !alreadyOurs)
+          otherOwner = true;
+      }
+      catch (e:Dynamic) {}
+
+      if (alreadyOurs || otherOwner) return;
+
+      var script = haxe.io.Path.directory(exe) + '\\uri\\Register-PhoenixURI.ps1';
+      if (sys.FileSystem.exists(script))
+        Sys.command('powershell -NoProfile -ExecutionPolicy Bypass -File "' + script + '"');
+    }
+    catch (e:Dynamic) {}
+  }
+  #end
 }
