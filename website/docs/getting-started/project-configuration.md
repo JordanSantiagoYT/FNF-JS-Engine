@@ -88,6 +88,7 @@ command line, so **`-DVIDEOS_ALLOWED` or `-DMODS_ALLOWED` always wins**.
 | `FUNNY_ALLOWED` | desktop | easter eggs |
 | `EMBED_ASSETS` | web only | embeds assets into the output |
 | `PRELOAD_ALL` | always | preloads asset libraries |
+| `NO_PRELOAD_ALL` | manual `-DNO_PRELOAD_ALL` switch | inverse of `PRELOAD_ALL`; assets are loaded on demand via `states.LoadingState` instead of preloaded (#55) |
 | `FLASH_ALLOWED` | flash target | SWF-specific code paths |
 | `TITLE_SCREEN_EASTER_EGG` | currently commented out | title screen easter egg |
 | `officialBuild` | `-Dofficial` | marks release builds |
