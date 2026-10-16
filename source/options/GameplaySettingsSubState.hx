@@ -5,6 +5,7 @@ import flixel.graphics.FlxGraphic;
 import flixel.input.keyboard.FlxKey;
 
 import backend.ClientPrefs;
+import backend.Conductor; // #43
 import objects.Note;
 import shaders.CrossFade;
 

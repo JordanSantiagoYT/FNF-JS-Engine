@@ -126,6 +126,7 @@ class TestEngineCode(unittest.TestCase):
                          r"option\.onChange = \(\) -> Conductor\.recalculateTimings\(\)")
         self.assertIn("Conductor.recalculateTimings();", read("source/states/InitState.hx"))
         self.assertIn("import backend.Conductor;", read("source/states/InitState.hx"))
+        self.assertIn("import backend.Conductor;", read("source/options/GameplaySettingsSubState.hx"))
 
     def test_hook_argument_lists_match_docs_and_templates(self):  # #44
         notes = read("source/play/helpers/PlayStateNotes.hx")
