@@ -2,6 +2,8 @@ name: Diag (temporary)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [arena/68e4e694-fnf-phoenix-engine]
 
 permissions:
   contents: read
