@@ -77,7 +77,7 @@ A: You do it here the [same way you'd do it in Psych Engine.](https://github.com
 
 A: Report [here.](https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues) Also, **please check if there are already posts about the same issue.**
 
-**Q: I found a *WAY* to fix a bug!**
+**Q: I found a *WAY* to fix a bug, or there are changes I want to make to the source code!**
 
 A: Send [here.](https://github.com/JordanSantiagoYT/FNF-JS-Engine/pulls)
 
