@@ -1,6 +1,6 @@
 # Phoenix Engine — TODO / Roadmap (large feature & cleanup backlog)
 
-Generated from full repo audit. Priority: `[P0]` critical/blocker, `[P1]` high, `[P2]` medium, `[P3]` nice-to-have. Sections grouped by system. Bold = biggest payoff.
+Generated from full repo audit. Priority: `[P0]` critical/blocker, `[P1]` high, `[P2]` medium, `[P3]` nice-to-have. Sections grouped by system. Bold = biggest payoff. Section 12 is a filtered Codename Engine (CNE) comparison: only CNE differences that Phoenix has **not** implemented (or has only partially implemented) are listed there.
 
 ---
 
@@ -149,6 +149,104 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 - **[P1] ~~Android platform API abstraction~~ DONE** (13 modules in `source/android/platform/`, see docs/ANDROID_PLATFORM.md) — Group native Android functionality into dedicated APIs/modules (e.g. `AndroidMedia`, `AndroidIntents`, `AndroidStorage`, `AndroidGamepad`, `AndroidHaptics`, `AndroidDisplay`) instead of directly calling platform APIs from gameplay code.
 - **[P2] ~~Android platform-specific patch system~~ DONE** (`templates/` + `javaPaths` + `android.extension` injected only for the Android target; Java sources never touch other targets) — Allow Android-only patches and native implementations to be injected into builds without requiring unrelated cross-platform engine code to contain Android-specific logic.
 - **[P2] ~~Android native dependency isolation~~ DONE** (hxdiscord_rpc/hxvlc/hxluajit/hxnativefiledialog haxelibs gated per-platform; Android-only Haxe code behind `#if android`) — Keep Java/Kotlin dependencies and Android-specific source isolated from other targets so desktop, web, Flash/AIR, HashLink, and iOS builds do not require Android-only libraries.
+
+## 12. CODENAME ENGINE (CNE) PARITY — DIFFERENCES NOT YET IMPLEMENTED
+
+Added from the supplied CNE-vs-vanilla/Psych comparison, filtered against the current tree. CNE-like features Phoenix already has (runtime Lua/Python, note skins, hxvlc video, Discord RPC, `funkin.vis`, Aseprite/multi-atlas support, custom volume tray, Windows titlebar colors, opponent/both-sides gameplay, P1/P2 vocal split, etc.) are intentionally omitted. Priorities reflect payoff for Phoenix, not blind CNE cloning; anything marked **breaking** needs an importer/compatibility flag before it lands.
+
+### 12.1 SCRIPTING & FULL-ENGINE SOFTCODING
+
+- **[P1] First-class standalone HScript mods.** `setup/unix.sh:21` and `setup/windows.bat:13` already install CodenameCrew's `hscript-improved` as haxelib `hscript`, but `source/psychlua/HScript.hx:179-242` only exposes it through Lua (`runHaxeCode`, `runHaxeFunction`, `addHaxeLibrary`). Need direct `.hx`/`.hscript` script discovery, lifecycle, callbacks, and scoping without requiring a Lua parent.
+- **[P1] Scripted states/substates.** No `data/states/StateName.hx` loader exists. CNE can softcode every state/substate; Phoenix menus, pause, game over, transitions, credits, freeplay, etc. remain source-only. `CustomSubstate` is only a scripted substate helper, not full state replacement.
+- **[P1] Cancellable event-object API.** Current script hooks pass raw arguments and use `Function_Stop` returns. Add CNE-style event objects (`event.note`, `event.score`, `event.cancel()`), `onGamePause` with exclusion list, `onBopZoom`, `onSplashShown`, `onHealthIconAnimChange`, input-system events, and stage/character data events.
+- **[P1] Missing script scopes.** Add scripted transitions (`MusicBeatTransition` equivalent), shader scripts, custom options/controls scripts, dialogue/cutscene scripts, and scripted asset libraries. Existing global/song/character/stage/notetype/event scripts do not cover these.
+- **[P2] HScript module system.** Imports, mod-root modules/redirects, public variables, static variables, and ScriptPack-like sharing. Current HScript integration only has `addHaxeLibrary()` plus `PlayState.variables`.
+- **[P2] Managed `Script.fromString`-style runtime scripts.** `HScript.execute()` can run strings, but there is no public API for creating, owning, updating, and destroying runtime script instances.
+- **[P2] Script hot reload.** Mods menu reload currently restarts/reloads states through `ModsMenuHelpers.reload`; CNE-style test builds can hot-swap scripts without restarting the relevant context.
+- **[P2] Python parity for character scripts.** `source/play/helpers/PlayStateCharacters.hx:46` only loads `characters/<name>.lua`; songs/stages/events/notetypes already support Python.
+- **[P3] NDLL / compiled native scripting.** No `.ndll` loader, bridge, or API exists.
+- **[P3] Continue PlayState decomposition.** Phoenix already split helpers, but CNE's rewritten gameplay core is much smaller; see §8 for the existing perf/allocation backlog.
+
+### 12.2 DATA, ASSET & FILE STRUCTURE
+
+- **[P2] XML definitions for characters, stages, weeks, and dialogue.** Phoenix still uses Psych-style JSON (`assets/preload/characters/*.json`, `assets/preload/stages/*.json`, `assets/preload/weeks/*.json`). The only XML assets are Sparrow atlases/UI sheets.
+- **[P2] CNE song folder layout.** Need `songs/<name>/meta.json`, `songs/<name>/charts/<difficulty>.json`, `songs/<name>/song/`, and `songs/<name>/scripts/`. Phoenix uses `data/<song>/<song>-<difficulty>.json` plus `assets/songs/<song>/Inst.*` / `Voices.*`.
+- **[P2] `meta.json` metadata.** Add a real metadata file that syncs freeplay/difficulties/charts and carries custom fields.
+- **[P2] Global charts folder.** CNE supports global `data/charts/`; Phoenix only resolves per-song JSON paths.
+- **[P2] Custom chart/character properties.** Expose CNE-style `SONG.meta.customValues` and `char.extras`; current `SwagSong`/`CharacterFile` use fixed fields.
+- **[P2] True song variations.** `specialAudioName` only swaps an audio suffix; add variation metadata, chart selection, and freeplay preview behavior.
+- **[P2] Multi-format audio.** `Paths.SOUND_EXT` is only `mp3` on web/Flash and `ogg` elsewhere. Add flac/opus/wav (and per-format fallbacks) like CNE.
+- **[P2] Multi-extension images/paths.** `Paths.image()` hardcodes `.png`; CNE supports multiple image extensions through path resolution.
+- **[P2] Unlimited vocals per strumline.** Phoenix supports separate P1/P2 vocal files, but not CNE's arbitrary per-strumline vocals.
+- **[P2] Declarative stage node graph.** Stage JSON only stores camera/character positions. Add XML/script nodes for sprites, solids, characters, ratings/combo, zoom/scroll factors, beat intervals, colors/skew/scale, and stage extensions.
+- **[P2] Universal asset replacement.** Mod folders currently override a limited set of categories (`Mods.ignoreModFolders` + `Paths.modFolders`). CNE can replace essentially every asset; Phoenix cannot override arbitrary engine/Flixel assets at runtime.
+- **[P3] Per-character extras.** CNE character data can define `gameOverChar` and custom extras; Phoenix currently keeps game-over character at song level and has no generic extras map.
+- **[P3] Music BPM INIs.** No CNE-style `.ini` metadata for music files.
+- **[P3] `.pack` bundles.** No packer/loader for softcoded events/notetypes/cutscenes/assets.
+
+### 12.3 EDITORS & LIVE TOOLS
+
+- **[P1] Multi-strumline Charter.** `PlayState` and `ChartingState` are built around fixed player/opponent strumlines. Add unlimited strumlines, GF/additional strumlines, multiple characters per strumline, and multi-icon support.
+- **[P2] Simultaneous multi-waveform display.** `ChartingUIWaveform.hx:51-52` selects only one waveform source (inst, player vocals, or opponent vocals) at a time.
+- **[P2] Strumline data editor.** Add editable strumline type (Player/Opponent/Additional), HUD ratio/position, scale, and stage positioning.
+- **[P2] Event packing/importing (`.pack`).** Not implemented.
+- **[P2] CNE built-in event parity.** Existing events include camera zoom/scroll/animation/property basics, but not CNE's Camera Movement/Modulo/Flash, richer BPM-change handling, HScript Call, and related event set.
+- **[P2] Custom property editing in Charter.** No UI for custom chart/meta properties.
+- **[P2] In-engine song/difficulty creation.** Difficulty is just a text field; add proper song/difficulty scaffolding and asset creation.
+- **[P2] Folder/subfolder selectors.** Character/editor dropdowns read flat folders; add recursive subfolder support.
+- **[P2] Stage Editor.** `MasterEditorMenu` has no stage editor.
+- **[P2] NoteSkin Editor.** Not implemented.
+- **[P2] Alphabet Editor.** Not implemented.
+- **[P2] Character Editor parity.** Add undo/redo, unsaved-change warnings, folder support, and stronger flip/offset tooling.
+- **[P2] Boxes/solids in editors.** Not implemented.
+- **[P2] ImGui Console + Inspector.** No F2 console or F4 live object inspector. Note that F2 is currently screenshot/crash-capture (`source/backend/SSPlugin.hx:34`), so keybinds must be configurable.
+- **[P3] Field auto-complete** in editors.
+- **[P3] In-game TAB mod switcher.** `InitState.hx:25` currently prevents TAB; CNE exposes a TAB mod menu with scriptable sorting.
+
+### 12.4 GAMEPLAY, CHARTS, HUD & QOL
+
+- **[P1] Unlimited strumlines / multiple characters per strumline.** Current gameplay uses fixed `playerStrums` / `opponentStrums`.
+- **[P1] BREAKING — section → `curCameraTarget` migration.** Phoenix still uses `Section.mustHitSection`. CNE replaced sections with explicit camera targets; only do this behind an importer/compat layer.
+- **[P2] CNE/modern chart parser.** Psych v1 conversion exists, but CNE's extensible chart format and modern FNF parser are absent.
+- **[P2] Camera zoom multipliers / bop events.** No `camGameZoomMult`, `camHUDZoomMult`, configurable lerp speeds, sprite/text angle/zoom factors, or `onBopZoom`.
+- **[P2] Unlimited health-icon states.** `HealthIcon` can load strips, but `PlayState.hx:2197-2222` only special-cases two/three frames. Add CNE's 150×N icon strips and threshold selection.
+- **[P2] True local co-op.** Phoenix has `bothSides`, but one player still hits both sides; `PlayerSettings.player2` is not wired into gameplay input. Add real P2 controls and rebinds.
+- **[P3] Gitaroo easter-egg toggle.** Not present.
+- **[P3] Desktop audio-device hotplug.** Android audio focus/interruptions are done; desktop headphone/device-change recovery is missing.
+- **[P3] Advanced FPS counter.** Add 1% lows, selectable/copyable diagnostics, and a true uncapped mode. Current option is merely capped at 1000 FPS.
+- **[P3] Low Memory Mode.** Current optimization options include GC/cache toggles, but not CNE-style appearance/low-memory profiles.
+- **[P3] Localization / translations.** No language key system or locale files.
+- **[P3] Lagless GitHub contributors + mod credits.** Credits are static; add cached GitHub contributor fetching and per-mod credit integration.
+- **[P3] Complete mouse support in base menus.** Freeplay/Story/Mods have partial wheel/click support; main menu/credits/etc. still need full mouse navigation.
+- **[P3] Free gamemode keybind.** Not implemented.
+
+### 12.5 RENDERING, SHADERS, MODCHARTS & 3D
+
+- **[P2] FunkinModchart-style advanced modcharts.** Phoenix has Lua sprite/text/tween helpers, but no dedicated modchart library/runtime.
+- **[P2] Advanced shader scripting.** Add shader scripts, shader imports, `FunkinShader.fromFile`-style loading, and tweenable shader uniforms/arrays. Current Lua API only sets basic bool/int/float/array/sampler values.
+- **[P3] Real 3D support (FoxLite/Away3D equivalent).** `ThreeDEffect`/`ThreeDShader` are shader effects, not a 3D scene/renderer.
+
+### 12.6 MOD PACKAGING, VERSIONING & RUNTIME CONFIG
+
+- **[P1] Addon system with load priority.** Phoenix has normal mods and `pack.runsGlobally`, but no CNE-style addons that layer over core/other mods with explicit before/after priority.
+- **[P2] `modpack.ini` / API versioning.** `pack.json` lacks API/engine version metadata and outdated-mod warnings.
+- **[P2] Runtime flags file.** Add a `flags.ini`-style runtime config for editors, transitions, beta warnings, default scripts, GLSL version, URLs, window title/icon, and other toggles. Current toggles are mostly compile-time `project.hxp` flags.
+- **[P3] In-app auto-updater.** `OutdatedState` only opens GitHub Releases; CNE downloads assets/executable. This was previously removed from Phoenix because it was broken/Windows-only, so only reintroduce if secure and cross-platform.
+- **[P3] Mod-supplied window title/icon.** Window title comes from preload `windowTitleBase.txt`; icons are compile-time assets. Allow active mod metadata to override both.
+- **[P3] Full replacement of engine/Flixel assets.** See §12.2 universal asset replacement.
+
+### 12.7 BUILD / DEV ERGONOMICS
+
+- **[P3] Nix shell or CNE-like CLI wrapper.** Phoenix has `setup/*.sh|bat`, but no Nix environment or unified build command with advanced flags (`--reinstall`, `--fast`, etc.).
+- **[P3] Porting guide.** Document Psych/Phoenix → Phoenix-CNE-parity conversion for charts, characters, stages, and scripts.
+
+### 12.8 EXPLICIT NON-GOALS / COMPATIBILITY CAUTIONS
+
+- **Do not remove Lua/Python to match CNE.** Phoenix's identity is Lua + Python + HScript; CNE's "no Lua" stance is not a target.
+- **Do not drop Psych/JS JSON compatibility.** Any CNE chart/XML/meta format must ship with importers and keep existing mods working.
+- **Do not remove `Boyfriend`, sections, or `LoadingState` without shims.** These are CNE architectural differences, not automatic wins.
+- **Do not remove video support.** CNE's softcoded Week 7 cutscenes are a goal for scriptability, not a reason to delete hxvlc/MP4 support.
+- **Do not adopt an auto-updater blindly.** The old updater was intentionally removed; revisit only with a safe cross-platform design.
 
 ---
 
