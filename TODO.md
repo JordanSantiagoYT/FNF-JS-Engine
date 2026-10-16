@@ -7,8 +7,8 @@ Generated from full repo audit. Priority: `[P0]` critical/blocker, `[P1]` high, 
 ## 1. BUILD / TOOLCHAIN (all targets green)
 
 - **[P0] HashLink target blocked.** `lime.hdll` missing locally, HL wasn't verifiable, HL agent dead-ended. Install a compatible HashLink (`lime.hdll` + `lime-hdiowrap`), fix any compile errors, re-enable the `hl` CI job in `.github/workflows/main.yml`. ([#63](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/63))
-- **[P0] CI Android build.** ([#64](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/64)) Local Android can't be validated: NDK **28.1.13356709** fails on `aarch64-linux-android-strip` (NDK 28 ships only `llvm-strip.exe`; wrapper copy was made but build still fails) and NDK 28 libc++ has a `__posix_l_fallback.h` redefinition bug. CI uses NDK **r27c** (no such bug) but emulator/toolchain mismatch must be resolved or documented. Options:
-  - Install NDK r27c locally (matches CI) to reproduce `#if mobile` errors faithfully.
+- **[P0] CI Android build.** ([#64](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/64)) Local Android can't be validated: NDK **28.1.13356709** fails on `aarch64-linux-android-strip` (NDK 28 ships only `llvm-strip.exe`; wrapper copy was made but build still fails) and NDK 28 libc++ has a `__posix_l_fallback.h` redefinition bug. Android CI now explicitly pins NDK **27.0.12077973 (r27)** in both workflows; the next CI result must confirm the Android build and merged manifest. Options:
+  - Install NDK 27.0.12077973 locally (matches CI) to reproduce `#if mobile` errors faithfully.
   - Or fix the NDK 28 header conflict (locale redefinition) instead of pinning old NDK.
   - Re-run android build to green, then commit + push.
 - **[P1] ~~Android source fixes uncommitted.~~ DONE** — `CopyState.hx` ThreadPool fix and `PlatformUtilNative.hx` `utsname` include verified present in tree and committed.
@@ -82,7 +82,7 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 ## 10. CI / REPO HYGIENE
 
 - **[P1] .github CI android emulator `CopyState`** — same 2 fixes; confirm CI picks them via `1a8a48d4`+. ([#72](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/72))
-- **[P2] NDK pin** — commit `.github` to use **r27c** explicitly (matches verified toolchain) so CI != local. ([#76](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/76))
+- **[P2] ~~NDK pin~~ DONE** — both Android workflows install `ndk;27.0.12077973` explicitly via `sdkmanager` (NDK r27) and configure Lime to use that SDK directory, so the main and mobile CI builds agree. ([#76](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/76))
 - **[P3] BUILDING.md "0 warnings" vs 3 MP3 warnings** — fix text. ([#92](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/92))
 
 ## 11. ANDROID NATIVE / PLATFORM INTEGRATION
@@ -125,7 +125,7 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 
 - **[P1] ~~Android Storage Access Framework integration~~ DONE** (`MobileFilePicker` over `ACTION_OPEN_DOCUMENT`/`ACTION_CREATE_DOCUMENT`/`ACTION_OPEN_DOCUMENT_TREE`, wired into chart/character import & export) — Use the native Android document picker for importing/exporting mods, charts, assets, replays, and other user files; support `ACTION_OPEN_DOCUMENT`, `ACTION_CREATE_DOCUMENT`, and `ACTION_OPEN_DOCUMENT_TREE`.
 - **[P1] ~~Android content URI support~~ DONE** (`AndroidStorage` read/write helpers + picker results carry `uri` alongside `path`/`data`) — Support Android `content://` URIs alongside normal filesystem paths, providing a common Haxe abstraction for resources loaded from either source.
-- **[P2] ~~Android file sharing~~ DONE** (`AndroidIntents.shareFile` via FileProvider; `PhoenixDocumentsProvider` exposes dedicated `Crash Logs` and `Mods` SAF roots) — Provide native file sharing through Android intents/`FileProvider` and let users browse/share app-generated files and mods through Android's system document picker.
+- **[P2] ~~Android file sharing~~ DONE** (`AndroidIntents.shareFile` via FileProvider; `PhoenixDocumentsProvider` replaces Lime's generic SAF provider while retaining the `SHARE_MOBILE_FILES` gate for dedicated `Crash Logs` and `Mods` roots) — Provide native file sharing through Android intents/`FileProvider` and let users browse/share app-generated files and mods through Android's system document picker.
 
 ### INTENTS / EXTERNAL INTEGRATION
 
@@ -252,7 +252,7 @@ Added from the supplied CNE-vs-vanilla/Psych comparison, filtered against the cu
 
 ## TOP 5 (do these first)
 1. Commit + push the two uncommitted Android fixes (`CopyState.hx` ThreadPool, `PlatformUtilNative.hx` utsname) — they ARE the Android CI fix.
-2. Resolve NDK version (install r27c or fix the NDK28 libc++ redefinition) so Android builds locally → green. ([#64](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/64))
+2. Resolve local NDK mismatch (install 27.0.12077973/r27 or fix the NDK 28 libc++ redefinition) so Android builds locally → green. ([#64](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/64))
 3. HashLink target: install working `lime.hdll`, build, re-enable CI `hl` job. ([#63](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/63))
 4. Kill `Paths.hx`/`BuildingEffect.hx` production trace spam.
 5. Path-traversal + keystore-secret hardening (security). ([#65](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/65))

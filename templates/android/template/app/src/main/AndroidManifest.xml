@@ -65,7 +65,8 @@
 		</provider>
 		::end::
 
-		<!-- SAF provider exposes only app-managed crash reports and mods/. -->
+		<!-- Keep Lime's SHARE_MOBILE_FILES feature gate for the system DocumentsProvider. -->
+		::if (SHARE_FILES)::
 		<provider
 			android:name="quack.fnf.phoenix.android.PhoenixDocumentsProvider"
 			android:authorities="::APP_PACKAGE::.documentsprovider"
@@ -76,6 +77,7 @@
 				<action android:name="android.content.action.DOCUMENTS_PROVIDER" />
 			</intent-filter>
 		</provider>
+		::end::
 
 	</application>
 

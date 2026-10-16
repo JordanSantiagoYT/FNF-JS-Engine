@@ -6,6 +6,7 @@ import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.CancellationSignal;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
@@ -18,9 +19,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,6 +40,10 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 	private static final String ROOT_CRASH = "crash";
 	private static final int DOCUMENT_ID_FLAGS = Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP;
 	private static final String FALLBACK_MIME_TYPE = "application/octet-stream";
+	// A filesystem path is bounded to 4096 bytes on Android/Linux. Base64 URL
+	// encoding needs at most about 5462 characters; keep a little headroom but
+	// reject arbitrarily large provider-supplied IDs before decoding them.
+	private static final int MAX_ENCODED_RELATIVE_PATH_LENGTH = 6000;
 
 	private static final String[] DEFAULT_ROOT_PROJECTION = {
 		DocumentsContract.Root.COLUMN_ROOT_ID,
@@ -90,6 +97,18 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 		}
 	}
 
+	private static final class PermissionTarget
+	{
+		final String documentId;
+		final File file;
+
+		PermissionTarget(String documentId, File file)
+		{
+			this.documentId = documentId;
+			this.file = file;
+		}
+	}
+
 	@Override public boolean onCreate()
 	{
 		return getContext() != null;
@@ -104,6 +123,11 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 			RootInfo[] roots = getRoots(storageDirectory);
 			for (RootInfo root : roots)
 			{
+				// A missing root is valid (it is created on first SAF write),
+				// but do not advertise a root replaced by a file or symlink.
+				if (!isUsableRoot(root))
+					continue;
+
 				Map<String, Object> values = new HashMap<String, Object>();
 				values.put(DocumentsContract.Root.COLUMN_ROOT_ID, root.id);
 				values.put(DocumentsContract.Root.COLUMN_DOCUMENT_ID, root.id);
@@ -127,7 +151,8 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 	@Override public Cursor queryDocument(String documentId, String[] projection) throws FileNotFoundException
 	{
 		DocumentInfo document = resolveDocumentId(documentId);
-		if ((!document.rootDocument && !document.file.exists())
+		if (!isUsableRoot(document.root) || !isSafeFile(document.root, document.file)
+			|| (!document.rootDocument && (!document.file.exists() || (!document.file.isDirectory() && !document.file.isFile())))
 			|| (document.rootDocument && document.file.exists() && !document.file.isDirectory()))
 			throw new FileNotFoundException("Document does not exist: " + documentId);
 
@@ -140,7 +165,8 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 	@Override public Cursor queryChildDocuments(String parentDocumentId, String[] projection, String sortOrder) throws FileNotFoundException
 	{
 		DocumentInfo parent = resolveDocumentId(parentDocumentId);
-		if ((!parent.rootDocument && (!parent.file.exists() || !parent.file.isDirectory()))
+		if (!isUsableRoot(parent.root) || !isSafeFile(parent.root, parent.file)
+			|| (!parent.rootDocument && (!parent.file.exists() || !parent.file.isDirectory()))
 			|| (parent.rootDocument && parent.file.exists() && !parent.file.isDirectory()))
 			throw new FileNotFoundException("Not a directory: " + parentDocumentId);
 
@@ -151,27 +177,35 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 			return cursor;
 		}
 
-		File[] children = parent.file.listFiles();
-		if (children != null)
+		File[] children;
+		try
 		{
-			// The system UI may impose its own ordering. Return a predictable
-			// directory-first order without interpreting an SQL sort string.
-			Arrays.sort(children, new Comparator<File>()
-			{
-				@Override public int compare(File left, File right)
-				{
-					if (left.isDirectory() != right.isDirectory())
-						return left.isDirectory() ? -1 : 1;
-					return left.getName().compareToIgnoreCase(right.getName());
-				}
-			});
+			children = parent.file.listFiles();
+		}
+		catch (SecurityException e)
+		{
+			throw fileNotFound("Could not list directory: " + parentDocumentId, e);
+		}
+		if (children == null)
+			throw new FileNotFoundException("Could not list directory: " + parentDocumentId);
 
-			for (File child : children)
+		// The system UI may impose its own ordering. Return a predictable
+		// directory-first order without interpreting an SQL sort string.
+		Arrays.sort(children, new Comparator<File>()
+		{
+			@Override public int compare(File left, File right)
 			{
-				if (!isSafeFile(parent.root, child))
-					continue;
-				addDocumentRow(cursor, new DocumentInfo(parent.root, child, false));
+				if (left.isDirectory() != right.isDirectory())
+					return left.isDirectory() ? -1 : 1;
+				return left.getName().compareToIgnoreCase(right.getName());
 			}
+		});
+
+		for (File child : children)
+		{
+			if (!isSafeFile(parent.root, child) || (!child.isDirectory() && !child.isFile()))
+				continue;
+			addDocumentRow(cursor, new DocumentInfo(parent.root, child, false));
 		}
 
 		setNotificationUri(cursor, DocumentsContract.buildChildDocumentsUri(getAuthority(), parentDocumentId));
@@ -184,14 +218,14 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 			signal.throwIfCanceled();
 
 		DocumentInfo document = resolveDocumentId(documentId);
-		if (document.rootDocument || document.file.isDirectory())
-			throw new FileNotFoundException("Directories cannot be opened as files: " + documentId);
+		if (document.rootDocument || document.file.isDirectory() || !document.file.isFile())
+			throw new FileNotFoundException("Document is not a regular file: " + documentId);
 
 		boolean write = isWriteMode(mode);
 		if (!"r".equals(mode) && !"w".equals(mode) && !"wt".equals(mode) && !"wa".equals(mode)
 			&& !"rw".equals(mode) && !"rwt".equals(mode))
 			throw new UnsupportedOperationException("Unsupported document mode: " + mode);
-		if (write && !document.root.writable)
+		if (write && !canWriteToRoot(document.root))
 			throw new FileNotFoundException("This document is read-only: " + documentId);
 		if (!document.file.exists())
 			throw new FileNotFoundException("Document does not exist: " + documentId);
@@ -203,6 +237,12 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 		try
 		{
 			final int accessMode = ParcelFileDescriptor.parseMode(mode);
+			// Recheck immediately before the path-based open. This closes the
+			// ordinary stale-ID/symlink window, though java.io.File cannot make
+			// check-and-open atomic against a concurrent filesystem writer.
+			if (!isUsableRoot(document.root) || !isSafeFile(document.root, document.file)
+				|| !document.file.isFile() || !isSafeFile(document.root, parent) || !parent.isDirectory())
+				throw new FileNotFoundException("Document path changed before opening: " + documentId);
 			if (!write)
 				return ParcelFileDescriptor.open(document.file, accessMode);
 
@@ -217,46 +257,65 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 					}
 				});
 		}
+		catch (FileNotFoundException e)
+		{
+			throw e;
+		}
+		catch (IOException e)
+		{
+			throw fileNotFound("Could not open document: " + documentId, e);
+		}
 		catch (IllegalArgumentException e)
 		{
 			throw new UnsupportedOperationException("Unsupported document mode: " + mode, e);
+		}
+		catch (SecurityException e)
+		{
+			throw fileNotFound("Could not open document: " + documentId, e);
 		}
 	}
 
 	@Override public String createDocument(String parentDocumentId, String mimeType, String displayName) throws FileNotFoundException
 	{
 		DocumentInfo parent = resolveDocumentId(parentDocumentId);
-		if (!parent.root.writable)
+		if (!canWriteToRoot(parent.root))
 			throw new FileNotFoundException("This root is read-only: " + parent.root.id);
-		if ((!parent.rootDocument && (!parent.file.exists() || !parent.file.isDirectory()))
-			|| (parent.rootDocument && parent.file.exists() && !parent.file.isDirectory()))
-			throw new FileNotFoundException("Not a directory: " + parentDocumentId);
-		if (!isValidDisplayName(displayName))
+		if (!PhoenixDocumentPathPolicy.isValidDisplayName(displayName))
 			throw new FileNotFoundException("Invalid document name");
-
-		if (!parent.file.exists() && !parent.file.mkdirs())
-			throw new FileNotFoundException("Could not create directory: " + parent.file);
-
-		File child = new File(parent.file, displayName);
-		if (!isSafeFile(parent.root, child))
-			throw new FileNotFoundException("Invalid document path");
-		if (child.exists())
-			throw new FileNotFoundException("A document with this name already exists: " + displayName);
 
 		boolean directory = DocumentsContract.Document.MIME_TYPE_DIR.equals(mimeType);
 		boolean created;
-		if (directory)
-			created = child.mkdir();
-		else
+		File child;
+		try
 		{
-			try
-			{
-				created = child.createNewFile();
-			}
-			catch (IOException e)
-			{
-				throw fileNotFound("Could not create document: " + displayName, e);
-			}
+			if (!isUsableRoot(parent.root) || !isSafeFile(parent.root, parent.file))
+				throw new FileNotFoundException("The document root or parent is unavailable: " + parentDocumentId);
+			if ((!parent.rootDocument && (!parent.file.exists() || !parent.file.isDirectory()))
+				|| (parent.rootDocument && parent.file.exists() && !parent.file.isDirectory()))
+				throw new FileNotFoundException("Not a directory: " + parentDocumentId);
+
+			if (!parent.file.exists() && !parent.file.mkdirs() && !parent.file.isDirectory())
+				throw new FileNotFoundException("Could not create directory: " + parent.file);
+			if (!isUsableRoot(parent.root) || !parent.file.isDirectory() || !isSafeFile(parent.root, parent.file))
+				throw new FileNotFoundException("The document parent changed before creation: " + parentDocumentId);
+
+			child = new File(parent.file, displayName);
+			if (!isSafeFile(parent.root, child))
+				throw new FileNotFoundException("Invalid document path");
+			if (child.exists())
+				throw new FileNotFoundException("A document with this name already exists: " + displayName);
+
+			// createNewFile() is exclusive; mkdir() also fails rather than
+			// replacing an existing entry created by another request.
+			created = directory ? child.mkdir() : child.createNewFile();
+		}
+		catch (FileNotFoundException e)
+		{
+			throw e;
+		}
+		catch (IOException | SecurityException e)
+		{
+			throw fileNotFound("Could not create document: " + displayName, e);
 		}
 
 		if (!created)
@@ -270,25 +329,50 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 	@Override public void deleteDocument(String documentId) throws FileNotFoundException
 	{
 		DocumentInfo document = resolveDocumentId(documentId);
-		if (document.rootDocument || !document.root.writable)
+		if (document.rootDocument || !canWriteToRoot(document.root))
 			throw new FileNotFoundException("This document cannot be deleted: " + documentId);
-		if (!document.file.exists())
-			throw new FileNotFoundException("Document does not exist: " + documentId);
+		if (!isUsableRoot(document.root) || !document.file.exists()
+			|| (!document.file.isDirectory() && !document.file.isFile()) || !isSafeFile(document.root, document.file))
+			throw new FileNotFoundException("Document does not exist or is no longer safe: " + documentId);
 
 		File parent = document.file.getParentFile();
-		if (parent == null)
-			throw new FileNotFoundException("Document has no parent: " + documentId);
+		if (parent == null || !parent.isDirectory() || !isSafeFile(document.root, parent))
+			throw new FileNotFoundException("Document parent is unavailable: " + documentId);
+		final String parentDocumentId = buildDocumentId(document.root, parent);
 
-		// The base class revokes the selected document's grant after this
-		// method returns. Descendants deleted with a directory need explicit
-		// revocation as well.
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && document.file.isDirectory())
-			revokeDescendantPermissions(document.root, document.file);
+		// Keep descendant grants until their entries are actually removed. If a
+		// recursive delete is partial, revoke only IDs whose files disappeared.
+		List<PermissionTarget> descendants = new ArrayList<PermissionTarget>();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+		{
+			descendants.add(new PermissionTarget(documentId, document.file));
+			if (document.file.isDirectory())
+				collectDescendantPermissions(document.root, document.file, descendants);
+		}
 
-		if (!deleteRecursively(document.file))
+		boolean deleted = false;
+		try
+		{
+			// Revalidate immediately before recursively mutating the path.
+			if (isUsableRoot(document.root) && isSafeFile(document.root, document.file)
+				&& isSafeFile(document.root, parent))
+				deleted = deleteRecursively(document.root, document.file);
+		}
+		catch (SecurityException e)
+		{
+			throw fileNotFound("Could not delete document: " + documentId, e);
+		}
+		finally
+		{
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+				revokeDeletedDescendantPermissions(descendants);
+			// Recursive deletion can fail after removing some children. Always
+			// refresh the parent view, including on partial failure.
+			notifyDocumentChanged(parentDocumentId, null);
+		}
+
+		if (!deleted)
 			throw new FileNotFoundException("Could not delete document: " + documentId);
-
-		notifyDocumentChanged(buildDocumentId(document.root, parent), null);
 	}
 
 	@Override public String renameDocument(String documentId, String displayName) throws FileNotFoundException
@@ -296,24 +380,39 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 		DocumentInfo document = resolveDocumentId(documentId);
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
 			throw new UnsupportedOperationException("Renaming documents requires Android 5.0 or newer");
-		if (document.rootDocument || !document.root.writable || document.file.isDirectory() || !isValidDisplayName(displayName))
+		if (document.rootDocument || !canWriteToRoot(document.root) || document.file.isDirectory()
+			|| !PhoenixDocumentPathPolicy.isValidDisplayName(displayName))
 			throw new FileNotFoundException("This document cannot be renamed: " + documentId);
-		if (!document.file.exists())
-			throw new FileNotFoundException("Document does not exist: " + documentId);
+		if (!isUsableRoot(document.root) || !document.file.isFile() || !isSafeFile(document.root, document.file))
+			throw new FileNotFoundException("Document does not exist or is no longer safe: " + documentId);
 		if (document.file.getName().equals(displayName))
 			return null;
 
 		File parent = document.file.getParentFile();
-		if (parent == null || !isSafeFile(document.root, parent))
+		if (parent == null || !parent.isDirectory() || !isSafeFile(document.root, parent))
 			throw new FileNotFoundException("Document parent is unavailable: " + documentId);
+		final String parentDocumentId = buildDocumentId(document.root, parent);
 		File renamed = new File(parent, displayName);
-		if (!isSafeFile(document.root, renamed) || renamed.exists())
+		if (!PhoenixDocumentPathPolicy.isValidDisplayName(displayName)
+			|| !isSafeFile(document.root, renamed) || renamed.exists())
 			throw new FileNotFoundException("A document with this name already exists or the path is invalid");
-		if (!document.file.renameTo(renamed))
-			throw new FileNotFoundException("Could not rename document: " + documentId);
+
+		try
+		{
+			// Revalidate directly before rename; the java.io.File API cannot make
+			// the no-overwrite check and rename atomic against concurrent writers.
+			if (!isUsableRoot(document.root) || !isSafeFile(document.root, parent)
+				|| !isSafeFile(document.root, document.file) || renamed.exists()
+				|| !document.file.renameTo(renamed))
+				throw new FileNotFoundException("Could not rename document: " + documentId);
+		}
+		catch (SecurityException e)
+		{
+			throw fileNotFound("Could not rename document: " + documentId, e);
+		}
 
 		String renamedDocumentId = buildDocumentId(document.root, renamed);
-		notifyDocumentChanged(buildDocumentId(document.root, parent), renamedDocumentId);
+		notifyDocumentChanged(parentDocumentId, renamedDocumentId);
 		return renamedDocumentId;
 	}
 
@@ -326,7 +425,7 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 			if (!parent.root.id.equals(child.root.id) || parent.file.equals(child.file)
 				|| !child.file.exists() || (!parent.rootDocument && !parent.file.isDirectory()))
 				return false;
-			return child.file.getAbsolutePath().startsWith(parent.file.getAbsolutePath() + File.separator);
+			return PhoenixDocumentPathPolicy.isWithin(parent.file.getAbsolutePath(), child.file.getAbsolutePath());
 		}
 		catch (FileNotFoundException e)
 		{
@@ -341,7 +440,9 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 		try
 		{
 			File directory = getContext().getExternalFilesDir(null);
-			return directory == null ? null : directory.getCanonicalFile();
+			if (directory == null || !isStorageAvailable(directory))
+				return null;
+			return directory.getCanonicalFile();
 		}
 		catch (IOException | RuntimeException e)
 		{
@@ -359,10 +460,63 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 
 	private int getRootFlags(RootInfo root)
 	{
-		int flags = root.writable ? DocumentsContract.Root.FLAG_SUPPORTS_CREATE : 0;
+		int flags = 0;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+		{
+			if (canWriteToRoot(root) && isWritableDirectory(root.directory))
+				flags |= DocumentsContract.Root.FLAG_SUPPORTS_CREATE;
 			flags |= DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD;
+		}
 		return flags;
+	}
+
+	private boolean isStorageAvailable(File path)
+	{
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+			return false;
+		try
+		{
+			String state = Environment.getExternalStorageState(path);
+			return Environment.MEDIA_MOUNTED.equals(state)
+				|| Environment.MEDIA_MOUNTED_READ_ONLY.equals(state);
+		}
+		catch (RuntimeException e)
+		{
+			return false;
+		}
+	}
+
+	private boolean isStorageWritable(File path)
+	{
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+			return false;
+		try
+		{
+			return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState(path));
+		}
+		catch (RuntimeException e)
+		{
+			return false;
+		}
+	}
+
+	private boolean canWriteToRoot(RootInfo root)
+	{
+		return root.writable && isStorageWritable(root.directory);
+	}
+
+	private boolean isUsableRoot(RootInfo root)
+	{
+		return isStorageAvailable(root.directory) && isSafeFile(root, root.directory)
+			&& (!root.directory.exists() || root.directory.isDirectory());
+	}
+
+	private static boolean isWritableDirectory(File directory)
+	{
+		if (directory.exists())
+			return directory.isDirectory() && directory.canWrite();
+		File parent = directory.getParentFile();
+		return parent != null && parent.isDirectory() && parent.canWrite();
 	}
 
 	private DocumentInfo resolveDocumentId(String documentId) throws FileNotFoundException
@@ -377,7 +531,7 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 		{
 			if (root.id.equals(documentId))
 			{
-				if (!isSafeFile(root, root.directory))
+				if (!isUsableRoot(root))
 					throw new FileNotFoundException("Invalid root directory: " + root.id);
 				return new DocumentInfo(root, root.directory, true);
 			}
@@ -385,10 +539,12 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 			String prefix = root.id + ":";
 			if (!documentId.startsWith(prefix))
 				continue;
+			if (!isUsableRoot(root))
+				throw new FileNotFoundException("Invalid root directory: " + root.id);
 
 			String encodedPath = documentId.substring(prefix.length());
-			if (encodedPath.length() == 0)
-				throw new FileNotFoundException("Invalid document ID: " + documentId);
+			if (encodedPath.length() == 0 || encodedPath.length() > MAX_ENCODED_RELATIVE_PATH_LENGTH)
+				throw new FileNotFoundException("Invalid document ID length");
 
 			final String relativePath;
 			try
@@ -400,7 +556,7 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 				throw fileNotFound("Invalid document ID: " + documentId, e);
 			}
 
-			if (!isSafeRelativePath(relativePath))
+			if (!PhoenixDocumentPathPolicy.isSafeRelativePath(relativePath))
 				throw new FileNotFoundException("Invalid document path: " + documentId);
 			File file = new File(root.directory, relativePath);
 			if (!isSafeFile(root, file))
@@ -413,52 +569,7 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 
 	private boolean isSafeFile(RootInfo root, File file)
 	{
-		try
-		{
-			String rootPath = root.directory.getCanonicalPath();
-			String rootAbsolutePath = root.directory.getAbsolutePath();
-			String absolutePath = file.getAbsolutePath();
-			String canonicalPath = file.getCanonicalPath();
-
-			// IDs are relative paths, but reject traversal and symbolic links so
-			// a crafted document ID cannot escape either exported directory.
-			if (!isWithin(rootPath, absolutePath) || !isWithin(rootPath, canonicalPath)
-				|| !absolutePath.equals(canonicalPath) || !isWithin(rootAbsolutePath, absolutePath))
-				return false;
-			if (!rootAbsolutePath.equals(absolutePath)
-				&& !isSafeRelativePath(absolutePath.substring(rootAbsolutePath.length() + 1)))
-				return false;
-			return true;
-		}
-		catch (IOException e)
-		{
-			return false;
-		}
-	}
-
-	private static boolean isWithin(String rootPath, String path)
-	{
-		return path.equals(rootPath) || path.startsWith(rootPath + File.separator);
-	}
-
-	private static boolean isSafeRelativePath(String path)
-	{
-		if (path == null || path.length() == 0 || path.startsWith("/") || path.indexOf('\\') >= 0 || path.indexOf('\0') >= 0)
-			return false;
-
-		String[] segments = path.split("/", -1);
-		for (String segment : segments)
-		{
-			if (segment.length() == 0 || ".".equals(segment) || "..".equals(segment))
-				return false;
-		}
-		return true;
-	}
-
-	private static boolean isValidDisplayName(String name)
-	{
-		return name != null && name.length() > 0 && !".".equals(name) && !"..".equals(name)
-			&& name.indexOf('/') < 0 && name.indexOf('\\') < 0 && name.indexOf('\0') < 0;
+		return PhoenixDocumentPathPolicy.isSafeFile(root.directory, file);
 	}
 
 	private String buildDocumentId(RootInfo root, File file) throws FileNotFoundException
@@ -469,10 +580,12 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 		String filePath = file.getAbsolutePath();
 		if (rootPath.equals(filePath))
 			return root.id;
-		if (!filePath.startsWith(rootPath + File.separator))
+		if (!PhoenixDocumentPathPolicy.isWithin(rootPath, filePath))
 			throw new FileNotFoundException("Document is outside its root: " + file);
 
 		String relativePath = filePath.substring(rootPath.length() + 1);
+		if (!PhoenixDocumentPathPolicy.isSafeRelativePath(relativePath))
+			throw new FileNotFoundException("Document has an invalid relative path: " + file);
 		String encodedPath = Base64.encodeToString(relativePath.getBytes(StandardCharsets.UTF_8), DOCUMENT_ID_FLAGS);
 		return root.id + ":" + encodedPath;
 	}
@@ -482,23 +595,29 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 		boolean directory = document.rootDocument || document.file.isDirectory();
 		String documentId = buildDocumentId(document.root, document.file);
 		int flags = 0;
-		if (document.root.writable)
+		if (canWriteToRoot(document.root))
 		{
+			File parent = document.file.getParentFile();
+			boolean parentWritable = parent != null && parent.isDirectory() && parent.canWrite();
 			if (directory)
 			{
-				flags |= DocumentsContract.Document.FLAG_DIR_SUPPORTS_CREATE;
-				if (!document.rootDocument)
+				if (isWritableDirectory(document.file))
+					flags |= DocumentsContract.Document.FLAG_DIR_SUPPORTS_CREATE;
+				if (!document.rootDocument && parentWritable)
 					flags |= DocumentsContract.Document.FLAG_SUPPORTS_DELETE;
 			}
 			else
 			{
-				flags |= DocumentsContract.Document.FLAG_SUPPORTS_WRITE | DocumentsContract.Document.FLAG_SUPPORTS_DELETE;
+				if (document.file.canWrite())
+					flags |= DocumentsContract.Document.FLAG_SUPPORTS_WRITE;
+				if (parentWritable)
+					flags |= DocumentsContract.Document.FLAG_SUPPORTS_DELETE;
 			}
 
 			// SAF rename support was added in API 21. Directory IDs are
 			// path-based, so only files advertise rename (a directory rename
 			// would otherwise invalidate every descendant ID).
-			if (!directory && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			if (!directory && parentWritable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
 				flags |= DocumentsContract.Document.FLAG_SUPPORTS_RENAME;
 		}
 
@@ -572,31 +691,51 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 			resolver.notifyChange(DocumentsContract.buildDocumentUri(authority, changedDocumentId), null);
 	}
 
-	private void revokeDescendantPermissions(RootInfo root, File directory)
+	private void collectDescendantPermissions(RootInfo root, File directory, List<PermissionTarget> targets)
 	{
-		if (isSymbolicLink(directory))
+		if (isSymbolicLink(directory) || !isSafeFile(root, directory))
 			return;
 		File[] children = directory.listFiles();
 		if (children == null)
 			return;
 		for (File child : children)
 		{
-			if (!isSafeFile(root, child))
+			// Symlinks are never exposed as documents and are never traversed.
+			if (isSymbolicLink(child) || !isSafeFile(root, child)
+				|| (!child.isDirectory() && !child.isFile()))
 				continue;
 			try
 			{
-				revokeDocumentPermission(buildDocumentId(root, child));
+				targets.add(new PermissionTarget(buildDocumentId(root, child), child));
 			}
 			catch (FileNotFoundException ignored) {}
 			if (child.isDirectory())
-				revokeDescendantPermissions(root, child);
+				collectDescendantPermissions(root, child, targets);
 		}
 	}
 
-	private static boolean deleteRecursively(File file)
+	private void revokeDeletedDescendantPermissions(List<PermissionTarget> targets)
 	{
+		for (PermissionTarget target : targets)
+		{
+			if (target.file.exists())
+				continue;
+			try
+			{
+				revokeDocumentPermission(target.documentId);
+			}
+			catch (RuntimeException ignored) {}
+		}
+	}
+
+	private boolean deleteRecursively(RootInfo root, File file)
+	{
+		// Delete the symlink itself, never its target. For ordinary paths, keep
+		// validating every level instead of trusting an earlier parent check.
 		if (isSymbolicLink(file))
 			return file.delete();
+		if (!isSafeFile(root, file))
+			return false;
 
 		if (file.isDirectory())
 		{
@@ -605,7 +744,7 @@ public final class PhoenixDocumentsProvider extends DocumentsProvider
 				return false;
 			for (File child : children)
 			{
-				if (!deleteRecursively(child))
+				if (!deleteRecursively(root, child))
 					return false;
 			}
 		}

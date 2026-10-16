@@ -55,16 +55,24 @@ Menus add a virtual pad; `PlayState` adds the hitbox. Both route into the same
 `mobile.files.MobileFilePicker` bridges to the platform picker, used by the editors for
 loading and saving charts and characters on device.
 
-On Android, `PhoenixDocumentsProvider` adds two roots to the system Files picker:
+On Android, `PhoenixDocumentsProvider` adds two roots to the system Files picker
+when Lime's existing `SHARE_FILES` feature is enabled. Lime derives this from the
+`SHARE_MOBILE_FILES` Haxe define, which `project.hxp` sets for mobile builds, so
+normal Android builds retain the previous system-visible sharing behavior.
 
 - **Crash Logs** — read-only access to crash reports written in `crash/`.
 - **Mods** — browse and manage the runtime `mods/` directory; the provider supports
   creating folders/files, reading and writing files, renaming files, and deleting files
   or subfolders.
 
-Both roots are backed by the app's external-files storage directory, where the game keeps
-its writable runtime data. Only these two folders are exposed; each requesting app gets
-access through the narrow URI grants issued by Android's Storage Access Framework.
+Both roots use the same app-specific external-files directory as the game's runtime
+working directory. Only these two folders are exposed. Missing directories appear as
+empty roots and are created only when the game or an explicit SAF write creates them.
+If `getExternalFilesDir(null)` returns no path, or Android reports its volume as
+unavailable, no roots are returned. Mounted read-only storage remains browsable but
+cannot be written; if storage later becomes unavailable, document operations fail.
+Static traversal and symlink escapes are rejected, but Java path-based checks cannot
+make the check/use pair atomic against an independent concurrent filesystem writer.
 
 ## The Android platform layer
 
