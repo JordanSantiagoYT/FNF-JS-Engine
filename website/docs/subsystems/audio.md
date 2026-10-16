@@ -37,10 +37,12 @@ character JSON's `vocals_file`).
 `Conductor.songPosition` is driven from the instrumental's time, not from `elapsed`, so
 rendering hitches cannot desync the chart.
 
-:::note Pitch on SWF targets
+:::note[Pitch on SWF targets]
+
 Flash and AIR have no pitch shifting. A [haxelib patch](../architecture/haxelib-patches.md)
 gives `FlxSound` a store-only `pitch` property so the code compiles there, and
 `#if FLX_PITCH` guards the places where real pitch shifting is required.
+
 :::
 
 ## Menu music

@@ -29,10 +29,12 @@ path — including `mods/` — resolve inside storage.
 
 `android.platform.AndroidStorage` wraps the Java side (scoped storage, MANAGE_ALL_FILES).
 
-:::note Known issue
+:::note[Known issue]
+
 Android may still ask for image/sound access even with "manage all files" granted
 (low severity), and a song with valid files can show the "no JSON/voices/instrumental"
 dialog — accepting it works fine.
+
 :::
 
 ## Touch controls

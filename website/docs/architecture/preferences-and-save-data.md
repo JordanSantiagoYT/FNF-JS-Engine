@@ -44,7 +44,7 @@ Keybinds are saved separately as `save.data.customControls`. Volume/mute keys ar
 back into `TitleState.muteKeys` / `volumeDownKeys` / `volumeUpKeys` after loading so Flixel
 picks them up.
 
-:::tip Adding a setting
+:::tip[Adding a setting]
 
 1. Add a `public static var` to `ClientPrefs` with a sensible default.
 2. Add an `Option` to the right substate in `options/` (see [Options menu](../subsystems/options-menu.md)).

@@ -96,7 +96,7 @@ Dependencies are declared in **`hmm.json`** and installed by the setup scripts
 | `hxgamemode` | haxelib | Feral GameMode on Linux |
 | `hxcpp-debug-server` | haxelib | VS Code debugging |
 
-:::warning Pinned versions matter
+:::warning[Pinned versions matter]
 
 Because several libraries are forks, a plain `haxelib install <lib>` can silently switch
 the active version away from the fork (this is the classic `hxcpp` failure described in

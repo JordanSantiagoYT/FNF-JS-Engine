@@ -33,6 +33,10 @@ const config = {
     // `.md` files are parsed as CommonMark, `.mdx` as MDX. The generated
     // reference pages contain Haxe generics (`Array<Foo>`) and other
     // characters MDX would try to read as JSX.
+    //
+    // Consequence: the MDX-v1 compat layer is off under `future.v4`, so
+    // admonitions must use the directive-label syntax `:::note[Title]` —
+    // `:::note Title` renders as plain text. `npm run lint:docs` enforces it.
     format: 'detect',
     hooks: {
       onBrokenMarkdownLinks: 'throw',

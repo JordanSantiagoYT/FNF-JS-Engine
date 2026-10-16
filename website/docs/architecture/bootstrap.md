@@ -52,9 +52,11 @@ In order:
 `Main.instance` is the global handle; `Main.isPlayState()` is the cheap check the FPS
 counter and others use instead of repeated `Std.isOfType` calls.
 
-:::note `-troll`
+:::note[-troll]
+
 `Main.superDangerMode` is `true` when the executable is launched with the `-troll`
 argument. It is read from `Sys.args()` and only exists on `sys` targets.
+
 :::
 
 ## `states.InitState`

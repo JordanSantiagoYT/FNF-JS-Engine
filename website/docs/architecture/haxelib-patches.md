@@ -139,8 +139,10 @@ grep -rn "source/source-haxelib-patches" build/release/haxe/*.hxml   # must appe
 Brute-force proof: introduce a syntax error in the patch file and rebuild — the compiler
 should stop inside `source/source-haxelib-patches/`, not inside `~/.haxelib`.
 
-:::warning Not everything belongs here
+:::warning[Not everything belongs here]
+
 Anything that cannot be expressed in Haxe (C/C++, Java/Kotlin, Objective-C, Win32) goes
 through `project.hxp` build callbacks and `setup/` scripts instead — for example
 `configureAndroidRuntime` + `setup/android-copy-stl.sh`, or `setup/windows-msvc-fix.ps1`.
+
 :::
