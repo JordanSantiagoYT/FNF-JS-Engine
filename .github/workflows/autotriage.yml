@@ -6,6 +6,9 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  issues: write
+
 jobs:
   remove-label:
     runs-on: ubuntu-latest
@@ -15,7 +18,22 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const labelToRemove = "status: pending triage"; // <<< replace with your label name
+            const labelToRemove = "status: pending triage";
+            // #48: the label must exist or this workflow silently does
+            // nothing. Create it if missing (self-healing) and warn loudly.
+            try {
+              await github.rest.issues.getLabel({
+                owner: context.repo.owner, repo: context.repo.repo, name: labelToRemove,
+              });
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              core.warning(`Label "${labelToRemove}" did not exist; creating it (#48).`);
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner, repo: context.repo.repo,
+                name: labelToRemove, color: "B60205",
+                description: "Awaiting first maintainer response",
+              });
+            }
 
             // Check if it's an issue (not a PR)
             if (context.payload.issue.pull_request) {
@@ -35,5 +53,5 @@ jobs:
                 name: labelToRemove,
               });
             } else {
-              console.log(`Label "${labelToRemove}" not found on issue #${issue_number}`);
+              core.warning(`Label "${labelToRemove}" not found on issue #${issue_number}`);
             }

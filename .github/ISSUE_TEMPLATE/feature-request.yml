@@ -11,7 +11,7 @@ body:
     id: eyetest
     attributes:
       label: To test your sight, and reliability, please select the option of what should NOT be requested.
-      description: "If it's code optimization, and the optimization is yours, make a [https://github.com/JordanSantiagoYT/FNF-JS-Engine/pulls](Pull Request) please."
+      description: "If it's code optimization, and the optimization is yours, make a [Pull Request](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/pulls) please."
       options:
         - Proper credit that was forgotten.
         - Thing that would not cause problems.
