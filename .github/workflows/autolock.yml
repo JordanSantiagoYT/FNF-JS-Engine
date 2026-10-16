@@ -10,6 +10,23 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      # #48: actions/stale cannot label issues with a label that does not
+      # exist, and it reported success anyway. Ensure it exists first.
+      - name: Ensure stale label exists
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const name = "stale";
+            try {
+              await github.rest.issues.getLabel({owner: context.repo.owner, repo: context.repo.repo, name});
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              core.warning(`Label "${name}" did not exist; creating it (#48).`);
+              await github.rest.issues.createLabel({
+                owner: context.repo.owner, repo: context.repo.repo, name,
+                color: "FEF2C0", description: "Inactive for 30 days",
+              });
+            }
       - uses: actions/stale@v5
         with:
           days-before-issue-stale: 30

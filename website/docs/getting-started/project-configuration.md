@@ -38,10 +38,16 @@ configureIcons();
 | `MAIN_CLASS` | `Main` |
 | `PRELOADER` | `flixel.system.FlxPreloader` |
 | `SOURCE_DIR` | `source` |
-| `PREBUILD_HX` / `POSTBUILD_HX` | `source/Prebuild.hx`, `source/Postbuild.hx` |
 
 :::tip Bumping the version
-Change `VERSION` in `project.hxp` and nothing else — every other place reads it from there.
+Change `VERSION` in `project.hxp` — every in-game reader (main menu, FPS
+counter, crash reports, the Lua `phoenixVersion` global) derives the Phoenix
+version from the application metadata it sets, and `project.hxp` also
+exposes it as the `ENGINE_VERSION` compile-time define. One manual step
+remains: make the first entry of `THECHANGELOG.md` the same version, because
+the update checker polls that file from this repository and compares its
+first entry against the running Phoenix version (#53, #54).
+`tests/test_arena_fixes.py` asserts the two stay equal.
 :::
 
 ## Window
@@ -82,6 +88,7 @@ command line, so **`-DVIDEOS_ALLOWED` or `-DMODS_ALLOWED` always wins**.
 | `FUNNY_ALLOWED` | desktop | easter eggs |
 | `EMBED_ASSETS` | web only | embeds assets into the output |
 | `PRELOAD_ALL` | always | preloads asset libraries |
+| `NO_PRELOAD_ALL` | manual `-DNO_PRELOAD_ALL` switch | inverse of `PRELOAD_ALL`; assets are loaded on demand via `states.LoadingState` instead of preloaded (#55) |
 | `FLASH_ALLOWED` | flash target | SWF-specific code paths |
 | `TITLE_SCREEN_EASTER_EGG` | currently commented out | title screen easter egg |
 | `officialBuild` | `-Dofficial` | marks release builds |

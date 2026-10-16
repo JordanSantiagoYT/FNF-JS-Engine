@@ -98,10 +98,13 @@ it walks `PlayState.instance.ratingsData` (loaded by `Rating.loadDefault()`) and
 the first window the absolute timing difference fits into; botplay and misses short-circuit
 to the first entry.
 
-Hit windows are **decimal** (merged from Psych 1.0) and scale with `timeScale`, so changing
-*safe frames* in the options moves every window consistently.
-`Conductor.recalculateTimings()` recomputes `safeZoneOffset` and `timeScale` after a
-preferences change.
+Hit windows are **decimal** (merged from Psych 1.0) and are read verbatim from
+`ClientPrefs.<rating>Window` when each `Rating` is built; they do **not** scale
+with `timeScale`. `timeScale` scales only the accuracy ("wife3") calculation.
+`Conductor.recalculateTimings()` recomputes `safeZoneOffset` and `timeScale`
+from `ClientPrefs.safeFrames`; it runs after `ClientPrefs.loadPrefs()` and
+whenever the Safe Frames option changes (#43), so changing *safe frames* in
+the options takes effect immediately for note spawning and accuracy.
 
 Ratings themselves (`Rating` class in the same module) hold a name, score, accuracy weight
 and hit counter, with `increase(n)` used by the rating code in

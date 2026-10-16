@@ -42,7 +42,7 @@ body:
     id: knownIssueCheck
     attributes:
       label: "Did you check if the problem is in the pinned issue?"
-      description: "[Click me here to check if there is.](https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues/1031)"
+      description: "[Search the Phoenix Engine issues first.](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues?q=is%3Aissue+is%3Aopen)"
       options:
         - "No"
         - "Yes"

@@ -79,16 +79,6 @@ class Project extends HXProject
 	static final COMPANY:String = "JordanSantiago";
 
 	/**
-   * Path to the Haxe script run before building the game.
-   */
-  static final PREBUILD_HX:String = "source/Prebuild.hx";
-
-  /**
-   * Path to the Haxe script run after building the game.
-   */
-  static final POSTBUILD_HX:String = "source/Postbuild.hx";
-
-	/**
 	 * Scripts that copy the NDK's `libc++_shared.so` into the generated Gradle
 	 * project on Android. See `configureAndroidRuntime`.
 	 */
@@ -232,6 +222,9 @@ class Project extends HXProject
 	{
 		this.meta.title = TITLE;
 		this.meta.version = VERSION;
+		// Single source of truth for the engine version (#54): the game
+		// reads it back via Application.current.meta (and MainMenuState).
+		setHaxedef("ENGINE_VERSION", VERSION);
 		this.meta.packageName = PACKAGE_NAME;
 		this.meta.company = COMPANY;
 
@@ -249,10 +242,6 @@ class Project extends HXProject
 
 		// Haxelib classpath overrides (shadow machine-local haxelib edits for CI/fresh builds).
 		this.sources.push("source-haxelib-patches");
-
-		// Tell Lime to run some prebuild and postbuild scripts.
-		// this.preBuildCallbacks.push(buildHaxeCLICommand(PREBUILD_HX));
-		// this.postBuildCallbacks.push(buildHaxeCLICommand(POSTBUILD_HX));
 
 		// Configure the window.
 		// Automatically configure FPS.

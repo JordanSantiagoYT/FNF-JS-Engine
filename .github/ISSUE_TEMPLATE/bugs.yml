@@ -13,7 +13,7 @@ body:
     id: buildVersion
     attributes:
       label: "What version did the bug occur?"
-      description: "You HAVE to answer this. If you don't know what version, please go to the main menu and look at the bottem-left of the window."
+      description: "You HAVE to answer this. Copy the version from the bottom-left of the main menu (the 'Phoenix Engine v...' line; the FPS counter shows the same value)."
     validations:
       required: true
 
@@ -43,7 +43,7 @@ body:
     id: knownIssueCheck
     attributes:
       label: "Did you check if this issue is already known?"
-      description: "[Click me here to see the Known Issues and Fixes... Please?](https://github.com/JordanSantiagoYT/FNF-JS-Engine/issues/1031) If not, you will automatically be rejected."
+      description: "[Search the known Phoenix Engine issues first](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues?q=is%3Aissue+is%3Aopen+label%3Abug). Reports that skip this may be closed as duplicates after a maintainer check."
       options:
         - "No"
         - "Yes"
@@ -54,7 +54,7 @@ body:
     id: dupeCheck
     attributes:
       label: "Did you check for any similar issues?"
-      description: "Check if there is one. Don't report the issue if you find an issue related to this one, or it will be closed as a duplicate. If you answer 'No', you will automatically be rejected."
+      description: "Check if there is one. Don't report the issue if you find an issue related to this one, or it may be closed as a duplicate after a maintainer check."
       options:
         - "No"
         - "Yes"

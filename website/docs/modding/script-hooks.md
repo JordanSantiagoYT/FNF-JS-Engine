@@ -17,7 +17,7 @@ Syntax below is Lua; Python is identical with `def name(args):`.
 |---|---|
 | nothing / `Function_Continue` | the engine proceeds normally |
 | `Function_Stop` | cancels the engine's default behaviour for that hook |
-| `Function_StopLua` | stops the hook propagating to further scripts |
+| `Function_StopLua` (Python: also `Function_StopAll`) | stops the hook propagating to further scripts |
 
 Only hooks documented as cancellable react to `Function_Stop`.
 
@@ -64,11 +64,11 @@ Only hooks documented as cancellable react to `Function_Stop`.
 
 | Hook | Arguments | Notes |
 |---|---|---|
-| `onEvent(name, value1, value2)` | | an event note fired (**not** fired by `triggerEvent()`) |
-| `eventEarlyTrigger(name)` | | return a millisecond offset to fire the event earlier; overrides the engine's hardcoded values |
+| `onEvent(name, value1, value2, strumTime)` | | an event note fired (**not** fired by `triggerEvent()`) |
+| `eventEarlyTrigger(name, value1, value2, strumTime)` | | return a millisecond offset to fire the event earlier; overrides the engine's hardcoded values |
 
 ```lua
-function eventEarlyTrigger(name)
+function eventEarlyTrigger(name, value1, value2, strumTime)
     if name == 'Kill Henchmen' then
         return 280   -- fire 280ms early so the sound lands on the beat
     end

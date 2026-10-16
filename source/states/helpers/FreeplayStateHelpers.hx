@@ -6,7 +6,6 @@ import backend.CoolUtil;
 import backend.Conductor;
 import backend.Highscore;
 #if MODS_ALLOWED
-import backend.Mods;
 #end
 import backend.Paths;
 import backend.WeekData;

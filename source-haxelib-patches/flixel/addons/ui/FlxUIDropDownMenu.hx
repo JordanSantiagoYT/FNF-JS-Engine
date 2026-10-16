@@ -1,5 +1,11 @@
 package flixel.addons.ui;
 
+import flixel.util.FlxStringUtil;
+import flixel.util.FlxDestroyUtil;
+import flixel.util.FlxColor;
+import flixel.math.FlxMath;
+import flixel.FlxSprite;
+import flixel.FlxG;
 import flixel.addons.ui.FlxUI9SliceSprite;
 import flixel.addons.ui.FlxUI;
 import flixel.addons.ui.FlxUIAssets;

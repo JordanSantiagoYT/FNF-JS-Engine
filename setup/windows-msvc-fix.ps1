@@ -18,6 +18,20 @@
 
 $ErrorActionPreference = 'Stop'
 
+# #42: a plain "[git]" marker is not enough -- the JS-Engine-things fork is
+# also a git checkout but lacks the MSVC fixes this script exists to ensure.
+# Verify the checked-out remote really is the pinned FunkinCrew fork.
+$expectedRemote = 'https://github.com/FunkinCrew/hxcpp'
+$hxcppPath = (& haxelib path hxcpp 2>&1 | Select-Object -First 1)
+if ($hxcppPath -and (Test-Path (Join-Path $hxcppPath '.git'))) {
+    $actualRemote = (& git -C $hxcppPath remote get-url origin 2>&1) -join ''
+    if ($actualRemote -notmatch 'FunkinCrew/hxcpp') {
+        Write-Error "hxcpp checkout at $hxcppPath points at '$actualRemote', expected '$expectedRemote' (see hmm.json). Re-run setup\windows.bat."
+        exit 1
+    }
+    Write-Host "hxcpp remote verified: $actualRemote"
+}
+
 $out = (& haxelib list hxcpp 2>&1) -join "`n"
 if ($out -match '\[git\]') {
     Write-Host "hxcpp already set to git. OK."

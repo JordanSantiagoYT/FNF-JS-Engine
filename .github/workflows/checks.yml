@@ -1,0 +1,30 @@
+name: Checks
+
+# Dependency-free regression guards for the Arena audit fixes
+# (#42-#55, #57-#60). These run in seconds and need no Haxe toolchain:
+# they assert the dependency pins agree across hmm.json and the setup
+# scripts, that workflow triggers name real workflows, that script-hook
+# argument lists match their documentation, and similar invariants.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    name: Static regression checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency manifests agree and are pinned
+        run: python3 tools/check_dependencies.py
+
+      - name: Run regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v

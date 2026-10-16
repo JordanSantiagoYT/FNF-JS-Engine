@@ -185,7 +185,7 @@ class PlayStateNotes
 					state.spawnedNote = (state.targetNote.isSustainNote ? state.sustainNotes : state.notes).recycle(Note);
 					state.spawnedNote.setupNoteData(state.targetNote);
 
-					if (!ClientPrefs.noSpawnFunc && state.hasActiveScripts()) state.callOnLuas('onSpawnNote', [(!state.spawnedNote.isSustainNote ? state.notes.members.indexOf(state.spawnedNote) : state.sustainNotes.members.indexOf(state.spawnedNote)), state.targetNote.noteData, state.targetNote.noteType, state.targetNote.isSustainNote]);
+					if (!ClientPrefs.noSpawnFunc && state.hasActiveScripts()) state.callOnLuas('onSpawnNote', [(!state.spawnedNote.isSustainNote ? state.notes.members.indexOf(state.spawnedNote) : state.sustainNotes.members.indexOf(state.spawnedNote)), state.targetNote.noteData, state.targetNote.noteType, state.targetNote.isSustainNote, state.targetNote.strumTime]); // #44: documented 5th arg
 					state.notesAddedCount++; state.limitNC++;
 					if (state.unspawnNotes[state.notesAddedCount+1] != null) state.targetNote = state.unspawnNotes[state.notesAddedCount];
 					else break;

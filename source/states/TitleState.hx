@@ -83,7 +83,7 @@ class TitleState extends MusicBeatState
     if (ClientPrefs.checkForUpdates && !closedState && !Main.askedToUpdate)
     {
       trace('Checking for a update...');
-      var http = new haxe.Http("https://raw.githubusercontent.com/JordanSantiagoYT/FNF-JS-Engine/main/THECHANGELOG.md");
+      var http = new haxe.Http("https://raw.githubusercontent.com/havaianasdestruido/FNF-Phoenix-Engine/main/THECHANGELOG.md");
       var returnedData:Array<String> = [];
 
       http.onData = function(data:String) {
@@ -93,7 +93,7 @@ class TitleState extends MusicBeatState
         // Extract the changelog after the version number
         returnedData[1] = data.substring(versionEndIndex + 1, data.length);
         updateVersion = returnedData[0];
-        final curVersion:String = MainMenuState.psychEngineJSVersion.trim();
+        final curVersion:String = MainMenuState.phoenixEngineVersion.trim(); // Phoenix version, not the JSE marker (#53)
         final cleanVersion:String = curVersion.split(" (")[0]; // Removes everything after " ("
 		#if debug
         trace(cleanVersion);

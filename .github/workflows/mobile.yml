@@ -50,6 +50,10 @@ on:
         default: false
 
 
+env:
+  # Keep in sync with main.yml (#60); tests/test_arena_fixes.py enforces this.
+  HAXE_VERSION: "4.3.7"
+
 jobs:
   Mobile:
     runs-on: ${{ matrix.os }}
@@ -127,7 +131,7 @@ jobs:
         if: steps.target-selection.outputs.enabled == 'true'
         uses: krdlab/setup-haxe@master
         with:
-          haxe-version: 4.3.6
+          haxe-version: ${{ env.HAXE_VERSION }}
 
 
       # ==========================================
@@ -178,17 +182,16 @@ jobs:
       # ==========================================
       # Install Haxe libraries
       # ==========================================
+      # Same installation path as main.yml (#42): setup/unix.sh installs the
+      # commit pins recorded in hmm.json (tools/check_dependencies.py keeps
+      # the two in sync). Failures are no longer swallowed with `|| true`.
       - name: Install Haxe libraries
         if: steps.target-selection.outputs.enabled == 'true'
         shell: bash
         run: |
           set -eux
-
-          haxelib install hscript || true
-          haxelib install hmm || true
-          haxelib install lime || true
-
-          haxelib run hmm install --quiet || true
+          chmod +x ./setup/unix.sh
+          SKIP_SYSTEM_DEPENDENCIES=1 ./setup/unix.sh
 
 
       # ==========================================

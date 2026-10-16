@@ -26,7 +26,30 @@ class MainMenuState extends MusicBeatState
 {
   public static final gitCommit:String = HaxeCommit.getGitCommitHash();
 
-  public static var phoenixEngineVersion:String = 'pre-alpha';
+  // Phoenix's own version, derived from the application metadata, which
+  // project.hxp sets from its VERSION constant -- the single source of
+  // truth (#54). Never hard-code a release string here again; the literal
+  // below is only a fallback for the (normally impossible) case where the
+  // metadata is unavailable, and tests/test_arena_fixes.py asserts it stays
+  // equal to project.hxp's VERSION and to the top of THECHANGELOG.md.
+  public static var phoenixEngineVersion(get, never):String;
+
+  private static function get_phoenixEngineVersion():String
+  {
+    #if !flash
+    if (Application.current != null)
+    {
+      final metaVersion:String = Application.current.meta.get('version');
+      if (metaVersion != null && metaVersion.length > 0) return metaVersion;
+    }
+    #end
+    return '0.3.2';
+  }
+
+  // Upstream JS Engine compatibility marker: the JSE release this fork is
+  // based on. This is NOT the Phoenix version and must not be used by the
+  // update checker (#53) -- it is kept for Discord RPC / watermark labels
+  // that intentionally report the upstream base.
   public static var psychEngineJSVersion:String = '1.51.0'; // This is also used for Discord RPC
   public static var psychEngineVersion:String = '0.6.3'; // This is also used for Discord RPC
   public static var curSelected:Int = 0;

@@ -1,11 +1,19 @@
 ﻿package flixel.addons.ui;
 
+import flixel.util.FlxTimer;
+import flixel.util.FlxDestroyUtil;
+import flixel.util.FlxColor;
+import flixel.text.FlxText;
+import flixel.math.FlxRect;
+import flixel.math.FlxPoint;
+import flixel.input.keyboard.FlxKey;
+import flixel.FlxSprite;
+import flixel.FlxG;
 import flixel.addons.ui.FlxUI.NamedString;
 import lime.system.Clipboard;
 import openfl.errors.Error;
 import openfl.events.KeyboardEvent;
 import openfl.geom.Rectangle;
-
 import objects.Character;
 
 /**

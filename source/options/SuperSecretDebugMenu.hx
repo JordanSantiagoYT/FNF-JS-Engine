@@ -110,7 +110,7 @@ class SuperSecretDebugMenu extends BaseOptionsMenu
 	function doDaUpdate():Void {
 		if(ClientPrefs.checkForUpdates) {
 			trace('checking for update');
-			var http = new haxe.Http("https://raw.githubusercontent.com/JordanSantiagoYT/FNF-JS-Engine/main/THECHANGELOG.md");
+			var http = new haxe.Http("https://raw.githubusercontent.com/havaianasdestruido/FNF-Phoenix-Engine/main/THECHANGELOG.md");
 			var returnedData:Array<String> = [];
 
 			http.onData = function (data:String)
@@ -121,7 +121,7 @@ class SuperSecretDebugMenu extends BaseOptionsMenu
     				// Extract the changelog after the version number
     				returnedData[1] = data.substring(versionEndIndex + 1, data.length);
 				TitleState.updateVersion = returnedData[0];
-				var curVersion:String = MainMenuState.psychEngineJSVersion.trim();
+				var curVersion:String = MainMenuState.phoenixEngineVersion.trim();
 					OutdatedState.currChanges = returnedData[1];
 			}
 

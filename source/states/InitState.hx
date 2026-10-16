@@ -1,6 +1,7 @@
 ﻿package states;
 
 import backend.ClientPrefs;
+import backend.Conductor;
 import backend.CoolUtil;
 import backend.Paths;
 import backend.PlayerSettings;
@@ -39,6 +40,7 @@ class InitState extends FlxState {
 
         // ClientPrefs.loadDefaultKeys();
 		ClientPrefs.loadPrefs();
+		Conductor.recalculateTimings(); // #43: apply the saved safeFrames before any song starts
 
         /*
         #if ACHIEVEMNTS_ALLOWED
