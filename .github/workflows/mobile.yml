@@ -53,6 +53,9 @@ on:
 env:
   # Keep in sync with main.yml (#60); tests/test_arena_fixes.py enforces this.
   HAXE_VERSION: "4.3.7"
+  # Keep the haxelib installation inside the workspace so the hxcpp tools
+  # (which must be compiled from source) land in a known, writable location.
+  HAXELIB_PATH: ${{ github.workspace }}/.haxelib
 
 jobs:
   Mobile:
@@ -190,8 +193,28 @@ jobs:
         shell: bash
         run: |
           set -eux
+          haxelib setup "$HAXELIB_PATH"
           chmod +x ./setup/unix.sh
           SKIP_SYSTEM_DEPENDENCIES=1 ./setup/unix.sh
+
+
+      # ==========================================
+      # Compile hxcpp tools
+      # ==========================================
+      # The FunkinCrew hxcpp checkout installed above is a source/development
+      # version, so its command-line tools must be built before `lime build`
+      # can drive the C++ compiler (otherwise hxcpp prompts interactively and
+      # the build aborts with "Can't continue without hxcpp.n").
+      - name: Compile hxcpp tools
+        if: steps.target-selection.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set -eux
+          cd "$HAXELIB_PATH/hxcpp/git/tools/run"
+          haxe compile.hxml
+
+          cd "$HAXELIB_PATH/hxcpp/git/tools/hxcpp"
+          haxe compile.hxml
 
 
       # ==========================================
