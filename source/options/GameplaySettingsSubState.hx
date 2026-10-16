@@ -207,6 +207,7 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		option.maxValue = 20;
 		if (ClientPrefs.safeFrames > 10) option.displayFormat = '%v (Will not save)';
 		option.changeValue = 0.1;
+		option.onChange = () -> Conductor.recalculateTimings(); // #43: safeFrames drives safeZoneOffset/timeScale
 		addOption(option);
 
 		var option:Option = new Option('Voiid-Styled Troll Mode',
