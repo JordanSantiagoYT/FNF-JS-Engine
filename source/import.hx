@@ -21,10 +21,11 @@ import flxanimate.*;
 import flxanimate.PsychFlxAnimate as FlxAnimate;
 #end
 
+import backend.ModsList;
 #if MODS_ALLOWED
 import backend.Mods;
 #else
-import backend.ModsStub;
+import backend.ModsStub as Mods; // #52: distinct type path, aliased for callers
 #end
 
 //so that it doesn't bring up a "Type not found: Countdown"

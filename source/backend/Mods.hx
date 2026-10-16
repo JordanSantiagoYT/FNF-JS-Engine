@@ -3,19 +3,9 @@ package backend;
 import backend.CoolUtil;
 import haxe.Json;
 
-typedef ModsList = {
-	enabled:Array<String>,
-	disabled:Array<String>,
-	all:Array<String>
-};
-
 class Mods
 {
-	#if MODS_ALLOWED
 	static public var currentModDirectory:String = '';
-	#else
-	static public var currentModDirectory:String = '';
-	#end
 	public static var ignoreModFolders:Array<String> = [
 		'characters',
 		'custom_events',

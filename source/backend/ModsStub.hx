@@ -1,9 +1,10 @@
 package backend;
 
-// Always-available no-op stub of backend.Mods for non-MODS_ALLOWED targets.
-// Callers can reference Mods.<method> without wrapping in #if MODS_ALLOWED;
-// on MODS_ALLOWED builds this is shadowed by the real backend.Mods import in import.hx.
-class Mods
+// No-op stub for non-MODS_ALLOWED targets (#52). This class has its own
+// type path (backend.ModsStub); import.hx aliases it as `Mods` when
+// MODS_ALLOWED is off, so exactly one `Mods` implementation is ever bound
+// and the two classes can no longer collide on the backend.Mods type path.
+class ModsStub
 {
 	static public var currentModDirectory:String = '';
 	public static var ignoreModFolders:Array<String> = [];
@@ -25,8 +26,3 @@ class Mods
 	inline public static function loadTopMod():Void {}
 }
 
-typedef ModsList = {
-	enabled:Array<String>,
-	disabled:Array<String>,
-	all:Array<String>
-};
