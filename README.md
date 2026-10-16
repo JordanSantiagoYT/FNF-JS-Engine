@@ -4,7 +4,7 @@
   <br>
   <b>FNF Phoenix Engine</b>
   <br>
-  <i>(Jordan Santiago Engine, with a bunch of new stuff)</i>
+  <i>(JSE, with a bunch of new stuff)</i>
   <br>
 </h1>
 <h3 align="center">

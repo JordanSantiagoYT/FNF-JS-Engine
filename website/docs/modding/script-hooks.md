@@ -132,7 +132,9 @@ onCustomSubstateUpdate  onCustomSubstateUpdatePost  onCustomSubstateDestroy
 
 Plus `goodNoteHit` / `opponentNoteHit`, which are dispatched from the note-hit path.
 
-:::tip Keep it cheap
+:::tip[Keep it cheap]
+
 `onUpdate` and `onUpdatePost` run every frame for *every* loaded script. Move work into
 beat hooks, timers or event handlers whenever the timing allows.
+
 :::

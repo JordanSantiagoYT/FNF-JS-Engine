@@ -43,7 +43,7 @@ Two goals drive every decision in the codebase:
 | [Contributing](./contributing/workflow.md) | send a pull request that gets merged |
 | [Code reference](./reference/index.md) | look up a class, field or method — generated from the Haxe sources |
 
-:::tip Pick your entry point
+:::tip[Pick your entry point]
 
 - *"I just want to compile it."* → [Requirements](./getting-started/requirements.md) then [Building](./getting-started/building.md).
 - *"I'm making a mod."* → [Modding overview](./modding/overview.md) and the

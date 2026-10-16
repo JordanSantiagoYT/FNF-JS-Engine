@@ -53,9 +53,11 @@ instead of re-scanning the chart.
 `Conductor.changeBPM(newBpm)` updates `bpm`, `crochet` and `stepCrochet` together;
 `calculateCrochet(bpm)` is the inline helper.
 
-:::note Sustain notes and BPM
+:::note[Sustain notes and BPM]
+
 A historical bug dropped sustain notes in charts with no BPM changes at all. The engine
 now always seeds the map with the song's base BPM.
+
 :::
 
 ## Beat callbacks
