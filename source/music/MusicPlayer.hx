@@ -97,7 +97,6 @@ class MusicPlayer extends FlxGroup
 		else
 			songTxt.text = 'PLAYING: ' + instance.songs[FreeplayState.curSelected].songName + ' (PAUSED)';
 
-		if(FlxG.keys.justPressed.K) trace('Time: ${FreeplayState.vocals.time}, Playing: ${FreeplayState.vocals.playing}');
 
 		if (controls.UI_LEFT_P)
 		{
