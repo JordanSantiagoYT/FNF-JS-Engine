@@ -71,7 +71,7 @@ story-menu characters, lock/hide flags and the asset directory.
 
 ## Working on an editor
 
-- The editors use `flixel-ui`, with engine overrides in `source-haxelib-patches/flixel/addons/ui/` and
+- The editors use `flixel-ui`, with engine overrides in `source/source-haxelib-patches/flixel/addons/ui/` and
   `objects.FlxUIDropDownMenuCustom`.
 - Keep heavy logic in `editors/helpers/` or `editors/charting/`; the state classes are
   already as large as they should get.

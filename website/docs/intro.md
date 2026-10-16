@@ -58,7 +58,7 @@ Two goals drive every decision in the codebase:
 ```text
 FNF-Phoenix-Engine/
 ├── source/                    # all engine Haxe code (284 modules, 36 packages)
-├── source-haxelib-patches/    # whole-file overrides of flixel/openfl/funkin.vis
+├── source/source-haxelib-patches/    # whole-file overrides of flixel/openfl/funkin.vis
 ├── assets/                    # preload/shared/embed asset libraries, fonts, songs
 ├── mods/                      # user mods (soft modding); ships with bf-clicker
 ├── example_mods/              # mod template zip + script templates

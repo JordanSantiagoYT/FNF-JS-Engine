@@ -144,13 +144,13 @@ With `-DNO_BUILTIN_CONTENT`, the content libraries are stripped; see
 
 ```haxe
 this.sources.push(SOURCE_DIR);                 // source/
-this.sources.push("source-haxelib-patches");   // overrides, pushed LAST
+this.sources.push("source/source-haxelib-patches");   // overrides, pushed LAST
 ```
 
 Lime turns each entry into a `-cp` line *after* the library class paths, and the compiler
 takes a module from the **last** matching class path. That is the whole mechanism behind
 [Haxelib patches](../architecture/haxelib-patches.md) — precedence is
-`source-haxelib-patches/` > `source/` > haxelib.
+`source/source-haxelib-patches/` > `source/` > haxelib.
 
 ## Build callbacks
 

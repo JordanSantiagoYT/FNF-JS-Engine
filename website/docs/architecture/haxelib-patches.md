@@ -1,12 +1,12 @@
 ---
 title: Haxelib patches
 sidebar_position: 9
-description: How source-haxelib-patches/ shadows library modules, what each patch fixes, and how to add or remove one.
+description: How source/source-haxelib-patches/ shadows library modules, what each patch fixes, and how to add or remove one.
 ---
 
 # Haxelib patches
 
-`source-haxelib-patches/` holds **complete copies of library files** (`flixel`, `openfl`,
+`source/source-haxelib-patches/` holds **complete copies of library files** (`flixel`, `openfl`,
 `funkin.vis`) with a few lines changed, committed to the repository instead of being
 applied by hand into the haxelib install folder.
 
@@ -31,22 +31,22 @@ as plain Haxe.
 
 ```haxe
 this.sources.push(SOURCE_DIR);                 // -> source/
-this.sources.push("source-haxelib-patches");   // -> source-haxelib-patches/
+this.sources.push("source/source-haxelib-patches");   // -> source/source-haxelib-patches/
 ```
 
 Lime writes each entry as a `-cp` line in the generated hxml *after* the `-lib` class
 paths, and a module present in more than one class path is taken from the **last** one
-declared. So `source-haxelib-patches/flixel/sound/FlxSound.hx` shadows the haxelib's
+declared. So `source/source-haxelib-patches/flixel/sound/FlxSound.hx` shadows the haxelib's
 `flixel/sound/FlxSound.hx` — the library copy is never opened by the compiler.
 
-Precedence: **`source-haxelib-patches/` > `source/` > haxelib.**
+Precedence: **`source/source-haxelib-patches/` > `source/` > haxelib.**
 
 Two consequences:
 
 - **A patch is a whole file, not a diff.** The folder mirrors the library's package layout
   exactly (path, letter case and file name must match) and the file must compile on its own.
 - **Keep the two source folders disjoint.** A module patched in both would silently be
-  taken from `source-haxelib-patches/`. Today they are disjoint, and `tests/test_arena_fixes.py` fails if a library package (`flixel/`, `openfl/`, `funkin/`) reappears under `source/` (#46).
+  taken from `source/source-haxelib-patches/`. Today they are disjoint, and `tests/test_arena_fixes.py` fails if a library package (`flixel/`, `openfl/`, `funkin/`) reappears under `source/` (#46).
 
 Because the substitution happens at Haxe compile time, a patch applies to *every* target —
 which is why each one is wrapped in platform conditionals, so native builds behave exactly
@@ -106,14 +106,14 @@ Nothing imports from this folder and there is no API to call. `source/` keeps re
 haxelib libpath flixel
 
 # 2. mirror the exact package path and copy the file (never hand-write one)
-mkdir -p source-haxelib-patches/flixel/sound
-cp "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source-haxelib-patches/flixel/sound/FlxSound.hx
+mkdir -p source/source-haxelib-patches/flixel/sound
+cp "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source/source-haxelib-patches/flixel/sound/FlxSound.hx
 
 # 3. edit only what is needed, keep upstream formatting/tabs, guard with #if,
 #    and leave a comment saying WHICH TARGET needs it and WHY
 
 # 4. review the delta the way a reviewer will
-diff -u "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source-haxelib-patches/flixel/sound/FlxSound.hx
+diff -u "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source/source-haxelib-patches/flixel/sound/FlxSound.hx
 ```
 
 - Patch here only for **library** fixes. Engine behaviour belongs in `source/` (or,
@@ -123,7 +123,7 @@ diff -u "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source-haxelib-patc
 - When a library is bumped (re-running `setup/unix.sh` / `setup/windows.bat`, or a new ref
   in `hmm.json`), re-diff **every** patch: the copy is frozen at the moment it was taken,
   so a stale patch silently reverts upstream fixes.
-- Un-applying a patch is `git rm source-haxelib-patches/<path>` — nothing was written into
+- Un-applying a patch is `git rm source/source-haxelib-patches/<path>` — nothing was written into
   the haxelib, so there is nothing to restore (build with `-clean` if you still see old
   output).
 - When the set of patched files changes, update the list in `BUILDING.md`
@@ -133,11 +133,11 @@ diff -u "$(haxelib libpath flixel)/flixel/sound/FlxSound.hx" source-haxelib-patc
 
 ```bash
 haxelib run lime build windows -Dofficial
-grep -rn "source-haxelib-patches" build/release/haxe/*.hxml   # must appear after -cp source/
+grep -rn "source/source-haxelib-patches" build/release/haxe/*.hxml   # must appear after -cp source/
 ```
 
 Brute-force proof: introduce a syntax error in the patch file and rebuild — the compiler
-should stop inside `source-haxelib-patches/`, not inside `~/.haxelib`.
+should stop inside `source/source-haxelib-patches/`, not inside `~/.haxelib`.
 
 :::warning[Not everything belongs here]
 
