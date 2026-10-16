@@ -12,6 +12,7 @@
 ROUND_TIME = 45.0
 
 g_started = False
+g_resumeFramePending = False
 g_finished = False
 g_clicks = 0
 g_misses = 0
@@ -22,6 +23,7 @@ g_lastShown = -1
 g_roundElapsed = 0.0
 g_previousMusicVolume = None
 g_previousMouseVisible = None
+g_mouseVisibilityCaptured = False
 
 
 # ---------------------------------------------------------------- //
@@ -38,6 +40,7 @@ def hideIfExists(target):
 # ---------------------------------------------------------------- //
 def onCreatePost():
 	global g_baseY, g_best, g_previousMusicVolume, g_previousMouseVisible
+	global g_mouseVisibilityCaptured
 
 	# hide the rhythm-game opponents
 	setProperty('dad.visible', False)
@@ -71,8 +74,15 @@ def onCreatePost():
 
 	# keep the background music quiet, then restore the player's setting on exit
 	g_previousMusicVolume = getPropertyFromClass('flixel.FlxG', 'sound.music.volume')
-	setPropertyFromClass('flixel.FlxG', 'sound.music.volume', 0.5)
+	if g_previousMusicVolume != None:
+		setPropertyFromClass('flixel.FlxG', 'sound.music.volume', 0.5)
+
+	# Capture before changing visibility. FlxG.mouse.visible is a Bool in this
+	# engine; if a host cannot provide it, leave the cursor untouched.
 	g_previousMouseVisible = getPropertyFromClass('flixel.FlxG', 'mouse.visible')
+	if g_previousMouseVisible != None:
+		g_mouseVisibilityCaptured = True
+		setPropertyFromClass('flixel.FlxG', 'mouse.visible', True)
 
 	# HUD texts
 	makeLuaText('clicksTxt', 'CLICKS: 0', 600, 0, 16)
@@ -105,9 +115,6 @@ def onCreatePost():
 	setTextBorder('helpTxt', 3, '000000')
 	screenCenter('helpTxt', 'x')
 
-	# show the mouse cursor for clicking
-	setPropertyFromClass('flixel.FlxG', 'mouse.visible', True)
-
 	# load the saved best score
 	if getPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest') != None:
 		g_best = int(getPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest'))
@@ -123,7 +130,30 @@ def onSongStart():
 	global g_started, g_roundElapsed, g_lastShown
 	g_started = True
 	g_roundElapsed = 0.0
-	g_lastShown = -1
+	g_lastShown = 45
+	setTextString('timeTxt2', 'TIME: 45')
+
+
+def onResume():
+	global g_resumeFramePending
+	# The first update after a pause can carry the pause interval in elapsed on
+	# some hosts. Drop just that sample; keep the accumulated round time intact.
+	g_resumeFramePending = True
+
+
+def restoreMouseVisibility():
+	# A separate captured flag preserves an original False value and avoids
+	# changing anything if the host did not provide a readable saved state.
+	if g_mouseVisibilityCaptured:
+		setPropertyFromClass('flixel.FlxG', 'mouse.visible', g_previousMouseVisible)
+
+
+def saveBestScore():
+	global g_best
+	if g_clicks > g_best:
+		g_best = g_clicks
+		setPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest', g_best)
+		flushGlobalSave()
 
 
 # ---------------------------------------------------------------- //
@@ -131,10 +161,16 @@ def onSongStart():
 # ---------------------------------------------------------------- //
 def onUpdate(elapsed):
 	global g_clicks, g_misses, g_best, g_floatPhase, g_roundElapsed
-	global g_lastShown, g_finished
+	global g_lastShown, g_finished, g_resumeFramePending
 
-	if g_finished:
+	# Check PlayState directly instead of relying on elapsed being frozen by the
+	# host. This also blocks clicks if an update is dispatched during a pause.
+	paused = getPropertyFromClass('play.PlayState', 'instance.paused')
+	if g_finished or paused == True:
 		return
+	if g_resumeFramePending:
+		g_resumeFramePending = False
+		elapsed = 0.0
 
 	# keep the camera pinned to the center of the screen
 	setProperty('camFollow.x', getPropertyFromClass('flixel.FlxG', 'width') / 2)
@@ -153,26 +189,34 @@ def onUpdate(elapsed):
 		dy = (2.0 - g_floatPhase) * 10.0
 	setProperty('boyfriend.y', g_baseY + dy)
 
-	# Count actual gameplay time, starting only after the countdown/song start.
+	# Count only active gameplay time. PlayState normally stops updating while
+	# paused, and the explicit state check above guards any dispatched updates.
 	if g_started:
 		g_roundElapsed = g_roundElapsed + elapsed
-		tLeft = ROUND_TIME - g_roundElapsed
-		if tLeft < 0:
-			tLeft = 0
-		if int(tLeft) != g_lastShown:
-			g_lastShown = int(tLeft)
+		if g_roundElapsed > ROUND_TIME:
+			g_roundElapsed = ROUND_TIME
+
+		# Integer round length minus elapsed whole seconds is equivalent to
+		# ceil(remaining): show 45 at start, then 44 after the first full second.
+		secondsLeft = int(ROUND_TIME) - int(g_roundElapsed)
+		if secondsLeft < 0:
+			secondsLeft = 0
+		if secondsLeft != g_lastShown:
+			g_lastShown = secondsLeft
 			setTextString('timeTxt2', 'TIME: ' + str(g_lastShown))
 
-	# Clicking uses world coordinates from the same game camera as BF. Its hitbox
-	# was already resized by scaleObject(updateHitbox=True), so do not scale twice.
-	if g_started and g_roundElapsed < ROUND_TIME and mouseClicked('left'):
-		mx = getMouseX('game')
-		my = getMouseY('game')
+	# PyCameraLib's getMouseX/Y return Flixel screen-space pointer coordinates.
+	# Add camGame.scroll to convert them to world space, matching BF's x/y.
+	# Flixel updateHitbox() has already incorporated scaleObject's 2x scale into
+	# width and height, so use those dimensions once. FlxObject x/y are top-left.
+	if g_started and paused != True and g_roundElapsed < ROUND_TIME and mouseClicked('left'):
+		mx = getMouseX('game') + getProperty('camGame.scroll.x')
+		my = getMouseY('game') + getProperty('camGame.scroll.y')
 		bfx = getProperty('boyfriend.x')
 		bfy = getProperty('boyfriend.y')
-		bw = getProperty('boyfriend.width') * 0.5
-		bh = getProperty('boyfriend.height') * 0.5
-		if mx > bfx - bw and mx < bfx + bw and my > bfy - bh and my < bfy + bh:
+		bw = getProperty('boyfriend.width')
+		bh = getProperty('boyfriend.height')
+		if mx >= bfx and mx < bfx + bw and my >= bfy and my < bfy + bh:
 			g_clicks = g_clicks + 1
 			addScore(1)
 			setTextString('clicksTxt', 'CLICKS: ' + str(g_clicks))
@@ -202,11 +246,12 @@ def onUpdate(elapsed):
 	if g_started and g_roundElapsed >= ROUND_TIME:
 		g_finished = True
 		setTextString('timeTxt2', 'TIME UP!')
-		if g_clicks > g_best:
-			g_best = g_clicks
-			setPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest', g_best)
+		saveBestScore()
 		setTextString('bestTxt', 'BEST: ' + str(g_best))
+		restoreMouseVisibility()
 		endSong()
+		# endSong may unload/reset Flixel's cursor, so restore once more after it.
+		restoreMouseVisibility()
 
 
 # ---------------------------------------------------------------- //
@@ -215,11 +260,10 @@ def onUpdate(elapsed):
 def onDestroy():
 	global g_best
 
-	# keep the best score even if the player leaves mid-round
-	if g_clicks > g_best:
-		g_best = g_clicks
-		setPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest', g_best)
+	# keep and flush the best score even if the player leaves mid-round
+	saveBestScore()
+	# Restore input state even if setup failed partway through; the helper is a
+	# no-op unless the original cursor state was successfully captured.
+	restoreMouseVisibility()
 	if g_previousMusicVolume != None:
 		setPropertyFromClass('flixel.FlxG', 'sound.music.volume', g_previousMusicVolume)
-	if g_previousMouseVisible != None:
-		setPropertyFromClass('flixel.FlxG', 'mouse.visible', g_previousMouseVisible)
