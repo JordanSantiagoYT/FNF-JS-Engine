@@ -40,7 +40,7 @@
       {
         "name": "hscript",
         "link": "https://github.com/CodenameCrew/hscript-improved",
-        "branch": "master"
+        "branch": "11cbbcffcf48b0e9ecc86e4e8f81deadafe3da54"
       },
       {
         "name": "hxcpp-debug-server"
