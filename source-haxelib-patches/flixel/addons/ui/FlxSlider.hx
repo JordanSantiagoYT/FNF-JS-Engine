@@ -1,5 +1,23 @@
 ﻿package flixel.addons.ui;
 
+import flixel.util.FlxDestroyUtil;
+
+import flixel.util.FlxColor;
+
+import flixel.text.FlxText;
+
+import flixel.math.FlxRect;
+
+import flixel.math.FlxPoint;
+
+import flixel.math.FlxMath;
+
+import flixel.group.FlxSpriteGroup;
+
+import flixel.FlxSprite;
+
+import flixel.FlxG;
+
 #if FLX_MOUSE
 import flixel.util.FlxSpriteUtil;
 
