@@ -44,8 +44,10 @@ end
 Python works identically with `custom_events/My Cool Event.py`.
 
 :::note
+
 `onEvent` fires for **every** event in the song, not only yours — always check `name`.
 Events triggered from a script with `triggerEvent()` do **not** call `onEvent`.
+
 :::
 
 ## Custom notetypes

@@ -30,7 +30,7 @@ import lime.system.JNI;
 
 /**
  * Central JNI bridge between the Haxe engine and the Phoenix Android native
- * layer (`android/src/quack/fnf/phoenix/android/*.java`).
+ * layer (`source/android/src/quack/fnf/phoenix/android/*.java`).
  *
  * Java pushes events through `onAndroidEvent(event, arg)` and storage
  * results through `handleStorageResult(...)`; this class demultiplexes them

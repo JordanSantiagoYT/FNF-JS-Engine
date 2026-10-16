@@ -9,8 +9,9 @@ Published to GitHub Pages by `.github/workflows/docs.yml`.
 cd website
 npm install
 npm start          # dev server (regenerates the reference first)
-npm run build      # production build into website/build
+npm run build      # production build into website/build (also runs lint:docs)
 npm run serve      # serve the production build
+npm run lint:docs  # check the markdown conventions the site needs to render
 ```
 
 Node 20+ is required.
@@ -27,7 +28,9 @@ edit them by hand:
 | `npm run gen` | both | both |
 
 `npm start` and `npm run build` run `npm run gen` first, so the reference is always in
-sync with the code.
+sync with the code. `npm run build` additionally runs `npm run lint:docs`, which rejects
+markdown that builds fine but renders wrong — most often an admonition written as
+`:::note Title` instead of `:::note[Title]`.
 
 To document something in the reference, write a `/** ... */` doc comment on the Haxe type
 or field, or a `//` comment directly above a `registerFunction(...)` call, and regenerate.
@@ -46,7 +49,8 @@ docs/
 scripts/
 ├── haxe-parser.mjs          dependency-free Haxe parser
 ├── generate-api-docs.mjs    code reference generator
-└── generate-script-api.mjs  Lua/Python API generator
+├── generate-script-api.mjs  Lua/Python API generator
+└── check-doc-syntax.mjs     markdown/admonition lint
 ```
 
 `sidebars.js` autogenerates one sidebar from the folder tree; ordering comes from

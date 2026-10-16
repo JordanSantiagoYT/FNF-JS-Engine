@@ -69,9 +69,11 @@ Mod-specific variants: `Paths.mods(key)`, `modsImages`, `modsJson`, `modsXml`, `
 `modsFont`, `modsVideo`, `modsSounds`, `modsImagesJson`, and `Paths.playModMusic(file,
 fallback, volume)` which tries a mod track, then the base theme, then the default.
 
-:::tip UTF-8 BOM
+:::tip[UTF-8 BOM]
+
 `getTextFromFile` strips a UTF-8 BOM before parsing. Hand-edited JSON saved by Windows
 editors used to crash the chart loader; always read text through `Paths`.
+
 :::
 
 ## Caching and memory

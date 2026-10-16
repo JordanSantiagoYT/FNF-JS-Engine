@@ -77,11 +77,11 @@ If you still hit it:
 
 ```bash
 haxelib run lime build windows -Dofficial
-grep -rn "source-haxelib-patches" build/release/haxe/*.hxml   # must appear after -cp source/
+grep -rn "source/source-haxelib-patches" build/release/haxe/*.hxml   # must appear after -cp source/
 ```
 
 Brute-force check: introduce a syntax error in the patch file and rebuild — the compiler
-should stop inside `source-haxelib-patches/`, not inside `~/.haxelib`.
+should stop inside `source/source-haxelib-patches/`, not inside `~/.haxelib`.
 
 ## Runtime
 

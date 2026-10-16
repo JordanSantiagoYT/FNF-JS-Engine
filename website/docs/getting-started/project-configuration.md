@@ -39,7 +39,8 @@ configureIcons();
 | `PRELOADER` | `flixel.system.FlxPreloader` |
 | `SOURCE_DIR` | `source` |
 
-:::tip Bumping the version
+:::tip[Bumping the version]
+
 Change `VERSION` in `project.hxp` — every in-game reader (main menu, FPS
 counter, crash reports, the Lua `phoenixVersion` global) derives the Phoenix
 version from the application metadata it sets, and `project.hxp` also
@@ -48,6 +49,7 @@ remains: make the first entry of `THECHANGELOG.md` the same version, because
 the update checker polls that file from this repository and compares its
 first entry against the running Phoenix version (#53, #54).
 `tests/test_arena_fixes.py` asserts the two stay equal.
+
 :::
 
 ## Window
@@ -142,13 +144,13 @@ With `-DNO_BUILTIN_CONTENT`, the content libraries are stripped; see
 
 ```haxe
 this.sources.push(SOURCE_DIR);                 // source/
-this.sources.push("source-haxelib-patches");   // overrides, pushed LAST
+this.sources.push("source/source-haxelib-patches");   // overrides, pushed LAST
 ```
 
 Lime turns each entry into a `-cp` line *after* the library class paths, and the compiler
 takes a module from the **last** matching class path. That is the whole mechanism behind
 [Haxelib patches](../architecture/haxelib-patches.md) — precedence is
-`source-haxelib-patches/` > `source/` > haxelib.
+`source/source-haxelib-patches/` > `source/` > haxelib.
 
 ## Build callbacks
 

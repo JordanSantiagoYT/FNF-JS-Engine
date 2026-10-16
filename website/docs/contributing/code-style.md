@@ -16,7 +16,7 @@ this page is the working summary.
   `files.insertFinalNewline` for all files.
 - **Generated code is not repo code.** Everything under `export/` and `build/` is produced
   by Haxe, hxcpp and Lime, and is git-ignored. Never hand-edit or reformat it — change the
-  `.hx`/`.hxp` source (or add a `source-haxelib-patches/` override) and rebuild.
+  `.hx`/`.hxp` source (or add a `source/source-haxelib-patches/` override) and rebuild.
 - **Naming**: types `UpperCamelCase`, members and functions `lowerCamelCase`, true
   constants `UPPER_SNAKE_CASE`.
 - **Comments**: `//` for implementation notes, `/** ... */` doc comments on every public
