@@ -1,7 +1,7 @@
 # Python stuff
 # The function properties still work if you change the function names.
 # For example:
-#   def onEvent(name, v1, v2):
+#   def onEvent(name, v1, v2, strumTime):
 #       # value 1 is the camera flash length, value 2 is the flash color
 #       if name == 'flashCamera':
 #           cameraFlash('camGame', v2, v1)
@@ -133,14 +133,14 @@ def onMoveCamera(focus):
 
 
 # Event notes hooks
-def onEvent(name, value1, value2):
+def onEvent(name, value1, value2, strumTime):
 	# event note triggered
 	# triggerEvent() does not call this function!!
 
 	# print('Event triggered: ', name, value1, value2)
 	pass
 
-def eventEarlyTrigger(name):
+def eventEarlyTrigger(name, value1, value2, strumTime):
 	# Here's a port of the Kill Henchmen early trigger but on Python instead of Haxe:
 	#
 	# if name == 'Kill Henchmen':

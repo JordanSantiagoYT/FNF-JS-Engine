@@ -2,7 +2,7 @@
 --[[
 The function properties still works if you change the function names
  For example:
-	function onEvent(name, v1, v2)
+	function onEvent(name, v1, v2, strumTime)
 	--value 1 is the camera flash length, value 2 is the flash color
 		if name == 'flashCamera' then
 			cameraFlash('camGame', v2, v1)
@@ -139,14 +139,14 @@ end
 
 
 -- Event notes hooks
-function onEvent(name, value1, value2)
+function onEvent(name, value1, value2, strumTime)
 	-- event note triggered
 	-- triggerEvent() does not call this function!!
 
 	-- print('Event triggered: ', name, value1, value2);
 end
 
-function eventEarlyTrigger(name)
+function eventEarlyTrigger(name, value1, value2, strumTime)
 	--[[
 	Here's a port of the Kill Henchmen early trigger but on Lua instead of Haxe:
 
