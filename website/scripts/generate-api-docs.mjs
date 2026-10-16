@@ -537,7 +537,10 @@ function main() {
     '',
     '# Code reference',
     '',
-    ':::info Generated page',
+    // Admonition titles must use the `:::type[Title]` directive-label syntax:
+    // `.md` files are parsed as CommonMark and the legacy `:::type Title` form
+    // is not recognised (it would render as plain text).
+    ':::info[Generated page]',
     '',
     'Everything in this section is generated from the Haxe sources by',
     '`website/scripts/generate-api-docs.mjs`. Do not edit these files — write a',
