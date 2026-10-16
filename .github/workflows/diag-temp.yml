@@ -24,6 +24,7 @@ jobs:
           set +e
           {
             haxelib setup "$GITHUB_WORKSPACE/.haxelib"
+            chmod +x ./setup/unix.sh
             SKIP_SYSTEM_DEPENDENCIES=1 ./setup/unix.sh
             echo "=== BUILD NEKO ==="
             timeout 600 haxelib run lime build neko -D official 2>&1
