@@ -629,7 +629,7 @@ class Project extends HXProject
 		addAssetPath("include/example_mods", "mods", "default", ["*"], exclude, shouldEmbed); // lololololoolollo
 
 		if (isLinux() && !isDebug())
-			addAsset("gamemode.ini");
+			addAsset("include/gamemode.ini");
 	}
 
 	/**
@@ -820,7 +820,7 @@ class Project extends HXProject
 	public function addAsset(path:String, ?rename:String, ?library:String, embed:Bool = false):Void
 	{
 		// path, rename, type, embed, setDefaults
-		var asset = new Asset(path, rename, null, embed, true);
+		final asset = new Asset(path, rename, null, embed, true);
 		@:nullSafety(Off)
 		{
 			asset.library = library ?? "default";
