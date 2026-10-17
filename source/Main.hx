@@ -2,6 +2,7 @@ package;
 
 import backend.SSPlugin as ScreenShotPlugin;
 import debug.FPSCounter;
+import debug.FrameProfiler;
 import backend.FunkinGame;
 // REFACTOR: relocated root classes
 import backend.CrashHandler;
@@ -133,6 +134,7 @@ class Main extends Sprite
     };
     #end
     ClientPrefs.loadDefaultStuff();
+    FrameProfiler.init(game.framerate);
     #if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
 
     final funkinGame:FunkinGame = new FunkinGame(game.width, game.height, #if (mobile && MODS_ALLOWED) !mobile.CopyState.checkExistingFiles() ? mobile.CopyState : #end game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate,
@@ -177,6 +179,13 @@ class Main extends Sprite
 
     #if GAMEMODE_ALLOWED
     Application.current.onExit.add(function(_:Int) shutdownGameMode());
+    #end
+
+    #if !flash
+    Application.current.onExit.add(function(_:Int) {
+      if (FrameProfiler.autoExportOnExit || ClientPrefs.frameProfiler)
+        FrameProfiler.exportLog();
+    });
     #end
 
     // shader coords fix

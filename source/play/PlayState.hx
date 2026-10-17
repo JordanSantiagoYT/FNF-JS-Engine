@@ -509,7 +509,9 @@ class PlayState extends MusicBeatState
 		inline Paths.clearStoredMemory();
 
 		#if sys
+		debug.FrameProfiler.beginGC(true);
 		System.gc();
+		debug.FrameProfiler.endGC();
 		#end
 
 		// for lua
@@ -2241,6 +2243,7 @@ class PlayState extends MusicBeatState
 
 		if (startedCountdown && !paused)
 		{
+			debug.FrameProfiler.beginAudio();
 			Conductor.songPosition += elapsed * 1000 * playbackRate;
 			if (!ffmpegMode)
 			{
@@ -2253,6 +2256,7 @@ class PlayState extends MusicBeatState
 				}
 				if (Conductor.songPosition < 200 && Math.abs(vocals.time - FlxG.sound.music.time) >= 20) setVocalsTime(FlxG.sound.music.time);
 			}
+			debug.FrameProfiler.endAudio();
 		}
 
 		if (startingSong)
@@ -2421,7 +2425,12 @@ class PlayState extends MusicBeatState
 					catch (e) {}
 				}
 			}
-			if (ClientPrefs.renderGCRate > 0 && (frameCaptured / targetFPS) % ClientPrefs.renderGCRate == 0) System.gc();
+			if (ClientPrefs.renderGCRate > 0 && (frameCaptured / targetFPS) % ClientPrefs.renderGCRate == 0)
+			{
+				debug.FrameProfiler.beginGC(true);
+				System.gc();
+				debug.FrameProfiler.endGC();
+			}
 			frameCaptured++;
 		}
 	}

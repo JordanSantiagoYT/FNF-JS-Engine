@@ -67,9 +67,11 @@ class PlayStateRender
 		if (!state.ffmpegExists || PlayState.process == null)
 			return;
 
+		debug.FrameProfiler.beginRender();
 		state.img = lime.app.Application.current.window.readPixels(new lime.math.Rectangle(FlxG.scaleMode.offset.x, FlxG.scaleMode.offset.y, FlxG.scaleMode.gameSize.x, FlxG.scaleMode.gameSize.y));
 		state.bytes = state.img.getPixels(new lime.math.Rectangle(0, 0, state.img.width, state.img.height));
 		PlayState.process.stdin.writeBytes(state.bytes, 0, state.bytes.length);
+		debug.FrameProfiler.endRender();
 		#end
 	}
 

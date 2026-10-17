@@ -180,20 +180,24 @@ class Paths
 
   @:noCompletion private inline static function _gc(major:Bool)
   {
+    debug.FrameProfiler.beginGC(major);
     #if cpp
     Gc.run(major);
     #elseif hl
     Gc.major();
     #end
+    debug.FrameProfiler.endGC();
   }
 
   @:noCompletion public inline static function compress()
   {
+    debug.FrameProfiler.beginGC(true);
     #if cpp
     Gc.compact();
     #elseif hl
     Gc.major();
     #end
+    debug.FrameProfiler.endGC();
   }
 
   public inline static function gc(major:Bool = false, repeat:Int = 1)

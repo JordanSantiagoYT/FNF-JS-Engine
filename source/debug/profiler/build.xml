@@ -1,0 +1,10 @@
+<xml>
+  <files id="haxe">
+    <compilervalue name="-I" value="${this_dir}/include/" />
+  </files>
+  <target id="haxe">
+    <section if="windows">
+      <lib name="psapi.lib" />
+    </section>
+  </target>
+</xml>
