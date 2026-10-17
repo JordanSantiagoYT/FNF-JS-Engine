@@ -76,6 +76,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var showRamUsage:Bool = true;
 	public static var showMaxRamUsage:Bool = true;
 	public static var debugInfo:Bool = false;
+	public static var frameProfiler:Bool = false;
 	public static var tipTexts:Bool = true;
 	public static var discordRPC:Bool = true;
 	public static var peOGCrash:Bool = false;
@@ -330,6 +331,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 							FlxG.drawFramerate = framerate;
 							FlxG.updateFramerate = framerate;
 						}
+						debug.FrameProfiler.setTargetFps(framerate);
 					}
 				}
 			}

@@ -1,5 +1,6 @@
-﻿package debug;
+package debug;
 
+import debug.FrameProfiler;
 import debug.mem.GetTotalMemory;
 import lime.system.System as LimeSystem;
 import openfl.events.Event;
@@ -157,6 +158,8 @@ class FPSCounter extends TextField
     if (ClientPrefs.showRamUsage) text += "\nMemory: "
       + MemoryUtil.formatMemory(memory)
       + (ClientPrefs.showMaxRamUsage ? " / " + MemoryUtil.formatMemory(mempeak) : "");
+    if (ClientPrefs.frameProfiler || ClientPrefs.debugInfo)
+      text += "\n" + FrameProfiler.getOverlayText();
     if (ClientPrefs.debugInfo)
     {
       text += '\nCurrent state: ${Type.getClassName(Type.getClass(FlxG.state))}';

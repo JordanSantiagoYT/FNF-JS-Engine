@@ -386,6 +386,14 @@ class VisualsUISubState extends BaseOptionsMenu
 		addOption(option);
 		option.onChange = updateFPSText;
 
+		var option:Option = new Option('Show Frame Profiler',
+			"If checked, displays frametime, update/render/audio timings, allocations, and GC pauses.\nPress F6 to export a .log report to debug/log/.",
+			'frameProfiler',
+			'bool',
+			false);
+		addOption(option);
+		option.onChange = updateFPSText;
+
 		var option:Option = new Option('Botplay Text Fading',
 			"If checked, the botplay text will do cool fading.",
 			'botTxtFade',

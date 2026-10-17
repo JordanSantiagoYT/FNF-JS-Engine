@@ -181,18 +181,26 @@ class Paths
   @:noCompletion private inline static function _gc(major:Bool)
   {
     #if cpp
+    debug.FrameProfiler.beginGC(major);
     Gc.run(major);
+    debug.FrameProfiler.endGC();
     #elseif hl
+    debug.FrameProfiler.beginGC(major);
     Gc.major();
+    debug.FrameProfiler.endGC();
     #end
   }
 
   @:noCompletion public inline static function compress()
   {
     #if cpp
+    debug.FrameProfiler.beginGC(true);
     Gc.compact();
+    debug.FrameProfiler.endGC();
     #elseif hl
+    debug.FrameProfiler.beginGC(true);
     Gc.major();
+    debug.FrameProfiler.endGC();
     #end
   }
 

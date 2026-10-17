@@ -1,4 +1,4 @@
-﻿package flixel;
+package flixel;
 
 import flixel.graphics.tile.FlxDrawBaseItem;
 import flixel.system.FlxSplash;
@@ -15,6 +15,7 @@ import lime.system.System;
 
 import backend.ClientPrefs;
 import data.Section;
+import debug.FrameProfiler;
 import objects.Note;
 import play.PlayState;
 #if desktop
@@ -481,6 +482,8 @@ class FlxGame extends Sprite
 	 */
 	function onEnterFrame(_):Void
 	{
+		FrameProfiler.beginFrame();
+
 		final timer = getTimer();
 		ticks = getTicks();
 		_elapsedMS = timer - _total;
@@ -488,7 +491,11 @@ class FlxGame extends Sprite
 
 		#if FLX_SOUND_TRAY
 		if (soundTray != null && soundTray.active)
+		{
+			FrameProfiler.beginAudio();
 			soundTray.update(_elapsedMS);
+			FrameProfiler.endAudio();
+		}
 		#end
 
 		if (!_lostFocus || !FlxG.autoPause)
@@ -520,6 +527,8 @@ class FlxGame extends Sprite
 			debugger.update();
 			#end
 		}
+
+		FrameProfiler.endFrame(FlxG.renderTile ? FlxDrawBaseItem.drawCalls : 0);
 	}
 
 	/**
@@ -576,6 +585,7 @@ class FlxGame extends Sprite
 		// Finally assign and create the new state
 		_state = _nextState.createInstance();
 		_isPlayState = Std.isOfType(_state, PlayState);
+		FrameProfiler.setStateName(Type.getClassName(Type.getClass(_state)));
 		_state._constructor = _nextState;
 		_nextState = null;
 
@@ -622,7 +632,9 @@ class FlxGame extends Sprite
 		FlxBasic.activeCount = 0;
 		#end
 
+		FrameProfiler.beginUpdate();
 		update();
+		FrameProfiler.endUpdate();
 
 		#if FLX_DEBUG
 		debugger.stats.activeObjects(FlxBasic.activeCount);
@@ -658,7 +670,9 @@ class FlxGame extends Sprite
 		#end
 
 		#if FLX_SOUND_SYSTEM
+		FrameProfiler.beginAudio();
 		FlxG.sound.update(FlxG.elapsed);
+		FrameProfiler.endAudio();
 		#end
 		FlxG.plugins.update(FlxG.elapsed);
 
@@ -708,6 +722,8 @@ class FlxGame extends Sprite
 		if (!_state.visible || !_state.exists)
 			return;
 
+		FrameProfiler.beginRender();
+
 		#if FLX_DEBUG
 		if (FlxG.debugger.visible)
 			ticks = getTicks();
@@ -741,6 +757,8 @@ class FlxGame extends Sprite
 		FlxG.cameras.unlock();
 
 		FlxG.signals.postDraw.dispatch();
+
+		FrameProfiler.endRender();
 
 		#if FLX_DEBUG
 		debugger.stats.flixelDraw(getTicks() - ticks);

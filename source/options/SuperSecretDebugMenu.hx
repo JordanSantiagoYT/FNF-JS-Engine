@@ -1,4 +1,4 @@
-﻿package options;
+package options;
 
 import backend.Controls;
 import flixel.graphics.FlxGraphic;
@@ -63,6 +63,23 @@ class SuperSecretDebugMenu extends BaseOptionsMenu
 			'noRenderGC',
 			'bool',
 			false);
+		addOption(option);
+
+		var option:Option = new Option('Frame Profiler Overlay',
+			"If checked, displays live frametime, update/render/audio timings, allocations, and GC pauses.",
+			'frameProfiler',
+			'bool',
+			false);
+		addOption(option);
+
+		var option:Option = new Option('Export Frame Profile Log',
+			"Exports the recorded frame profiler session to a .log file in debug/log/.",
+			'exportFrameProfileLog',
+			'link',
+			false);
+		option.onChange = function() {
+			debug.FrameProfiler.exportLog();
+		};
 		addOption(option);
 
 		super();

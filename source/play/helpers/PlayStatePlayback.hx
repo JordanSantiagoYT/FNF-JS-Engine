@@ -202,6 +202,7 @@ class PlayStatePlayback
 	{
 		if(state.finishTimer != null || state.ffmpegMode) return;
 
+		debug.FrameProfiler.beginAudio();
 		FlxG.sound.music.pitch = state.playbackRate;
 		state.vocals.pitch = state.opponentVocals.pitch = state.playbackRate;
 		if(!(Conductor.songPosition > 20 && FlxG.sound.music.time < 20))
@@ -232,6 +233,7 @@ class PlayStatePlayback
 					if (i != null && i.time <= i.length) i.play();
 			}
 		}
+		debug.FrameProfiler.endAudio();
 	}
 
 	public static function unpauseVocals(state:PlayState)
