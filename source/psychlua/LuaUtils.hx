@@ -238,6 +238,9 @@ class LuaUtils {
 				return true;
 			}
 
+			if(instance == null || Std.isOfType(instance, String) || Std.isOfType(instance, Int) || Std.isOfType(instance, Float) || Std.isOfType(instance, Bool))
+				return false;
+
 			Reflect.setProperty(instance, variable, value);
 			return true;
 		}
@@ -252,8 +255,10 @@ class LuaUtils {
 				if(retVal != null)
 					blah = retVal;
 			}
-			else
+			else if(instance != null && !Std.isOfType(instance, String) && !Std.isOfType(instance, Int) && !Std.isOfType(instance, Float) && !Std.isOfType(instance, Bool))
 				blah = Reflect.getProperty(instance, pathParts[0]);
+
+			if(blah == null) return null;
 
 			for (i in 1...pathParts.length)
 			{
@@ -275,6 +280,9 @@ class LuaUtils {
 			return true;
 		}
 
+		if(instance == null || Std.isOfType(instance, String) || Std.isOfType(instance, Int) || Std.isOfType(instance, Float) || Std.isOfType(instance, Bool))
+			return false;
+
 		Reflect.setProperty(instance, variable, value);
 		return true;
 	}
@@ -289,6 +297,9 @@ class LuaUtils {
 					return retVal;
 			}
 
+			if(instance == null || Std.isOfType(instance, String) || Std.isOfType(instance, Int) || Std.isOfType(instance, Float) || Std.isOfType(instance, Bool))
+				return null;
+
 			return Reflect.getProperty(instance, variable);
 		}
 
@@ -302,8 +313,10 @@ class LuaUtils {
 				if(retVal != null)
 					blah = retVal;
 			}
-			else
+			else if(instance != null && !Std.isOfType(instance, String) && !Std.isOfType(instance, Int) && !Std.isOfType(instance, Float) && !Std.isOfType(instance, Bool))
 				blah = Reflect.getProperty(instance, pathParts[0]);
+
+			if(blah == null) return null;
 
 			for (i in 1...pathParts.length)
 			{
@@ -319,6 +332,9 @@ class LuaUtils {
 			if(retVal != null)
 				return retVal;
 		}
+
+		if(instance == null || Std.isOfType(instance, String) || Std.isOfType(instance, Int) || Std.isOfType(instance, Float) || Std.isOfType(instance, Bool))
+			return null;
 
 		return Reflect.getProperty(instance, variable);
 	}

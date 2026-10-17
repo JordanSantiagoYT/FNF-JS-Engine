@@ -1,4 +1,4 @@
-﻿package psychlua;
+package psychlua;
 
 import flixel.FlxBasic;
 import flixel.FlxCamera;
@@ -107,25 +107,7 @@ class PythonScript
 		}
 		// hython's lexer miscounts indentation on CRLF files, normalize to LF
 		code = code.split("\r\n").join("\n");
-
-		try
-		{
-			interp.execute(parser.parseString(code));
-		}
-		catch (e:Error)
-		{
-			pyTrace('Error loading python script: "$scriptName"\n' + getErrorString(e), true, false, FlxColor.RED);
-			closed = true;
-			return;
-		}
-		catch (e:Dynamic)
-		{
-			pyTrace('Error loading python script: "$scriptName"\n' + Std.string(e), true, false, FlxColor.RED);
-			closed = true;
-			return;
-		}
-
-		pyTrace('python file loaded succesfully: ' + scriptName, true);
+		code = preprocessHythonCode(code);
 
 		// Python globals
 		set('Function_StopAll', Function_StopAll);
@@ -134,13 +116,6 @@ class PythonScript
 		set('Function_Continue', Function_Continue);
 		set('pythonDebugMode', false);
 		set('pythonDeprecatedWarnings', true);
-
-		// Bind every registered/custom function into the interpreter, then let
-		// other systems add their own callbacks (CustomSubstate, Achievements...).
-		registerCustomFunctions();
-		CustomSubstate.implementPython(this);
-		#if ACHIEVEMENTS_ALLOWED Achievements.addPythonCallbacks(this); #end
-		#if flxanimate FlxAnimateFunctions.implementPython(this); #end
 
 		// --------------------------------------------------------------------
 		// API registry (mirrors FunkinLua's constructor).
@@ -179,6 +154,40 @@ class PythonScript
 // REFACTOR: extracted to psychlua.pystdlib.PyMiscLib
 	PyMiscLib.register(this);
 
+		for (name => func in registeredFunctions) {
+			if (func != null) {
+				_missingCalls.remove(name);
+				set(name, func);
+			}
+		}
+
+		// Bind every registered/custom function into the interpreter, then let
+		// other systems add their own callbacks (CustomSubstate, Achievements...).
+		registerCustomFunctions();
+		CustomSubstate.implementPython(this);
+		#if ACHIEVEMENTS_ALLOWED Achievements.addPythonCallbacks(this); #end
+		#if flxanimate FlxAnimateFunctions.implementPython(this); #end
+
+		try
+		{
+			interp.execute(parser.parseString(code));
+		}
+		catch (e:Error)
+		{
+			pyTrace('Error loading python script: "$scriptName"\n' + getErrorString(e), true, false, FlxColor.RED);
+			closed = true;
+			return;
+		}
+		catch (e:Dynamic)
+		{
+			pyTrace('Error loading python script: "$scriptName"\n' + Std.string(e), true, false, FlxColor.RED);
+			closed = true;
+			return;
+		}
+
+		pyTrace('python file loaded succesfully: ' + scriptName, true);
+
+		call('onCreate', []);
 	}
 
 	// -------------------------------------------------------------------- //
@@ -201,6 +210,7 @@ class PythonScript
 
 			var result:Dynamic = interp.calldef(func, args);
 			if (result == null) result = Function_Continue;
+			if (closed) stop();
 			return result;
 		}
 		catch (e:Error) {
@@ -279,6 +289,24 @@ class PythonScript
 		catch (e:Dynamic) {
 			return false;
 		}
+	}
+
+	// Hython 0.0.352-beta tokenizes `global` as TGlobal, but its Parser does
+	// not handle TGlobal in parseStatement(), throwing "Unexpected token: global".
+	// Top-level variables declared before `def` are already shared across functions
+	// via captured reference boxes, so replacing `global ...` lines with `pass`
+	// preserves line numbers and indentation without crashing the parser.
+	static function preprocessHythonCode(code:String):String {
+		var lines:Array<String> = code.split("\n");
+		for (i in 0...lines.length) {
+			var line:String = lines[i];
+			var trimmed:String = line.ltrim();
+			if (trimmed.startsWith("global ") || trimmed.startsWith("global\t")) {
+				var indent:String = line.substr(0, line.length - trimmed.length);
+				lines[i] = indent + "pass";
+			}
+		}
+		return lines.join("\n");
 	}
 
 	static function getErrorString(e:Error):String {

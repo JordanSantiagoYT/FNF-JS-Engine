@@ -217,6 +217,31 @@ class TestEngineCode(unittest.TestCase):
         self.assertNotRegex(loading, r"(?<![A-Za-z])Assets\.cache\.hasSound")
         self.assertIn("OpenFlAssets.getLibrary(library)", loading)
 
+    def test_python_script_binds_registered_functions_before_execute(self):
+        py_script = read("source/psychlua/PythonScript.hx")
+        self.assertIn("for (name => func in registeredFunctions)", py_script)
+        self.assertIn("preprocessHythonCode", py_script)
+        bind_pos = py_script.index("for (name => func in registeredFunctions)")
+        exec_pos = py_script.index("interp.execute(parser.parseString(code))")
+        on_create_pos = py_script.index("call('onCreate', [])")
+        self.assertLess(bind_pos, exec_pos,
+                        "registeredFunctions must be bound before interp.execute")
+        self.assertLess(exec_pos, on_create_pos,
+                        "onCreate must be dispatched after interp.execute")
+
+    def test_py_text_lib_and_bf_clicker_add_hud_texts(self):
+        py_text = read("source/psychlua/pystdlib/PyTextLib.hx")
+        self.assertIn('PythonScript.registerFunction("addLuaText"', py_text)
+        self.assertIn('PythonScript.registerFunction("removeLuaText"', py_text)
+
+        bf_clicker = read("mods/bf-clicker/data/bf-clicker/bf-clicker.py")
+        compile(bf_clicker, "bf-clicker.py", "exec")
+        self.assertNotRegex(bf_clicker, r"(?m)^\s*global\s+",
+                            "Hython 0.0.352-beta Parser does not support global statements")
+        for tag in ("clicksTxt", "timeTxt2", "bestTxt", "missTxt", "helpTxt"):
+            self.assertIn(f"makeLuaText('{tag}'", bf_clicker)
+            self.assertIn(f"addLuaText('{tag}')", bf_clicker)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
