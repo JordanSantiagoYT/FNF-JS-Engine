@@ -1,90 +1,119 @@
 package debug.profiler;
 
+import haxe.Int64;
+#if !cpp
+import Date;
+import debug.mem.GetTotalMemory;
+import haxe.Timer;
+#if sys
+import sys.FileSystem;
+import sys.io.File;
+#end
+#end
+
 /**
- * Low-level native C/C++ bridge for the Phoenix Engine Frame Profiler.
- * On C++ targets (`#if cpp`), delegates frame timing, phase accounting,
- * heap/GC observation, ring-buffer storage, percentile math, and `.log` file
- * export to `phoenix_profiler.h` with zero per-frame heap allocations.
- * On non-C++ targets, provides a portable pure-Haxe fallback with an identical API.
+ * Low-level native C/C++ bridge for the Phoenix Engine frame profiler.
+ *
+ * On `cpp` (hxcpp) targets, all calls delegate directly to the inline C/C++
+ * functions in `phoenix_profiler.h` (`PhoenixProfilerState`), using native OS
+ * monotonic clocks (`QueryPerformanceCounter`, `mach_absolute_time`, or
+ * `clock_gettime(CLOCK_MONOTONIC)`), an explicit LIFO phase stack, and bounded
+ * low-overhead process RSS sampling.
+ *
+ * On non-`cpp` targets, a behaviorally equivalent Haxe fallback implementation
+ * is provided with identical phase-stack accounting, honest GC/heap semantics,
+ * configurable RSS sampling, and RFC 4180 CSV report formatting.
  */
 #if cpp
-@:buildXml('<include name="../../../../source/debug/profiler/build.xml" />')
+@:buildXml('<include name="${haxelib:funkin}/source/debug/profiler/build.xml" />')
+@:include("phoenix_profiler.h")
 @:cppFileCode('
 #include "phoenix_profiler.h"
 
 static PhoenixProfilerState gPhoenixProfiler;
-static PhoenixProfilerSummary gPhoenixSummary;
-static PhoenixFrameSample gPhoenixSample;
+static PhoenixFrameSample gPhoenixLastSample;
+static PhoenixProfilerSummary gPhoenixLastSummary;
+static char gPhoenixOverlayBuf[512];
+
+static inline PhoenixProfilerState* phoenixGetProfiler(void)
+{
+  if (!gPhoenixProfiler.initialized)
+    phoenixProfilerInit(&gPhoenixProfiler, 60.0);
+  return &gPhoenixProfiler;
+}
 ')
+#end
 class NativeFrameProfiler
 {
-  public static inline final PHASE_UPDATE:Int = 0;
-  public static inline final PHASE_RENDER:Int = 1;
-  public static inline final PHASE_AUDIO:Int = 2;
-  public static inline final PHASE_GC:Int = 3;
-  public static inline final RING_CAPACITY:Int = 2048;
+  public static inline var PHASE_UPDATE:Int = 0;
+  public static inline var PHASE_RENDER:Int = 1;
+  public static inline var PHASE_AUDIO:Int = 2;
+  public static inline var PHASE_GC:Int = 3;
 
-  /**
-   * Initializes the native profiler state with the given target FPS.
-   * @param targetFps Target framerate for frame budget calculations.
-   */
+  public static inline var RING_CAPACITY:Int = 2048;
+  public static inline var DEFAULT_RSS_SAMPLE_INTERVAL:Int = 60;
+
+  #if cpp
   @:functionCode('
     phoenixProfilerInit(&gPhoenixProfiler, (double)targetFps);
   ')
   public static function init(targetFps:Float = 60.0):Void {}
 
-  /**
-   * Resets all recorded frames and session statistics.
-   */
   @:functionCode('
-    phoenixProfilerReset(&gPhoenixProfiler);
+    phoenixProfilerReset(phoenixGetProfiler());
   ')
   public static function reset():Void {}
 
-  /**
-   * Enables or pauses frame profiling.
-   * @param enabled Whether profiling is active.
-   */
   @:functionCode('
-    phoenixProfilerSetEnabled(&gPhoenixProfiler, enabled ? 1 : 0);
+    phoenixProfilerSetEnabled(phoenixGetProfiler(), enabled ? 1 : 0);
   ')
   public static function setEnabled(enabled:Bool):Void {}
 
-  /**
-   * Returns whether the native frame profiler is currently enabled.
-   * @return Bool
-   */
   @:functionCode('
-    return phoenixProfilerIsEnabled(&gPhoenixProfiler) != 0;
+    return phoenixProfilerIsEnabled(phoenixGetProfiler()) != 0;
   ')
   public static function isEnabled():Bool
+  {
+    return false;
+  }
+
+  @:functionCode('
+    phoenixProfilerSetRssSampleInterval(phoenixGetProfiler(), intervalFrames > 0 ? (uint32_t)intervalFrames : 0);
+  ')
+  public static function setRssSampleInterval(intervalFrames:Int):Void {}
+
+  @:functionCode('
+    return (int)phoenixProfilerGetRssSampleInterval(phoenixGetProfiler());
+  ')
+  public static function getRssSampleInterval():Int
+  {
+    return DEFAULT_RSS_SAMPLE_INTERVAL;
+  }
+
+  @:functionCode('
+    phoenixProfilerSetCollectMemoryMetrics(phoenixGetProfiler(), enabled ? 1 : 0);
+  ')
+  public static function setCollectMemoryMetrics(enabled:Bool):Void {}
+
+  @:functionCode('
+    return phoenixProfilerGetCollectMemoryMetrics(phoenixGetProfiler()) != 0;
+  ')
+  public static function getCollectMemoryMetrics():Bool
   {
     return true;
   }
 
-  /**
-   * Sets the target FPS used for frame budget calculations.
-   * @param targetFps Target framerate in frames per second.
-   */
   @:functionCode('
-    phoenixProfilerSetTargetFps(&gPhoenixProfiler, (double)targetFps);
+    phoenixProfilerSetTargetFps(phoenixGetProfiler(), (double)targetFps);
   ')
   public static function setTargetFps(targetFps:Float):Void {}
 
-  /**
-   * Updates the current game state name associated with recorded frames.
-   * @param stateName Active FlxState class name.
-   */
   @:functionCode('
-    const char *raw = stateName.utf8_str();
-    phoenixProfilerSetStateName(&gPhoenixProfiler, raw != NULL ? raw : "Unknown");
+    const char *cstr = stateName.c_str();
+    phoenixProfilerSetStateName(phoenixGetProfiler(), cstr);
   ')
   public static function setStateName(stateName:String):Void {}
 
-  /**
-   * Returns a high-resolution monotonic timestamp in milliseconds.
-   * @return Float
-   */
   @:functionCode('
     return phoenixProfilerNowMs();
   ')
@@ -93,816 +122,1230 @@ class NativeFrameProfiler
     return 0.0;
   }
 
-  /**
-   * Begins recording a new frame.
-   * @param heapUsedBytes Current GC heap usage in bytes.
-   * @param heapReservedBytes Current GC reserved heap in bytes.
-   */
   @:functionCode('
-    phoenixProfilerBeginFrame(&gPhoenixProfiler, (int64_t)heapUsedBytes, (int64_t)heapReservedBytes);
+    phoenixProfilerBeginFrame(phoenixGetProfiler(), (int64_t)heapUsedBytes, (int64_t)heapReservedBytes);
   ')
   public static function beginFrame(heapUsedBytes:Float, heapReservedBytes:Float):Void {}
 
-  /**
-   * Begins a subsystem phase (`PHASE_UPDATE`, `PHASE_RENDER`, `PHASE_AUDIO`, `PHASE_GC`).
-   * @param phase Subsystem phase constant.
-   * @param heapUsedBytes Current GC heap usage in bytes.
-   */
-  @:functionCode('
-    phoenixProfilerBeginPhase(&gPhoenixProfiler, phase, (int64_t)heapUsedBytes);
-  ')
-  public static function beginPhase(phase:Int, heapUsedBytes:Float):Void {}
-
-  /**
-   * Ends a subsystem phase and returns the net elapsed time in milliseconds.
-   * @param phase Subsystem phase constant.
-   * @param heapUsedBytes Current GC heap usage in bytes.
-   * @return Float
-   */
-  @:functionCode('
-    return phoenixProfilerEndPhase(&gPhoenixProfiler, phase, (int64_t)heapUsedBytes);
-  ')
-  public static function endPhase(phase:Int, heapUsedBytes:Float):Float
-  {
-    return 0.0;
-  }
-
-  /**
-   * Directly adds a pre-measured duration (in ms) to a subsystem phase on the active frame.
-   * @param phase Subsystem phase constant.
-   * @param durationMs Duration in milliseconds.
-   */
-  @:functionCode('
-    phoenixProfilerRecordPhaseMs(&gPhoenixProfiler, phase, (double)durationMs);
-  ')
-  public static function recordPhaseMs(phase:Int, durationMs:Float):Void {}
-
-  /**
-   * Directly records an allocation event on the active frame.
-   * @param bytes Positive bytes allocated.
-   * @param count Number of allocation events.
-   */
-  @:functionCode('
-    phoenixProfilerRecordAllocation(&gPhoenixProfiler, (int64_t)bytes, count);
-  ')
-  public static function recordAllocation(bytes:Float, count:Int = 1):Void {}
-
-  /**
-   * Directly records a garbage collection pause on the active frame.
-   * @param pauseMs GC pause duration in milliseconds.
-   * @param reclaimedBytes Bytes reclaimed by GC.
-   * @param isExplicit Whether the GC was triggered explicitly.
-   */
-  @:functionCode('
-    phoenixProfilerRecordGCPause(&gPhoenixProfiler, (double)pauseMs, (int64_t)reclaimedBytes, isExplicit ? 1 : 0);
-  ')
-  public static function recordGCPause(pauseMs:Float, reclaimedBytes:Float = 0.0, isExplicit:Bool = true):Void {}
-
-  /**
-   * Adds draw call counts to the active frame.
-   * @param drawCalls Number of draw calls executed.
-   */
-  @:functionCode('
-    phoenixProfilerAddDrawCalls(&gPhoenixProfiler, drawCalls);
-  ')
-  public static function addDrawCalls(drawCalls:Int):Void {}
-
-  /**
-   * Ends the current frame, commits the frame sample to the native ring buffer,
-   * and updates session statistics.
-   * @param heapUsedBytes Current GC heap usage in bytes.
-   * @param heapReservedBytes Current GC reserved heap in bytes.
-   * @param drawCalls Draw calls executed during the frame.
-   * @param explicitFrameTimeMs Optional explicit frame delta in milliseconds (0 for automatic).
-   */
   @:functionCode('
     phoenixProfilerEndFrameAt(
-      &gPhoenixProfiler,
+      phoenixGetProfiler(),
       phoenixProfilerNowMs(),
       (double)explicitFrameTimeMs,
       (int64_t)heapUsedBytes,
       (int64_t)heapReservedBytes,
-      drawCalls);
+      drawCalls > 0 ? (uint32_t)drawCalls : 0);
   ')
   public static function endFrame(
     heapUsedBytes:Float,
     heapReservedBytes:Float,
-    drawCalls:Int = 0,
+    drawCalls:Int,
     explicitFrameTimeMs:Float = 0.0):Void {}
 
-  /**
-   * Refreshes the cached summary snapshot from the native profiler state.
-   */
   @:functionCode('
-    phoenixProfilerComputeSummary(&gPhoenixProfiler, &gPhoenixSummary);
+    phoenixProfilerBeginUpdate(phoenixGetProfiler(), (int64_t)heapUsedBytes);
   ')
-  public static function refreshSummary():Void {}
+  public static function beginUpdate(heapUsedBytes:Float):Void {}
 
-  /**
-   * Refreshes the cached last-frame sample from the native profiler state.
-   * @return Bool True if at least one frame has been recorded.
-   */
   @:functionCode('
-    return phoenixProfilerGetLastFrame(&gPhoenixProfiler, &gPhoenixSample) != 0;
+    return phoenixProfilerEndUpdate(phoenixGetProfiler(), (int64_t)heapUsedBytes);
   ')
-  public static function refreshLastFrame():Bool
+  public static function endUpdate(heapUsedBytes:Float):Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    phoenixProfilerBeginRender(phoenixGetProfiler(), (int64_t)heapUsedBytes);
+  ')
+  public static function beginRender(heapUsedBytes:Float):Void {}
+
+  @:functionCode('
+    return phoenixProfilerEndRender(phoenixGetProfiler(), (int64_t)heapUsedBytes);
+  ')
+  public static function endRender(heapUsedBytes:Float):Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    phoenixProfilerBeginAudio(phoenixGetProfiler(), (int64_t)heapUsedBytes);
+  ')
+  public static function beginAudio(heapUsedBytes:Float):Void {}
+
+  @:functionCode('
+    return phoenixProfilerEndAudio(phoenixGetProfiler(), (int64_t)heapUsedBytes);
+  ')
+  public static function endAudio(heapUsedBytes:Float):Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    phoenixProfilerBeginGC(phoenixGetProfiler(), (int64_t)heapUsedBytes);
+  ')
+  public static function beginGC(heapUsedBytes:Float):Void {}
+
+  @:functionCode('
+    return phoenixProfilerEndGC(phoenixGetProfiler(), (int64_t)heapUsedBytes);
+  ')
+  public static function endGC(heapUsedBytes:Float):Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    phoenixProfilerRecordPhaseMs(phoenixGetProfiler(), (PhoenixProfilerPhase)phase, (double)durationMs);
+  ')
+  public static function recordPhaseMs(phase:Int, durationMs:Float):Void {}
+
+  @:functionCode('
+    phoenixProfilerRecordAllocation(phoenixGetProfiler(), (int64_t)bytes, count > 0 ? (uint32_t)count : 1);
+  ')
+  public static function recordAllocation(bytes:Float, count:Int = 1):Void {}
+
+  @:functionCode('
+    phoenixProfilerRecordGCPause(phoenixGetProfiler(), (double)pauseMs, (int64_t)reclaimedBytes, isExplicit ? 1 : 0);
+  ')
+  public static function recordGCPause(pauseMs:Float, reclaimedBytes:Float, isExplicit:Bool = true):Void {}
+
+  @:functionCode('
+    return phoenixProfilerGetLastFrame(phoenixGetProfiler(), &gPhoenixLastSample) != 0;
+  ')
+  public static function loadLastFrame():Bool
   {
     return false;
   }
 
-  /**
-   * Loads the buffered frame at `chronologicalIndex` (0 = oldest in ring buffer) into the sample cache.
-   * @param chronologicalIndex Index from 0 to bufferedFrames - 1.
-   * @return Bool True if the frame exists.
-   */
   @:functionCode('
-    return phoenixProfilerGetBufferedFrame(&gPhoenixProfiler, (size_t)chronologicalIndex, &gPhoenixSample) != 0;
+    if (chronologicalIndex < 0)
+      return false;
+    return phoenixProfilerGetBufferedFrame(phoenixGetProfiler(), (size_t)chronologicalIndex, &gPhoenixLastSample) != 0;
   ')
   public static function loadBufferedFrame(chronologicalIndex:Int):Bool
   {
     return false;
   }
 
-  /**
-   * Resolves a requested log file name to a safe path inside `debug/log/` ending in `.log`.
-   * @param requestedPath Optional custom file name or path.
-   * @return String
-   */
   @:functionCode('
-    char resolved[PHOENIX_PROFILER_PATH_MAX];
-    const char *raw = requestedPath.utf8_str();
-    if (!phoenixProfilerResolveLogPath(raw, resolved, sizeof(resolved)))
-      return ::String(PHOENIX_PROFILER_DEFAULT_LOG_FILE);
-    return ::String(resolved);
+    return (int)phoenixGetProfiler()->ringCount;
   ')
-  public static function resolveLogPath(requestedPath:String):String
+  public static function getBufferedFrameCount():Int
   {
-    return "debug/log/frame_profiler.log";
+    return 0;
   }
 
-  /**
-   * Exports the full profiler report and frame timeline to a `.log` file in `debug/log/`.
-   * @param requestedPath Optional custom filename or path inside `debug/log/`.
-   * @param engineVersion Engine version string for the report header.
-   * @param platformInfo Platform/OS description string for the report header.
-   * @return String The resolved path written on success, or empty string on failure.
-   */
   @:functionCode('
-    char resolved[PHOENIX_PROFILER_PATH_MAX];
-    const char *pathRaw = requestedPath.utf8_str();
-    const char *verRaw = engineVersion.utf8_str();
-    const char *platRaw = platformInfo.utf8_str();
-    if (!phoenixProfilerExportLog(&gPhoenixProfiler, pathRaw, verRaw, platRaw, resolved, sizeof(resolved)))
-      return ::String("");
-    return ::String(resolved);
+    return (int)gPhoenixLastSample.frameIndex;
   ')
-  public static function exportLog(requestedPath:String, engineVersion:String, platformInfo:String):String
+  public static function lastSampleFrameIndex():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.timestampMs;
+  ')
+  public static function lastSampleTimestampMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.frameTimeMs;
+  ')
+  public static function lastSampleFrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.workTimeMs;
+  ')
+  public static function lastSampleWorkTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.fps;
+  ')
+  public static function lastSampleFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.rollingFps;
+  ')
+  public static function lastSampleRollingFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.updateTimeMs;
+  ')
+  public static function lastSampleUpdateTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.renderTimeMs;
+  ')
+  public static function lastSampleRenderTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.audioTimeMs;
+  ')
+  public static function lastSampleAudioTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.gcPauseMs;
+  ')
+  public static function lastSampleGcPauseMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.otherTimeMs;
+  ')
+  public static function lastSampleOtherTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSample.allocBytes;
+  ')
+  public static function lastSampleAllocBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSample.allocCount;
+  ')
+  public static function lastSampleAllocCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSample.gcReclaimedBytes;
+  ')
+  public static function lastSampleGcReclaimedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSample.netHeapDeltaBytes;
+  ')
+  public static function lastSampleNetHeapDeltaBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSample.heapUsedBytes;
+  ')
+  public static function lastSampleHeapUsedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSample.heapReservedBytes;
+  ')
+  public static function lastSampleHeapReservedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSample.rssBytes;
+  ')
+  public static function lastSampleRssBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSample.peakRssBytes;
+  ')
+  public static function lastSamplePeakRssBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSample.gcCount;
+  ')
+  public static function lastSampleGcCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSample.explicitGcCount;
+  ')
+  public static function lastSampleExplicitGcCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSample.implicitGcCount;
+  ')
+  public static function lastSampleImplicitGcCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSample.drawCalls;
+  ')
+  public static function lastSampleDrawCalls():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSample.updateSteps;
+  ')
+  public static function lastSampleUpdateSteps():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.rssSampled != 0;
+  ')
+  public static function lastSampleRssSampled():Bool
+  {
+    return false;
+  }
+
+  @:functionCode('
+    return ::String(gPhoenixLastSample.stateName);
+  ')
+  public static function lastSampleStateName():String
+  {
+    return "UnknownState";
+  }
+
+  @:functionCode('
+    phoenixProfilerComputeSummary(phoenixGetProfiler(), &gPhoenixLastSummary);
+  ')
+  public static function refreshSummary():Void {}
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.totalFrames;
+  ')
+  public static function summaryTotalFrames():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.bufferedFrames;
+  ')
+  public static function summaryBufferedFrames():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.sessionDurationMs;
+  ')
+  public static function summarySessionDurationMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.targetFps;
+  ')
+  public static function summaryTargetFps():Float
+  {
+    return 60.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.targetFrameTimeMs;
+  ')
+  public static function summaryTargetFrameTimeMs():Float
+  {
+    return 16.6667;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.currentFps;
+  ')
+  public static function summaryCurrentFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgFps;
+  ')
+  public static function summaryAvgFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.minFps;
+  ')
+  public static function summaryMinFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.maxFps;
+  ')
+  public static function summaryMaxFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.onePercentLowFps;
+  ')
+  public static function summaryOnePercentLowFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.pointOnePercentLowFps;
+  ')
+  public static function summaryPointOnePercentLowFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.slowest1PctAvgFps;
+  ')
+  public static function summarySlowest1PctAvgFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.slowest01PctAvgFps;
+  ')
+  public static function summarySlowest01PctAvgFps():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.lastFrameTimeMs;
+  ')
+  public static function summaryLastFrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgFrameTimeMs;
+  ')
+  public static function summaryAvgFrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.minFrameTimeMs;
+  ')
+  public static function summaryMinFrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.maxFrameTimeMs;
+  ')
+  public static function summaryMaxFrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.stdDevFrameTimeMs;
+  ')
+  public static function summaryStdDevFrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.p50FrameTimeMs;
+  ')
+  public static function summaryP50FrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.p95FrameTimeMs;
+  ')
+  public static function summaryP95FrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.p99FrameTimeMs;
+  ')
+  public static function summaryP99FrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.p999FrameTimeMs;
+  ')
+  public static function summaryP999FrameTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgUpdateTimeMs;
+  ')
+  public static function summaryAvgUpdateTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.maxUpdateTimeMs;
+  ')
+  public static function summaryMaxUpdateTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.p95UpdateTimeMs;
+  ')
+  public static function summaryP95UpdateTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgRenderTimeMs;
+  ')
+  public static function summaryAvgRenderTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.maxRenderTimeMs;
+  ')
+  public static function summaryMaxRenderTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.p95RenderTimeMs;
+  ')
+  public static function summaryP95RenderTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgAudioTimeMs;
+  ')
+  public static function summaryAvgAudioTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.maxAudioTimeMs;
+  ')
+  public static function summaryMaxAudioTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.p95AudioTimeMs;
+  ')
+  public static function summaryP95AudioTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgOtherTimeMs;
+  ')
+  public static function summaryAvgOtherTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.maxOtherTimeMs;
+  ')
+  public static function summaryMaxOtherTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.totalGcCount;
+  ')
+  public static function summaryTotalGcCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.totalExplicitGcCount;
+  ')
+  public static function summaryTotalExplicitGcCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.totalImplicitGcCount;
+  ')
+  public static function summaryTotalImplicitGcCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.framesWithGc;
+  ')
+  public static function summaryFramesWithGc():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.totalGcPauseMs;
+  ')
+  public static function summaryTotalGcPauseMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgGcPauseMs;
+  ')
+  public static function summaryAvgGcPauseMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.maxGcPauseMs;
+  ')
+  public static function summaryMaxGcPauseMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.maxGcPauseFrame;
+  ')
+  public static function summaryMaxGcPauseFrame():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.totalGcReclaimedBytes;
+  ')
+  public static function summaryTotalGcReclaimedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.totalAllocBytes;
+  ')
+  public static function summaryTotalAllocBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.totalAllocCount;
+  ')
+  public static function summaryTotalAllocCount():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgAllocBytesPerFrame;
+  ')
+  public static function summaryAvgAllocBytesPerFrame():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.allocRateBytesPerSec;
+  ')
+  public static function summaryAllocRateBytesPerSec():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.peakFrameAllocBytes;
+  ')
+  public static function summaryPeakFrameAllocBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.peakFrameAllocFrame;
+  ')
+  public static function summaryPeakFrameAllocFrame():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.currentHeapUsedBytes;
+  ')
+  public static function summaryCurrentHeapUsedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.currentHeapReservedBytes;
+  ')
+  public static function summaryCurrentHeapReservedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.peakHeapUsedBytes;
+  ')
+  public static function summaryPeakHeapUsedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.peakHeapReservedBytes;
+  ')
+  public static function summaryPeakHeapReservedBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.currentRssBytes;
+  ')
+  public static function summaryCurrentRssBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (double)gPhoenixLastSummary.peakRssBytes;
+  ')
+  public static function summaryPeakRssBytes():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.droppedFrames;
+  ')
+  public static function summaryDroppedFrames():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.spikeCount16Ms;
+  ')
+  public static function summarySpikeCount16Ms():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.spikeCount25Ms;
+  ')
+  public static function summarySpikeCount25Ms():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.spikeCount33Ms;
+  ')
+  public static function summarySpikeCount33Ms():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.spikeCount50Ms;
+  ')
+  public static function summarySpikeCount50Ms():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.avgDrawCalls;
+  ')
+  public static function summaryAvgDrawCalls():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.maxDrawCalls;
+  ')
+  public static function summaryMaxDrawCalls():Int
+  {
+    return 0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.cpuTimeMs;
+  ')
+  public static function summaryCpuTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.cpuUtilizationPct;
+  ')
+  public static function summaryCpuUtilizationPct():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.cpuNormalizedPct;
+  ')
+  public static function summaryCpuNormalizedPct():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.logicalCpuCount;
+  ')
+  public static function summaryLogicalCpuCount():Int
+  {
+    return 1;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.cpuTimeAvailable != 0;
+  ')
+  public static function summaryCpuTimeAvailable():Bool
+  {
+    return false;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.rssAvailable != 0;
+  ')
+  public static function summaryRssAvailable():Bool
+  {
+    return false;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSummary.heapStatsAvailable != 0;
+  ')
+  public static function summaryHeapStatsAvailable():Bool
+  {
+    return false;
+  }
+
+  @:functionCode('
+    return (int)gPhoenixLastSummary.rssSampleIntervalFrames;
+  ')
+  public static function summaryRssSampleIntervalFrames():Int
+  {
+    return DEFAULT_RSS_SAMPLE_INTERVAL;
+  }
+
+  @:functionCode('
+    if (phoenixProfilerFormatOverlay(phoenixGetProfiler(), gPhoenixOverlayBuf, sizeof(gPhoenixOverlayBuf)))
+      return ::String(gPhoenixOverlayBuf);
+    return ::String("");
+  ')
+  public static function formatOverlay():String
   {
     return "";
   }
 
-  // Cached sample getters (populated by refreshLastFrame / loadBufferedFrame)
-
-  @:functionCode('return (double)gPhoenixSample.frameIndex;')
-  public static function sampleFrameIndex():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.timestampMs;')
-  public static function sampleTimestampMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.frameTimeMs;')
-  public static function sampleFrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.workTimeMs;')
-  public static function sampleWorkTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.fps;')
-  public static function sampleFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.rollingFps;')
-  public static function sampleRollingFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.updateTimeMs;')
-  public static function sampleUpdateTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.renderTimeMs;')
-  public static function sampleRenderTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.audioTimeMs;')
-  public static function sampleAudioTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.gcPauseMs;')
-  public static function sampleGcPauseMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.otherTimeMs;')
-  public static function sampleOtherTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSample.allocBytes;')
-  public static function sampleAllocBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSample.netHeapDeltaBytes;')
-  public static function sampleNetHeapDeltaBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSample.gcReclaimedBytes;')
-  public static function sampleGcReclaimedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSample.heapUsedBytes;')
-  public static function sampleHeapUsedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSample.heapReservedBytes;')
-  public static function sampleHeapReservedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSample.rssBytes;')
-  public static function sampleRssBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSample.peakRssBytes;')
-  public static function samplePeakRssBytes():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSample.allocCount;')
-  public static function sampleAllocCount():Int
-    return 0;
-
-  @:functionCode('return gPhoenixSample.gcCount;')
-  public static function sampleGcCount():Int
-    return 0;
-
-  @:functionCode('return gPhoenixSample.explicitGcCount;')
-  public static function sampleExplicitGcCount():Int
-    return 0;
-
-  @:functionCode('return gPhoenixSample.implicitGcCount;')
-  public static function sampleImplicitGcCount():Int
-    return 0;
-
-  @:functionCode('return gPhoenixSample.updateSteps;')
-  public static function sampleUpdateSteps():Int
-    return 0;
-
-  @:functionCode('return gPhoenixSample.drawCalls;')
-  public static function sampleDrawCalls():Int
-    return 0;
-
-  @:functionCode('return ::String(gPhoenixSample.stateName);')
-  public static function sampleStateName():String
-    return "Unknown";
-
-  // Cached summary getters (populated by refreshSummary)
-
-  @:functionCode('return (double)gPhoenixSummary.totalFrames;')
-  public static function summaryTotalFrames():Float
-    return 0.0;
-
-  @:functionCode('return (int)gPhoenixSummary.bufferedFrames;')
-  public static function summaryBufferedFrames():Int
-    return 0;
-
-  @:functionCode('return gPhoenixSummary.targetFps;')
-  public static function summaryTargetFps():Float
-    return 60.0;
-
-  @:functionCode('return gPhoenixSummary.sessionDurationMs;')
-  public static function summarySessionDurationMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.cpuTimeMs;')
-  public static function summaryCpuTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.cpuUtilizationPct;')
-  public static function summaryCpuUtilizationPct():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgFrameTimeMs;')
-  public static function summaryAvgFrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.minFrameTimeMs;')
-  public static function summaryMinFrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.maxFrameTimeMs;')
-  public static function summaryMaxFrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.stdDevFrameTimeMs;')
-  public static function summaryStdDevFrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.p50FrameTimeMs;')
-  public static function summaryP50FrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.p95FrameTimeMs;')
-  public static function summaryP95FrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.p99FrameTimeMs;')
-  public static function summaryP99FrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.p999FrameTimeMs;')
-  public static function summaryP999FrameTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.spikeCount25Ms;')
-  public static function summarySpikeCount25Ms():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.spikeCount33Ms;')
-  public static function summarySpikeCount33Ms():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgFps;')
-  public static function summaryAvgFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.currentFps;')
-  public static function summaryCurrentFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.minFps;')
-  public static function summaryMinFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.maxFps;')
-  public static function summaryMaxFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.onePercentLowFps;')
-  public static function summaryOnePercentLowFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.pointOnePercentLowFps;')
-  public static function summaryPointOnePercentLowFps():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgUpdateTimeMs;')
-  public static function summaryAvgUpdateTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.maxUpdateTimeMs;')
-  public static function summaryMaxUpdateTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.p99UpdateTimeMs;')
-  public static function summaryP99UpdateTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.totalUpdateTimeMs;')
-  public static function summaryTotalUpdateTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.updateFrameSharePct;')
-  public static function summaryUpdateFrameSharePct():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgRenderTimeMs;')
-  public static function summaryAvgRenderTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.maxRenderTimeMs;')
-  public static function summaryMaxRenderTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.p99RenderTimeMs;')
-  public static function summaryP99RenderTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.totalRenderTimeMs;')
-  public static function summaryTotalRenderTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.renderFrameSharePct;')
-  public static function summaryRenderFrameSharePct():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgAudioTimeMs;')
-  public static function summaryAvgAudioTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.maxAudioTimeMs;')
-  public static function summaryMaxAudioTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.p99AudioTimeMs;')
-  public static function summaryP99AudioTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.totalAudioTimeMs;')
-  public static function summaryTotalAudioTimeMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.audioFrameSharePct;')
-  public static function summaryAudioFrameSharePct():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.totalGcCount;')
-  public static function summaryTotalGcCount():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.totalExplicitGcCount;')
-  public static function summaryTotalExplicitGcCount():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.totalImplicitGcCount;')
-  public static function summaryTotalImplicitGcCount():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.framesWithGc;')
-  public static function summaryFramesWithGc():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.totalGcPauseMs;')
-  public static function summaryTotalGcPauseMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgGcPausePerFrameMs;')
-  public static function summaryAvgGcPausePerFrameMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgGcPausePerCollectionMs;')
-  public static function summaryAvgGcPausePerCollectionMs():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.maxGcPauseMs;')
-  public static function summaryMaxGcPauseMs():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.maxGcPauseFrame;')
-  public static function summaryMaxGcPauseFrame():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.gcFrameSharePct;')
-  public static function summaryGcFrameSharePct():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.totalGcReclaimedBytes;')
-  public static function summaryTotalGcReclaimedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.totalAllocBytes;')
-  public static function summaryTotalAllocBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.totalAllocCount;')
-  public static function summaryTotalAllocCount():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.avgAllocBytesPerFrame;')
-  public static function summaryAvgAllocBytesPerFrame():Float
-    return 0.0;
-
-  @:functionCode('return gPhoenixSummary.allocRateBytesPerSec;')
-  public static function summaryAllocRateBytesPerSec():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.peakFrameAllocBytes;')
-  public static function summaryPeakFrameAllocBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.peakFrameAllocFrame;')
-  public static function summaryPeakFrameAllocFrame():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.startHeapUsedBytes;')
-  public static function summaryStartHeapUsedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.currentHeapUsedBytes;')
-  public static function summaryCurrentHeapUsedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.peakHeapUsedBytes;')
-  public static function summaryPeakHeapUsedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.currentHeapReservedBytes;')
-  public static function summaryCurrentHeapReservedBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.currentRssBytes;')
-  public static function summaryCurrentRssBytes():Float
-    return 0.0;
-
-  @:functionCode('return (double)gPhoenixSummary.peakRssBytes;')
-  public static function summaryPeakRssBytes():Float
-    return 0.0;
-}
-#else
-import debug.mem.GetTotalMemory;
-
-private class FallbackSample
-{
-  public var frameIndex:Float = 0;
-  public var timestampMs:Float = 0;
-  public var frameTimeMs:Float = 0;
-  public var workTimeMs:Float = 0;
-  public var fps:Float = 0;
-  public var rollingFps:Float = 0;
-  public var updateTimeMs:Float = 0;
-  public var renderTimeMs:Float = 0;
-  public var audioTimeMs:Float = 0;
-  public var gcPauseMs:Float = 0;
-  public var otherTimeMs:Float = 0;
-  public var allocBytes:Float = 0;
-  public var netHeapDeltaBytes:Float = 0;
-  public var gcReclaimedBytes:Float = 0;
-  public var heapUsedBytes:Float = 0;
-  public var heapReservedBytes:Float = 0;
-  public var rssBytes:Float = 0;
-  public var peakRssBytes:Float = 0;
-  public var allocCount:Int = 0;
-  public var gcCount:Int = 0;
-  public var explicitGcCount:Int = 0;
-  public var implicitGcCount:Int = 0;
-  public var updateSteps:Int = 0;
-  public var drawCalls:Int = 0;
-  public var stateName:String = "Unknown";
-
-  public function new() {}
-
-  public function reset(state:String):Void
+  @:functionCode('
+    char resolved[PHOENIX_PROFILER_PATH_MAX];
+    const char *req = requestedPath.c_str();
+    const char *ver = engineVersion.c_str();
+    const char *plat = platformName.c_str();
+    if (phoenixProfilerExportLog(phoenixGetProfiler(), req, ver, plat, resolved, sizeof(resolved)))
+      return ::String(resolved);
+    return ::String("");
+  ')
+  public static function exportLog(
+    requestedPath:String = "",
+    engineVersion:String = "0.3.2",
+    platformName:String = "C++/hxcpp"):String
   {
-    frameIndex = 0;
-    timestampMs = 0;
-    frameTimeMs = 0;
-    workTimeMs = 0;
-    fps = 0;
-    rollingFps = 0;
-    updateTimeMs = 0;
-    renderTimeMs = 0;
-    audioTimeMs = 0;
-    gcPauseMs = 0;
-    otherTimeMs = 0;
-    allocBytes = 0;
-    netHeapDeltaBytes = 0;
-    gcReclaimedBytes = 0;
-    heapUsedBytes = 0;
-    heapReservedBytes = 0;
-    rssBytes = 0;
-    peakRssBytes = 0;
-    allocCount = 0;
-    gcCount = 0;
-    explicitGcCount = 0;
-    implicitGcCount = 0;
-    updateSteps = 0;
-    drawCalls = 0;
-    stateName = state;
+    return "";
   }
 
-  public function copyFrom(other:FallbackSample):Void
+  #else
+  private static var _initialized:Bool = false;
+  private static var _enabled:Bool = true;
+  private static var _inFlight:Bool = false;
+  private static var _collectMemory:Bool = true;
+  private static var _rssSampleInterval:Int = DEFAULT_RSS_SAMPLE_INTERVAL;
+  private static var _targetFps:Float = 60.0;
+  private static var _sessionStartMs:Float = 0.0;
+  private static var _currentFrameStartMs:Float = 0.0;
+  private static var _lastFrameEndMs:Float = 0.0;
+  private static var _currentRollingFps:Float = 0.0;
+  private static var _rollingWindowMs:Float = 0.0;
+  private static var _rollingWindowCount:Int = 0;
+  private static var _currentStateName:String = "InitialState";
+
+  private static var _phaseStack:Array<{phase:Int, startMs:Float, childDurationMs:Float}> = [];
+  private static var _phaseDepth:Array<Int> = [0, 0, 0, 0];
+
+  private static var _hasObservedHeap:Bool = false;
+  private static var _heapStatsAvailable:Bool = false;
+  private static var _rssAvailable:Bool = false;
+  private static var _lastObservedHeap:Float = 0.0;
+  private static var _frameStartHeap:Float = 0.0;
+  private static var _currentHeapUsed:Float = 0.0;
+  private static var _currentHeapReserved:Float = 0.0;
+  private static var _peakHeapUsed:Float = 0.0;
+  private static var _peakHeapReserved:Float = 0.0;
+  private static var _lastSampledRss:Float = 0.0;
+  private static var _lastSampledPeakRss:Float = 0.0;
+
+  private static var _totalFrames:Int = 0;
+  private static var _sumFrameTimeMs:Float = 0.0;
+  private static var _sumSqFrameTimeMs:Float = 0.0;
+  private static var _minFrameTimeMs:Float = 1e12;
+  private static var _maxFrameTimeMs:Float = 0.0;
+
+  private static var _sumUpdateMs:Float = 0.0;
+  private static var _maxUpdateMs:Float = 0.0;
+  private static var _sumRenderMs:Float = 0.0;
+  private static var _maxRenderMs:Float = 0.0;
+  private static var _sumAudioMs:Float = 0.0;
+  private static var _maxAudioMs:Float = 0.0;
+  private static var _sumOtherMs:Float = 0.0;
+  private static var _maxOtherMs:Float = 0.0;
+
+  private static var _totalGcCount:Int = 0;
+  private static var _totalExplicitGcCount:Int = 0;
+  private static var _totalImplicitGcCount:Int = 0;
+  private static var _framesWithGc:Int = 0;
+  private static var _totalGcPauseMs:Float = 0.0;
+  private static var _maxGcPauseMs:Float = 0.0;
+  private static var _maxGcPauseFrame:Int = 0;
+  private static var _totalGcReclaimedBytes:Float = 0.0;
+
+  private static var _totalAllocBytes:Float = 0.0;
+  private static var _totalAllocCount:Int = 0;
+  private static var _peakFrameAllocBytes:Float = 0.0;
+  private static var _peakFrameAllocFrame:Int = 0;
+
+  private static var _droppedFrames:Int = 0;
+  private static var _spike16:Int = 0;
+  private static var _spike25:Int = 0;
+  private static var _spike33:Int = 0;
+  private static var _spike50:Int = 0;
+  private static var _totalDrawCalls:Int = 0;
+  private static var _maxDrawCalls:Int = 0;
+
+  private static var _samples:Array<FallbackSample> = [];
+  private static var _ringWriteIndex:Int = 0;
+  private static var _ringCount:Int = 0;
+  private static var _activeSample:FallbackSample = null;
+  private static var _loadedSample:FallbackSample = null;
+
+  private static var _summaryP50:Float = 0.0;
+  private static var _summaryP95:Float = 0.0;
+  private static var _summaryP99:Float = 0.0;
+  private static var _summaryP999:Float = 0.0;
+  private static var _summarySlowest1PctFps:Float = 0.0;
+  private static var _summarySlowest01PctFps:Float = 0.0;
+  private static var _summaryP95Update:Float = 0.0;
+  private static var _summaryP95Render:Float = 0.0;
+  private static var _summaryP95Audio:Float = 0.0;
+
+  private static inline function isFiniteFloat(v:Float):Bool
   {
-    frameIndex = other.frameIndex;
-    timestampMs = other.timestampMs;
-    frameTimeMs = other.frameTimeMs;
-    workTimeMs = other.workTimeMs;
-    fps = other.fps;
-    rollingFps = other.rollingFps;
-    updateTimeMs = other.updateTimeMs;
-    renderTimeMs = other.renderTimeMs;
-    audioTimeMs = other.audioTimeMs;
-    gcPauseMs = other.gcPauseMs;
-    otherTimeMs = other.otherTimeMs;
-    allocBytes = other.allocBytes;
-    netHeapDeltaBytes = other.netHeapDeltaBytes;
-    gcReclaimedBytes = other.gcReclaimedBytes;
-    heapUsedBytes = other.heapUsedBytes;
-    heapReservedBytes = other.heapReservedBytes;
-    rssBytes = other.rssBytes;
-    peakRssBytes = other.peakRssBytes;
-    allocCount = other.allocCount;
-    gcCount = other.gcCount;
-    explicitGcCount = other.explicitGcCount;
-    implicitGcCount = other.implicitGcCount;
-    updateSteps = other.updateSteps;
-    drawCalls = other.drawCalls;
-    stateName = other.stateName;
+    return !Math.isNaN(v) && Math.isFinite(v);
   }
-}
 
-class NativeFrameProfiler
-{
-  public static inline final PHASE_UPDATE:Int = 0;
-  public static inline final PHASE_RENDER:Int = 1;
-  public static inline final PHASE_AUDIO:Int = 2;
-  public static inline final PHASE_GC:Int = 3;
-  public static inline final RING_CAPACITY:Int = 2048;
+  private static inline function sanitizeDuration(v:Float):Float
+  {
+    if (!isFiniteFloat(v) || v < 0.0)
+      return 0.0;
+    return v > 86400000.0 ? 86400000.0 : v;
+  }
 
-  static var _initialized:Bool = false;
-  static var _enabled:Bool = true;
-  static var _inFlightFrame:Bool = false;
-  static var _hasObservedHeap:Bool = false;
+  private static function sanitizeSingleLine(s:String):String
+  {
+    if (s == null || s == "")
+      return "UnknownState";
+    var buf = new StringBuf();
+    for (i in 0...s.length)
+    {
+      var code = StringTools.fastCodeAt(s, i);
+      if (code < 32 || code == 127)
+        buf.addChar(32);
+      else
+        buf.addChar(code);
+    }
+    return buf.toString();
+  }
 
-  static var _targetFps:Float = 60.0;
-  static var _sessionStartTimeMs:Float = 0.0;
-  static var _currentFrameStartMs:Float = 0.0;
-  static var _lastFrameEndMs:Float = 0.0;
+  public static function escapeCsvField(s:String):String
+  {
+    if (s == null || s == "")
+      return "UnknownState";
+    var needsQuotes = false;
+    for (i in 0...s.length)
+    {
+      var c = StringTools.fastCodeAt(s, i);
+      if (c == ",".code || c == "\"".code || c == "\r".code || c == "\n".code)
+      {
+        needsQuotes = true;
+        break;
+      }
+    }
+    if (s.length > 0 && (StringTools.fastCodeAt(s, 0) == 32 || StringTools.fastCodeAt(s, s.length - 1) == 32))
+      needsQuotes = true;
 
-  static var _phaseStartMs:Array<Float> = [0.0, 0.0, 0.0, 0.0];
-  static var _phaseDepth:Array<Int> = [0, 0, 0, 0];
+    if (!needsQuotes)
+      return sanitizeSingleLine(s);
 
-  static var _nestedAudioInUpdateMs:Float = 0.0;
-  static var _nestedGcInUpdateMs:Float = 0.0;
-  static var _nestedGcInRenderMs:Float = 0.0;
-  static var _nestedGcInAudioMs:Float = 0.0;
+    var buf = new StringBuf();
+    buf.addChar("\"".code);
+    for (i in 0...s.length)
+    {
+      var c = StringTools.fastCodeAt(s, i);
+      if (c == "\"".code)
+      {
+        buf.add("\"\"" );
+      }
+      else if (c < 32 || c == 127)
+      {
+        buf.addChar(32);
+      }
+      else
+      {
+        buf.addChar(c);
+      }
+    }
+    buf.addChar("\"".code);
+    return buf.toString();
+  }
 
-  static var _emaUpdateMs:Float = 0.0;
-  static var _emaRenderMs:Float = 0.0;
-  static var _emaAudioMs:Float = 0.0;
-
-  static var _frameStartHeapBytes:Float = 0.0;
-  static var _lastObservedHeapBytes:Float = 0.0;
-  static var _lastObservedReservedBytes:Float = 0.0;
-
-  static var _rollingWindowMs:Float = 0.0;
-  static var _rollingWindowFrames:Int = 0;
-  static var _currentRollingFps:Float = 0.0;
-
-  static var _totalFrames:Float = 0.0;
-  static var _totalDurationMs:Float = 0.0;
-  static var _minFrameTimeMs:Float = 0.0;
-  static var _maxFrameTimeMs:Float = 0.0;
-  static var _sumFrameTimeMs:Float = 0.0;
-  static var _sumSqFrameTimeMs:Float = 0.0;
-  static var _spikeCount25Ms:Float = 0.0;
-  static var _spikeCount33Ms:Float = 0.0;
-
-  static var _totalUpdateTimeMs:Float = 0.0;
-  static var _maxUpdateTimeMs:Float = 0.0;
-  static var _totalRenderTimeMs:Float = 0.0;
-  static var _maxRenderTimeMs:Float = 0.0;
-  static var _totalAudioTimeMs:Float = 0.0;
-  static var _maxAudioTimeMs:Float = 0.0;
-
-  static var _totalGcCount:Float = 0.0;
-  static var _totalExplicitGcCount:Float = 0.0;
-  static var _totalImplicitGcCount:Float = 0.0;
-  static var _framesWithGc:Float = 0.0;
-  static var _totalGcPauseMs:Float = 0.0;
-  static var _maxGcPauseMs:Float = 0.0;
-  static var _maxGcPauseFrame:Float = 0.0;
-  static var _totalGcReclaimedBytes:Float = 0.0;
-
-  static var _totalAllocBytes:Float = 0.0;
-  static var _totalAllocCount:Float = 0.0;
-  static var _peakFrameAllocBytes:Float = 0.0;
-  static var _peakFrameAllocFrame:Float = 0.0;
-  static var _startHeapUsedBytes:Float = 0.0;
-  static var _currentHeapUsedBytes:Float = 0.0;
-  static var _peakHeapUsedBytes:Float = 0.0;
-  static var _currentHeapReservedBytes:Float = 0.0;
-  static var _currentRssBytes:Float = 0.0;
-  static var _peakRssBytes:Float = 0.0;
-
-  static var _currentStateName:String = "InitState";
-  static var _activeSample:FallbackSample = new FallbackSample();
-  static var _cachedSample:FallbackSample = new FallbackSample();
-  static var _samples:Array<FallbackSample> = [];
-  static var _writeIndex:Int = 0;
-  static var _sampleCount:Int = 0;
-
-  static var _p50FrameTimeMs:Float = 0.0;
-  static var _p95FrameTimeMs:Float = 0.0;
-  static var _p99FrameTimeMs:Float = 0.0;
-  static var _p999FrameTimeMs:Float = 0.0;
-  static var _p99UpdateTimeMs:Float = 0.0;
-  static var _p99RenderTimeMs:Float = 0.0;
-  static var _p99AudioTimeMs:Float = 0.0;
-  static var _stdDevFrameTimeMs:Float = 0.0;
+  public static function nowMs():Float
+  {
+    return Timer.stamp() * 1000.0;
+  }
 
   public static function init(targetFps:Float = 60.0):Void
   {
     _initialized = true;
     _enabled = true;
-    _inFlightFrame = false;
-    _hasObservedHeap = false;
-    _targetFps = targetFps > 0.0 ? targetFps : 60.0;
-    _sessionStartTimeMs = nowMs();
-    _currentFrameStartMs = 0.0;
-    _lastFrameEndMs = 0.0;
-    _rollingWindowMs = 0.0;
-    _rollingWindowFrames = 0;
-    _currentRollingFps = 0.0;
-    _totalFrames = 0.0;
-    _totalDurationMs = 0.0;
-    _minFrameTimeMs = 0.0;
-    _maxFrameTimeMs = 0.0;
-    _sumFrameTimeMs = 0.0;
-    _sumSqFrameTimeMs = 0.0;
-    _spikeCount25Ms = 0.0;
-    _spikeCount33Ms = 0.0;
-    _totalUpdateTimeMs = 0.0;
-    _maxUpdateTimeMs = 0.0;
-    _totalRenderTimeMs = 0.0;
-    _maxRenderTimeMs = 0.0;
-    _totalAudioTimeMs = 0.0;
-    _maxAudioTimeMs = 0.0;
-    _totalGcCount = 0.0;
-    _totalExplicitGcCount = 0.0;
-    _totalImplicitGcCount = 0.0;
-    _framesWithGc = 0.0;
-    _totalGcPauseMs = 0.0;
-    _maxGcPauseMs = 0.0;
-    _maxGcPauseFrame = 0.0;
-    _totalGcReclaimedBytes = 0.0;
-    _totalAllocBytes = 0.0;
-    _totalAllocCount = 0.0;
-    _peakFrameAllocBytes = 0.0;
-    _peakFrameAllocFrame = 0.0;
-    _startHeapUsedBytes = 0.0;
-    _currentHeapUsedBytes = 0.0;
-    _peakHeapUsedBytes = 0.0;
-    _currentHeapReservedBytes = 0.0;
-    _currentRssBytes = GetTotalMemory.getCurrentRSS();
-    _peakRssBytes = GetTotalMemory.getPeakRSS();
-    _writeIndex = 0;
-    _sampleCount = 0;
-    if (_samples.length < RING_CAPACITY)
-    {
-      for (_ in _samples.length...RING_CAPACITY)
-        _samples.push(new FallbackSample());
-    }
+    _collectMemory = true;
+    _rssSampleInterval = DEFAULT_RSS_SAMPLE_INTERVAL;
+    _targetFps = (isFiniteFloat(targetFps) && targetFps > 0.0) ? targetFps : 60.0;
+    reset();
   }
 
   public static function reset():Void
   {
-    var savedTarget = _targetFps;
-    var savedEnabled = _enabled;
-    var savedState = _currentStateName;
-    init(savedTarget);
-    _enabled = savedEnabled;
-    _currentStateName = savedState;
+    if (!_initialized)
+      _initialized = true;
+    _inFlight = false;
+    _sessionStartMs = nowMs();
+    _currentFrameStartMs = 0.0;
+    _lastFrameEndMs = 0.0;
+    _currentRollingFps = 0.0;
+    _rollingWindowMs = 0.0;
+    _rollingWindowCount = 0;
+    _phaseStack = [];
+    _phaseDepth = [0, 0, 0, 0];
+    _hasObservedHeap = false;
+    _heapStatsAvailable = false;
+    _rssAvailable = false;
+    _lastObservedHeap = 0.0;
+    _frameStartHeap = 0.0;
+    _currentHeapUsed = 0.0;
+    _currentHeapReserved = 0.0;
+    _peakHeapUsed = 0.0;
+    _peakHeapReserved = 0.0;
+    _lastSampledRss = 0.0;
+    _lastSampledPeakRss = 0.0;
+    _totalFrames = 0;
+    _sumFrameTimeMs = 0.0;
+    _sumSqFrameTimeMs = 0.0;
+    _minFrameTimeMs = 1e12;
+    _maxFrameTimeMs = 0.0;
+    _sumUpdateMs = 0.0;
+    _maxUpdateMs = 0.0;
+    _sumRenderMs = 0.0;
+    _maxRenderMs = 0.0;
+    _sumAudioMs = 0.0;
+    _maxAudioMs = 0.0;
+    _sumOtherMs = 0.0;
+    _maxOtherMs = 0.0;
+    _totalGcCount = 0;
+    _totalExplicitGcCount = 0;
+    _totalImplicitGcCount = 0;
+    _framesWithGc = 0;
+    _totalGcPauseMs = 0.0;
+    _maxGcPauseMs = 0.0;
+    _maxGcPauseFrame = 0;
+    _totalGcReclaimedBytes = 0.0;
+    _totalAllocBytes = 0.0;
+    _totalAllocCount = 0;
+    _peakFrameAllocBytes = 0.0;
+    _peakFrameAllocFrame = 0;
+    _droppedFrames = 0;
+    _spike16 = 0;
+    _spike25 = 0;
+    _spike33 = 0;
+    _spike50 = 0;
+    _totalDrawCalls = 0;
+    _maxDrawCalls = 0;
+    _samples = [];
+    _ringWriteIndex = 0;
+    _ringCount = 0;
+    _activeSample = null;
+    _loadedSample = null;
   }
 
   public static function setEnabled(enabled:Bool):Void
   {
     if (!_initialized)
       init(60.0);
-    _enabled = enabled;
-    if (!_enabled)
-      _inFlightFrame = false;
+    if (!enabled)
+    {
+      _enabled = false;
+      _inFlight = false;
+      _phaseStack = [];
+      _phaseDepth = [0, 0, 0, 0];
+      _lastFrameEndMs = 0.0;
+      _currentFrameStartMs = 0.0;
+      _hasObservedHeap = false;
+    }
+    else if (!_enabled)
+    {
+      _enabled = true;
+      _inFlight = false;
+      _phaseStack = [];
+      _phaseDepth = [0, 0, 0, 0];
+      _lastFrameEndMs = 0.0;
+      _currentFrameStartMs = 0.0;
+      _hasObservedHeap = false;
+    }
   }
 
   public static function isEnabled():Bool
   {
-    return _initialized ? _enabled : true;
+    return _initialized && _enabled;
+  }
+
+  public static function setRssSampleInterval(intervalFrames:Int):Void
+  {
+    if (!_initialized)
+      init(60.0);
+    _rssSampleInterval = intervalFrames > 0 ? intervalFrames : 0;
+  }
+
+  public static function getRssSampleInterval():Int
+  {
+    return _rssSampleInterval;
+  }
+
+  public static function setCollectMemoryMetrics(enabled:Bool):Void
+  {
+    if (!_initialized)
+      init(60.0);
+    _collectMemory = enabled;
+    if (!enabled)
+      _hasObservedHeap = false;
+  }
+
+  public static function getCollectMemoryMetrics():Bool
+  {
+    return _collectMemory;
   }
 
   public static function setTargetFps(targetFps:Float):Void
   {
-    if (!_initialized)
-      init(targetFps);
-    if (targetFps > 0.0)
+    if (isFiniteFloat(targetFps) && targetFps > 0.0)
       _targetFps = targetFps;
   }
 
   public static function setStateName(stateName:String):Void
   {
-    if (!_initialized)
-      init(60.0);
-    _currentStateName = (stateName != null && stateName.length > 0) ? stateName : "Unknown";
-    if (_inFlightFrame)
+    _currentStateName = sanitizeSingleLine(stateName);
+    if (_activeSample != null)
       _activeSample.stateName = _currentStateName;
   }
 
-  public static function nowMs():Float
+  private static function observeHeap(heapUsedBytes:Float, isExplicitGcEnd:Bool):Void
   {
-    return haxe.Timer.stamp() * 1000.0;
-  }
-
-  static function observeHeap(heapUsedBytes:Float, isExplicitGcEnd:Bool, phaseElapsedMs:Float, activePhase:Int):Void
-  {
-    if (heapUsedBytes < 0.0)
+    if (!_collectMemory || !isFiniteFloat(heapUsedBytes) || heapUsedBytes < 0.0)
       return;
+    _heapStatsAvailable = true;
+    _currentHeapUsed = heapUsedBytes;
+    if (heapUsedBytes > _peakHeapUsed)
+      _peakHeapUsed = heapUsedBytes;
     if (!_hasObservedHeap)
     {
-      _lastObservedHeapBytes = heapUsedBytes;
-      _frameStartHeapBytes = heapUsedBytes;
-      _startHeapUsedBytes = heapUsedBytes;
-      _currentHeapUsedBytes = heapUsedBytes;
-      _peakHeapUsedBytes = heapUsedBytes;
+      _lastObservedHeap = heapUsedBytes;
       _hasObservedHeap = true;
       return;
     }
-
-    var delta = heapUsedBytes - _lastObservedHeapBytes;
+    var delta = heapUsedBytes - _lastObservedHeap;
+    _lastObservedHeap = heapUsedBytes;
+    if (!_inFlight || _activeSample == null)
+      return;
     if (delta > 0.0)
     {
       _activeSample.allocBytes += delta;
@@ -910,25 +1353,12 @@ class NativeFrameProfiler
     }
     else if (delta < 0.0)
     {
-      var reclaimed = -delta;
-      _activeSample.gcReclaimedBytes += reclaimed;
+      _activeSample.gcReclaimedBytes += (-delta);
       if (!isExplicitGcEnd && _phaseDepth[PHASE_GC] <= 0)
       {
         _activeSample.implicitGcCount += 1;
-        _activeSample.gcCount += 1;
-        if (phaseElapsedMs > 0.0)
-        {
-          var est = phaseElapsedMs * 0.25;
-          if (est < 0.02)
-            est = 0.02;
-          _activeSample.gcPauseMs += est;
-        }
       }
     }
-    _lastObservedHeapBytes = heapUsedBytes;
-    _currentHeapUsedBytes = heapUsedBytes;
-    if (heapUsedBytes > _peakHeapUsedBytes)
-      _peakHeapUsedBytes = heapUsedBytes;
   }
 
   public static function beginFrame(heapUsedBytes:Float, heapReservedBytes:Float):Void
@@ -937,656 +1367,794 @@ class NativeFrameProfiler
       init(60.0);
     if (!_enabled)
       return;
+    if (_inFlight)
+    {
+      _inFlight = false;
+      _phaseStack = [];
+      _phaseDepth = [0, 0, 0, 0];
+      if (_hasObservedHeap)
+        _lastObservedHeap = _frameStartHeap;
+    }
     var now = nowMs();
-    if (_totalFrames == 0 && !_inFlightFrame)
-    {
-      _sessionStartTimeMs = now;
-      if (heapUsedBytes > 0.0)
-        _startHeapUsedBytes = heapUsedBytes;
-    }
-    _activeSample.reset(_currentStateName);
-    for (i in 0...4)
-    {
-      _phaseStartMs[i] = 0.0;
-      _phaseDepth[i] = 0;
-    }
-    _nestedAudioInUpdateMs = 0.0;
-    _nestedGcInUpdateMs = 0.0;
-    _nestedGcInRenderMs = 0.0;
-    _nestedGcInAudioMs = 0.0;
-    observeHeap(heapUsedBytes, false, 0.0, -1);
-    _frameStartHeapBytes = heapUsedBytes >= 0.0 ? heapUsedBytes : _lastObservedHeapBytes;
-    if (heapReservedBytes >= 0.0)
-    {
-      _lastObservedReservedBytes = heapReservedBytes;
-      _currentHeapReservedBytes = heapReservedBytes;
-    }
+    _inFlight = true;
     _currentFrameStartMs = now;
-    _inFlightFrame = true;
+    _phaseStack = [];
+    _phaseDepth = [0, 0, 0, 0];
+    _activeSample = {
+      frameIndex: _totalFrames + 1,
+      timestampMs: now >= _sessionStartMs ? (now - _sessionStartMs) : 0.0,
+      frameTimeMs: 0.0,
+      workTimeMs: 0.0,
+      fps: 0.0,
+      rollingFps: 0.0,
+      updateTimeMs: 0.0,
+      renderTimeMs: 0.0,
+      audioTimeMs: 0.0,
+      gcPauseMs: 0.0,
+      otherTimeMs: 0.0,
+      allocBytes: 0.0,
+      allocCount: 0,
+      gcReclaimedBytes: 0.0,
+      netHeapDeltaBytes: 0.0,
+      heapUsedBytes: _currentHeapUsed,
+      heapReservedBytes: _currentHeapReserved,
+      rssBytes: 0.0,
+      peakRssBytes: 0.0,
+      gcCount: 0,
+      explicitGcCount: 0,
+      implicitGcCount: 0,
+      drawCalls: 0,
+      updateSteps: 0,
+      rssSampled: false,
+      stateName: _currentStateName
+    };
+    if (_collectMemory && isFiniteFloat(heapReservedBytes) && heapReservedBytes >= 0.0)
+    {
+      _currentHeapReserved = heapReservedBytes;
+      if (heapReservedBytes > _peakHeapReserved)
+        _peakHeapReserved = heapReservedBytes;
+    }
+    if (_collectMemory && isFiniteFloat(heapUsedBytes) && heapUsedBytes >= 0.0)
+    {
+      _heapStatsAvailable = true;
+      if (!_hasObservedHeap)
+      {
+        _lastObservedHeap = heapUsedBytes;
+        _hasObservedHeap = true;
+      }
+      _frameStartHeap = _lastObservedHeap;
+      observeHeap(heapUsedBytes, false);
+    }
+    else
+    {
+      _frameStartHeap = _hasObservedHeap ? _lastObservedHeap : 0.0;
+    }
+    _activeSample.heapUsedBytes = _currentHeapUsed;
+    _activeSample.heapReservedBytes = _currentHeapReserved;
   }
 
-  public static function beginPhase(phase:Int, heapUsedBytes:Float):Void
+  private static function beginPhase(phase:Int, heapUsedBytes:Float):Void
   {
-    if (phase < 0 || phase >= 4)
-      return;
     if (!_initialized)
       init(60.0);
-    if (!_enabled)
+    if (!_enabled || phase < 0 || phase > 3)
       return;
-    if (!_inFlightFrame)
-      beginFrame(heapUsedBytes, _lastObservedReservedBytes);
-    observeHeap(heapUsedBytes, false, 0.0, -1);
-    if (_phaseDepth[phase] == 0)
+    if (!_inFlight)
+      beginFrame(heapUsedBytes, _currentHeapReserved);
+    else if (_collectMemory && heapUsedBytes >= 0.0)
+      observeHeap(heapUsedBytes, false);
+
+    if (_phaseDepth[phase] <= 0)
     {
-      _phaseStartMs[phase] = nowMs();
-      if (phase == PHASE_UPDATE)
+      _phaseDepth[phase] = 1;
+      _phaseStack.push({phase: phase, startMs: nowMs(), childDurationMs: 0.0});
+      if (phase == PHASE_UPDATE && _activeSample != null)
         _activeSample.updateSteps += 1;
     }
-    _phaseDepth[phase] += 1;
+    else
+    {
+      _phaseDepth[phase] += 1;
+    }
   }
 
-  public static function endPhase(phase:Int, heapUsedBytes:Float):Float
+  private static function popTopPhaseAt(now:Float, heapUsedBytes:Float):Float
   {
-    if (phase < 0 || phase >= 4 || !_initialized || !_enabled || !_inFlightFrame)
+    if (_phaseStack.length <= 0 || _activeSample == null)
       return 0.0;
-    if (_phaseDepth[phase] <= 0)
-      return 0.0;
-    _phaseDepth[phase] -= 1;
-    if (_phaseDepth[phase] > 0)
-      return 0.0;
+    var entry = _phaseStack.pop();
+    var phase = entry.phase;
+    if (phase >= 0 && phase <= 3)
+      _phaseDepth[phase] = 0;
 
-    var rawElapsedMs = nowMs() - _phaseStartMs[phase];
-    if (rawElapsedMs < 0.0)
-      rawElapsedMs = 0.0;
+    var raw = sanitizeDuration(now - entry.startMs);
+    var exclusive = raw - entry.childDurationMs;
+    if (exclusive < 0.0)
+      exclusive = 0.0;
 
-    if (phase == PHASE_GC)
+    if (_collectMemory && heapUsedBytes >= 0.0)
+      observeHeap(heapUsedBytes, phase == PHASE_GC);
+
+    if (phase == PHASE_UPDATE)
+      _activeSample.updateTimeMs += exclusive;
+    else if (phase == PHASE_RENDER)
+      _activeSample.renderTimeMs += exclusive;
+    else if (phase == PHASE_AUDIO)
+      _activeSample.audioTimeMs += exclusive;
+    else if (phase == PHASE_GC)
     {
-      observeHeap(heapUsedBytes, true, rawElapsedMs, PHASE_GC);
+      _activeSample.gcPauseMs += exclusive;
       _activeSample.explicitGcCount += 1;
       _activeSample.gcCount += 1;
-      _activeSample.gcPauseMs += rawElapsedMs;
-      if (_phaseDepth[PHASE_AUDIO] > 0)
-        _nestedGcInAudioMs += rawElapsedMs;
-      else if (_phaseDepth[PHASE_UPDATE] > 0)
-        _nestedGcInUpdateMs += rawElapsedMs;
-      else if (_phaseDepth[PHASE_RENDER] > 0)
-        _nestedGcInRenderMs += rawElapsedMs;
-      return rawElapsedMs;
     }
 
-    observeHeap(heapUsedBytes, false, rawElapsedMs, phase);
-    var netElapsedMs = rawElapsedMs;
-    if (phase == PHASE_AUDIO)
+    if (_phaseStack.length > 0)
+      _phaseStack[_phaseStack.length - 1].childDurationMs += raw;
+
+    return exclusive;
+  }
+
+  private static function endPhase(phase:Int, heapUsedBytes:Float):Float
+  {
+    if (!_initialized || !_enabled || !_inFlight || _activeSample == null)
+      return 0.0;
+    if (phase < 0 || phase > 3 || _phaseDepth[phase] <= 0)
+      return 0.0;
+    if (_phaseDepth[phase] > 1)
     {
-      netElapsedMs = Math.max(0.0, rawElapsedMs - _nestedGcInAudioMs);
-      _nestedGcInAudioMs = 0.0;
-      _activeSample.audioTimeMs += netElapsedMs;
-      if (_phaseDepth[PHASE_UPDATE] > 0)
-        _nestedAudioInUpdateMs += rawElapsedMs;
+      _phaseDepth[phase] -= 1;
+      return 0.0;
     }
-    else if (phase == PHASE_UPDATE)
+
+    var targetIdx = -1;
+    var i = _phaseStack.length - 1;
+    while (i >= 0)
     {
-      netElapsedMs = Math.max(0.0, rawElapsedMs - _nestedAudioInUpdateMs - _nestedGcInUpdateMs);
-      _nestedAudioInUpdateMs = 0.0;
-      _nestedGcInUpdateMs = 0.0;
-      _activeSample.updateTimeMs += netElapsedMs;
+      if (_phaseStack[i].phase == phase)
+      {
+        targetIdx = i;
+        break;
+      }
+      --i;
     }
-    else if (phase == PHASE_RENDER)
+    if (targetIdx < 0)
     {
-      netElapsedMs = Math.max(0.0, rawElapsedMs - _nestedGcInRenderMs);
-      _nestedGcInRenderMs = 0.0;
-      _activeSample.renderTimeMs += netElapsedMs;
+      _phaseDepth[phase] = 0;
+      return 0.0;
     }
-    return netElapsedMs;
+
+    var now = nowMs();
+    while (_phaseStack.length - 1 > targetIdx)
+    {
+      popTopPhaseAt(now, -1.0);
+    }
+    return popTopPhaseAt(now, heapUsedBytes);
+  }
+
+  public static function beginUpdate(heapUsedBytes:Float):Void
+  {
+    beginPhase(PHASE_UPDATE, heapUsedBytes);
+  }
+
+  public static function endUpdate(heapUsedBytes:Float):Float
+  {
+    return endPhase(PHASE_UPDATE, heapUsedBytes);
+  }
+
+  public static function beginRender(heapUsedBytes:Float):Void
+  {
+    beginPhase(PHASE_RENDER, heapUsedBytes);
+  }
+
+  public static function endRender(heapUsedBytes:Float):Float
+  {
+    return endPhase(PHASE_RENDER, heapUsedBytes);
+  }
+
+  public static function beginAudio(heapUsedBytes:Float):Void
+  {
+    beginPhase(PHASE_AUDIO, heapUsedBytes);
+  }
+
+  public static function endAudio(heapUsedBytes:Float):Float
+  {
+    return endPhase(PHASE_AUDIO, heapUsedBytes);
+  }
+
+  public static function beginGC(heapUsedBytes:Float):Void
+  {
+    beginPhase(PHASE_GC, heapUsedBytes);
+  }
+
+  public static function endGC(heapUsedBytes:Float):Float
+  {
+    return endPhase(PHASE_GC, heapUsedBytes);
   }
 
   public static function recordPhaseMs(phase:Int, durationMs:Float):Void
   {
-    if (durationMs <= 0.0 || phase < 0 || phase >= 4)
+    var cleanMs = sanitizeDuration(durationMs);
+    if (!_initialized || !_enabled || !_inFlight || _activeSample == null || cleanMs <= 0.0)
       return;
-    if (!_initialized)
-      init(60.0);
-    if (!_enabled)
-      return;
-    if (!_inFlightFrame)
-      beginFrame(_lastObservedHeapBytes, _lastObservedReservedBytes);
     if (phase == PHASE_UPDATE)
     {
-      _activeSample.updateTimeMs += durationMs;
+      _activeSample.updateTimeMs += cleanMs;
       _activeSample.updateSteps += 1;
     }
     else if (phase == PHASE_RENDER)
-      _activeSample.renderTimeMs += durationMs;
+      _activeSample.renderTimeMs += cleanMs;
     else if (phase == PHASE_AUDIO)
-      _activeSample.audioTimeMs += durationMs;
+      _activeSample.audioTimeMs += cleanMs;
     else if (phase == PHASE_GC)
     {
-      _activeSample.gcPauseMs += durationMs;
-      _activeSample.explicitGcCount += 1;
+      _activeSample.gcPauseMs += cleanMs;
       _activeSample.gcCount += 1;
+      _activeSample.explicitGcCount += 1;
     }
+    else
+      return;
+
+    if (_phaseStack.length > 0 && _phaseStack[_phaseStack.length - 1].phase != phase)
+      _phaseStack[_phaseStack.length - 1].childDurationMs += cleanMs;
   }
 
   public static function recordAllocation(bytes:Float, count:Int = 1):Void
   {
-    if (bytes <= 0.0)
+    if (!_initialized || !_enabled || !_inFlight || _activeSample == null)
       return;
-    if (!_initialized)
-      init(60.0);
-    if (!_enabled)
-      return;
-    if (!_inFlightFrame)
-      beginFrame(_lastObservedHeapBytes, _lastObservedReservedBytes);
-    _activeSample.allocBytes += bytes;
-    _activeSample.allocCount += count > 0 ? count : 1;
+    if (isFiniteFloat(bytes) && bytes > 0.0)
+      _activeSample.allocBytes += bytes;
+    _activeSample.allocCount += (count > 0 ? count : 1);
   }
 
-  public static function recordGCPause(pauseMs:Float, reclaimedBytes:Float = 0.0, isExplicit:Bool = true):Void
+  public static function recordGCPause(pauseMs:Float, reclaimedBytes:Float, isExplicit:Bool = true):Void
   {
-    if (!_initialized)
-      init(60.0);
-    if (!_enabled)
+    var cleanPauseMs = sanitizeDuration(pauseMs);
+    if (!_initialized || !_enabled || !_inFlight || _activeSample == null)
       return;
-    if (!_inFlightFrame)
-      beginFrame(_lastObservedHeapBytes, _lastObservedReservedBytes);
-    if (pauseMs > 0.0)
-      _activeSample.gcPauseMs += pauseMs;
-    if (reclaimedBytes > 0.0)
+    if (cleanPauseMs > 0.0)
+    {
+      _activeSample.gcPauseMs += cleanPauseMs;
+      if (_phaseStack.length > 0 && _phaseStack[_phaseStack.length - 1].phase != PHASE_GC)
+        _phaseStack[_phaseStack.length - 1].childDurationMs += cleanPauseMs;
+    }
+    if (isFiniteFloat(reclaimedBytes) && reclaimedBytes > 0.0)
       _activeSample.gcReclaimedBytes += reclaimedBytes;
-    _activeSample.gcCount += 1;
     if (isExplicit)
+    {
       _activeSample.explicitGcCount += 1;
+      _activeSample.gcCount += 1;
+    }
     else
+    {
       _activeSample.implicitGcCount += 1;
-  }
-
-  public static function addDrawCalls(drawCalls:Int):Void
-  {
-    if (_inFlightFrame && drawCalls > 0)
-      _activeSample.drawCalls += drawCalls;
+      if (cleanPauseMs > 0.0)
+        _activeSample.gcCount += 1;
+    }
   }
 
   public static function endFrame(
     heapUsedBytes:Float,
     heapReservedBytes:Float,
-    drawCalls:Int = 0,
+    drawCalls:Int,
     explicitFrameTimeMs:Float = 0.0):Void
   {
-    if (!_initialized || !_enabled || !_inFlightFrame)
+    if (!_initialized || !_enabled)
       return;
-    var i = 3;
-    while (i >= 0)
-    {
-      while (_phaseDepth[i] > 0)
-        endPhase(i, heapUsedBytes);
-      --i;
-    }
-    observeHeap(heapUsedBytes, false, 0.0, -1);
-    if (heapReservedBytes >= 0.0)
-    {
-      _lastObservedReservedBytes = heapReservedBytes;
-      _currentHeapReservedBytes = heapReservedBytes;
-    }
+    if (!_inFlight)
+      beginFrame(heapUsedBytes, heapReservedBytes);
     var now = nowMs();
-    var workTimeMs = Math.max(0.0, now - _currentFrameStartMs);
-    var accountedMs = _activeSample.updateTimeMs + _activeSample.renderTimeMs + _activeSample.audioTimeMs + _activeSample.gcPauseMs;
-    if (workTimeMs < accountedMs)
-      workTimeMs = accountedMs;
-
-    var frameTimeMs = workTimeMs;
-    if (explicitFrameTimeMs > 0.0)
-      frameTimeMs = Math.max(explicitFrameTimeMs, workTimeMs);
-    else if (_lastFrameEndMs > 0.0)
+    while (_phaseStack.length > 0)
     {
-      var delta = now - _lastFrameEndMs;
-      if (delta >= workTimeMs && delta < 10000.0)
-        frameTimeMs = delta;
+      popTopPhaseAt(now, -1.0);
     }
-    if (frameTimeMs <= 0.0)
-      frameTimeMs = _targetFps > 0.0 ? (1000.0 / _targetFps) : 16.6667;
-
-    _rollingWindowFrames += 1;
-    _rollingWindowMs += frameTimeMs;
-    if (_rollingWindowMs >= 1000.0)
+    if (_collectMemory && heapUsedBytes >= 0.0)
+      observeHeap(heapUsedBytes, false);
+    if (_collectMemory && isFiniteFloat(heapReservedBytes) && heapReservedBytes >= 0.0)
     {
-      _currentRollingFps = (_rollingWindowFrames * 1000.0) / _rollingWindowMs;
-      _rollingWindowFrames = 0;
-      _rollingWindowMs = 0.0;
-    }
-    else if (_currentRollingFps <= 0.0)
-    {
-      _currentRollingFps = (_rollingWindowFrames * 1000.0) / _rollingWindowMs;
+      _currentHeapReserved = heapReservedBytes;
+      if (heapReservedBytes > _peakHeapReserved)
+        _peakHeapReserved = heapReservedBytes;
     }
 
-    _currentRssBytes = GetTotalMemory.getCurrentRSS();
-    _peakRssBytes = Math.max(_peakRssBytes, GetTotalMemory.getPeakRSS());
-
-    _totalFrames += 1.0;
-    _activeSample.frameIndex = _totalFrames;
-    _activeSample.timestampMs = Math.max(0.0, now - _sessionStartTimeMs);
-    _activeSample.frameTimeMs = frameTimeMs;
-    _activeSample.workTimeMs = workTimeMs;
-    _activeSample.fps = 1000.0 / frameTimeMs;
-    _activeSample.rollingFps = _currentRollingFps;
-    _activeSample.otherTimeMs = Math.max(0.0, frameTimeMs - accountedMs);
-    _activeSample.heapUsedBytes = _lastObservedHeapBytes;
-    _activeSample.heapReservedBytes = _lastObservedReservedBytes;
-    _activeSample.netHeapDeltaBytes = _lastObservedHeapBytes - _frameStartHeapBytes;
-    _activeSample.rssBytes = _currentRssBytes;
-    _activeSample.peakRssBytes = _peakRssBytes;
-    if (drawCalls > 0)
-      _activeSample.drawCalls += drawCalls;
-
-    _totalDurationMs += frameTimeMs;
-    _sumFrameTimeMs += frameTimeMs;
-    _sumSqFrameTimeMs += frameTimeMs * frameTimeMs;
-    if (_totalFrames == 1.0 || frameTimeMs < _minFrameTimeMs)
-      _minFrameTimeMs = frameTimeMs;
-    if (_totalFrames == 1.0 || frameTimeMs > _maxFrameTimeMs)
-      _maxFrameTimeMs = frameTimeMs;
-    if (frameTimeMs > 25.0)
-      _spikeCount25Ms += 1.0;
-    if (frameTimeMs > 33.3333)
-      _spikeCount33Ms += 1.0;
-
-    _totalUpdateTimeMs += _activeSample.updateTimeMs;
-    if (_activeSample.updateTimeMs > _maxUpdateTimeMs)
-      _maxUpdateTimeMs = _activeSample.updateTimeMs;
-    _totalRenderTimeMs += _activeSample.renderTimeMs;
-    if (_activeSample.renderTimeMs > _maxRenderTimeMs)
-      _maxRenderTimeMs = _activeSample.renderTimeMs;
-    _totalAudioTimeMs += _activeSample.audioTimeMs;
-    if (_activeSample.audioTimeMs > _maxAudioTimeMs)
-      _maxAudioTimeMs = _activeSample.audioTimeMs;
-
-    if (_activeSample.gcCount > 0 || _activeSample.gcPauseMs > 0.0)
+    var workMs = sanitizeDuration(now - _currentFrameStartMs);
+    var frameMs = workMs;
+    if (isFiniteFloat(explicitFrameTimeMs) && explicitFrameTimeMs > 0.0)
     {
-      _framesWithGc += 1.0;
-      _totalGcCount += _activeSample.gcCount;
-      _totalExplicitGcCount += _activeSample.explicitGcCount;
-      _totalImplicitGcCount += _activeSample.implicitGcCount;
-      _totalGcPauseMs += _activeSample.gcPauseMs;
-      _totalGcReclaimedBytes += _activeSample.gcReclaimedBytes;
-      if (_activeSample.gcPauseMs > _maxGcPauseMs)
+      var cleanExp = sanitizeDuration(explicitFrameTimeMs);
+      frameMs = cleanExp >= workMs ? cleanExp : workMs;
+    }
+    else if (_lastFrameEndMs > 0.0 && now >= _lastFrameEndMs)
+    {
+      var delta = sanitizeDuration(now - _lastFrameEndMs);
+      frameMs = (delta >= workMs && delta < 10000.0) ? delta : workMs;
+    }
+    if (frameMs <= 0.0)
+      frameMs = 0.0001;
+
+    _lastFrameEndMs = now;
+    _inFlight = false;
+
+    var nextFrameNum = _totalFrames + 1;
+    if (_collectMemory && _rssSampleInterval > 0
+        && (nextFrameNum == 1 || (nextFrameNum % _rssSampleInterval) == 0))
+    {
+      var curRss = GetTotalMemory.getCurrentRSS();
+      var pkRss = GetTotalMemory.getPeakRSS();
+      if (curRss > 0.0 || pkRss > 0.0)
       {
-        _maxGcPauseMs = _activeSample.gcPauseMs;
-        _maxGcPauseFrame = _totalFrames;
+        _rssAvailable = true;
+        _lastSampledRss = curRss;
+        if (pkRss > _lastSampledPeakRss)
+          _lastSampledPeakRss = pkRss;
+        if (curRss > _lastSampledPeakRss)
+          _lastSampledPeakRss = curRss;
+        _activeSample.rssSampled = true;
+      }
+      else
+      {
+        _activeSample.rssSampled = false;
       }
     }
+    else
+    {
+      _activeSample.rssSampled = false;
+    }
+
+    _activeSample.workTimeMs = workMs;
+    _activeSample.frameTimeMs = frameMs;
+    _activeSample.fps = 1000.0 / frameMs;
+    var accounted = _activeSample.updateTimeMs + _activeSample.renderTimeMs + _activeSample.audioTimeMs + _activeSample.gcPauseMs;
+    _activeSample.otherTimeMs = workMs > accounted ? (workMs - accounted) : 0.0;
+    _activeSample.heapUsedBytes = _currentHeapUsed;
+    _activeSample.heapReservedBytes = _currentHeapReserved;
+    _activeSample.netHeapDeltaBytes = _currentHeapUsed - _frameStartHeap;
+    _activeSample.rssBytes = _lastSampledRss;
+    _activeSample.peakRssBytes = _lastSampledPeakRss;
+    _activeSample.drawCalls = drawCalls > 0 ? drawCalls : 0;
+
+    if (_ringCount == RING_CAPACITY && _rollingWindowCount >= RING_CAPACITY)
+    {
+      var overwrittenFt = _samples[_ringWriteIndex].frameTimeMs;
+      _rollingWindowMs = _rollingWindowMs > overwrittenFt ? (_rollingWindowMs - overwrittenFt) : 0.0;
+      _rollingWindowCount = RING_CAPACITY - 1;
+    }
+
+    if (_samples.length < RING_CAPACITY)
+      _samples.push(_activeSample);
+    else
+      _samples[_ringWriteIndex] = _activeSample;
+    _ringWriteIndex = (_ringWriteIndex + 1) % RING_CAPACITY;
+    if (_ringCount < RING_CAPACITY)
+      _ringCount += 1;
+
+    _rollingWindowMs += frameMs;
+    _rollingWindowCount += 1;
+    while (_rollingWindowCount > 1)
+    {
+      var oldestIdx = (_ringWriteIndex + RING_CAPACITY - _rollingWindowCount) % RING_CAPACITY;
+      var oldestFt = _samples[oldestIdx].frameTimeMs;
+      if ((_rollingWindowMs - oldestFt) >= 1000.0 || _rollingWindowCount > 240)
+      {
+        _rollingWindowMs -= oldestFt;
+        if (_rollingWindowMs < 0.0)
+          _rollingWindowMs = 0.0;
+        _rollingWindowCount -= 1;
+      }
+      else
+      {
+        break;
+      }
+    }
+    _currentRollingFps = _rollingWindowMs > 0.0 ? ((_rollingWindowCount * 1000.0) / _rollingWindowMs) : 0.0;
+    _activeSample.rollingFps = _currentRollingFps;
+
+    _totalFrames += 1;
+    _sumFrameTimeMs += frameMs;
+    _sumSqFrameTimeMs += frameMs * frameMs;
+    if (frameMs < _minFrameTimeMs)
+      _minFrameTimeMs = frameMs;
+    if (frameMs > _maxFrameTimeMs)
+      _maxFrameTimeMs = frameMs;
+
+    _sumUpdateMs += _activeSample.updateTimeMs;
+    if (_activeSample.updateTimeMs > _maxUpdateMs)
+      _maxUpdateMs = _activeSample.updateTimeMs;
+    _sumRenderMs += _activeSample.renderTimeMs;
+    if (_activeSample.renderTimeMs > _maxRenderMs)
+      _maxRenderMs = _activeSample.renderTimeMs;
+    _sumAudioMs += _activeSample.audioTimeMs;
+    if (_activeSample.audioTimeMs > _maxAudioMs)
+      _maxAudioMs = _activeSample.audioTimeMs;
+    _sumOtherMs += _activeSample.otherTimeMs;
+    if (_activeSample.otherTimeMs > _maxOtherMs)
+      _maxOtherMs = _activeSample.otherTimeMs;
+
+    _totalGcCount += _activeSample.gcCount;
+    _totalExplicitGcCount += _activeSample.explicitGcCount;
+    _totalImplicitGcCount += _activeSample.implicitGcCount;
+    if (_activeSample.gcCount > 0 || _activeSample.implicitGcCount > 0 || _activeSample.gcPauseMs > 0.0)
+      _framesWithGc += 1;
+    _totalGcPauseMs += _activeSample.gcPauseMs;
+    if (_activeSample.gcPauseMs > _maxGcPauseMs)
+    {
+      _maxGcPauseMs = _activeSample.gcPauseMs;
+      _maxGcPauseFrame = _activeSample.frameIndex;
+    }
+    _totalGcReclaimedBytes += _activeSample.gcReclaimedBytes;
 
     _totalAllocBytes += _activeSample.allocBytes;
     _totalAllocCount += _activeSample.allocCount;
     if (_activeSample.allocBytes > _peakFrameAllocBytes)
     {
       _peakFrameAllocBytes = _activeSample.allocBytes;
-      _peakFrameAllocFrame = _totalFrames;
+      _peakFrameAllocFrame = _activeSample.frameIndex;
     }
 
-    _samples[_writeIndex].copyFrom(_activeSample);
-    _writeIndex = (_writeIndex + 1) % RING_CAPACITY;
-    if (_sampleCount < RING_CAPACITY)
-      _sampleCount += 1;
+    var budget = _targetFps > 0.0 ? (1000.0 / _targetFps) : 16.6667;
+    if (frameMs > budget * 1.5)
+      _droppedFrames += 1;
+    if (frameMs > 16.6667)
+      _spike16 += 1;
+    if (frameMs > 25.0)
+      _spike25 += 1;
+    if (frameMs > 33.3333)
+      _spike33 += 1;
+    if (frameMs > 50.0)
+      _spike50 += 1;
 
-    _lastFrameEndMs = now;
-    _inFlightFrame = false;
+    _totalDrawCalls += _activeSample.drawCalls;
+    if (_activeSample.drawCalls > _maxDrawCalls)
+      _maxDrawCalls = _activeSample.drawCalls;
   }
 
-  static function computePercentile(vals:Array<Float>, p:Float):Float
+  public static function loadLastFrame():Bool
   {
-    if (vals.length == 0)
-      return 0.0;
-    vals.sort((a, b) -> a < b ? -1 : (a > b ? 1 : 0));
-    var pos = p * (vals.length - 1);
-    var lo = Std.int(Math.floor(pos));
-    var hi = lo + 1 < vals.length ? lo + 1 : lo;
-    var w = pos - lo;
-    return vals[lo] * (1.0 - w) + vals[hi] * w;
-  }
-
-  public static function refreshSummary():Void
-  {
-    if (_totalFrames <= 0.0)
-      return;
-    var avg = _sumFrameTimeMs / _totalFrames;
-    var variance = (_sumSqFrameTimeMs / _totalFrames) - (avg * avg);
-    _stdDevFrameTimeMs = variance > 0.0 ? Math.sqrt(variance) : 0.0;
-
-    if (_sampleCount > 0)
-    {
-      var ft = [for (i in 0..._sampleCount) _samples[i].frameTimeMs];
-      _p50FrameTimeMs = computePercentile(ft, 0.50);
-      _p95FrameTimeMs = computePercentile(ft, 0.95);
-      _p99FrameTimeMs = computePercentile(ft, 0.99);
-      _p999FrameTimeMs = computePercentile(ft, 0.999);
-      _p99UpdateTimeMs = computePercentile([for (i in 0..._sampleCount) _samples[i].updateTimeMs], 0.99);
-      _p99RenderTimeMs = computePercentile([for (i in 0..._sampleCount) _samples[i].renderTimeMs], 0.99);
-      _p99AudioTimeMs = computePercentile([for (i in 0..._sampleCount) _samples[i].audioTimeMs], 0.99);
-    }
-  }
-
-  public static function refreshLastFrame():Bool
-  {
-    if (_sampleCount <= 0)
+    if (_ringCount == 0)
       return false;
-    var idx = (_writeIndex + RING_CAPACITY - 1) % RING_CAPACITY;
-    _cachedSample.copyFrom(_samples[idx]);
-    return true;
+    var idx = (_ringWriteIndex + RING_CAPACITY - 1) % RING_CAPACITY;
+    _loadedSample = _samples[idx];
+    return _loadedSample != null;
   }
 
   public static function loadBufferedFrame(chronologicalIndex:Int):Bool
   {
-    if (chronologicalIndex < 0 || chronologicalIndex >= _sampleCount)
+    if (chronologicalIndex < 0 || chronologicalIndex >= _ringCount)
       return false;
-    var oldest = _sampleCount < RING_CAPACITY ? 0 : _writeIndex;
-    var idx = (oldest + chronologicalIndex) % RING_CAPACITY;
-    _cachedSample.copyFrom(_samples[idx]);
-    return true;
+    var startIdx = _ringCount < RING_CAPACITY ? 0 : _ringWriteIndex;
+    var idx = (startIdx + chronologicalIndex) % RING_CAPACITY;
+    _loadedSample = _samples[idx];
+    return _loadedSample != null;
+  }
+
+  public static function getBufferedFrameCount():Int
+  {
+    return _ringCount;
+  }
+
+  public static function lastSampleFrameIndex():Int return _loadedSample != null ? _loadedSample.frameIndex : 0;
+  public static function lastSampleTimestampMs():Float return _loadedSample != null ? _loadedSample.timestampMs : 0.0;
+  public static function lastSampleFrameTimeMs():Float return _loadedSample != null ? _loadedSample.frameTimeMs : 0.0;
+  public static function lastSampleWorkTimeMs():Float return _loadedSample != null ? _loadedSample.workTimeMs : 0.0;
+  public static function lastSampleFps():Float return _loadedSample != null ? _loadedSample.fps : 0.0;
+  public static function lastSampleRollingFps():Float return _loadedSample != null ? _loadedSample.rollingFps : 0.0;
+  public static function lastSampleUpdateTimeMs():Float return _loadedSample != null ? _loadedSample.updateTimeMs : 0.0;
+  public static function lastSampleRenderTimeMs():Float return _loadedSample != null ? _loadedSample.renderTimeMs : 0.0;
+  public static function lastSampleAudioTimeMs():Float return _loadedSample != null ? _loadedSample.audioTimeMs : 0.0;
+  public static function lastSampleGcPauseMs():Float return _loadedSample != null ? _loadedSample.gcPauseMs : 0.0;
+  public static function lastSampleOtherTimeMs():Float return _loadedSample != null ? _loadedSample.otherTimeMs : 0.0;
+  public static function lastSampleAllocBytes():Float return _loadedSample != null ? _loadedSample.allocBytes : 0.0;
+  public static function lastSampleAllocCount():Int return _loadedSample != null ? _loadedSample.allocCount : 0;
+  public static function lastSampleGcReclaimedBytes():Float return _loadedSample != null ? _loadedSample.gcReclaimedBytes : 0.0;
+  public static function lastSampleNetHeapDeltaBytes():Float return _loadedSample != null ? _loadedSample.netHeapDeltaBytes : 0.0;
+  public static function lastSampleHeapUsedBytes():Float return _loadedSample != null ? _loadedSample.heapUsedBytes : 0.0;
+  public static function lastSampleHeapReservedBytes():Float return _loadedSample != null ? _loadedSample.heapReservedBytes : 0.0;
+  public static function lastSampleRssBytes():Float return _loadedSample != null ? _loadedSample.rssBytes : 0.0;
+  public static function lastSamplePeakRssBytes():Float return _loadedSample != null ? _loadedSample.peakRssBytes : 0.0;
+  public static function lastSampleGcCount():Int return _loadedSample != null ? _loadedSample.gcCount : 0;
+  public static function lastSampleExplicitGcCount():Int return _loadedSample != null ? _loadedSample.explicitGcCount : 0;
+  public static function lastSampleImplicitGcCount():Int return _loadedSample != null ? _loadedSample.implicitGcCount : 0;
+  public static function lastSampleDrawCalls():Int return _loadedSample != null ? _loadedSample.drawCalls : 0;
+  public static function lastSampleUpdateSteps():Int return _loadedSample != null ? _loadedSample.updateSteps : 0;
+  public static function lastSampleRssSampled():Bool return _loadedSample != null ? _loadedSample.rssSampled : false;
+  public static function lastSampleStateName():String return _loadedSample != null ? _loadedSample.stateName : "UnknownState";
+
+  private static function percentile(sorted:Array<Float>, p:Float):Float
+  {
+    if (sorted.length == 0)
+      return 0.0;
+    if (sorted.length == 1 || p <= 0.0)
+      return sorted[0];
+    if (p >= 1.0)
+      return sorted[sorted.length - 1];
+    var pos = p * (sorted.length - 1);
+    var lo = Std.int(Math.floor(pos));
+    var hi = lo + 1;
+    if (hi >= sorted.length)
+      return sorted[sorted.length - 1];
+    var w = pos - lo;
+    return sorted[lo] * (1.0 - w) + sorted[hi] * w;
+  }
+
+  private static function slowestTailMeanFps(sorted:Array<Float>, tailFraction:Float):Float
+  {
+    if (sorted.length == 0 || tailFraction <= 0.0)
+      return 0.0;
+    var tailCount = Std.int(Math.ceil(tailFraction * sorted.length));
+    if (tailCount < 1)
+      tailCount = 1;
+    if (tailCount > sorted.length)
+      tailCount = sorted.length;
+    var sumMs = 0.0;
+    for (i in (sorted.length - tailCount)...sorted.length)
+    {
+      if (sorted[i] > 0.0)
+        sumMs += sorted[i];
+    }
+    var avgMs = sumMs / tailCount;
+    return avgMs > 0.0 ? (1000.0 / avgMs) : 0.0;
+  }
+
+  public static function refreshSummary():Void
+  {
+    if (_collectMemory && _lastSampledRss == 0.0 && _lastSampledPeakRss == 0.0)
+    {
+      var cur = GetTotalMemory.getCurrentRSS();
+      var pk = GetTotalMemory.getPeakRSS();
+      if (cur > 0.0 || pk > 0.0)
+      {
+        _rssAvailable = true;
+        _lastSampledRss = cur;
+        _lastSampledPeakRss = pk > cur ? pk : cur;
+      }
+    }
+    if (_ringCount == 0)
+    {
+      _summaryP50 = 0.0;
+      _summaryP95 = 0.0;
+      _summaryP99 = 0.0;
+      _summaryP999 = 0.0;
+      _summarySlowest1PctFps = 0.0;
+      _summarySlowest01PctFps = 0.0;
+      _summaryP95Update = 0.0;
+      _summaryP95Render = 0.0;
+      _summaryP95Audio = 0.0;
+      return;
+    }
+    var ft:Array<Float> = [];
+    var ut:Array<Float> = [];
+    var rt:Array<Float> = [];
+    var at:Array<Float> = [];
+    for (i in 0..._ringCount)
+    {
+      ft.push(_samples[i].frameTimeMs);
+      ut.push(_samples[i].updateTimeMs);
+      rt.push(_samples[i].renderTimeMs);
+      at.push(_samples[i].audioTimeMs);
+    }
+    ft.sort(Reflect.compare);
+    ut.sort(Reflect.compare);
+    rt.sort(Reflect.compare);
+    at.sort(Reflect.compare);
+    _summaryP50 = percentile(ft, 0.50);
+    _summaryP95 = percentile(ft, 0.95);
+    _summaryP99 = percentile(ft, 0.99);
+    _summaryP999 = percentile(ft, 0.999);
+    _summarySlowest1PctFps = slowestTailMeanFps(ft, 0.01);
+    _summarySlowest01PctFps = slowestTailMeanFps(ft, 0.001);
+    _summaryP95Update = percentile(ut, 0.95);
+    _summaryP95Render = percentile(rt, 0.95);
+    _summaryP95Audio = percentile(at, 0.95);
+  }
+
+  public static function summaryTotalFrames():Int return _totalFrames;
+  public static function summaryBufferedFrames():Int return _ringCount;
+  public static function summarySessionDurationMs():Float return _sumFrameTimeMs;
+  public static function summaryTargetFps():Float return _targetFps;
+  public static function summaryTargetFrameTimeMs():Float return _targetFps > 0.0 ? (1000.0 / _targetFps) : 16.6667;
+  public static function summaryCurrentFps():Float return _currentRollingFps;
+  public static function summaryAvgFps():Float return _totalFrames > 0 && _sumFrameTimeMs > 0.0 ? ((_totalFrames * 1000.0) / _sumFrameTimeMs) : 0.0;
+  public static function summaryMinFps():Float return _maxFrameTimeMs > 0.0 ? (1000.0 / _maxFrameTimeMs) : 0.0;
+  public static function summaryMaxFps():Float return _minFrameTimeMs < 1e11 && _minFrameTimeMs > 0.0 ? (1000.0 / _minFrameTimeMs) : 0.0;
+  public static function summaryOnePercentLowFps():Float return _summaryP99 > 0.0 ? (1000.0 / _summaryP99) : 0.0;
+  public static function summaryPointOnePercentLowFps():Float return _summaryP999 > 0.0 ? (1000.0 / _summaryP999) : 0.0;
+  public static function summarySlowest1PctAvgFps():Float return _summarySlowest1PctFps;
+  public static function summarySlowest01PctAvgFps():Float return _summarySlowest01PctFps;
+  public static function summaryLastFrameTimeMs():Float return loadLastFrame() ? _loadedSample.frameTimeMs : 0.0;
+  public static function summaryAvgFrameTimeMs():Float return _totalFrames > 0 ? (_sumFrameTimeMs / _totalFrames) : 0.0;
+  public static function summaryMinFrameTimeMs():Float return _minFrameTimeMs < 1e11 ? _minFrameTimeMs : 0.0;
+  public static function summaryMaxFrameTimeMs():Float return _maxFrameTimeMs;
+  public static function summaryStdDevFrameTimeMs():Float
+  {
+    if (_totalFrames <= 0)
+      return 0.0;
+    var mean = _sumFrameTimeMs / _totalFrames;
+    var variance = (_sumSqFrameTimeMs / _totalFrames) - (mean * mean);
+    return variance > 0.0 ? Math.sqrt(variance) : 0.0;
+  }
+  public static function summaryP50FrameTimeMs():Float return _summaryP50;
+  public static function summaryP95FrameTimeMs():Float return _summaryP95;
+  public static function summaryP99FrameTimeMs():Float return _summaryP99;
+  public static function summaryP999FrameTimeMs():Float return _summaryP999;
+  public static function summaryAvgUpdateTimeMs():Float return _totalFrames > 0 ? (_sumUpdateMs / _totalFrames) : 0.0;
+  public static function summaryMaxUpdateTimeMs():Float return _maxUpdateMs;
+  public static function summaryP95UpdateTimeMs():Float return _summaryP95Update;
+  public static function summaryAvgRenderTimeMs():Float return _totalFrames > 0 ? (_sumRenderMs / _totalFrames) : 0.0;
+  public static function summaryMaxRenderTimeMs():Float return _maxRenderMs;
+  public static function summaryP95RenderTimeMs():Float return _summaryP95Render;
+  public static function summaryAvgAudioTimeMs():Float return _totalFrames > 0 ? (_sumAudioMs / _totalFrames) : 0.0;
+  public static function summaryMaxAudioTimeMs():Float return _maxAudioMs;
+  public static function summaryP95AudioTimeMs():Float return _summaryP95Audio;
+  public static function summaryAvgOtherTimeMs():Float return _totalFrames > 0 ? (_sumOtherMs / _totalFrames) : 0.0;
+  public static function summaryMaxOtherTimeMs():Float return _maxOtherMs;
+  public static function summaryTotalGcCount():Int return _totalGcCount;
+  public static function summaryTotalExplicitGcCount():Int return _totalExplicitGcCount;
+  public static function summaryTotalImplicitGcCount():Int return _totalImplicitGcCount;
+  public static function summaryFramesWithGc():Int return _framesWithGc;
+  public static function summaryTotalGcPauseMs():Float return _totalGcPauseMs;
+  public static function summaryAvgGcPauseMs():Float return _totalGcCount > 0 ? (_totalGcPauseMs / _totalGcCount) : 0.0;
+  public static function summaryMaxGcPauseMs():Float return _maxGcPauseMs;
+  public static function summaryMaxGcPauseFrame():Int return _maxGcPauseFrame;
+  public static function summaryTotalGcReclaimedBytes():Float return _totalGcReclaimedBytes;
+  public static function summaryTotalAllocBytes():Float return _totalAllocBytes;
+  public static function summaryTotalAllocCount():Int return _totalAllocCount;
+  public static function summaryAvgAllocBytesPerFrame():Float return _totalFrames > 0 ? (_totalAllocBytes / _totalFrames) : 0.0;
+  public static function summaryAllocRateBytesPerSec():Float return _sumFrameTimeMs > 0.0 ? ((_totalAllocBytes * 1000.0) / _sumFrameTimeMs) : 0.0;
+  public static function summaryPeakFrameAllocBytes():Float return _peakFrameAllocBytes;
+  public static function summaryPeakFrameAllocFrame():Int return _peakFrameAllocFrame;
+  public static function summaryCurrentHeapUsedBytes():Float return _currentHeapUsed;
+  public static function summaryCurrentHeapReservedBytes():Float return _currentHeapReserved;
+  public static function summaryPeakHeapUsedBytes():Float return _peakHeapUsed;
+  public static function summaryPeakHeapReservedBytes():Float return _peakHeapReserved;
+  public static function summaryCurrentRssBytes():Float return _collectMemory ? _lastSampledRss : 0.0;
+  public static function summaryPeakRssBytes():Float return _collectMemory ? _lastSampledPeakRss : 0.0;
+  public static function summaryDroppedFrames():Int return _droppedFrames;
+  public static function summarySpikeCount16Ms():Int return _spike16;
+  public static function summarySpikeCount25Ms():Int return _spike25;
+  public static function summarySpikeCount33Ms():Int return _spike33;
+  public static function summarySpikeCount50Ms():Int return _spike50;
+  public static function summaryAvgDrawCalls():Float return _totalFrames > 0 ? (_totalDrawCalls / _totalFrames) : 0.0;
+  public static function summaryMaxDrawCalls():Int return _maxDrawCalls;
+  public static function summaryCpuTimeMs():Float return 0.0;
+  public static function summaryCpuUtilizationPct():Float return 0.0;
+  public static function summaryCpuNormalizedPct():Float return 0.0;
+  public static function summaryLogicalCpuCount():Int return 1;
+  public static function summaryCpuTimeAvailable():Bool return false;
+  public static function summaryRssAvailable():Bool return _collectMemory && _rssAvailable;
+  public static function summaryHeapStatsAvailable():Bool return _collectMemory && _heapStatsAvailable;
+  public static function summaryRssSampleIntervalFrames():Int return _rssSampleInterval;
+
+  private static function roundStr(v:Float, decimals:Int = 2):String
+  {
+    var mult = Math.pow(10, decimals);
+    var r = Math.round(v * mult) / mult;
+    return Std.string(r);
+  }
+
+  public static function formatOverlay():String
+  {
+    if (_ringCount == 0 || !loadLastFrame())
+      return "";
+    var ft:Array<Float> = [];
+    for (i in 0..._ringCount)
+      ft.push(_samples[i].frameTimeMs);
+    ft.sort(Reflect.compare);
+    var p95 = percentile(ft, 0.95);
+    var p99 = percentile(ft, 0.99);
+    var low1 = p99 > 0.0 ? (1000.0 / p99) : 0.0;
+    var allocKb = _loadedSample.allocBytes / 1024.0;
+    return 'Frame: ${roundStr(_loadedSample.frameTimeMs, 2)}ms (P95 ${roundStr(p95, 2)} / P99 ${roundStr(p99, 2)}ms) | 1% Low: ${roundStr(low1, 1)} FPS\n'
+      + 'Upd: ${roundStr(_loadedSample.updateTimeMs, 2)}ms | Rnd: ${roundStr(_loadedSample.renderTimeMs, 2)}ms | Aud: ${roundStr(_loadedSample.audioTimeMs, 2)}ms | GC: ${roundStr(_loadedSample.gcPauseMs, 2)}ms (${_totalGcCount})\n'
+      + 'Alloc: ${roundStr(allocKb, 1)} KB/f | Draws: ${_loadedSample.drawCalls} | F3 HUD | F6 Export .log';
   }
 
   public static function resolveLogPath(requestedPath:String):String
   {
-    if (requestedPath == null || StringTools.trim(requestedPath).length == 0)
-      return "debug/log/frame_profiler.log";
-    var norm = StringTools.replace(requestedPath, "\\", "/");
-    for (bad in [":", "*", "?", "\"", "<", ">", "|", "\r", "\n"])
-      norm = StringTools.replace(norm, bad, "_");
-    var hasTraversal = norm.indexOf("..") >= 0;
-    var out:String;
-    if (!hasTraversal && norm.indexOf("debug/log/") >= 0)
-      out = norm;
-    else
+    var base = "";
+    if (requestedPath != null && requestedPath != "")
     {
-      var slash = norm.lastIndexOf("/");
-      var base = slash >= 0 ? norm.substr(slash + 1) : norm;
-      while (base.length > 0 && (base.charAt(0) == "." || base.charAt(0) == " "))
-        base = base.substr(1);
-      if (base.length == 0)
-        base = "frame_profiler.log";
-      out = "debug/log/" + base;
+      var normalized = StringTools.replace(requestedPath, "\\", "/");
+      var parts = normalized.split("/");
+      var rawBase = parts.length > 0 ? parts[parts.length - 1] : "";
+      var start = 0;
+      while (start < rawBase.length)
+      {
+        var c = StringTools.fastCodeAt(rawBase, start);
+        if (c == ".".code || c == " ".code || c == "\t".code)
+          start++;
+        else
+          break;
+      }
+      var buf = new StringBuf();
+      for (i in start...rawBase.length)
+      {
+        var ch = StringTools.fastCodeAt(rawBase, i);
+        if (ch < 32 || ch == 127 || ch == "/".code || ch == "\\".code || ch == ":".code
+            || ch == "*".code || ch == "?".code || ch == "\"".code || ch == "<".code
+            || ch == ">".code || ch == "|".code)
+          buf.addChar("_".code);
+        else
+          buf.addChar(ch);
+      }
+      base = StringTools.trim(buf.toString());
+      while (StringTools.endsWith(base, "."))
+        base = base.substr(0, base.length - 1);
     }
-    if (!StringTools.endsWith(out, ".log"))
-      out += ".log";
-    return out;
+
+    if (base == "" || base == "log")
+    {
+      var stamp = DateTools.format(Date.now(), "%Y-%m-%d_%H-%M-%S");
+      base = 'frame_profiler_${stamp}.log';
+    }
+    else if (!StringTools.endsWith(base, ".log"))
+    {
+      base += ".log";
+    }
+    return 'debug/log/${base}';
   }
 
-  public static function exportLog(requestedPath:String, engineVersion:String, platformInfo:String):String
+  public static function exportLog(
+    requestedPath:String = "",
+    engineVersion:String = "0.3.2",
+    platformName:String = "Haxe"):String
   {
-    var resolved = resolveLogPath(requestedPath);
     #if sys
+    if (_inFlight)
+    {
+      _inFlight = false;
+      _phaseStack = [];
+      _phaseDepth = [0, 0, 0, 0];
+      if (_hasObservedHeap)
+        _lastObservedHeap = _frameStartHeap;
+    }
+    var resolved = resolveLogPath(requestedPath);
     try
     {
-      var slashIdx = resolved.lastIndexOf("/");
-      if (slashIdx > 0)
-      {
-        var dir = resolved.substr(0, slashIdx);
-        if (!sys.FileSystem.exists(dir))
-          sys.FileSystem.createDirectory(dir);
-      }
-      sys.io.File.saveContent(resolved, debug.FrameProfiler.formatReport(engineVersion, platformInfo, resolved));
-      return resolved;
+      if (!FileSystem.exists("debug"))
+        FileSystem.createDirectory("debug");
+      if (!FileSystem.exists("debug/log"))
+        FileSystem.createDirectory("debug/log");
+      var report = debug.FrameProfiler.formatReport(engineVersion, platformName);
+      File.saveContent(resolved, report);
+      if (FileSystem.exists(resolved) && !FileSystem.isDirectory(resolved))
+        return resolved;
     }
-    catch (_:Dynamic)
-    {
-      return "";
-    }
+    catch (_:Dynamic) {}
+    return "";
     #else
-    return resolved;
+    return "";
     #end
   }
-
-  public static function sampleFrameIndex():Float
-    return _cachedSample.frameIndex;
-
-  public static function sampleTimestampMs():Float
-    return _cachedSample.timestampMs;
-
-  public static function sampleFrameTimeMs():Float
-    return _cachedSample.frameTimeMs;
-
-  public static function sampleWorkTimeMs():Float
-    return _cachedSample.workTimeMs;
-
-  public static function sampleFps():Float
-    return _cachedSample.fps;
-
-  public static function sampleRollingFps():Float
-    return _cachedSample.rollingFps;
-
-  public static function sampleUpdateTimeMs():Float
-    return _cachedSample.updateTimeMs;
-
-  public static function sampleRenderTimeMs():Float
-    return _cachedSample.renderTimeMs;
-
-  public static function sampleAudioTimeMs():Float
-    return _cachedSample.audioTimeMs;
-
-  public static function sampleGcPauseMs():Float
-    return _cachedSample.gcPauseMs;
-
-  public static function sampleOtherTimeMs():Float
-    return _cachedSample.otherTimeMs;
-
-  public static function sampleAllocBytes():Float
-    return _cachedSample.allocBytes;
-
-  public static function sampleNetHeapDeltaBytes():Float
-    return _cachedSample.netHeapDeltaBytes;
-
-  public static function sampleGcReclaimedBytes():Float
-    return _cachedSample.gcReclaimedBytes;
-
-  public static function sampleHeapUsedBytes():Float
-    return _cachedSample.heapUsedBytes;
-
-  public static function sampleHeapReservedBytes():Float
-    return _cachedSample.heapReservedBytes;
-
-  public static function sampleRssBytes():Float
-    return _cachedSample.rssBytes;
-
-  public static function samplePeakRssBytes():Float
-    return _cachedSample.peakRssBytes;
-
-  public static function sampleAllocCount():Int
-    return _cachedSample.allocCount;
-
-  public static function sampleGcCount():Int
-    return _cachedSample.gcCount;
-
-  public static function sampleExplicitGcCount():Int
-    return _cachedSample.explicitGcCount;
-
-  public static function sampleImplicitGcCount():Int
-    return _cachedSample.implicitGcCount;
-
-  public static function sampleUpdateSteps():Int
-    return _cachedSample.updateSteps;
-
-  public static function sampleDrawCalls():Int
-    return _cachedSample.drawCalls;
-
-  public static function sampleStateName():String
-    return _cachedSample.stateName;
-
-  public static function summaryTotalFrames():Float
-    return _totalFrames;
-
-  public static function summaryBufferedFrames():Int
-    return _sampleCount;
-
-  public static function summaryTargetFps():Float
-    return _targetFps;
-
-  public static function summarySessionDurationMs():Float
-    return _totalDurationMs;
-
-  public static function summaryCpuTimeMs():Float
-    return 0.0;
-
-  public static function summaryCpuUtilizationPct():Float
-    return 0.0;
-
-  public static function summaryAvgFrameTimeMs():Float
-    return _totalFrames > 0.0 ? (_sumFrameTimeMs / _totalFrames) : 0.0;
-
-  public static function summaryMinFrameTimeMs():Float
-    return _minFrameTimeMs;
-
-  public static function summaryMaxFrameTimeMs():Float
-    return _maxFrameTimeMs;
-
-  public static function summaryStdDevFrameTimeMs():Float
-    return _stdDevFrameTimeMs;
-
-  public static function summaryP50FrameTimeMs():Float
-    return _p50FrameTimeMs;
-
-  public static function summaryP95FrameTimeMs():Float
-    return _p95FrameTimeMs;
-
-  public static function summaryP99FrameTimeMs():Float
-    return _p99FrameTimeMs;
-
-  public static function summaryP999FrameTimeMs():Float
-    return _p999FrameTimeMs;
-
-  public static function summarySpikeCount25Ms():Float
-    return _spikeCount25Ms;
-
-  public static function summarySpikeCount33Ms():Float
-    return _spikeCount33Ms;
-
-  public static function summaryAvgFps():Float
-    return _totalDurationMs > 1e-6 ? (_totalFrames * 1000.0 / _totalDurationMs) : 0.0;
-
-  public static function summaryCurrentFps():Float
-    return _currentRollingFps > 0.0 ? _currentRollingFps : summaryAvgFps();
-
-  public static function summaryMinFps():Float
-    return _maxFrameTimeMs > 1e-6 ? (1000.0 / _maxFrameTimeMs) : 0.0;
-
-  public static function summaryMaxFps():Float
-    return _minFrameTimeMs > 1e-6 ? (1000.0 / _minFrameTimeMs) : 0.0;
-
-  public static function summaryOnePercentLowFps():Float
-    return _p99FrameTimeMs > 1e-6 ? (1000.0 / _p99FrameTimeMs) : 0.0;
-
-  public static function summaryPointOnePercentLowFps():Float
-    return _p999FrameTimeMs > 1e-6 ? (1000.0 / _p999FrameTimeMs) : 0.0;
-
-  public static function summaryAvgUpdateTimeMs():Float
-    return _totalFrames > 0.0 ? (_totalUpdateTimeMs / _totalFrames) : 0.0;
-
-  public static function summaryMaxUpdateTimeMs():Float
-    return _maxUpdateTimeMs;
-
-  public static function summaryP99UpdateTimeMs():Float
-    return _p99UpdateTimeMs;
-
-  public static function summaryTotalUpdateTimeMs():Float
-    return _totalUpdateTimeMs;
-
-  public static function summaryUpdateFrameSharePct():Float
-    return _totalDurationMs > 1e-6 ? (_totalUpdateTimeMs * 100.0 / _totalDurationMs) : 0.0;
-
-  public static function summaryAvgRenderTimeMs():Float
-    return _totalFrames > 0.0 ? (_totalRenderTimeMs / _totalFrames) : 0.0;
-
-  public static function summaryMaxRenderTimeMs():Float
-    return _maxRenderTimeMs;
-
-  public static function summaryP99RenderTimeMs():Float
-    return _p99RenderTimeMs;
-
-  public static function summaryTotalRenderTimeMs():Float
-    return _totalRenderTimeMs;
-
-  public static function summaryRenderFrameSharePct():Float
-    return _totalDurationMs > 1e-6 ? (_totalRenderTimeMs * 100.0 / _totalDurationMs) : 0.0;
-
-  public static function summaryAvgAudioTimeMs():Float
-    return _totalFrames > 0.0 ? (_totalAudioTimeMs / _totalFrames) : 0.0;
-
-  public static function summaryMaxAudioTimeMs():Float
-    return _maxAudioTimeMs;
-
-  public static function summaryP99AudioTimeMs():Float
-    return _p99AudioTimeMs;
-
-  public static function summaryTotalAudioTimeMs():Float
-    return _totalAudioTimeMs;
-
-  public static function summaryAudioFrameSharePct():Float
-    return _totalDurationMs > 1e-6 ? (_totalAudioTimeMs * 100.0 / _totalDurationMs) : 0.0;
-
-  public static function summaryTotalGcCount():Float
-    return _totalGcCount;
-
-  public static function summaryTotalExplicitGcCount():Float
-    return _totalExplicitGcCount;
-
-  public static function summaryTotalImplicitGcCount():Float
-    return _totalImplicitGcCount;
-
-  public static function summaryFramesWithGc():Float
-    return _framesWithGc;
-
-  public static function summaryTotalGcPauseMs():Float
-    return _totalGcPauseMs;
-
-  public static function summaryAvgGcPausePerFrameMs():Float
-    return _totalFrames > 0.0 ? (_totalGcPauseMs / _totalFrames) : 0.0;
-
-  public static function summaryAvgGcPausePerCollectionMs():Float
-    return _totalGcCount > 0.0 ? (_totalGcPauseMs / _totalGcCount) : 0.0;
-
-  public static function summaryMaxGcPauseMs():Float
-    return _maxGcPauseMs;
-
-  public static function summaryMaxGcPauseFrame():Float
-    return _maxGcPauseFrame;
-
-  public static function summaryGcFrameSharePct():Float
-    return _totalDurationMs > 1e-6 ? (_totalGcPauseMs * 100.0 / _totalDurationMs) : 0.0;
-
-  public static function summaryTotalGcReclaimedBytes():Float
-    return _totalGcReclaimedBytes;
-
-  public static function summaryTotalAllocBytes():Float
-    return _totalAllocBytes;
-
-  public static function summaryTotalAllocCount():Float
-    return _totalAllocCount;
-
-  public static function summaryAvgAllocBytesPerFrame():Float
-    return _totalFrames > 0.0 ? (_totalAllocBytes / _totalFrames) : 0.0;
-
-  public static function summaryAllocRateBytesPerSec():Float
-    return _totalDurationMs > 1e-6 ? (_totalAllocBytes * 1000.0 / _totalDurationMs) : 0.0;
-
-  public static function summaryPeakFrameAllocBytes():Float
-    return _peakFrameAllocBytes;
-
-  public static function summaryPeakFrameAllocFrame():Float
-    return _peakFrameAllocFrame;
-
-  public static function summaryStartHeapUsedBytes():Float
-    return _startHeapUsedBytes;
-
-  public static function summaryCurrentHeapUsedBytes():Float
-    return _currentHeapUsedBytes;
-
-  public static function summaryPeakHeapUsedBytes():Float
-    return _peakHeapUsedBytes;
-
-  public static function summaryCurrentHeapReservedBytes():Float
-    return _currentHeapReservedBytes;
-
-  public static function summaryCurrentRssBytes():Float
-    return _currentRssBytes;
-
-  public static function summaryPeakRssBytes():Float
-    return _peakRssBytes;
+  #end
 }
+
+#if !cpp
+private typedef FallbackSample =
+{
+  var frameIndex:Int;
+  var timestampMs:Float;
+  var frameTimeMs:Float;
+  var workTimeMs:Float;
+  var fps:Float;
+  var rollingFps:Float;
+  var updateTimeMs:Float;
+  var renderTimeMs:Float;
+  var audioTimeMs:Float;
+  var gcPauseMs:Float;
+  var otherTimeMs:Float;
+  var allocBytes:Float;
+  var allocCount:Int;
+  var gcReclaimedBytes:Float;
+  var netHeapDeltaBytes:Float;
+  var heapUsedBytes:Float;
+  var heapReservedBytes:Float;
+  var rssBytes:Float;
+  var peakRssBytes:Float;
+  var gcCount:Int;
+  var explicitGcCount:Int;
+  var implicitGcCount:Int;
+  var drawCalls:Int;
+  var updateSteps:Int;
+  var rssSampled:Bool;
+  var stateName:String;
+};
 #end

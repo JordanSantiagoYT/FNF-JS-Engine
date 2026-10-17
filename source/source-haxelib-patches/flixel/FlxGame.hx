@@ -528,7 +528,7 @@ class FlxGame extends Sprite
 			#end
 		}
 
-		FrameProfiler.endFrame(FlxG.renderTile ? FlxDrawBaseItem.drawCalls : 0, _elapsedMS);
+		FrameProfiler.endFrame(FlxG.renderTile ? FlxDrawBaseItem.drawCalls : 0);
 	}
 
 	/**

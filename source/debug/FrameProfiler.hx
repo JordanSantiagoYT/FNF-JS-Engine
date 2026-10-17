@@ -1,16 +1,39 @@
 package debug;
 
-import debug.Memory;
+import Date;
+import DateTools;
+import Type;
+import backend.ClientPrefs;
 import debug.profiler.NativeFrameProfiler;
-import lime.system.System as LimeSystem;
-import states.MainMenuState;
-import utils.MemoryUtil;
+import flixel.FlxG;
+import lime.app.Application;
 #if cpp
-import utils.PlatformUtil;
+import cpp.vm.Gc;
+#elseif hl
+import hl.Gc;
+#elseif neko
+import neko.vm.Gc;
+#end
+#if sys
+import Sys;
+import sys.FileSystem;
+import sys.io.File;
 #end
 
 /**
- * Snapshot of metrics captured for a single rendered frame.
+ * Per-frame sample snapshot captured by the Phoenix Engine frame profiler.
+ *
+ * Units & Semantics:
+ * - All durations (`timestampMs`, `frameTimeMs`, `workTimeMs`, `updateTimeMs`,
+ *   `renderTimeMs`, `audioTimeMs`, `gcPauseMs`, `otherTimeMs`) are in milliseconds.
+ * - Subsystem durations (`updateTimeMs`, `renderTimeMs`, `audioTimeMs`, `gcPauseMs`)
+ *   are exclusive: nested child phase durations are subtracted from their enclosing
+ *   parent phase via an explicit LIFO phase stack.
+ * - `gcPauseMs` and `gcCount`/`explicitGcCount` reflect directly measured GC pauses.
+ * - `implicitGcCount` counts observed negative heap-delta intervals outside explicit
+ *   GC scopes (heuristic indicator of uninstrumented collection, not an exact cycle count).
+ * - `rssSampled` is `true` when process RSS was freshly sampled on this frame and
+ *   `false` when carried forward from the previous periodic RSS sample.
  */
 typedef FrameSample =
 {
@@ -26,33 +49,53 @@ typedef FrameSample =
   var gcPauseMs:Float;
   var otherTimeMs:Float;
   var allocBytes:Float;
-  var netHeapDeltaBytes:Float;
+  var allocCount:Int;
   var gcReclaimedBytes:Float;
+  var netHeapDeltaBytes:Float;
   var heapUsedBytes:Float;
   var heapReservedBytes:Float;
   var rssBytes:Float;
   var peakRssBytes:Float;
-  var allocCount:Int;
   var gcCount:Int;
   var explicitGcCount:Int;
   var implicitGcCount:Int;
-  var updateSteps:Int;
   var drawCalls:Int;
+  var updateSteps:Int;
+  var rssSampled:Bool;
   var stateName:String;
-}
+};
 
 /**
- * Aggregated session and percentile statistics across profiled frames.
+ * Aggregated statistical summary across the profiling session and ring buffer.
+ *
+ * Percentile & Low-FPS Semantics:
+ * - Percentiles (`p50`, `p95`, `p99`, `p999`) use Hyndman-Fan Type 7 linear
+ *   interpolation (`pos = q * (N - 1)`) over the ring buffer (up to 2,048 frames).
+ * - `onePercentLowFps` = `1000.0 / p99FrameTimeMs` (reciprocal of P99 frametime).
+ * - `pointOnePercentLowFps` = `1000.0 / p999FrameTimeMs` (reciprocal of P99.9 frametime).
+ * - `slowest1PctAvgFps` and `slowest01PctAvgFps` = harmonic mean FPS of the slowest
+ *   `ceil(0.01 * N)` and `ceil(0.001 * N)` buffered frames.
+ * - `cpuTimeAvailable`, `rssAvailable`, `heapStatsAvailable` explicitly indicate
+ *   whether the underlying platform/runtime metrics are available.
  */
 typedef FrameProfileSummary =
 {
   var totalFrames:Int;
   var bufferedFrames:Int;
-  var targetFps:Float;
   var sessionDurationMs:Float;
-  var cpuTimeMs:Float;
-  var cpuUtilizationPct:Float;
+  var targetFps:Float;
+  var targetFrameTimeMs:Float;
 
+  var currentFps:Float;
+  var avgFps:Float;
+  var minFps:Float;
+  var maxFps:Float;
+  var onePercentLowFps:Float;
+  var pointOnePercentLowFps:Float;
+  var slowest1PctAvgFps:Float;
+  var slowest01PctAvgFps:Float;
+
+  var lastFrameTimeMs:Float;
   var avgFrameTimeMs:Float;
   var minFrameTimeMs:Float;
   var maxFrameTimeMs:Float;
@@ -61,44 +104,30 @@ typedef FrameProfileSummary =
   var p95FrameTimeMs:Float;
   var p99FrameTimeMs:Float;
   var p999FrameTimeMs:Float;
-  var spikeCount25Ms:Int;
-  var spikeCount33Ms:Int;
-
-  var avgFps:Float;
-  var currentFps:Float;
-  var minFps:Float;
-  var maxFps:Float;
-  var onePercentLowFps:Float;
-  var pointOnePercentLowFps:Float;
 
   var avgUpdateTimeMs:Float;
   var maxUpdateTimeMs:Float;
-  var p99UpdateTimeMs:Float;
-  var totalUpdateTimeMs:Float;
-  var updateFrameSharePct:Float;
+  var p95UpdateTimeMs:Float;
 
   var avgRenderTimeMs:Float;
   var maxRenderTimeMs:Float;
-  var p99RenderTimeMs:Float;
-  var totalRenderTimeMs:Float;
-  var renderFrameSharePct:Float;
+  var p95RenderTimeMs:Float;
 
   var avgAudioTimeMs:Float;
   var maxAudioTimeMs:Float;
-  var p99AudioTimeMs:Float;
-  var totalAudioTimeMs:Float;
-  var audioFrameSharePct:Float;
+  var p95AudioTimeMs:Float;
+
+  var avgOtherTimeMs:Float;
+  var maxOtherTimeMs:Float;
 
   var totalGcCount:Int;
   var totalExplicitGcCount:Int;
   var totalImplicitGcCount:Int;
   var framesWithGc:Int;
   var totalGcPauseMs:Float;
-  var avgGcPausePerFrameMs:Float;
-  var avgGcPausePerCollectionMs:Float;
+  var avgGcPauseMs:Float;
   var maxGcPauseMs:Float;
   var maxGcPauseFrame:Int;
-  var gcFrameSharePct:Float;
   var totalGcReclaimedBytes:Float;
 
   var totalAllocBytes:Float;
@@ -107,471 +136,494 @@ typedef FrameProfileSummary =
   var allocRateBytesPerSec:Float;
   var peakFrameAllocBytes:Float;
   var peakFrameAllocFrame:Int;
-  var startHeapUsedBytes:Float;
   var currentHeapUsedBytes:Float;
-  var peakHeapUsedBytes:Float;
   var currentHeapReservedBytes:Float;
+  var peakHeapUsedBytes:Float;
+  var peakHeapReservedBytes:Float;
   var currentRssBytes:Float;
   var peakRssBytes:Float;
-}
+
+  var droppedFrames:Int;
+  var spikeCount16Ms:Int;
+  var spikeCount25Ms:Int;
+  var spikeCount33Ms:Int;
+  var spikeCount50Ms:Int;
+  var avgDrawCalls:Float;
+  var maxDrawCalls:Int;
+
+  var cpuTimeMs:Float;
+  var cpuUtilizationPct:Float;
+  var cpuNormalizedPct:Float;
+  var logicalCpuCount:Int;
+  var cpuTimeAvailable:Bool;
+  var rssAvailable:Bool;
+  var heapStatsAvailable:Bool;
+  var rssSampleIntervalFrames:Int;
+};
 
 /**
- * Full Frame Profiler for Phoenix Engine (Haxe + Native C/C++).
+ * Full-engine Haxe + C/C++ Frame Profiler for FNF-Phoenix-Engine.
  *
- * Records per-frame frametime, FPS, heap allocations, GC pauses, and time
- * spent on updates, rendering, and audio, and exports structured `.log`
- * reports to the `debug/log/` directory.
+ * Separates three distinct lifecycle states:
+ * 1. Overlay Visibility (`ClientPrefs.frameProfiler` / `FrameProfiler.overlayVisible`):
+ *    Controls whether the compact HUD profiler lines are shown in `FPSCounter`.
+ *    Toggling overlay visibility (F3) never resets or corrupts recorded data.
+ * 2. Metric Recording (`FrameProfiler.enabled`):
+ *    Controls whether frame/subsystem/GC/heap samples are actively recorded.
+ *    Disabling recording cleanly aborts any in-flight frame/phase and resets
+ *    inter-frame baselines without losing previously recorded frames.
+ * 3. Automatic Exit Export (`FrameProfiler.autoExportOnExit`):
+ *    Controls whether a `.log` report is automatically written to `debug/log/`
+ *    when the application exits (idempotent across repeated shutdown callbacks).
  */
 class FrameProfiler
 {
-  public static inline final LOG_DIR:String = "debug/log";
-  public static inline final DEFAULT_LOG_FILE:String = "debug/log/frame_profiler.log";
-
-  /** Whether to automatically export a `.log` report to `debug/log/` when the game exits. */
-  public static var autoExportOnExit:Bool = #if PROFILE_FRAMES true #else false #end;
-
-  /** Path of the most recently exported `.log` file, or empty string if none yet. */
-  public static var lastExportedLogPath(default, null):String = "";
-
-  /** Whether the frame profiler is currently recording frames. */
-  public static var enabled(get, set):Bool;
-
-  static var _initialized:Bool = false;
-
-  static inline function get_enabled():Bool
-    return NativeFrameProfiler.isEnabled();
-
-  static inline function set_enabled(value:Bool):Bool
-  {
-    NativeFrameProfiler.setEnabled(value);
-    return value;
-  }
+  public static inline var LOG_DIR:String = "debug/log";
 
   /**
-   * Initializes the Frame Profiler and configures the target framerate.
-   * @param targetFps Target framerate in frames per second.
+   * Whether metric recording is currently active.
    */
+  public static var enabled(get, set):Bool;
+
+  /**
+   * Whether the live HUD profiler overlay is visible (`ClientPrefs.frameProfiler`).
+   */
+  public static var overlayVisible(get, set):Bool;
+
+  /**
+   * Process RSS sampling interval in frames (`0` = on-demand only, `1` = every frame,
+   * default `60` = once per ~1 second at 60 FPS).
+   */
+  public static var rssSampleIntervalFrames(get, set):Int;
+
+  /**
+   * Whether managed heap and process RSS metrics are collected (`true` = full
+   * profiling, `false` = timing-only mode).
+   */
+  public static var collectMemoryMetrics(get, set):Bool;
+
+  /**
+   * Whether a `.log` report should be exported automatically on application exit.
+   * Independent of `overlayVisible` (`ClientPrefs.frameProfiler`).
+   */
+  public static var autoExportOnExit:Bool = false;
+
+  /**
+   * Path of the most recent `.log` file successfully written to `debug/log/`.
+   */
+  public static var lastExportedLogPath(default, null):String = "";
+
+  private static var _initialized:Bool = false;
+  private static var _recordingEnabled:Bool = false;
+  private static var _collectMemory:Bool = true;
+  private static var _exitExportCompleted:Bool = false;
+  private static var _currentStateName:String = "InitialState";
+  private static var _lastStateInstance:Dynamic = null;
+
   public static function init(targetFps:Float = 60.0):Void
   {
     NativeFrameProfiler.init(targetFps);
     _initialized = true;
+    _recordingEnabled = true;
+    _collectMemory = NativeFrameProfiler.getCollectMemoryMetrics();
+    _exitExportCompleted = false;
+    _lastStateInstance = null;
+
     #if sys
-    final args = Sys.args();
-    if (args.contains("-profile") || args.contains("--profile"))
-      autoExportOnExit = true;
+    try
+    {
+      for (arg in Sys.args())
+      {
+        if (arg == "--profile" || arg == "-profile" || arg == "--frame-profiler")
+        {
+          autoExportOnExit = true;
+          ClientPrefs.frameProfiler = true;
+        }
+      }
+    }
+    catch (_:Dynamic) {}
+    #end
+
+    #if PROFILE_FRAMES
+    autoExportOnExit = true;
     #end
   }
 
-  /**
-   * Starts or resumes recording frame profiling data.
-   */
-  public static function start():Void
+  public static inline function ensureInitialized():Void
   {
     if (!_initialized)
-      init(FlxG.drawFramerate > 0 ? FlxG.drawFramerate : 60.0);
-    NativeFrameProfiler.setEnabled(true);
+    {
+      var fps:Float = (FlxG.drawFramerate > 0) ? FlxG.drawFramerate : 60.0;
+      init(fps);
+    }
   }
 
-  /**
-   * Pauses frame profiling without clearing previously recorded frames.
-   */
-  public static function stop():Void
-  {
-    NativeFrameProfiler.setEnabled(false);
-  }
-
-  /**
-   * Toggles frame profiler recording on or off and returns the new state.
-   * @return Bool
-   */
-  public static function toggle():Bool
-  {
-    final nextState = !enabled;
-    enabled = nextState;
-    return nextState;
-  }
-
-  /**
-   * Clears all recorded frame samples and resets session accumulators.
-   */
   public static function reset():Void
   {
-    if (!_initialized)
-      init(60.0);
-    else
-      NativeFrameProfiler.reset();
+    ensureInitialized();
+    NativeFrameProfiler.reset();
+    _exitExportCompleted = false;
+    _lastStateInstance = null;
+  }
+
+  private static function get_enabled():Bool
+  {
+    ensureInitialized();
+    return _recordingEnabled;
+  }
+
+  private static function set_enabled(value:Bool):Bool
+  {
+    ensureInitialized();
+    _recordingEnabled = value;
+    NativeFrameProfiler.setEnabled(value);
+    return value;
+  }
+
+  private static function get_overlayVisible():Bool
+  {
+    return ClientPrefs.frameProfiler;
+  }
+
+  private static function set_overlayVisible(value:Bool):Bool
+  {
+    ensureInitialized();
+    ClientPrefs.frameProfiler = value;
+    /* Ensure recording is active when user turns on the live overlay, without resetting data */
+    if (value && !_recordingEnabled)
+    {
+      _recordingEnabled = true;
+      NativeFrameProfiler.setEnabled(true);
+    }
+    return value;
   }
 
   /**
-   * Updates the target framerate used for frame budget calculations.
-   * @param targetFps Target framerate in frames per second.
+   * Toggles the on-screen profiler overlay (`F3`) without resetting or corrupting
+   * recorded frame samples.
    */
-  public static function setTargetFPS(targetFps:Float):Void
+  public static function toggleOverlay():Bool
   {
+    overlayVisible = !overlayVisible;
+    return overlayVisible;
+  }
+
+  private static function get_rssSampleIntervalFrames():Int
+  {
+    ensureInitialized();
+    return NativeFrameProfiler.getRssSampleInterval();
+  }
+
+  private static function set_rssSampleIntervalFrames(intervalFrames:Int):Int
+  {
+    ensureInitialized();
+    final sanitized = intervalFrames > 0 ? intervalFrames : 0;
+    NativeFrameProfiler.setRssSampleInterval(sanitized);
+    return sanitized;
+  }
+
+  private static function get_collectMemoryMetrics():Bool
+  {
+    ensureInitialized();
+    return _collectMemory;
+  }
+
+  private static function set_collectMemoryMetrics(value:Bool):Bool
+  {
+    ensureInitialized();
+    _collectMemory = value;
+    NativeFrameProfiler.setCollectMemoryMetrics(value);
+    return value;
+  }
+
+  public static function setTargetFps(targetFps:Float):Void
+  {
+    ensureInitialized();
     NativeFrameProfiler.setTargetFps(targetFps);
   }
 
-  /**
-   * Updates the active state label attached to subsequent frames.
-   * @param stateName Active FlxState class name.
-   */
   public static function setStateName(stateName:String):Void
   {
-    NativeFrameProfiler.setStateName(stateName != null ? stateName : "Unknown");
+    ensureInitialized();
+    if (stateName != null && stateName != "" && stateName != _currentStateName)
+    {
+      _currentStateName = stateName;
+      NativeFrameProfiler.setStateName(stateName);
+    }
   }
 
   /**
-   * Returns current GC heap usage in bytes.
-   * @return Float
+   * Queries current managed heap usage in bytes from the runtime GC, or `-1.0`
+   * when memory collection is disabled or unavailable on the target runtime.
    */
-  public static inline function getHeapUsedBytes():Float
+  public static inline function queryHeapUsedBytes():Float
   {
+    if (!_collectMemory)
+      return -1.0;
     #if cpp
-    return cpp.vm.Gc.memInfo64(cpp.vm.Gc.MEM_INFO_USAGE);
+    return Gc.memInfo64(Gc.MEM_INFO_USAGE);
     #elseif hl
-    return hl.Gc.stats().currentMemory;
+    var stats = Gc.stats();
+    return stats != null ? stats.currentMemory : -1.0;
     #else
-    return Memory.gay();
+    return -1.0;
     #end
   }
 
   /**
-   * Returns current GC reserved heap size in bytes.
-   * @return Float
+   * Queries reserved managed heap memory in bytes from the runtime GC, or `-1.0`
+   * when memory collection is disabled or unavailable on the target runtime.
    */
-  public static inline function getHeapReservedBytes():Float
+  public static inline function queryHeapReservedBytes():Float
   {
+    if (!_collectMemory)
+      return -1.0;
     #if cpp
-    return cpp.vm.Gc.memInfo64(cpp.vm.Gc.MEM_INFO_RESERVED);
+    return Gc.memInfo64(Gc.MEM_INFO_RESERVED);
     #elseif hl
-    return hl.Gc.stats().totalAllocated;
+    var stats = Gc.stats();
+    return stats != null ? stats.totalAllocated : -1.0;
     #else
-    return Memory.gay();
+    return -1.0;
     #end
   }
 
   /**
    * Marks the start of a new frame.
    */
-  public static function beginFrame():Void
+  public static inline function beginFrame():Void
   {
-    if (!_initialized)
-      init(60.0);
-    if (!NativeFrameProfiler.isEnabled())
+    ensureInitialized();
+    if (!_recordingEnabled)
       return;
-    if (FlxG.state != null)
+
+    if (FlxG.state != null && FlxG.state != _lastStateInstance)
     {
+      _lastStateInstance = FlxG.state;
       final cls = Type.getClass(FlxG.state);
       if (cls != null)
-        NativeFrameProfiler.setStateName(Type.getClassName(cls));
+        setStateName(Type.getClassName(cls));
     }
-    NativeFrameProfiler.beginFrame(getHeapUsedBytes(), getHeapReservedBytes());
+
+    NativeFrameProfiler.beginFrame(queryHeapUsedBytes(), queryHeapReservedBytes());
   }
 
   /**
-   * Marks the end of the current frame and commits its metrics to the ring buffer.
-   * @param drawCalls Number of draw calls executed during the frame.
-   * @param explicitFrameTimeMs Optional frame delta in milliseconds (0 for automatic monotonic measurement).
+   * Marks the completion of the current frame.
    */
-  public static function endFrame(drawCalls:Int = 0, explicitFrameTimeMs:Float = 0.0):Void
+  public static inline function endFrame(drawCalls:Int = 0, frameTimeMs:Float = 0.0):Void
   {
-    if (!_initialized || !NativeFrameProfiler.isEnabled())
+    if (!_initialized || !_recordingEnabled)
       return;
-    NativeFrameProfiler.endFrame(getHeapUsedBytes(), getHeapReservedBytes(), drawCalls, explicitFrameTimeMs);
+
+    NativeFrameProfiler.endFrame(
+      queryHeapUsedBytes(),
+      queryHeapReservedBytes(),
+      drawCalls,
+      frameTimeMs);
   }
 
   /**
-   * Marks the start of the game update phase (`FlxGame.step` / `FlxGame.update`).
+   * Marks the start of the gameplay/state update phase.
    */
   public static inline function beginUpdate():Void
   {
-    if (NativeFrameProfiler.isEnabled())
-      NativeFrameProfiler.beginPhase(NativeFrameProfiler.PHASE_UPDATE, getHeapUsedBytes());
+    if (!_initialized || !_recordingEnabled)
+      return;
+    NativeFrameProfiler.beginUpdate(queryHeapUsedBytes());
   }
 
   /**
-   * Marks the end of the game update phase and returns the net update duration in milliseconds.
-   * @return Float
+   * Marks the end of the gameplay/state update phase.
    */
   public static inline function endUpdate():Float
   {
-    if (!NativeFrameProfiler.isEnabled())
+    if (!_initialized || !_recordingEnabled)
       return 0.0;
-    return NativeFrameProfiler.endPhase(NativeFrameProfiler.PHASE_UPDATE, getHeapUsedBytes());
+    return NativeFrameProfiler.endUpdate(queryHeapUsedBytes());
   }
 
   /**
-   * Marks the start of the rendering phase (`FlxGame.draw` / frame pipe).
+   * Marks the start of the rendering phase.
    */
   public static inline function beginRender():Void
   {
-    if (NativeFrameProfiler.isEnabled())
-      NativeFrameProfiler.beginPhase(NativeFrameProfiler.PHASE_RENDER, getHeapUsedBytes());
+    if (!_initialized || !_recordingEnabled)
+      return;
+    NativeFrameProfiler.beginRender(queryHeapUsedBytes());
   }
 
   /**
-   * Marks the end of the rendering phase and returns the net render duration in milliseconds.
-   * @param drawCalls Optional draw call count to record for this render pass.
-   * @return Float
+   * Marks the end of the rendering phase.
    */
-  public static inline function endRender(drawCalls:Int = 0):Float
+  public static inline function endRender():Float
   {
-    if (!NativeFrameProfiler.isEnabled())
+    if (!_initialized || !_recordingEnabled)
       return 0.0;
-    if (drawCalls > 0)
-      NativeFrameProfiler.addDrawCalls(drawCalls);
-    return NativeFrameProfiler.endPhase(NativeFrameProfiler.PHASE_RENDER, getHeapUsedBytes());
+    return NativeFrameProfiler.endRender(queryHeapUsedBytes());
   }
 
   /**
-   * Marks the start of an audio update or sync phase (`FlxG.sound.update`, `soundTray`, vocal sync).
+   * Marks the start of the audio processing/synchronization phase.
    */
   public static inline function beginAudio():Void
   {
-    if (NativeFrameProfiler.isEnabled())
-      NativeFrameProfiler.beginPhase(NativeFrameProfiler.PHASE_AUDIO, getHeapUsedBytes());
+    if (!_initialized || !_recordingEnabled)
+      return;
+    NativeFrameProfiler.beginAudio(queryHeapUsedBytes());
   }
 
   /**
-   * Marks the end of an audio phase and returns the net audio duration in milliseconds.
-   * @return Float
+   * Marks the end of the audio processing/synchronization phase.
    */
   public static inline function endAudio():Float
   {
-    if (!NativeFrameProfiler.isEnabled())
+    if (!_initialized || !_recordingEnabled)
       return 0.0;
-    return NativeFrameProfiler.endPhase(NativeFrameProfiler.PHASE_AUDIO, getHeapUsedBytes());
+    return NativeFrameProfiler.endAudio(queryHeapUsedBytes());
   }
 
   /**
-   * Marks the start of a garbage collection pause.
-   * @param major Whether a major collection is being performed.
+   * Marks the start of an explicit synchronous garbage collection cycle.
+   * No-op on targets that do not expose synchronous GC (`!cpp && !hl && !neko`).
    */
-  public static inline function beginGC(major:Bool = false):Void
+  public static inline function beginGC(major:Bool = true):Void
   {
-    if (NativeFrameProfiler.isEnabled())
-      NativeFrameProfiler.beginPhase(NativeFrameProfiler.PHASE_GC, getHeapUsedBytes());
+    #if (cpp || hl || neko)
+    if (!_initialized || !_recordingEnabled)
+      return;
+    NativeFrameProfiler.beginGC(queryHeapUsedBytes());
+    #end
   }
 
   /**
-   * Marks the end of a garbage collection pause and returns the pause duration in milliseconds.
-   * @return Float
+   * Marks the end of an explicit synchronous garbage collection cycle.
    */
   public static inline function endGC():Float
   {
-    if (!NativeFrameProfiler.isEnabled())
+    #if (cpp || hl || neko)
+    if (!_initialized || !_recordingEnabled)
       return 0.0;
-    return NativeFrameProfiler.endPhase(NativeFrameProfiler.PHASE_GC, getHeapUsedBytes());
-  }
-
-  /**
-   * Runs a garbage collection cycle while measuring and recording its pause time and reclaimed memory.
-   * @param major Whether to perform a major collection.
-   * @return Float Measured GC pause duration in milliseconds.
-   */
-  public static function collectGarbage(major:Bool = false):Float
-  {
-    beginGC(major);
-    #if cpp
-    cpp.vm.Gc.run(major);
-    #elseif hl
-    hl.Gc.major();
+    return NativeFrameProfiler.endGC(queryHeapUsedBytes());
     #else
-    openfl.system.System.gc();
+    return 0.0;
     #end
-    return endGC();
   }
 
   /**
-   * Measures a callback as part of the update phase and returns its result.
-   * @param fn Callback to profile.
-   * @return T
+   * Manually records a subsystem phase duration in milliseconds.
    */
-  public static inline function measureUpdate<T>(fn:Void->T):T
+  public static inline function recordPhaseMs(phase:Int, durationMs:Float):Void
   {
-    beginUpdate();
-    final result = fn();
-    endUpdate();
-    return result;
+    if (!_initialized || !_recordingEnabled)
+      return;
+    NativeFrameProfiler.recordPhaseMs(phase, durationMs);
   }
 
   /**
-   * Measures a callback as part of the rendering phase and returns its result.
-   * @param fn Callback to profile.
-   * @return T
-   */
-  public static inline function measureRender<T>(fn:Void->T):T
-  {
-    beginRender();
-    final result = fn();
-    endRender();
-    return result;
-  }
-
-  /**
-   * Measures a callback as part of the audio phase and returns its result.
-   * @param fn Callback to profile.
-   * @return T
-   */
-  public static inline function measureAudio<T>(fn:Void->T):T
-  {
-    beginAudio();
-    final result = fn();
-    endAudio();
-    return result;
-  }
-
-  /**
-   * Measures a callback as a garbage collection operation and returns its result.
-   * @param major Whether the operation is a major GC.
-   * @param fn Callback to profile.
-   * @return T
-   */
-  public static inline function measureGC<T>(major:Bool, fn:Void->T):T
-  {
-    beginGC(major);
-    final result = fn();
-    endGC();
-    return result;
-  }
-
-  /**
-   * Directly records an allocation event on the current frame.
-   * @param bytes Number of bytes allocated.
-   * @param count Number of allocations.
+   * Manually records an allocation event (`bytes` and `count`).
    */
   public static inline function recordAllocation(bytes:Float, count:Int = 1):Void
   {
+    if (!_initialized || !_recordingEnabled)
+      return;
     NativeFrameProfiler.recordAllocation(bytes, count);
   }
 
   /**
-   * Directly records a GC pause duration and reclaimed byte count on the current frame.
-   * @param pauseMs Duration of the GC pause in milliseconds.
-   * @param reclaimedBytes Bytes reclaimed by the collection.
-   * @param isExplicit Whether the GC was explicitly requested.
+   * Manually records a garbage collection pause (`pauseMs`, `reclaimedBytes`, `isExplicit`).
    */
   public static inline function recordGCPause(pauseMs:Float, reclaimedBytes:Float = 0.0, isExplicit:Bool = true):Void
   {
+    if (!_initialized || !_recordingEnabled)
+      return;
     NativeFrameProfiler.recordGCPause(pauseMs, reclaimedBytes, isExplicit);
   }
 
   /**
-   * Directly adds update duration (in ms) to the current frame.
-   * @param durationMs Update time in milliseconds.
+   * Returns a snapshot of the most recently completed frame, or `null` if no
+   * frames have been recorded yet.
    */
-  public static inline function recordUpdateTime(durationMs:Float):Void
+  public static function getLastFrame():Null<FrameSample>
   {
-    NativeFrameProfiler.recordPhaseMs(NativeFrameProfiler.PHASE_UPDATE, durationMs);
+    ensureInitialized();
+    if (!NativeFrameProfiler.loadLastFrame())
+      return null;
+    return readLoadedSample();
   }
 
   /**
-   * Directly adds rendering duration (in ms) to the current frame.
-   * @param durationMs Render time in milliseconds.
+   * Returns a snapshot of the buffered frame at `chronologicalIndex`
+   * (`0` = oldest frame in ring buffer, `getBufferedFrameCount() - 1` = newest).
    */
-  public static inline function recordRenderTime(durationMs:Float):Void
+  public static function getBufferedFrame(chronologicalIndex:Int):Null<FrameSample>
   {
-    NativeFrameProfiler.recordPhaseMs(NativeFrameProfiler.PHASE_RENDER, durationMs);
+    ensureInitialized();
+    if (!NativeFrameProfiler.loadBufferedFrame(chronologicalIndex))
+      return null;
+    return readLoadedSample();
   }
 
-  /**
-   * Directly adds audio duration (in ms) to the current frame.
-   * @param durationMs Audio time in milliseconds.
-   */
-  public static inline function recordAudioTime(durationMs:Float):Void
+  public static function getBufferedFrameCount():Int
   {
-    NativeFrameProfiler.recordPhaseMs(NativeFrameProfiler.PHASE_AUDIO, durationMs);
+    ensureInitialized();
+    return NativeFrameProfiler.getBufferedFrameCount();
   }
 
-  /**
-   * Adds draw call counts to the current frame.
-   * @param drawCalls Number of draw calls.
-   */
-  public static inline function addDrawCalls(drawCalls:Int):Void
-  {
-    NativeFrameProfiler.addDrawCalls(drawCalls);
-  }
-
-  static function readCachedSample():FrameSample
+  private static function readLoadedSample():FrameSample
   {
     return {
-      frameIndex: Std.int(NativeFrameProfiler.sampleFrameIndex()),
-      timestampMs: NativeFrameProfiler.sampleTimestampMs(),
-      frameTimeMs: NativeFrameProfiler.sampleFrameTimeMs(),
-      workTimeMs: NativeFrameProfiler.sampleWorkTimeMs(),
-      fps: NativeFrameProfiler.sampleFps(),
-      rollingFps: NativeFrameProfiler.sampleRollingFps(),
-      updateTimeMs: NativeFrameProfiler.sampleUpdateTimeMs(),
-      renderTimeMs: NativeFrameProfiler.sampleRenderTimeMs(),
-      audioTimeMs: NativeFrameProfiler.sampleAudioTimeMs(),
-      gcPauseMs: NativeFrameProfiler.sampleGcPauseMs(),
-      otherTimeMs: NativeFrameProfiler.sampleOtherTimeMs(),
-      allocBytes: NativeFrameProfiler.sampleAllocBytes(),
-      netHeapDeltaBytes: NativeFrameProfiler.sampleNetHeapDeltaBytes(),
-      gcReclaimedBytes: NativeFrameProfiler.sampleGcReclaimedBytes(),
-      heapUsedBytes: NativeFrameProfiler.sampleHeapUsedBytes(),
-      heapReservedBytes: NativeFrameProfiler.sampleHeapReservedBytes(),
-      rssBytes: NativeFrameProfiler.sampleRssBytes(),
-      peakRssBytes: NativeFrameProfiler.samplePeakRssBytes(),
-      allocCount: NativeFrameProfiler.sampleAllocCount(),
-      gcCount: NativeFrameProfiler.sampleGcCount(),
-      explicitGcCount: NativeFrameProfiler.sampleExplicitGcCount(),
-      implicitGcCount: NativeFrameProfiler.sampleImplicitGcCount(),
-      updateSteps: NativeFrameProfiler.sampleUpdateSteps(),
-      drawCalls: NativeFrameProfiler.sampleDrawCalls(),
-      stateName: NativeFrameProfiler.sampleStateName()
+      frameIndex: NativeFrameProfiler.lastSampleFrameIndex(),
+      timestampMs: NativeFrameProfiler.lastSampleTimestampMs(),
+      frameTimeMs: NativeFrameProfiler.lastSampleFrameTimeMs(),
+      workTimeMs: NativeFrameProfiler.lastSampleWorkTimeMs(),
+      fps: NativeFrameProfiler.lastSampleFps(),
+      rollingFps: NativeFrameProfiler.lastSampleRollingFps(),
+      updateTimeMs: NativeFrameProfiler.lastSampleUpdateTimeMs(),
+      renderTimeMs: NativeFrameProfiler.lastSampleRenderTimeMs(),
+      audioTimeMs: NativeFrameProfiler.lastSampleAudioTimeMs(),
+      gcPauseMs: NativeFrameProfiler.lastSampleGcPauseMs(),
+      otherTimeMs: NativeFrameProfiler.lastSampleOtherTimeMs(),
+      allocBytes: NativeFrameProfiler.lastSampleAllocBytes(),
+      allocCount: NativeFrameProfiler.lastSampleAllocCount(),
+      gcReclaimedBytes: NativeFrameProfiler.lastSampleGcReclaimedBytes(),
+      netHeapDeltaBytes: NativeFrameProfiler.lastSampleNetHeapDeltaBytes(),
+      heapUsedBytes: NativeFrameProfiler.lastSampleHeapUsedBytes(),
+      heapReservedBytes: NativeFrameProfiler.lastSampleHeapReservedBytes(),
+      rssBytes: NativeFrameProfiler.lastSampleRssBytes(),
+      peakRssBytes: NativeFrameProfiler.lastSamplePeakRssBytes(),
+      gcCount: NativeFrameProfiler.lastSampleGcCount(),
+      explicitGcCount: NativeFrameProfiler.lastSampleExplicitGcCount(),
+      implicitGcCount: NativeFrameProfiler.lastSampleImplicitGcCount(),
+      drawCalls: NativeFrameProfiler.lastSampleDrawCalls(),
+      updateSteps: NativeFrameProfiler.lastSampleUpdateSteps(),
+      rssSampled: NativeFrameProfiler.lastSampleRssSampled(),
+      stateName: NativeFrameProfiler.lastSampleStateName()
     };
   }
 
   /**
-   * Returns the most recently completed frame sample, or `null` if no frames have been recorded yet.
-   * @return Null<FrameSample>
-   */
-  public static function getLastFrame():Null<FrameSample>
-  {
-    if (!NativeFrameProfiler.refreshLastFrame())
-      return null;
-    return readCachedSample();
-  }
-
-  /**
-   * Returns the buffered frame history in chronological order (oldest to newest).
-   * @param maxFrames Optional maximum number of most-recent frames to return.
-   * @return Array<FrameSample>
-   */
-  public static function getFrameHistory(?maxFrames:Int):Array<FrameSample>
-  {
-    NativeFrameProfiler.refreshSummary();
-    final buffered = NativeFrameProfiler.summaryBufferedFrames();
-    if (buffered <= 0)
-      return [];
-    var startIdx = 0;
-    if (maxFrames != null && maxFrames > 0 && maxFrames < buffered)
-      startIdx = buffered - maxFrames;
-    final out:Array<FrameSample> = [];
-    for (i in startIdx...buffered)
-    {
-      if (NativeFrameProfiler.loadBufferedFrame(i))
-        out.push(readCachedSample());
-    }
-    return out;
-  }
-
-  /**
-   * Computes and returns the aggregated session summary statistics.
-   * @return FrameProfileSummary
+   * Computes and returns the full statistical summary across the current session.
    */
   public static function getSummary():FrameProfileSummary
   {
+    ensureInitialized();
     NativeFrameProfiler.refreshSummary();
     return {
-      totalFrames: Std.int(NativeFrameProfiler.summaryTotalFrames()),
+      totalFrames: NativeFrameProfiler.summaryTotalFrames(),
       bufferedFrames: NativeFrameProfiler.summaryBufferedFrames(),
-      targetFps: NativeFrameProfiler.summaryTargetFps(),
       sessionDurationMs: NativeFrameProfiler.summarySessionDurationMs(),
-      cpuTimeMs: NativeFrameProfiler.summaryCpuTimeMs(),
-      cpuUtilizationPct: NativeFrameProfiler.summaryCpuUtilizationPct(),
-
+      targetFps: NativeFrameProfiler.summaryTargetFps(),
+      targetFrameTimeMs: NativeFrameProfiler.summaryTargetFrameTimeMs(),
+      currentFps: NativeFrameProfiler.summaryCurrentFps(),
+      avgFps: NativeFrameProfiler.summaryAvgFps(),
+      minFps: NativeFrameProfiler.summaryMinFps(),
+      maxFps: NativeFrameProfiler.summaryMaxFps(),
+      onePercentLowFps: NativeFrameProfiler.summaryOnePercentLowFps(),
+      pointOnePercentLowFps: NativeFrameProfiler.summaryPointOnePercentLowFps(),
+      slowest1PctAvgFps: NativeFrameProfiler.summarySlowest1PctAvgFps(),
+      slowest01PctAvgFps: NativeFrameProfiler.summarySlowest01PctAvgFps(),
+      lastFrameTimeMs: NativeFrameProfiler.summaryLastFrameTimeMs(),
       avgFrameTimeMs: NativeFrameProfiler.summaryAvgFrameTimeMs(),
       minFrameTimeMs: NativeFrameProfiler.summaryMinFrameTimeMs(),
       maxFrameTimeMs: NativeFrameProfiler.summaryMaxFrameTimeMs(),
@@ -580,262 +632,373 @@ class FrameProfiler
       p95FrameTimeMs: NativeFrameProfiler.summaryP95FrameTimeMs(),
       p99FrameTimeMs: NativeFrameProfiler.summaryP99FrameTimeMs(),
       p999FrameTimeMs: NativeFrameProfiler.summaryP999FrameTimeMs(),
-      spikeCount25Ms: Std.int(NativeFrameProfiler.summarySpikeCount25Ms()),
-      spikeCount33Ms: Std.int(NativeFrameProfiler.summarySpikeCount33Ms()),
-
-      avgFps: NativeFrameProfiler.summaryAvgFps(),
-      currentFps: NativeFrameProfiler.summaryCurrentFps(),
-      minFps: NativeFrameProfiler.summaryMinFps(),
-      maxFps: NativeFrameProfiler.summaryMaxFps(),
-      onePercentLowFps: NativeFrameProfiler.summaryOnePercentLowFps(),
-      pointOnePercentLowFps: NativeFrameProfiler.summaryPointOnePercentLowFps(),
-
       avgUpdateTimeMs: NativeFrameProfiler.summaryAvgUpdateTimeMs(),
       maxUpdateTimeMs: NativeFrameProfiler.summaryMaxUpdateTimeMs(),
-      p99UpdateTimeMs: NativeFrameProfiler.summaryP99UpdateTimeMs(),
-      totalUpdateTimeMs: NativeFrameProfiler.summaryTotalUpdateTimeMs(),
-      updateFrameSharePct: NativeFrameProfiler.summaryUpdateFrameSharePct(),
-
+      p95UpdateTimeMs: NativeFrameProfiler.summaryP95UpdateTimeMs(),
       avgRenderTimeMs: NativeFrameProfiler.summaryAvgRenderTimeMs(),
       maxRenderTimeMs: NativeFrameProfiler.summaryMaxRenderTimeMs(),
-      p99RenderTimeMs: NativeFrameProfiler.summaryP99RenderTimeMs(),
-      totalRenderTimeMs: NativeFrameProfiler.summaryTotalRenderTimeMs(),
-      renderFrameSharePct: NativeFrameProfiler.summaryRenderFrameSharePct(),
-
+      p95RenderTimeMs: NativeFrameProfiler.summaryP95RenderTimeMs(),
       avgAudioTimeMs: NativeFrameProfiler.summaryAvgAudioTimeMs(),
       maxAudioTimeMs: NativeFrameProfiler.summaryMaxAudioTimeMs(),
-      p99AudioTimeMs: NativeFrameProfiler.summaryP99AudioTimeMs(),
-      totalAudioTimeMs: NativeFrameProfiler.summaryTotalAudioTimeMs(),
-      audioFrameSharePct: NativeFrameProfiler.summaryAudioFrameSharePct(),
-
-      totalGcCount: Std.int(NativeFrameProfiler.summaryTotalGcCount()),
-      totalExplicitGcCount: Std.int(NativeFrameProfiler.summaryTotalExplicitGcCount()),
-      totalImplicitGcCount: Std.int(NativeFrameProfiler.summaryTotalImplicitGcCount()),
-      framesWithGc: Std.int(NativeFrameProfiler.summaryFramesWithGc()),
+      p95AudioTimeMs: NativeFrameProfiler.summaryP95AudioTimeMs(),
+      avgOtherTimeMs: NativeFrameProfiler.summaryAvgOtherTimeMs(),
+      maxOtherTimeMs: NativeFrameProfiler.summaryMaxOtherTimeMs(),
+      totalGcCount: NativeFrameProfiler.summaryTotalGcCount(),
+      totalExplicitGcCount: NativeFrameProfiler.summaryTotalExplicitGcCount(),
+      totalImplicitGcCount: NativeFrameProfiler.summaryTotalImplicitGcCount(),
+      framesWithGc: NativeFrameProfiler.summaryFramesWithGc(),
       totalGcPauseMs: NativeFrameProfiler.summaryTotalGcPauseMs(),
-      avgGcPausePerFrameMs: NativeFrameProfiler.summaryAvgGcPausePerFrameMs(),
-      avgGcPausePerCollectionMs: NativeFrameProfiler.summaryAvgGcPausePerCollectionMs(),
+      avgGcPauseMs: NativeFrameProfiler.summaryAvgGcPauseMs(),
       maxGcPauseMs: NativeFrameProfiler.summaryMaxGcPauseMs(),
-      maxGcPauseFrame: Std.int(NativeFrameProfiler.summaryMaxGcPauseFrame()),
-      gcFrameSharePct: NativeFrameProfiler.summaryGcFrameSharePct(),
+      maxGcPauseFrame: NativeFrameProfiler.summaryMaxGcPauseFrame(),
       totalGcReclaimedBytes: NativeFrameProfiler.summaryTotalGcReclaimedBytes(),
-
       totalAllocBytes: NativeFrameProfiler.summaryTotalAllocBytes(),
-      totalAllocCount: Std.int(NativeFrameProfiler.summaryTotalAllocCount()),
+      totalAllocCount: NativeFrameProfiler.summaryTotalAllocCount(),
       avgAllocBytesPerFrame: NativeFrameProfiler.summaryAvgAllocBytesPerFrame(),
       allocRateBytesPerSec: NativeFrameProfiler.summaryAllocRateBytesPerSec(),
       peakFrameAllocBytes: NativeFrameProfiler.summaryPeakFrameAllocBytes(),
-      peakFrameAllocFrame: Std.int(NativeFrameProfiler.summaryPeakFrameAllocFrame()),
-      startHeapUsedBytes: NativeFrameProfiler.summaryStartHeapUsedBytes(),
+      peakFrameAllocFrame: NativeFrameProfiler.summaryPeakFrameAllocFrame(),
       currentHeapUsedBytes: NativeFrameProfiler.summaryCurrentHeapUsedBytes(),
-      peakHeapUsedBytes: NativeFrameProfiler.summaryPeakHeapUsedBytes(),
       currentHeapReservedBytes: NativeFrameProfiler.summaryCurrentHeapReservedBytes(),
+      peakHeapUsedBytes: NativeFrameProfiler.summaryPeakHeapUsedBytes(),
+      peakHeapReservedBytes: NativeFrameProfiler.summaryPeakHeapReservedBytes(),
       currentRssBytes: NativeFrameProfiler.summaryCurrentRssBytes(),
-      peakRssBytes: NativeFrameProfiler.summaryPeakRssBytes()
+      peakRssBytes: NativeFrameProfiler.summaryPeakRssBytes(),
+      droppedFrames: NativeFrameProfiler.summaryDroppedFrames(),
+      spikeCount16Ms: NativeFrameProfiler.summarySpikeCount16Ms(),
+      spikeCount25Ms: NativeFrameProfiler.summarySpikeCount25Ms(),
+      spikeCount33Ms: NativeFrameProfiler.summarySpikeCount33Ms(),
+      spikeCount50Ms: NativeFrameProfiler.summarySpikeCount50Ms(),
+      avgDrawCalls: NativeFrameProfiler.summaryAvgDrawCalls(),
+      maxDrawCalls: NativeFrameProfiler.summaryMaxDrawCalls(),
+      cpuTimeMs: NativeFrameProfiler.summaryCpuTimeMs(),
+      cpuUtilizationPct: NativeFrameProfiler.summaryCpuUtilizationPct(),
+      cpuNormalizedPct: NativeFrameProfiler.summaryCpuNormalizedPct(),
+      logicalCpuCount: NativeFrameProfiler.summaryLogicalCpuCount(),
+      cpuTimeAvailable: NativeFrameProfiler.summaryCpuTimeAvailable(),
+      rssAvailable: NativeFrameProfiler.summaryRssAvailable(),
+      heapStatsAvailable: NativeFrameProfiler.summaryHeapStatsAvailable(),
+      rssSampleIntervalFrames: NativeFrameProfiler.summaryRssSampleIntervalFrames()
     };
   }
 
-  static inline function round2(v:Float):Float
-    return Math.fround(v * 100.0) / 100.0;
-
-  static inline function round3(v:Float):Float
-    return Math.fround(v * 1000.0) / 1000.0;
+  private static inline function roundDec(val:Float, decimals:Int = 2):Float
+  {
+    var mult = Math.pow(10, decimals);
+    return Math.round(val * mult) / mult;
+  }
 
   /**
-   * Returns a compact multi-line HUD string suitable for `FPSCounter` display.
-   * @return String
+   * Formats a compact HUD string suitable for `FPSCounter` without allocating
+   * full `FrameSample` / `FrameProfileSummary` structures.
    */
   public static function getOverlayText():String
   {
-    final last = getLastFrame();
-    final sum = getSummary();
-    if (last == null)
-      return "Profiler: waiting for frames...";
-
-    var text = 'Frametime: ${round2(last.frameTimeMs)} ms (Avg: ${round2(sum.avgFrameTimeMs)} ms | 1% Low: ${Math.round(sum.onePercentLowFps)} FPS)';
-    text += '\nUpdate: ${round3(last.updateTimeMs)} ms | Render: ${round3(last.renderTimeMs)} ms | Audio: ${round3(last.audioTimeMs)} ms';
-    text += '\nAlloc: ${MemoryUtil.formatMemory(last.allocBytes)}/f (Rate: ${MemoryUtil.formatMemory(sum.allocRateBytesPerSec)}/s)'
-      + ' | GC: ${sum.totalGcCount} (${round3(sum.totalGcPauseMs)} ms total, max ${round3(sum.maxGcPauseMs)} ms)';
-    return text;
-  }
-
-  static function cleanTimestamp():String
-  {
-    var now = Date.now().toString();
-    now = StringTools.replace(now, " ", "_");
-    now = StringTools.replace(now, ":", "-");
-    return now;
-  }
-
-  static function getPlatformDescription():String
-  {
-    var pName = LimeSystem.platformName != null ? LimeSystem.platformName : "Unknown";
-    var pVer = LimeSystem.platformVersion != null ? LimeSystem.platformVersion : "";
-    var arch = #if cpp PlatformUtil.getArch() #else "" #end;
-    var parts:Array<String> = [pName];
-    if (arch != null && arch.length > 0)
-      parts.push(arch);
-    if (pVer.length > 0 && pVer != pName)
-      parts.push(pVer);
-    return parts.join(" ");
+    ensureInitialized();
+    return NativeFrameProfiler.formatOverlay();
   }
 
   /**
-   * Resolves a requested log filename into a sanitized `.log` path inside `debug/log/`.
-   * @param fileName Optional custom filename (defaults to a timestamped `frame_profiler_<date>.log`).
-   * @return String
+   * Escapes a string field according to RFC 4180 CSV rules (normalizing raw
+   * control chars to spaces and quoting fields containing `,`, `"`, `\r`, `\n`,
+   * or leading/trailing spaces).
    */
-  public static function resolveLogPath(?fileName:String):String
+  public static function escapeCsvField(value:String):String
   {
-    var requested = fileName;
-    if (requested == null || StringTools.trim(requested).length == 0)
-      requested = '$LOG_DIR/frame_profiler_${cleanTimestamp()}.log';
-    return NativeFrameProfiler.resolveLogPath(requested);
-  }
-
-  /**
-   * Formats the full frame profiler report and CSV frame table as a string.
-   * @param engineVersion Optional engine version override.
-   * @param platformInfo Optional platform info override.
-   * @param logPath Optional resolved log file path for header display.
-   * @return String
-   */
-  public static function formatReport(?engineVersion:String, ?platformInfo:String, ?logPath:String):String
-  {
-    final ver = (engineVersion != null && engineVersion.length > 0)
-      ? engineVersion
-      : MainMenuState.phoenixEngineVersion;
-    final plat = (platformInfo != null && platformInfo.length > 0)
-      ? platformInfo
-      : getPlatformDescription();
-    final path = (logPath != null && logPath.length > 0) ? logPath : DEFAULT_LOG_FILE;
-    final sum = getSummary();
-    final history = getFrameHistory();
-    final last = history.length > 0 ? history[history.length - 1] : null;
-    final activeState = last != null ? last.stateName : "Unknown";
-
-    final buf = new StringBuf();
-    buf.add("================================================================================\n");
-    buf.add("PHOENIX ENGINE - FRAME PROFILER LOG REPORT\n");
-    buf.add("================================================================================\n");
-    buf.add('Engine Version       : $ver\n');
-    buf.add('Platform             : $plat\n');
-    buf.add('Log File             : $path\n');
-    buf.add('Target FPS           : ${round2(sum.targetFps)}\n');
-    buf.add('Total Frames         : ${sum.totalFrames} (Buffered: ${sum.bufferedFrames} / ${NativeFrameProfiler.RING_CAPACITY})\n');
-    buf.add('Session Duration     : ${round3(sum.sessionDurationMs)} ms (${round3(sum.sessionDurationMs / 1000.0)} s)\n');
-    buf.add('Process CPU Time     : ${round3(sum.cpuTimeMs)} ms (${round2(sum.cpuUtilizationPct)}% utilization)\n');
-    buf.add('Active State         : $activeState\n\n');
-
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add("[1] FRAMETIME & FPS SUMMARY\n");
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add('Avg Frametime        : ${round3(sum.avgFrameTimeMs)} ms\n');
-    buf.add('Min Frametime        : ${round3(sum.minFrameTimeMs)} ms\n');
-    buf.add('Max Frametime        : ${round3(sum.maxFrameTimeMs)} ms\n');
-    buf.add('Frametime StdDev     : ${round3(sum.stdDevFrameTimeMs)} ms\n');
-    buf.add('P50 Frametime        : ${round3(sum.p50FrameTimeMs)} ms\n');
-    buf.add('P95 Frametime        : ${round3(sum.p95FrameTimeMs)} ms\n');
-    buf.add('P99 Frametime        : ${round3(sum.p99FrameTimeMs)} ms\n');
-    buf.add('P99.9 Frametime      : ${round3(sum.p999FrameTimeMs)} ms\n');
-    buf.add('Frame Spikes (>25ms) : ${sum.spikeCount25Ms}\n');
-    buf.add('Frame Spikes (>33ms) : ${sum.spikeCount33Ms}\n');
-    buf.add('Avg FPS              : ${round2(sum.avgFps)}\n');
-    buf.add('Current Rolling FPS  : ${round2(sum.currentFps)}\n');
-    buf.add('Min FPS              : ${round2(sum.minFps)}\n');
-    buf.add('Max FPS              : ${round2(sum.maxFps)}\n');
-    buf.add('1% Low FPS           : ${round2(sum.onePercentLowFps)}\n');
-    buf.add('0.1% Low FPS         : ${round2(sum.pointOnePercentLowFps)}\n\n');
-
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add("[2] SUBSYSTEM TIMINGS (UPDATES, RENDERING, AUDIO)\n");
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add('Updates (avg/max/p99): ${round3(sum.avgUpdateTimeMs)} ms / ${round3(sum.maxUpdateTimeMs)} ms / ${round3(sum.p99UpdateTimeMs)} ms (Total: ${round3(sum.totalUpdateTimeMs)} ms, ${round2(sum.updateFrameSharePct)}% of frame)\n');
-    buf.add('Render  (avg/max/p99): ${round3(sum.avgRenderTimeMs)} ms / ${round3(sum.maxRenderTimeMs)} ms / ${round3(sum.p99RenderTimeMs)} ms (Total: ${round3(sum.totalRenderTimeMs)} ms, ${round2(sum.renderFrameSharePct)}% of frame)\n');
-    buf.add('Audio   (avg/max/p99): ${round3(sum.avgAudioTimeMs)} ms / ${round3(sum.maxAudioTimeMs)} ms / ${round3(sum.p99AudioTimeMs)} ms (Total: ${round3(sum.totalAudioTimeMs)} ms, ${round2(sum.audioFrameSharePct)}% of frame)\n\n');
-
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add("[3] GARBAGE COLLECTION (GC PAUSES)\n");
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add('Total GC Collections : ${sum.totalGcCount} (Explicit: ${sum.totalExplicitGcCount}, Implicit: ${sum.totalImplicitGcCount})\n');
-    buf.add('Frames With GC       : ${sum.framesWithGc}\n');
-    buf.add('Total GC Pause Time  : ${round3(sum.totalGcPauseMs)} ms (${round2(sum.gcFrameSharePct)}% of session)\n');
-    buf.add('Avg GC Pause / Frame : ${round3(sum.avgGcPausePerFrameMs)} ms\n');
-    buf.add('Avg GC Pause / Event : ${round3(sum.avgGcPausePerCollectionMs)} ms\n');
-    buf.add('Max GC Pause         : ${round3(sum.maxGcPauseMs)} ms (Frame #${sum.maxGcPauseFrame})\n');
-    buf.add('Total GC Reclaimed   : ${Std.int(sum.totalGcReclaimedBytes)} bytes (${MemoryUtil.formatMemory(sum.totalGcReclaimedBytes)})\n\n');
-
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add("[4] ALLOCATIONS & MEMORY USAGE\n");
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add('Total Allocations    : ${Std.int(sum.totalAllocBytes)} bytes (${MemoryUtil.formatMemory(sum.totalAllocBytes)}) across ${sum.totalAllocCount} events\n');
-    buf.add('Avg Alloc / Frame    : ${round2(sum.avgAllocBytesPerFrame)} bytes (${MemoryUtil.formatMemory(sum.avgAllocBytesPerFrame)})\n');
-    buf.add('Allocation Rate      : ${MemoryUtil.formatMemory(sum.allocRateBytesPerSec)}/s\n');
-    buf.add('Peak Frame Alloc     : ${Std.int(sum.peakFrameAllocBytes)} bytes (${MemoryUtil.formatMemory(sum.peakFrameAllocBytes)}) on Frame #${sum.peakFrameAllocFrame}\n');
-    buf.add('Start GC Heap Used   : ${Std.int(sum.startHeapUsedBytes)} bytes (${MemoryUtil.formatMemory(sum.startHeapUsedBytes)})\n');
-    buf.add('Current GC Heap Used : ${Std.int(sum.currentHeapUsedBytes)} bytes (${MemoryUtil.formatMemory(sum.currentHeapUsedBytes)})\n');
-    buf.add('Peak GC Heap Used    : ${Std.int(sum.peakHeapUsedBytes)} bytes (${MemoryUtil.formatMemory(sum.peakHeapUsedBytes)})\n');
-    buf.add('Current GC Reserved  : ${Std.int(sum.currentHeapReservedBytes)} bytes (${MemoryUtil.formatMemory(sum.currentHeapReservedBytes)})\n');
-    buf.add('Current Process RSS  : ${Std.int(sum.currentRssBytes)} bytes (${MemoryUtil.formatMemory(sum.currentRssBytes)})\n');
-    buf.add('Peak Process RSS     : ${Std.int(sum.peakRssBytes)} bytes (${MemoryUtil.formatMemory(sum.peakRssBytes)})\n\n');
-
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add("[5] PER-FRAME TIMELINE (CSV)\n");
-    buf.add("--------------------------------------------------------------------------------\n");
-    buf.add("frame,timestamp_ms,frametime_ms,work_ms,fps,rolling_fps,update_ms,render_ms,audio_ms,gc_pause_ms,other_ms,alloc_bytes,alloc_count,net_heap_delta_bytes,gc_reclaimed_bytes,gc_count,explicit_gc_count,implicit_gc_count,heap_used_bytes,heap_reserved_bytes,rss_bytes,peak_rss_bytes,draw_calls,update_steps,state\n");
-    for (s in history)
+    if (value == null || value == "")
+      return "UnknownState";
+    var needsQuotes = false;
+    for (i in 0...value.length)
     {
-      buf.add('${s.frameIndex},${round3(s.timestampMs)},${round3(s.frameTimeMs)},${round3(s.workTimeMs)},${round2(s.fps)},${round2(s.rollingFps)},'
-        + '${round3(s.updateTimeMs)},${round3(s.renderTimeMs)},${round3(s.audioTimeMs)},${round3(s.gcPauseMs)},${round3(s.otherTimeMs)},'
-        + '${Std.int(s.allocBytes)},${s.allocCount},${Std.int(s.netHeapDeltaBytes)},${Std.int(s.gcReclaimedBytes)},'
-        + '${s.gcCount},${s.explicitGcCount},${s.implicitGcCount},${Std.int(s.heapUsedBytes)},${Std.int(s.heapReservedBytes)},'
-        + '${Std.int(s.rssBytes)},${Std.int(s.peakRssBytes)},${s.drawCalls},${s.updateSteps},${s.stateName}\n');
+      var ch = StringTools.fastCodeAt(value, i);
+      if (ch == ",".code || ch == "\"".code || ch == "\r".code || ch == "\n".code)
+      {
+        needsQuotes = true;
+        break;
+      }
+    }
+    if (value.length > 0 && (StringTools.fastCodeAt(value, 0) == 32 || StringTools.fastCodeAt(value, value.length - 1) == 32))
+      needsQuotes = true;
+
+    if (!needsQuotes)
+    {
+      var clean = new StringBuf();
+      for (i in 0...value.length)
+      {
+        var ch = StringTools.fastCodeAt(value, i);
+        clean.addChar((ch < 32 || ch == 127) ? 32 : ch);
+      }
+      return clean.toString();
+    }
+
+    var buf = new StringBuf();
+    buf.addChar("\"".code);
+    for (i in 0...value.length)
+    {
+      var ch = StringTools.fastCodeAt(value, i);
+      if (ch == "\"".code)
+        buf.add("\"\"");
+      else if (ch < 32 || ch == 127)
+        buf.addChar(32);
+      else
+        buf.addChar(ch);
+    }
+    buf.addChar("\"".code);
+    return buf.toString();
+  }
+
+  private static function sanitizeSingleLine(value:String, fallback:String = "Unknown"):String
+  {
+    if (value == null || value == "")
+      return fallback;
+    var buf = new StringBuf();
+    for (i in 0...value.length)
+    {
+      var ch = StringTools.fastCodeAt(value, i);
+      buf.addChar((ch < 32 || ch == 127) ? 32 : ch);
     }
     return buf.toString();
   }
 
+  private static function dominantSubsystem(sample:FrameSample):String
+  {
+    var maxVal = sample.otherTimeMs;
+    var label = "Other/Idle";
+    if (sample.updateTimeMs >= maxVal)
+    {
+      maxVal = sample.updateTimeMs;
+      label = "Update";
+    }
+    if (sample.renderTimeMs >= maxVal)
+    {
+      maxVal = sample.renderTimeMs;
+      label = "Render";
+    }
+    if (sample.audioTimeMs >= maxVal)
+    {
+      maxVal = sample.audioTimeMs;
+      label = "Audio";
+    }
+    if (sample.gcPauseMs >= maxVal && sample.gcPauseMs > 0.0)
+      label = "GC Pause";
+    return label;
+  }
+
   /**
-   * Exports the recorded profiler metrics and frame history to a `.log` file in `debug/log/`.
-   * @param fileName Optional custom filename inside `debug/log/` (defaults to timestamped `.log` file).
-   * @return String The normalized file path written, or empty string if writing failed.
+   * Formats a complete `.log` report in Haxe matching the 6-section native C/C++
+   * report layout (`[1]` through `[6]`), including top slowest frames and
+   * RFC 4180 CSV escaping.
+   */
+  public static function formatReport(?engineVersion:String, ?platformName:String):String
+  {
+    ensureInitialized();
+    final sum = getSummary();
+    final ver = sanitizeSingleLine(engineVersion != null && engineVersion != "" ? engineVersion : getEngineVersion(), "0.3.2");
+    final plat = sanitizeSingleLine(platformName != null && platformName != "" ? platformName : getPlatformLabel(), "Haxe");
+    final safeState = sanitizeSingleLine(_currentStateName, "InitialState");
+    final nowStr = DateTools.format(Date.now(), "%Y-%m-%d %H:%M:%S");
+
+    var buf = new StringBuf();
+    buf.add("================================================================================\n");
+    buf.add("PHOENIX ENGINE - FRAME PROFILER LOG REPORT\n");
+    buf.add("================================================================================\n");
+    buf.add('Generated At           : ${nowStr}\n');
+    buf.add('Engine Version         : ${ver}\n');
+    buf.add('Platform / Runtime     : ${plat}\n');
+    buf.add('Active State           : ${safeState}\n');
+    buf.add('Target Framerate       : ${roundDec(sum.targetFps, 2)} FPS (${roundDec(sum.targetFrameTimeMs, 4)} ms/frame budget)\n');
+    buf.add('Session Duration       : ${roundDec(sum.sessionDurationMs, 3)} ms (${roundDec(sum.sessionDurationMs / 1000.0, 2)} s)\n');
+    buf.add('Total Frames Recorded  : ${sum.totalFrames} (Ring Buffer Window: ${sum.bufferedFrames} / ${NativeFrameProfiler.RING_CAPACITY} frames)\n');
+    if (sum.cpuTimeAvailable)
+    {
+      buf.add('Process CPU Time       : ${roundDec(sum.cpuTimeMs, 3)} ms (${roundDec(sum.cpuUtilizationPct, 2)}% single-core eq; ${roundDec(sum.cpuNormalizedPct, 2)}% across ${sum.logicalCpuCount} logical CPUs)\n');
+    }
+    else
+    {
+      buf.add("Process CPU Time       : N/A (unavailable on this platform/runtime)\n");
+    }
+    buf.add('RSS Sampling Interval  : ${sum.rssSampleIntervalFrames} frames (0 = on-demand only)\n\n');
+
+    buf.add("[1] FRAMETIME & FPS SUMMARY\n");
+    buf.add("--------------------------------------------------------------------------------\n");
+    buf.add('Average FPS            : ${roundDec(sum.avgFps, 2)} FPS\n');
+    buf.add('Current Rolling FPS    : ${roundDec(sum.currentFps, 2)} FPS (1.0s trailing sliding window)\n');
+    buf.add('Min / Max FPS          : ${roundDec(sum.minFps, 2)} FPS / ${roundDec(sum.maxFps, 2)} FPS\n');
+    buf.add('1% Low / 0.1% Low FPS  : ${roundDec(sum.onePercentLowFps, 2)} FPS (1000/P99) / ${roundDec(sum.pointOnePercentLowFps, 2)} FPS (1000/P99.9)\n');
+    buf.add('Slowest 1% / 0.1% Mean : ${roundDec(sum.slowest1PctAvgFps, 2)} FPS / ${roundDec(sum.slowest01PctAvgFps, 2)} FPS (harmonic mean of slowest tail frames)\n');
+    buf.add('Average Frametime      : ${roundDec(sum.avgFrameTimeMs, 4)} ms (StdDev: ${roundDec(sum.stdDevFrameTimeMs, 4)} ms)\n');
+    buf.add('Min / Max Frametime    : ${roundDec(sum.minFrameTimeMs, 4)} ms / ${roundDec(sum.maxFrameTimeMs, 4)} ms\n');
+    buf.add('Frametime Percentiles  : P50=${roundDec(sum.p50FrameTimeMs, 4)} ms | P95=${roundDec(sum.p95FrameTimeMs, 4)} ms | P99=${roundDec(sum.p99FrameTimeMs, 4)} ms | P99.9=${roundDec(sum.p999FrameTimeMs, 4)} ms\n');
+    buf.add('Dropped / Spike Frames : >1.5x Budget=${sum.droppedFrames} | >16.7ms=${sum.spikeCount16Ms} | >25ms=${sum.spikeCount25Ms} | >33.3ms=${sum.spikeCount33Ms} | >50ms=${sum.spikeCount50Ms}\n\n');
+
+    buf.add("[2] SUBSYSTEM TIMINGS (UPDATES, RENDERING, AUDIO)\n");
+    buf.add("--------------------------------------------------------------------------------\n");
+    buf.add('Update Timings         : Avg=${roundDec(sum.avgUpdateTimeMs, 4)} ms | P95=${roundDec(sum.p95UpdateTimeMs, 4)} ms | Max=${roundDec(sum.maxUpdateTimeMs, 4)} ms\n');
+    buf.add('Render Timings         : Avg=${roundDec(sum.avgRenderTimeMs, 4)} ms | P95=${roundDec(sum.p95RenderTimeMs, 4)} ms | Max=${roundDec(sum.maxRenderTimeMs, 4)} ms\n');
+    buf.add('Audio Timings          : Avg=${roundDec(sum.avgAudioTimeMs, 4)} ms | P95=${roundDec(sum.p95AudioTimeMs, 4)} ms | Max=${roundDec(sum.maxAudioTimeMs, 4)} ms\n');
+    buf.add('Other / Unaccounted    : Avg=${roundDec(sum.avgOtherTimeMs, 4)} ms | Max=${roundDec(sum.maxOtherTimeMs, 4)} ms\n');
+    buf.add('Draw Calls             : Avg=${roundDec(sum.avgDrawCalls, 1)} / frame | Max=${sum.maxDrawCalls}\n\n');
+
+    buf.add("[3] GARBAGE COLLECTION (GC PAUSES & HEAP CONTRACTIONS)\n");
+    buf.add("--------------------------------------------------------------------------------\n");
+    buf.add('Measured GC Events     : ${sum.totalGcCount} (Explicit: ${sum.totalExplicitGcCount})\n');
+    buf.add('Observed Contractions  : ${sum.totalImplicitGcCount} intervals (uninstrumented negative heap deltas; heuristic)\n');
+    buf.add('Frames With GC Activity: ${sum.framesWithGc}\n');
+    buf.add('Measured GC Pause Time : Total=${roundDec(sum.totalGcPauseMs, 4)} ms | Avg=${roundDec(sum.avgGcPauseMs, 4)} ms | Max=${roundDec(sum.maxGcPauseMs, 4)} ms (Frame #${sum.maxGcPauseFrame})\n');
+    buf.add('Observed Reclaimed Heap: ${Std.int(sum.totalGcReclaimedBytes)} bytes (${roundDec(sum.totalGcReclaimedBytes / (1024.0 * 1024.0), 2)} MB)\n\n');
+
+    buf.add("[4] ALLOCATIONS & MEMORY USAGE\n");
+    buf.add("--------------------------------------------------------------------------------\n");
+    if (sum.heapStatsAvailable)
+    {
+      buf.add('Observed Alloc Growth  : ${Std.int(sum.totalAllocBytes)} bytes (${roundDec(sum.totalAllocBytes / (1024.0 * 1024.0), 2)} MB) across ${sum.totalAllocCount} positive-delta intervals\n');
+      buf.add('Avg Alloc / Frame      : ${roundDec(sum.avgAllocBytesPerFrame, 1)} bytes/frame (${roundDec(sum.avgAllocBytesPerFrame / 1024.0, 2)} KB/frame)\n');
+      buf.add('Allocation Rate        : ${roundDec(sum.allocRateBytesPerSec / 1024.0, 2)} KB/s (${roundDec(sum.allocRateBytesPerSec / (1024.0 * 1024.0), 2)} MB/s)\n');
+      buf.add('Peak Frame Allocation  : ${Std.int(sum.peakFrameAllocBytes)} bytes (${roundDec(sum.peakFrameAllocBytes / 1024.0, 2)} KB) on Frame #${sum.peakFrameAllocFrame}\n');
+      buf.add('Managed Heap (Current) : Used=${Std.int(sum.currentHeapUsedBytes)} bytes (${roundDec(sum.currentHeapUsedBytes / (1024.0 * 1024.0), 2)} MB) | Reserved=${Std.int(sum.currentHeapReservedBytes)} bytes (${roundDec(sum.currentHeapReservedBytes / (1024.0 * 1024.0), 2)} MB)\n');
+      buf.add('Managed Heap (Peak)    : Used=${Std.int(sum.peakHeapUsedBytes)} bytes (${roundDec(sum.peakHeapUsedBytes / (1024.0 * 1024.0), 2)} MB) | Reserved=${Std.int(sum.peakHeapReservedBytes)} bytes (${roundDec(sum.peakHeapReservedBytes / (1024.0 * 1024.0), 2)} MB)\n');
+    }
+    else
+    {
+      buf.add("Managed Heap Metrics   : N/A (not collected or unavailable on this runtime)\n");
+    }
+    if (sum.rssAvailable)
+    {
+      buf.add('Process RSS Memory     : Current=${Std.int(sum.currentRssBytes)} bytes (${roundDec(sum.currentRssBytes / (1024.0 * 1024.0), 2)} MB) | Peak=${Std.int(sum.peakRssBytes)} bytes (${roundDec(sum.peakRssBytes / (1024.0 * 1024.0), 2)} MB)\n\n');
+    }
+    else
+    {
+      buf.add("Process RSS Memory     : N/A (unavailable or disabled)\n\n");
+    }
+
+    final count = getBufferedFrameCount();
+    final allSamples:Array<FrameSample> = [];
+    for (i in 0...count)
+    {
+      final s = getBufferedFrame(i);
+      if (s != null)
+        allSamples.push(s);
+    }
+
+    final sortedBySlowest = allSamples.copy();
+    sortedBySlowest.sort(function(a:FrameSample, b:FrameSample):Int {
+      if (b.frameTimeMs > a.frameTimeMs)
+        return 1;
+      if (b.frameTimeMs < a.frameTimeMs)
+        return -1;
+      return 0;
+    });
+
+    buf.add("[5] TOP SLOWEST FRAMES (BOTTLENECK ANALYSIS)\n");
+    buf.add("--------------------------------------------------------------------------------\n");
+    if (sortedBySlowest.length == 0)
+    {
+      buf.add("No frames recorded.\n\n");
+    }
+    else
+    {
+      final topCount = sortedBySlowest.length < 10 ? sortedBySlowest.length : 10;
+      for (i in 0...topCount)
+      {
+        final s = sortedBySlowest[i];
+        final rankStr = (i + 1) < 10 ? '0${i + 1}' : '${i + 1}';
+        final cleanState = sanitizeSingleLine(s.stateName, "UnknownState");
+        buf.add('#${rankStr} Frame ${s.frameIndex} @ ${roundDec(s.timestampMs, 2)}ms: Frametime=${roundDec(s.frameTimeMs, 4)}ms (${roundDec(s.fps, 1)} FPS) | Upd=${roundDec(s.updateTimeMs, 4)}ms | Rnd=${roundDec(s.renderTimeMs, 4)}ms | Aud=${roundDec(s.audioTimeMs, 4)}ms | GC=${roundDec(s.gcPauseMs, 4)}ms | Alloc=${Std.int(s.allocBytes)}B | Bottleneck=${dominantSubsystem(s)} | State=${cleanState}\n');
+      }
+      buf.add("\n");
+    }
+
+    buf.add("[6] PER-FRAME TIMELINE (CSV)\n");
+    buf.add("--------------------------------------------------------------------------------\n");
+    buf.add("frame,timestamp_ms,frametime_ms,work_ms,fps,rolling_fps,update_ms,render_ms,audio_ms,gc_pause_ms,other_ms,alloc_bytes,alloc_count,gc_reclaimed_bytes,net_heap_delta_bytes,heap_used_bytes,heap_reserved_bytes,rss_bytes,peak_rss_bytes,gc_count,explicit_gc,implicit_gc,draw_calls,update_steps,state\n");
+
+    for (s in allSamples)
+    {
+      final csvState = escapeCsvField(s.stateName);
+      buf.add('${s.frameIndex},${roundDec(s.timestampMs, 4)},${roundDec(s.frameTimeMs, 4)},${roundDec(s.workTimeMs, 4)},${roundDec(s.fps, 2)},${roundDec(s.rollingFps, 2)},${roundDec(s.updateTimeMs, 4)},${roundDec(s.renderTimeMs, 4)},${roundDec(s.audioTimeMs, 4)},${roundDec(s.gcPauseMs, 4)},${roundDec(s.otherTimeMs, 4)},${Std.int(s.allocBytes)},${s.allocCount},${Std.int(s.gcReclaimedBytes)},${Std.int(s.netHeapDeltaBytes)},${Std.int(s.heapUsedBytes)},${Std.int(s.heapReservedBytes)},${Std.int(s.rssBytes)},${Std.int(s.peakRssBytes)},${s.gcCount},${s.explicitGcCount},${s.implicitGcCount},${s.drawCalls},${s.updateSteps},${csvState}\n');
+    }
+
+    return buf.toString();
+  }
+
+  /**
+   * Exports the current frame profiler session to a `.log` file inside `debug/log/`.
+   * Returns the resolved path on success, or `""` on failure. Never updates
+   * `lastExportedLogPath` when an export fails.
    */
   public static function exportLog(?fileName:String):String
   {
-    if (!_initialized)
-      init(60.0);
+    ensureInitialized();
+    final requested = fileName != null ? fileName : "";
+    final ver = getEngineVersion();
+    final plat = getPlatformLabel();
 
-    final targetPath = resolveLogPath(fileName);
-    final engineVersion = MainMenuState.phoenixEngineVersion;
-    final platformInfo = getPlatformDescription();
-
-    #if sys
-    try
+    final exported = NativeFrameProfiler.exportLog(requested, ver, plat);
+    if (exported != null && exported != "")
     {
-      if (!FileSystem.exists("debug"))
-        FileSystem.createDirectory("debug");
-      if (!FileSystem.exists(LOG_DIR))
-        FileSystem.createDirectory(LOG_DIR);
+      #if sys
+      try
+      {
+        if (FileSystem.exists(exported) && !FileSystem.isDirectory(exported))
+        {
+          lastExportedLogPath = exported;
+          trace('[FrameProfiler] Exported frame profile log to: ${exported}');
+          return exported;
+        }
+      }
+      catch (_:Dynamic) {}
+      #else
+      lastExportedLogPath = exported;
+      return exported;
+      #end
     }
-    catch (_:Dynamic) {}
-    #end
-
-    final writtenPath = NativeFrameProfiler.exportLog(targetPath, engineVersion, platformInfo);
-    if (writtenPath != null && writtenPath.length > 0)
-    {
-      lastExportedLogPath = writtenPath;
-      return writtenPath;
-    }
-
-    #if sys
-    try
-    {
-      File.saveContent(targetPath, formatReport(engineVersion, platformInfo, targetPath));
-      lastExportedLogPath = targetPath;
-      return targetPath;
-    }
-    catch (_:Dynamic) {}
-    #end
 
     return "";
+  }
+
+  /**
+   * Handles automatic log export during application shutdown.
+   * Idempotent: running shutdown callbacks multiple times exports at most once.
+   */
+  public static function handleApplicationExit():String
+  {
+    if (!autoExportOnExit || _exitExportCompleted)
+      return "";
+    _exitExportCompleted = true;
+    return exportLog();
+  }
+
+  private static function getEngineVersion():String
+  {
+    try
+    {
+      if (Application.current != null && Application.current.meta != null)
+      {
+        final v = Application.current.meta.get("version");
+        if (v != null && v != "")
+          return v;
+      }
+    }
+    catch (_:Dynamic) {}
+    return "0.3.2";
+  }
+
+  private static function getPlatformLabel():String
+  {
+    #if windows
+    return "Windows (C++/hxcpp)";
+    #elseif mac
+    return "macOS (C++/hxcpp)";
+    #elseif linux
+    return "Linux (C++/hxcpp)";
+    #elseif android
+    return "Android (C++/hxcpp)";
+    #elseif ios
+    return "iOS (C++/hxcpp)";
+    #elseif hl
+    return "HashLink";
+    #else
+    return "Haxe";
+    #end
   }
 }

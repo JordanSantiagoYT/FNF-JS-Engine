@@ -16,7 +16,7 @@ class FunkinGame extends FlxGame {
 			if (e.keyCode == 122) {
 				FlxG.fullscreen = !FlxG.fullscreen;
 			} else if (e.keyCode == 114) {
-				ClientPrefs.frameProfiler = !ClientPrefs.frameProfiler;
+				FrameProfiler.toggleOverlay();
 				if (Main.fpsVar != null) Main.fpsVar.updateText();
 			} else if (e.keyCode == 117) {
 				FrameProfiler.exportLog();

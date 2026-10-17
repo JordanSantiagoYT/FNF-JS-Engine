@@ -183,8 +183,7 @@ class Main extends Sprite
 
     #if !flash
     Application.current.onExit.add(function(_:Int) {
-      if (FrameProfiler.autoExportOnExit || ClientPrefs.frameProfiler)
-        FrameProfiler.exportLog();
+      FrameProfiler.handleApplicationExit();
     });
     #end
 

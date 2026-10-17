@@ -331,6 +331,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 							FlxG.drawFramerate = framerate;
 							FlxG.updateFramerate = framerate;
 						}
+						debug.FrameProfiler.setTargetFps(framerate);
 					}
 				}
 			}
