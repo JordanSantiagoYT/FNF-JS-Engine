@@ -69,6 +69,19 @@ class MiscSettingsSubState extends BaseOptionsMenu
 		option.displayFormat = '%vs';
 		addOption(option);
 
+		#if (windows && sys) // Only Windows registers at runtime; mobile gets the scheme from the build.
+		var option:Option = new Option('Toggle Deeplink', //Name
+			'If checked, this copy of the game registers the phoenix:// link\n'
+			+ 'scheme, so links like phoenix://menu/misc can open the game.\n'
+			+ 'Unchecking removes that registration again.\n'
+			+ 'Nothing is ever written when the game launches.', //Description
+			'deeplinkEnabled', //Save data variable name
+			'bool', //Variable type
+			false); //Default value
+		option.onChange = backend.deeplink.DeepLinks.applyRegistration;
+		addOption(option);
+		#end
+
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
 
 		super();

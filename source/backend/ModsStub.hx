@@ -8,6 +8,8 @@ class ModsStub
 {
 	static public var currentModDirectory:String = '';
 	public static var ignoreModFolders:Array<String> = [];
+	public static var invalidMods:Array<String> = [];
+	public static function markInvalidMod(?folder:String = null):Void {}
 	inline public static function getGlobalMods():Array<String>
 		return [];
 	inline public static function pushGlobalMods():Array<String>

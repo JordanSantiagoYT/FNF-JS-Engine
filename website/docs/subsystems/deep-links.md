@@ -6,7 +6,7 @@ description: The custom URI scheme — routes, grammar, dispatch rules and per-p
 
 # Deep links — `phoenix://`
 
-Phoenix registers the custom scheme **`phoenix`** on Android, iOS and Windows, so a web
+Phoenix uses the custom scheme **`phoenix`** on Android, iOS and Windows, so a web
 page or another app can open a specific menu:
 
 ```html
@@ -14,9 +14,11 @@ page or another app can open a specific menu:
 <a href="phoenix://mods">Open Phoenix Mods</a>
 ```
 
-The app must be installed (and registered on Windows). This is a *custom scheme*, not an
-Android App Link or iOS Universal Link: there is no domain verification and no web
-fallback, and another installed app could claim the same scheme.
+The app must be installed. On Windows the handler is also **opt-in**: the player
+claims it from **Options → Misc → Toggle Deeplink**, and no launch ever writes the
+registry on its own. This is a *custom scheme*, not an Android App Link or iOS
+Universal Link: there is no domain verification and no web fallback, and another
+installed app could claim the same scheme.
 
 ## Routes
 
@@ -69,14 +71,18 @@ Two modules in `backend/deeplink/`:
 - **`DeepLinks`** — platform subscription, queueing and dispatch.
 
 ```haxe
-DeepLinks.init();          // from Main, before the game exists
-DeepLinks.receive(uri);    // native callback: validates and queues
-DeepLinks.dispatch();      // called from an idle Title/Main Menu
+DeepLinks.init();             // from Main, before the game exists: queues only
+DeepLinks.receive(uri);       // native callback: validates and queues
+DeepLinks.dispatch();         // called from an idle Title/Main Menu
+DeepLinks.applyRegistration(); // the Misc "Toggle Deeplink" checkbox
 ```
 
 ### Dispatch rules
 
 - Native events only **queue** a destination; they never switch Flixel states directly.
+- Startup registers nothing at all. On Windows the handler is claimed only when the player
+  checks Options → Misc → Toggle Deeplink, and that preference is never re-applied,
+  re-checked or undone by a later launch.
 - A cold launch still performs the full startup (permissions/copy, preferences, saves,
   mods, splash, title, first-run flashing warning). Once the title has initialised, the
   link is dispatched automatically — no Enter required.
@@ -122,10 +128,15 @@ xcrun simctl openurl booted 'phoenix://menu/misc'
 
 ### Windows
 
-Registration is **explicit and per-user**, never an automatic registry write at startup.
-Windows builds ship `uri/Register-PhoenixURI.ps1` and `uri/Unregister-PhoenixURI.ps1`
-(source in `setup/uri/`) next to the executable. Launch arguments are scanned in
-`DeepLinks.init()`, and because protocol launches do not inherit a sane working
-directory, the engine resets the CWD to the executable's folder when a link is pending.
+Registration is **explicit, per-user and player-driven**. `DeepLinks.init()` only scans
+the launch arguments; it never touches the registry. **Options → Misc → Toggle Deeplink**
+(the `deeplinkEnabled` preference) does the writing: checking runs
+`uri/Register-PhoenixURI.ps1` against the running executable and rolls the checkbox back
+when another copy owns the scheme, unchecking deletes `HKCU\Software\Classes\phoenix`.
+The choice is remembered, but a later launch neither re-applies, re-verifies nor removes
+anything. Both scripts (source in `setup/uri/`) ship next to the executable, and because
+protocol launches do not inherit a sane working directory, the engine resets the CWD to
+the executable's folder when a link is pending. The whole path is behind
+`#if (windows && sys)`, so browser and mobile builds compile without any of it.
 
 Full specification: [`URI.MD`](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/blob/main/URI.MD).
