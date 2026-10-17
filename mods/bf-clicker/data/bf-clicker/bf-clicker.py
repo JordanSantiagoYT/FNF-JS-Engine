@@ -7,7 +7,8 @@
 
 # ---------------------------------------------------------------- //
 #                     SETTINGS / MODULE STATE                      //
-# State is module-scoped; callbacks declare globals when they update it. //
+# Declared at module top level before any `def` so Hython captures //
+# shared reference boxes across all callbacks without `global`.    //
 # ---------------------------------------------------------------- //
 ROUND_TIME = 45.0
 
@@ -18,6 +19,8 @@ g_clicks = 0
 g_misses = 0
 g_best = 0
 g_baseY = 0.0
+g_baseOffsetX = None
+g_baseOffsetY = None
 g_floatPhase = 0.0
 g_lastShown = -1
 g_roundElapsed = 0.0
@@ -39,9 +42,6 @@ def hideIfExists(target):
 #                              SETUP                              //
 # ---------------------------------------------------------------- //
 def onCreatePost():
-	global g_baseY, g_best, g_previousMusicVolume, g_previousMouseVisible
-	global g_mouseVisibilityCaptured
-
 	# hide the rhythm-game opponents
 	setProperty('dad.visible', False)
 	if getProperty('gf') != None:
@@ -58,6 +58,9 @@ def onCreatePost():
 	hideIfExists('timeBarBG.visible')
 	hideIfExists('timeTxt.visible')
 	hideIfExists('songName.visible')
+	hideIfExists('EngineWatermark.visible')
+	hideIfExists('botplayTxt.visible')
+	hideIfExists('popUpGroup.visible')
 	hideIfExists('comboGroup.visible')
 	hideIfExists('ratingsGroup.visible')
 
@@ -65,8 +68,11 @@ def onCreatePost():
 	scaleObject('boyfriend', 2, 2, True)
 	screenCenter('boyfriend')
 	g_baseY = getProperty('boyfriend.y')
+	g_baseOffsetX = getProperty('boyfriend.offset.x')
+	g_baseOffsetY = getProperty('boyfriend.offset.y')
 
 	# lock the camera onto the screen center
+	setProperty('isCameraOnForcedPos', True)
 	setProperty('camFollow.x', getPropertyFromClass('flixel.FlxG', 'width') / 2)
 	setProperty('camFollow.y', getPropertyFromClass('flixel.FlxG', 'height') / 2)
 	setProperty('camFollowPos.x', getPropertyFromClass('flixel.FlxG', 'width') / 2)
@@ -90,30 +96,35 @@ def onCreatePost():
 	setTextSize('clicksTxt', 42)
 	setTextBorder('clicksTxt', 3, '000000')
 	screenCenter('clicksTxt', 'x')
+	addLuaText('clicksTxt')
 
 	makeLuaText('timeTxt2', 'GET READY!', 600, 0, 70)
 	setTextAlignment('timeTxt2', 'center')
 	setTextSize('timeTxt2', 30)
 	setTextBorder('timeTxt2', 3, '000000')
 	screenCenter('timeTxt2', 'x')
+	addLuaText('timeTxt2')
 
 	makeLuaText('bestTxt', 'BEST: 0', 600, 0, 112)
 	setTextAlignment('bestTxt', 'center')
 	setTextSize('bestTxt', 24)
 	setTextBorder('bestTxt', 3, '000000')
 	screenCenter('bestTxt', 'x')
+	addLuaText('bestTxt')
 
 	makeLuaText('missTxt', 'MISSES: 0', 600, 0, 146)
 	setTextAlignment('missTxt', 'center')
 	setTextSize('missTxt', 22)
 	setTextBorder('missTxt', 3, '000000')
 	screenCenter('missTxt', 'x')
+	addLuaText('missTxt')
 
 	makeLuaText('helpTxt', 'CLICK BF!', 600, 0, 620)
 	setTextAlignment('helpTxt', 'center')
 	setTextSize('helpTxt', 24)
 	setTextBorder('helpTxt', 3, '000000')
 	screenCenter('helpTxt', 'x')
+	addLuaText('helpTxt')
 
 	# load the saved best score
 	if getPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest') != None:
@@ -127,15 +138,17 @@ def onCreatePost():
 #                            SONG START                            //
 # ---------------------------------------------------------------- //
 def onSongStart():
-	global g_started, g_roundElapsed, g_lastShown
 	g_started = True
 	g_roundElapsed = 0.0
 	g_lastShown = 45
 	setTextString('timeTxt2', 'TIME: 45')
+	if g_previousMusicVolume == None:
+		g_previousMusicVolume = getPropertyFromClass('flixel.FlxG', 'sound.music.volume')
+	if g_previousMusicVolume != None:
+		setPropertyFromClass('flixel.FlxG', 'sound.music.volume', 0.5)
 
 
 def onResume():
-	global g_resumeFramePending
 	# The first update after a pause can carry the pause interval in elapsed on
 	# some hosts. Drop just that sample; keep the accumulated round time intact.
 	g_resumeFramePending = True
@@ -149,7 +162,6 @@ def restoreMouseVisibility():
 
 
 def saveBestScore():
-	global g_best
 	if g_clicks > g_best:
 		g_best = g_clicks
 		setPropertyFromClass('flixel.FlxG', 'save.data.bfClickerBest', g_best)
@@ -160,9 +172,6 @@ def saveBestScore():
 #                              FRAME                               //
 # ---------------------------------------------------------------- //
 def onUpdate(elapsed):
-	global g_clicks, g_misses, g_best, g_floatPhase, g_roundElapsed
-	global g_lastShown, g_finished, g_resumeFramePending
-
 	# Check PlayState directly instead of relying on elapsed being frozen by the
 	# host. This also blocks clicks if an update is dispatched during a pause.
 	paused = getPropertyFromClass('play.PlayState', 'instance.paused')
@@ -233,6 +242,11 @@ def onUpdate(elapsed):
 			setTextString('missTxt', 'MISSES: ' + str(g_misses))
 			playSound('cancelMenu', 0.5)
 
+	# Keep BF's 2x hitbox offset aligned with his visual center after animations.
+	if g_baseOffsetX != None and g_baseOffsetY != None:
+		setProperty('boyfriend.offset.x', g_baseOffsetX)
+		setProperty('boyfriend.offset.y', g_baseOffsetY)
+
 	# ease the click-bounce back down to 2x
 	sc = getProperty('boyfriend.scale.x')
 	if sc > 2.0:
@@ -258,8 +272,6 @@ def onUpdate(elapsed):
 #                             CLEANUP                              //
 # ---------------------------------------------------------------- //
 def onDestroy():
-	global g_best
-
 	# keep and flush the best score even if the player leaves mid-round
 	saveBestScore()
 	# Restore input state even if setup failed partway through; the helper is a

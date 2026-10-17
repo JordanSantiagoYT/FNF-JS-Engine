@@ -109,6 +109,22 @@ class PlayStateScripts
 		#if sys
 		Sys.println(text);
 		#end
+		#elseif PYTHON_ALLOWED
+		var newText:DebugLuaText = state.pythonDebugGroup.recycle(DebugLuaText);
+		newText.text = text;
+		newText.color = color;
+		newText.disableTime = 6;
+		newText.alpha = 1;
+		newText.setPosition(10, 8 - newText.height);
+		newText.setFormat(Paths.font("old_windows.ttf"));
+		state.pythonDebugGroup.forEachAlive(function(spr:DebugLuaText) {
+			spr.y += newText.height + 2;
+		});
+		state.pythonDebugGroup.add(newText);
+
+		#if sys
+		Sys.println(text);
+		#end
 		#end
 	}
 
@@ -121,7 +137,7 @@ class PlayStateScripts
 			case 'camgame' | 'game':
 				state.camGame.addShader(effect.shader);
 			default:
-				#if LUA_ALLOWED
+				#if (LUA_ALLOWED || PYTHON_ALLOWED)
 				if(state.modchartSprites.exists(cam)) {
 					Reflect.setProperty(state.modchartSprites.get(cam),"shader",effect.shader);
 				} else if(state.modchartTexts.exists(cam)) {
@@ -165,7 +181,7 @@ class PlayStateScripts
 					trace("Shader wasn't found");
 				}
 			default:
-				#if LUA_ALLOWED
+				#if (LUA_ALLOWED || PYTHON_ALLOWED)
 				if(state.modchartSprites.exists(cam)) {
 					Reflect.setProperty(state.modchartSprites.get(cam),"shader",null);
 				} else if(state.modchartTexts.exists(cam)) {
@@ -193,7 +209,7 @@ class PlayStateScripts
 	}
 
 	public static function getLuaObject(state:PlayState, tag:String, text:Bool=true):FlxSprite {
-		#if LUA_ALLOWED
+		#if (LUA_ALLOWED || PYTHON_ALLOWED)
 		if(state.modchartSprites.exists(tag)) return state.modchartSprites.get(tag);
 		if(text && state.modchartTexts.exists(tag)) return state.modchartTexts.get(tag);
 		if(state.variables.exists(tag)) return state.variables.get(tag);

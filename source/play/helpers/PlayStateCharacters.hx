@@ -65,17 +65,53 @@ class PlayStateCharacters
 		}
 		#end
 
-if(doPush)
+		if(doPush)
+		{
+			var alreadyLoaded:Bool = false;
+			for (script in state.luaArray)
 			{
-				for (script in state.luaArray)
-				{
-					if(script.scriptName == luaFile) return;
+				if(script.scriptName == luaFile) {
+					alreadyLoaded = true;
+					break;
 				}
-				#if LUA_ALLOWED
-				if(doPush) new FunkinLua(luaFile);
-				#end
 			}
-			#end
+			if(!alreadyLoaded) new FunkinLua(luaFile);
+		}
+		#end
+
+		#if PYTHON_ALLOWED
+		var doPushPy:Bool = false;
+		var pyFile:String = 'characters/$name.py';
+		#if MODS_ALLOWED
+		if(FileSystem.exists(Paths.modFolders(pyFile))) {
+			pyFile = Paths.modFolders(pyFile);
+			doPushPy = true;
+		} else {
+			pyFile = Paths.getPreloadPath(pyFile);
+			if(FileSystem.exists(pyFile)) {
+				doPushPy = true;
+			}
+		}
+		#else
+		pyFile = Paths.getPreloadPath(pyFile);
+		if(Assets.exists(pyFile)) {
+			doPushPy = true;
+		}
+		#end
+
+		if(doPushPy)
+		{
+			var alreadyLoadedPy:Bool = false;
+			for (script in state.pythonArray)
+			{
+				if(script.scriptName == pyFile) {
+					alreadyLoadedPy = true;
+					break;
+				}
+			}
+			if(!alreadyLoadedPy) new PythonScript(pyFile);
+		}
+		#end
 	}
 
 	public static function startCharacterPos(state:PlayState, char:Character, ?gfCheck:Bool = false) {

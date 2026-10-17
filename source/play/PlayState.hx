@@ -92,7 +92,7 @@ class PlayState extends MusicBeatState
 	public var dadMap:Map<String, Character> = new Map();
 	public var gfMap:Map<String, Character> = new Map();
 	public var modchartTweens:Map<String, FlxTween> = new Map<String, FlxTween>();
-	#if LUA_ALLOWED
+	#if (LUA_ALLOWED || PYTHON_ALLOWED)
 	public var modchartSprites:Map<String, ModchartSprite> = new Map<String, ModchartSprite>();
 	#else
 	public var modchartSprites:Map<String, Dynamic> = new Map<String, Dynamic>();
@@ -2139,7 +2139,7 @@ class PlayState extends MusicBeatState
 		if (controls.PAUSE && startedCountdown && canPause && !heyStopTrying)
 		{
 			final ret:Dynamic = callOnLuas('onPause', [], false);
-			#if LUA_ALLOWED
+			#if (LUA_ALLOWED || PYTHON_ALLOWED)
 			if(ret != FunkinLua.Function_Stop)
 				openPauseMenu();
 			#else
@@ -2496,7 +2496,7 @@ class PlayState extends MusicBeatState
 		{
 			var ret:Dynamic = callOnLuas('onGameOver', [], false);
 			stagesFunc(function(stage:BaseStage) stage.onGameOver());
-			#if LUA_ALLOWED
+			#if (LUA_ALLOWED || PYTHON_ALLOWED)
 			if(ret != FunkinLua.Function_Stop) {
 				boyfriend.stunned = true;
 				deathCounter++;
@@ -2512,7 +2512,7 @@ class PlayState extends MusicBeatState
 				persistentDraw = false;
 				FlxTimer.globalManager.clear();
 				FlxTween.globalManager.clear();
-				#if LUA_ALLOWED
+				#if (LUA_ALLOWED || PYTHON_ALLOWED)
 				modchartTimers.clear();
 				modchartTweens.clear();
 				#end
@@ -3104,6 +3104,8 @@ class PlayState extends MusicBeatState
 	public function callOnScripts(event:String, args:Array<Dynamic> = null, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
 		#if LUA_ALLOWED
 		var returnVal = FunkinLua.Function_Continue;
+		#elseif PYTHON_ALLOWED
+		var returnVal = PythonScript.Function_Continue;
 		#else
 		var returnVal:Dynamic = null;
 		#end
