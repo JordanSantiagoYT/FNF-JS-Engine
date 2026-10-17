@@ -200,6 +200,7 @@ public class PhoenixDisplay extends Extension
 		}
 		catch (Exception e)
 		{
+			Log.e(LOG_TAG, "Unable to serialize physical cutout insets", e);
 			return "0,0,0,0";
 		}
 	}

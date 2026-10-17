@@ -44,11 +44,20 @@ public final class PhoenixCutoutTest
 		PhoenixDisplay.setCutoutMode("never");
 		padding(newContent,0,0,55,0);
 		padding(oldContent,0,0,0,0);
-		second.setContentView(new android.view.View());
+		android.widget.FrameLayout otherOwner = new android.widget.FrameLayout(new Context());
+		otherOwner.setPadding(1,2,3,4);
+		second.setContentView(otherOwner);
 		PhoenixCutoutLayout replacement = (PhoenixCutoutLayout) second.content;
 		check(replacement != newContent);
 		replacement.onApplyWindowInsets(new WindowInsets(new DisplayCutout(0,25,0,0)));
 		padding(replacement,0,25,0,0); // Active-view replacement reapplies selection.
+		check(otherOwner.getPaddingLeft()==1 && otherOwner.getPaddingTop()==2
+			&& otherOwner.getPaddingRight()==3 && otherOwner.getPaddingBottom()==4);
+		otherOwner.setPadding(6,7,8,9); // Later changes by another owner survive.
+		PhoenixDisplay.setCutoutMode("always");
+		PhoenixDisplay.setCutoutMode("never");
+		check(otherOwner.getPaddingLeft()==6 && otherOwner.getPaddingTop()==7
+			&& otherOwner.getPaddingRight()==8 && otherOwner.getPaddingBottom()==9);
 		for (int sdk : new int[]{21,27,28,29,30,34}) {
 			Build.VERSION.SDK_INT = sdk;
 			ActivityHarness legacy = new ActivityHarness();
