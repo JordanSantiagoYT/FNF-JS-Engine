@@ -147,6 +147,15 @@ class TestEngineCode(unittest.TestCase):
                 self.assertEqual(len(params), documented_params(hooks, hook),
                                  f"{template}:{hook}")
 
+    def test_wowza_badge_unlocks_with_ten_enabled_mods(self):
+        achievements = read("source/backend/Achievements.hx")
+        main_menu = read("source/states/MainMenuState.hx")
+        self.assertIn("createAchievement('wowza'", achievements)
+        self.assertIn('name: "Wowza!!"', achievements)
+        self.assertTrue((ROOT / "assets/preload/images/achievements/wowza.png").is_file())
+        self.assertRegex(main_menu, r"Mods\.parseList\(\)\.enabled\.length\s*>=\s*10")
+        self.assertIn("Achievements.unlock('wowza')", main_menu)
+
     def test_link_options_round_trip(self):  # #45
         option = read("source/options/Option.hx")
         self.assertIn("case 'link': newValue = 'link';", option)
