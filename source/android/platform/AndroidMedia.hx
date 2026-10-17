@@ -29,9 +29,9 @@ import lime.system.JNI;
 #end
 
 /**
- * Android media integration: MediaSession (system media controls, lock
- * screen, Bluetooth, Android Auto), MediaStyle notifications, audio focus
- * and native audio output information.
+ * Android media integration: Jetpack Media3 MediaSession / MediaSessionService
+ * (system media controls, lock screen, Bluetooth and Android Auto), MediaStyle
+ * notifications, audio focus and native audio output information.
  *
  * Media actions from the system fire the signals below; the engine (see
  * PlayState) maps them back onto gameplay/audio.
@@ -90,8 +90,12 @@ class AndroidMedia
 	// ------------------------------------------------------------------
 
 	/**
-	 * Publishes the currently playing song to the Android media system.
-	 * `artworkPath` may be null. No-op outside of Android.
+	 * Publishes the currently playing song to Android's Media3 session.
+	 *
+	 * `artworkPath` may be null, an Android asset path, a local file path or a
+	 * content/file URI. The native bridge embeds small local artwork in the
+	 * metadata so system clients can render it without private-file access.
+	 * No-op outside of Android.
 	 */
 	public static function updateNowPlaying(title:String, artist:String, durationMs:Float = -1, ?album:String, ?artworkPath:String):Void
 	{
@@ -111,7 +115,11 @@ class AndroidMedia
 		#end
 	}
 
-	/** Shows/updates the MediaStyle notification. */
+	/**
+	 * Compatibility helper for older callers. Media3 derives its notification
+	 * from `updateNowPlaying` and `setPlaybackState`; it requests its service
+	 * only if the native bridge already mirrors ready playback.
+	 */
 	public static function updateNotification(title:String, artist:String, playing:Bool):Void
 	{
 		#if android
@@ -120,9 +128,11 @@ class AndroidMedia
 	}
 
 	/**
-	 * Starts the foreground media service so playback can continue while the
-	 * app is backgrounded. Requires the FOREGROUND_SERVICE_MEDIA_PLAYBACK
-	 * permission (declared by the engine's manifest template).
+	 * Compatibility request for the Media3 MediaSessionService. It is ignored
+	 * until the native bridge already mirrors ready playback; Media3 owns the
+	 * foreground MediaStyle notification thereafter. Requires
+	 * FOREGROUND_SERVICE_MEDIA_PLAYBACK (declared by the engine's manifest
+	 * template). The Haxe audio player remains the audio owner.
 	 */
 	public static function startForegroundService(title:String, artist:String, playing:Bool = true):Void
 	{

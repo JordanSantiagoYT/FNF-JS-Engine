@@ -31,7 +31,7 @@ import flixel.util.FlxTimer;
  * Call `AndroidPlatform.init()` once at startup (Main.hx does this) and the
  * whole native layer becomes available through the dedicated modules:
  *
- *   - AndroidMedia         media session, MediaStyle notification, audio focus
+ *   - AndroidMedia         Media3 session/service, MediaStyle notification, audio focus
  *   - AndroidDisplay       resolution/DPI/orientation/refresh rate/cutouts,
  *                          immersive fullscreen
  *   - AndroidSystem        memory pressure, battery, wake lock,
