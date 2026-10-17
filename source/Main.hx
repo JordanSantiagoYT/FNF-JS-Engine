@@ -182,9 +182,7 @@ class Main extends Sprite
     #end
 
     #if !flash
-    Application.current.onExit.add(function(_:Int) {
-      FrameProfiler.handleApplicationExit();
-    });
+    FrameProfiler.registerExitHook();
     #end
 
     // shader coords fix

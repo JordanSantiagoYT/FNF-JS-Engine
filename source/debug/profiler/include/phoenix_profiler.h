@@ -5,9 +5,10 @@
  * Phoenix Engine - Native C/C++ Frame Profiler
  *
  * Header-only C99 / C++11+ library providing high-resolution monotonic timing,
- * arbitrary nested phase accounting (update, render, audio, GC), managed heap
- * delta tracking, configurable low-overhead process RSS sampling, ring-buffer
- * percentile statistics, and structured .log file export into debug/log/.
+ * arbitrary nested phase accounting (update, render, audio, GC) with both
+ * exclusive and inclusive durations, managed heap delta tracking, configurable
+ * low-overhead process RSS sampling, ring-buffer percentile statistics, and
+ * atomic .log file export into debug/log/.
  *
  * ============================================================================
  * METRIC DEFINITIONS, UNITS, WINDOWS, AND LIMITATIONS
@@ -26,14 +27,18 @@
  *    - Monotonic duration between `beginFrame` and `endFrame` (`endMs - startMs`),
  *      excluding inter-frame sleep / vsync wait prior to `beginFrame`.
  *
- * 3. Subsystem Exclusive Timings (`updateTimeMs`, `renderTimeMs`, `audioTimeMs`,
- *    and `gcPauseMs`, milliseconds):
- *    - Exclusive time spent in each phase within the frame.
- *    - Tracked via an explicit LIFO phase activation stack (`phaseStack`).
- *      Whenever any child phase completes inside an enclosing parent phase
- *      (e.g., Audio inside Update, Render inside Update during FFmpeg capture,
- *      or explicit GC inside Audio inside Update), the child's raw inclusive
- *      duration is subtracted from the immediate parent's exclusive time.
+ * 3. Subsystem Exclusive & Inclusive Timings (milliseconds):
+ *    - Exclusive durations: `updateTimeMs`, `renderTimeMs`, `audioTimeMs`,
+ *      `gcPauseMs`. Tracked via an explicit LIFO phase activation stack
+ *      (`phaseStack`). Whenever any child phase completes inside an enclosing
+ *      parent phase (e.g., Audio inside Update, Render inside Update during
+ *      FFmpeg capture, or explicit GC inside Audio inside Update), the child's
+ *      raw inclusive duration is subtracted from the immediate parent's
+ *      exclusive time so nested durations are never double-counted.
+ *    - Inclusive durations: `updateInclusiveMs`, `renderInclusiveMs`,
+ *      `audioInclusiveMs`, `gcInclusiveMs`. Total wall-clock time spent inside
+ *      the outermost activation(s) of each phase, including any nested child
+ *      phases that ran within it.
  *    - Re-entrant calls to the same phase (`phaseDepth[phase] > 1`) are coalesced
  *      into the outermost activation of that phase.
  *    - `otherTimeMs = max(0, workTimeMs - (updateTimeMs + renderTimeMs +
@@ -43,8 +48,9 @@
  *    `avgFps`, `onePercentLowFps`, `pointOnePercentLowFps`, `slowest1PctAvgFps`,
  *    `slowest01PctAvgFps`, frames per second):
  *    - `fps`: Instantaneous frame rate `1000.0 / frameTimeMs` for a single frame.
- *    - `rollingFps`: Harmonic mean FPS (`windowFrames * 1000.0 / windowMs`) over
- *      the trailing ~1000 ms sliding window of completed frames in the ring buffer.
+ *    - `rollingFps`: Harmonic mean FPS (`rollingWindowCount * 1000.0 /
+ *      rollingWindowMs`) over the trailing ~1000 ms sliding window of completed
+ *      frames, maintained in O(1) amortized time.
  *    - `avgFps`: Session-wide harmonic mean FPS (`totalFrames * 1000.0 /
  *      sessionDurationMs`) across all recorded frames since init/reset.
  *    - Percentiles (`p50FrameTimeMs`, `p95FrameTimeMs`, `p99FrameTimeMs`,
@@ -67,13 +73,10 @@
  *    - `explicitGcCount` / `gcCount`: Count of directly measured GC pause events.
  *    - `implicitGcCount`: Count of observed negative heap-delta intervals outside
  *      an explicit `beginGC`/`endGC` scope (or `recordGCPause(..., isExplicit=0)`).
- *      Because managed runtimes do not always expose internal collection hooks,
- *      `implicitGcCount` is documented as an observed heap-contraction indicator
- *      rather than an exact count of internal GC cycles.
+ *      Documented as an observed heap-contraction indicator rather than an exact
+ *      count of internal GC cycles.
  *    - `allocBytes`: Sum of observed positive heap-usage deltas across phase
  *      boundaries within the frame, plus any explicit `recordAllocation` bytes.
- *      Note: Heap deltas represent net interval growth (a lower-bound estimate of
- *      gross bytes allocated when collection also occurs within the same interval).
  *    - `gcReclaimedBytes`: Sum of observed negative heap-usage deltas (`-delta`)
  *      across phase boundaries within the frame, plus any explicit reclaimed bytes.
  *    - `netHeapDeltaBytes`: `frameEndHeapBytes - frameStartHeapBytes`. For heap
@@ -82,20 +85,20 @@
  *
  * 6. Process Memory (RSS) & CPU Utilization (`rssBytes`, `peakRssBytes`,
  *    `cpuTimeMs`, `cpuUtilizationPct`, `cpuNormalizedPct`):
- *    - To avoid per-frame OS/procfs syscall overhead on the hot path, process
- *      RSS and peak RSS are sampled in a single pass once every
+ *    - Process RSS and peak RSS are sampled in a single pass once every
  *      `rssSampleIntervalFrames` frames (default: 60 frames, ~1s at 60 FPS)
  *      and on summary/export. `sample.rssSampled` is 1 when freshly sampled on
  *      that frame and 0 when carried forward from the previous sample.
+ *    - Note: Platform RSS semantics differ slightly by OS (`WorkingSetSize` on
+ *      Windows, `mach_task_basic_info.resident_size` on macOS/iOS, and
+ *      `/proc/self/statm` resident pages + `getrusage.ru_maxrss` on Linux/Android).
  *    - `cpuTimeMs`: Process user + kernel CPU time consumed during the session.
- *    - `cpuUtilizationPct`: `(cpuTimeMs / sessionDurationMs) * 100.0`. Because
- *      process CPU time sums across all threads, this value is single-core
- *      equivalent and can exceed 100% (up to `100% * logicalCpuCount`) when
- *      worker/audio/render threads execute in parallel.
- *    - `cpuNormalizedPct`: `cpuUtilizationPct / logicalCpuCount` (0-100% of total
+ *    - `cpuUtilizationPct`: `(cpuTimeMs / sessionDurationMs) * 100.0` (single-core
+ *      equivalent; can reach `100% * logicalCpuCount` across threads).
+ *    - `cpuNormalizedPct`: `cpuUtilizationPct / logicalCpuCount` (`0-100%` of host
  *      logical CPU capacity).
  *    - `cpuTimeAvailable`, `rssAvailable`, `heapStatsAvailable`: Explicit flags
- *      (1 = available, 0 = unavailable on current platform/mode).
+ *      (`1` = available, `0` = unavailable on current platform/mode).
  */
 
 #include <stddef.h>
@@ -164,6 +167,10 @@ extern "C" {
   #define PHOENIX_PROFILER_DEFAULT_RSS_SAMPLE_INTERVAL 60
 #endif
 
+#ifndef PHOENIX_PROFILER_OVERLAY_SORT_INTERVAL
+  #define PHOENIX_PROFILER_OVERLAY_SORT_INTERVAL 15
+#endif
+
 typedef enum PhoenixProfilerPhase
 {
   PHOENIX_PHASE_UPDATE = 0,
@@ -193,6 +200,10 @@ typedef struct PhoenixFrameSample
   double audioTimeMs;
   double gcPauseMs;
   double otherTimeMs;
+  double updateInclusiveMs;
+  double renderInclusiveMs;
+  double audioInclusiveMs;
+  double gcInclusiveMs;
   int64_t allocBytes;
   uint32_t allocCount;
   int64_t gcReclaimedBytes;
@@ -298,6 +309,7 @@ typedef struct PhoenixProfilerState
   int initialized;
   int enabled;
   int inFlightFrame;
+  int exportInProgress;
   int collectMemoryMetrics;
   uint32_t rssSampleIntervalFrames;
 
@@ -315,6 +327,10 @@ typedef struct PhoenixProfilerState
   double currentRollingFps;
   double rollingWindowMs;
   size_t rollingWindowCount;
+
+  uint64_t cachedOverlayFrame;
+  double cachedOverlayP95Ms;
+  double cachedOverlayP99Ms;
 
   PhoenixPhaseStackEntry phaseStack[PHOENIX_PROFILER_MAX_PHASE_STACK];
   int phaseStackSize;
@@ -407,6 +423,15 @@ static inline int64_t phoenixProfilerSafeAddI64(int64_t a, int64_t b)
   if (b < 0 && a < INT64_MIN - b)
     return INT64_MIN;
   return a + b;
+}
+
+static inline int64_t phoenixProfilerSafeSubI64(int64_t a, int64_t b)
+{
+  if (b < 0 && a > INT64_MAX + b)
+    return INT64_MAX;
+  if (b > 0 && a < INT64_MIN + b)
+    return INT64_MIN;
+  return a - b;
 }
 
 /*
@@ -873,7 +898,7 @@ static inline void phoenixProfilerObserveHeap(
     return;
   }
 
-  delta = phoenixProfilerSafeAddI64(heapUsedBytes, -state->lastObservedHeapBytes);
+  delta = phoenixProfilerSafeSubI64(heapUsedBytes, state->lastObservedHeapBytes);
   state->lastObservedHeapBytes = heapUsedBytes;
 
   if (!state->inFlightFrame)
@@ -886,7 +911,7 @@ static inline void phoenixProfilerObserveHeap(
   }
   else if (delta < 0)
   {
-    int64_t reclaimed = -delta;
+    int64_t reclaimed = phoenixProfilerSafeSubI64(0, delta);
     state->activeSample.gcReclaimedBytes = phoenixProfilerSafeAddI64(state->activeSample.gcReclaimedBytes, reclaimed);
     if (!isExplicitGcEnd && state->phaseDepth[PHOENIX_PHASE_GC] <= 0)
     {
@@ -944,6 +969,35 @@ static inline void phoenixProfilerInit(PhoenixProfilerState *state, double targe
   state->targetFps = (phoenixProfilerIsFinite(targetFps) && targetFps > 0.0) ? targetFps : 60.0;
   phoenixProfilerCopyString(state->currentStateName, sizeof(state->currentStateName), "InitialState");
   phoenixProfilerReset(state);
+}
+
+/*
+ * Idempotent initialization helper: initializes `state` only if it has not
+ * already been initialized; otherwise updates `targetFps` without clearing
+ * collected samples or resetting counters.
+ */
+static inline void phoenixProfilerEnsureInit(PhoenixProfilerState *state, double targetFps)
+{
+  if (state == NULL)
+    return;
+  if (!state->initialized)
+  {
+    phoenixProfilerInit(state, targetFps);
+  }
+  else if (phoenixProfilerIsFinite(targetFps) && targetFps > 0.0)
+  {
+    state->targetFps = targetFps;
+  }
+}
+
+static inline int phoenixProfilerIsInitialized(const PhoenixProfilerState *state)
+{
+  return (state != NULL && state->initialized) ? 1 : 0;
+}
+
+static inline int phoenixProfilerIsExportInProgress(const PhoenixProfilerState *state)
+{
+  return (state != NULL && state->initialized && state->exportInProgress) ? 1 : 0;
 }
 
 static inline void phoenixProfilerSetEnabled(PhoenixProfilerState *state, int enabled)
@@ -1123,12 +1177,18 @@ static inline void phoenixProfilerBeginFrame(
   int64_t heapUsedBytes,
   int64_t heapReservedBytes)
 {
+  if (state == NULL || !state->initialized || !state->enabled)
+  {
+    if (state != NULL && !state->initialized)
+      phoenixProfilerBeginFrameAt(state, phoenixProfilerNowMs(), heapUsedBytes, heapReservedBytes);
+    return;
+  }
   phoenixProfilerBeginFrameAt(state, phoenixProfilerNowMs(), heapUsedBytes, heapReservedBytes);
 }
 
 static inline void phoenixProfilerBeginPhaseAt(
   PhoenixProfilerState *state,
-  PhoenixProfilerPhase phase,
+  int phase,
   double nowMs,
   int64_t heapUsedBytes)
 {
@@ -1153,7 +1213,7 @@ static inline void phoenixProfilerBeginPhaseAt(
     if (state->phaseStackSize < PHOENIX_PROFILER_MAX_PHASE_STACK)
     {
       PhoenixPhaseStackEntry *entry = &state->phaseStack[state->phaseStackSize++];
-      entry->phase = (int)phase;
+      entry->phase = phase;
       entry->startMs = nowMs;
       entry->childDurationMs = 0.0;
     }
@@ -1168,17 +1228,21 @@ static inline void phoenixProfilerBeginPhaseAt(
 
 static inline void phoenixProfilerBeginPhase(
   PhoenixProfilerState *state,
-  PhoenixProfilerPhase phase,
+  int phase,
   int64_t heapUsedBytes)
 {
+  if (state == NULL || phase < 0 || phase >= PHOENIX_PHASE_COUNT)
+    return;
+  if (state->initialized && !state->enabled)
+    return;
   phoenixProfilerBeginPhaseAt(state, phase, phoenixProfilerNowMs(), heapUsedBytes);
 }
 
 /*
  * Pops and closes the top entry on `state->phaseStack` at `nowMs`, accumulating
- * its exclusive duration (`rawElapsedMs - childDurationMs`) into the phase's
- * counter and crediting `rawElapsedMs` to the enclosing parent phase on the
- * stack (if any).
+ * its exclusive duration (`rawElapsedMs - childDurationMs`) and inclusive
+ * duration (`rawElapsedMs`) into the phase's counters and crediting
+ * `rawElapsedMs` to the enclosing parent phase on the stack (if any).
  */
 static inline double phoenixProfilerPopTopPhaseAt(
   PhoenixProfilerState *state,
@@ -1211,18 +1275,22 @@ static inline double phoenixProfilerPopTopPhaseAt(
   if (phase == PHOENIX_PHASE_UPDATE)
   {
     state->activeSample.updateTimeMs += exclusiveElapsedMs;
+    state->activeSample.updateInclusiveMs += rawElapsedMs;
   }
   else if (phase == PHOENIX_PHASE_RENDER)
   {
     state->activeSample.renderTimeMs += exclusiveElapsedMs;
+    state->activeSample.renderInclusiveMs += rawElapsedMs;
   }
   else if (phase == PHOENIX_PHASE_AUDIO)
   {
     state->activeSample.audioTimeMs += exclusiveElapsedMs;
+    state->activeSample.audioInclusiveMs += rawElapsedMs;
   }
   else if (phase == PHOENIX_PHASE_GC)
   {
     state->activeSample.gcPauseMs += exclusiveElapsedMs;
+    state->activeSample.gcInclusiveMs += rawElapsedMs;
     state->activeSample.explicitGcCount += 1;
     state->activeSample.gcCount += 1;
   }
@@ -1237,7 +1305,7 @@ static inline double phoenixProfilerPopTopPhaseAt(
 
 static inline double phoenixProfilerEndPhaseAt(
   PhoenixProfilerState *state,
-  PhoenixProfilerPhase phase,
+  int phase,
   double nowMs,
   int64_t heapUsedBytes)
 {
@@ -1263,7 +1331,7 @@ static inline double phoenixProfilerEndPhaseAt(
   /* Locate `phase` on the active phase stack (normally at top: phaseStackSize - 1) */
   for (i = state->phaseStackSize - 1; i >= 0; --i)
   {
-    if (state->phaseStack[i].phase == (int)phase)
+    if (state->phaseStack[i].phase == phase)
     {
       targetStackIdx = i;
       break;
@@ -1291,9 +1359,11 @@ static inline double phoenixProfilerEndPhaseAt(
 
 static inline double phoenixProfilerEndPhase(
   PhoenixProfilerState *state,
-  PhoenixProfilerPhase phase,
+  int phase,
   int64_t heapUsedBytes)
 {
+  if (state == NULL || !state->initialized || !state->enabled || !state->inFlightFrame)
+    return 0.0;
   return phoenixProfilerEndPhaseAt(state, phase, phoenixProfilerNowMs(), heapUsedBytes);
 }
 
@@ -1339,7 +1409,7 @@ static inline double phoenixProfilerEndGC(PhoenixProfilerState *state, int64_t h
 
 static inline void phoenixProfilerRecordPhaseMs(
   PhoenixProfilerState *state,
-  PhoenixProfilerPhase phase,
+  int phase,
   double durationMs)
 {
   double cleanMs = phoenixProfilerSanitizeDuration(durationMs);
@@ -1349,19 +1419,23 @@ static inline void phoenixProfilerRecordPhaseMs(
   if (phase == PHOENIX_PHASE_UPDATE)
   {
     state->activeSample.updateTimeMs += cleanMs;
+    state->activeSample.updateInclusiveMs += cleanMs;
     state->activeSample.updateSteps += 1;
   }
   else if (phase == PHOENIX_PHASE_RENDER)
   {
     state->activeSample.renderTimeMs += cleanMs;
+    state->activeSample.renderInclusiveMs += cleanMs;
   }
   else if (phase == PHOENIX_PHASE_AUDIO)
   {
     state->activeSample.audioTimeMs += cleanMs;
+    state->activeSample.audioInclusiveMs += cleanMs;
   }
   else if (phase == PHOENIX_PHASE_GC)
   {
     state->activeSample.gcPauseMs += cleanMs;
+    state->activeSample.gcInclusiveMs += cleanMs;
     state->activeSample.gcCount += 1;
     state->activeSample.explicitGcCount += 1;
   }
@@ -1371,7 +1445,7 @@ static inline void phoenixProfilerRecordPhaseMs(
   }
 
   /* If recorded while inside an enclosing parent phase, credit childDurationMs */
-  if (state->phaseStackSize > 0 && state->phaseStack[state->phaseStackSize - 1].phase != (int)phase)
+  if (state->phaseStackSize > 0 && state->phaseStack[state->phaseStackSize - 1].phase != phase)
   {
     state->phaseStack[state->phaseStackSize - 1].childDurationMs += cleanMs;
   }
@@ -1402,6 +1476,7 @@ static inline void phoenixProfilerRecordGCPause(
   if (cleanPauseMs > 0.0)
   {
     state->activeSample.gcPauseMs += cleanPauseMs;
+    state->activeSample.gcInclusiveMs += cleanPauseMs;
     if (state->phaseStackSize > 0 && state->phaseStack[state->phaseStackSize - 1].phase != PHOENIX_PHASE_GC)
     {
       state->phaseStack[state->phaseStackSize - 1].childDurationMs += cleanPauseMs;
@@ -1528,7 +1603,7 @@ static inline const PhoenixFrameSample *phoenixProfilerEndFrameAt(
 
   sample->heapUsedBytes = state->currentHeapUsedBytes;
   sample->heapReservedBytes = state->currentHeapReservedBytes;
-  sample->netHeapDeltaBytes = phoenixProfilerSafeAddI64(state->currentHeapUsedBytes, -state->frameStartHeapBytes);
+  sample->netHeapDeltaBytes = phoenixProfilerSafeSubI64(state->currentHeapUsedBytes, state->frameStartHeapBytes);
   sample->rssBytes = state->lastSampledRssBytes;
   sample->peakRssBytes = state->lastSampledPeakRssBytes;
   sample->drawCalls = drawCalls;
@@ -1654,6 +1729,8 @@ static inline const PhoenixFrameSample *phoenixProfilerEndFrame(
   int64_t heapReservedBytes,
   uint32_t drawCalls)
 {
+  if (state == NULL || !state->initialized || !state->enabled)
+    return NULL;
   return phoenixProfilerEndFrameAt(state, phoenixProfilerNowMs(), 0.0, heapUsedBytes, heapReservedBytes, drawCalls);
 }
 
@@ -1689,13 +1766,10 @@ static inline int phoenixProfilerGetBufferedFrame(
  * ============================================================================ */
 
 static inline void phoenixProfilerComputeSummary(
-  const PhoenixProfilerState *state,
+  PhoenixProfilerState *state,
   PhoenixProfilerSummary *outSummary)
 {
-  double frameTimes[PHOENIX_PROFILER_RING_CAPACITY];
-  double updateTimes[PHOENIX_PROFILER_RING_CAPACITY];
-  double renderTimes[PHOENIX_PROFILER_RING_CAPACITY];
-  double audioTimes[PHOENIX_PROFILER_RING_CAPACITY];
+  double scratch[PHOENIX_PROFILER_RING_CAPACITY];
   size_t count;
   size_t i;
   PhoenixFrameSample lastSample;
@@ -1728,9 +1802,16 @@ static inline void phoenixProfilerComputeSummary(
     if (curRss == 0 && pkRss == 0)
     {
       if (phoenixProfilerSampleProcessMemory(&curRss, &pkRss))
+      {
+        state->rssAvailable = 1;
+        state->lastSampledRssBytes = curRss;
+        state->lastSampledPeakRssBytes = pkRss;
         outSummary->rssAvailable = 1;
+      }
       else
+      {
         outSummary->rssAvailable = 0;
+      }
     }
     else
     {
@@ -1825,24 +1906,20 @@ static inline void phoenixProfilerComputeSummary(
     }
   }
 
+  /* Reuse a single 16 KB scratch buffer across all 4 percentile sorts */
   count = state->ringCount;
   for (i = 0; i < count; ++i)
-  {
-    frameTimes[i] = state->samples[i].frameTimeMs;
-    updateTimes[i] = state->samples[i].updateTimeMs;
-    renderTimes[i] = state->samples[i].renderTimeMs;
-    audioTimes[i] = state->samples[i].audioTimeMs;
-  }
+    scratch[i] = state->samples[i].frameTimeMs;
+  phoenixProfilerSortDoubles(scratch, count);
 
-  phoenixProfilerSortDoubles(frameTimes, count);
-  phoenixProfilerSortDoubles(updateTimes, count);
-  phoenixProfilerSortDoubles(renderTimes, count);
-  phoenixProfilerSortDoubles(audioTimes, count);
+  outSummary->p50FrameTimeMs = phoenixProfilerPercentileFromSorted(scratch, count, 0.50);
+  outSummary->p95FrameTimeMs = phoenixProfilerPercentileFromSorted(scratch, count, 0.95);
+  outSummary->p99FrameTimeMs = phoenixProfilerPercentileFromSorted(scratch, count, 0.99);
+  outSummary->p999FrameTimeMs = phoenixProfilerPercentileFromSorted(scratch, count, 0.999);
 
-  outSummary->p50FrameTimeMs = phoenixProfilerPercentileFromSorted(frameTimes, count, 0.50);
-  outSummary->p95FrameTimeMs = phoenixProfilerPercentileFromSorted(frameTimes, count, 0.95);
-  outSummary->p99FrameTimeMs = phoenixProfilerPercentileFromSorted(frameTimes, count, 0.99);
-  outSummary->p999FrameTimeMs = phoenixProfilerPercentileFromSorted(frameTimes, count, 0.999);
+  state->cachedOverlayFrame = state->totalFrames;
+  state->cachedOverlayP95Ms = outSummary->p95FrameTimeMs;
+  state->cachedOverlayP99Ms = outSummary->p99FrameTimeMs;
 
   outSummary->onePercentLowFps = outSummary->p99FrameTimeMs > 0.0
     ? (1000.0 / outSummary->p99FrameTimeMs)
@@ -1850,30 +1927,40 @@ static inline void phoenixProfilerComputeSummary(
   outSummary->pointOnePercentLowFps = outSummary->p999FrameTimeMs > 0.0
     ? (1000.0 / outSummary->p999FrameTimeMs)
     : 0.0;
-  outSummary->slowest1PctAvgFps = phoenixProfilerSlowestTailMeanFps(frameTimes, count, 0.01);
-  outSummary->slowest01PctAvgFps = phoenixProfilerSlowestTailMeanFps(frameTimes, count, 0.001);
+  outSummary->slowest1PctAvgFps = phoenixProfilerSlowestTailMeanFps(scratch, count, 0.01);
+  outSummary->slowest01PctAvgFps = phoenixProfilerSlowestTailMeanFps(scratch, count, 0.001);
 
-  outSummary->p95UpdateTimeMs = phoenixProfilerPercentileFromSorted(updateTimes, count, 0.95);
-  outSummary->p95RenderTimeMs = phoenixProfilerPercentileFromSorted(renderTimes, count, 0.95);
-  outSummary->p95AudioTimeMs = phoenixProfilerPercentileFromSorted(audioTimes, count, 0.95);
+  for (i = 0; i < count; ++i)
+    scratch[i] = state->samples[i].updateTimeMs;
+  phoenixProfilerSortDoubles(scratch, count);
+  outSummary->p95UpdateTimeMs = phoenixProfilerPercentileFromSorted(scratch, count, 0.95);
+
+  for (i = 0; i < count; ++i)
+    scratch[i] = state->samples[i].renderTimeMs;
+  phoenixProfilerSortDoubles(scratch, count);
+  outSummary->p95RenderTimeMs = phoenixProfilerPercentileFromSorted(scratch, count, 0.95);
+
+  for (i = 0; i < count; ++i)
+    scratch[i] = state->samples[i].audioTimeMs;
+  phoenixProfilerSortDoubles(scratch, count);
+  outSummary->p95AudioTimeMs = phoenixProfilerPercentileFromSorted(scratch, count, 0.95);
 }
 
 /*
- * Formats a compact 3-line HUD overlay directly from `state` without sorting
- * subsystem arrays or allocating Haxe anonymous structures.
+ * Formats a compact 3-line HUD overlay directly from `state` without allocating
+ * Haxe anonymous structures, caching P95/P99 percentile sorts across
+ * `PHOENIX_PROFILER_OVERLAY_SORT_INTERVAL` frames.
  */
 static inline int phoenixProfilerFormatOverlay(
-  const PhoenixProfilerState *state,
+  PhoenixProfilerState *state,
   char *outBuffer,
   size_t outCapacity)
 {
   PhoenixFrameSample lastSample;
-  double frameTimes[PHOENIX_PROFILER_RING_CAPACITY];
   double p95Ft = 0.0;
   double p99Ft = 0.0;
   double low1PctFps = 0.0;
   double allocKb = 0.0;
-  size_t i;
   int written;
 
   if (outBuffer == NULL || outCapacity == 0)
@@ -1885,11 +1972,22 @@ static inline int phoenixProfilerFormatOverlay(
   if (!phoenixProfilerGetLastFrame(state, &lastSample))
     return 0;
 
-  for (i = 0; i < state->ringCount; ++i)
-    frameTimes[i] = state->samples[i].frameTimeMs;
-  phoenixProfilerSortDoubles(frameTimes, state->ringCount);
-  p95Ft = phoenixProfilerPercentileFromSorted(frameTimes, state->ringCount, 0.95);
-  p99Ft = phoenixProfilerPercentileFromSorted(frameTimes, state->ringCount, 0.99);
+  if (state->cachedOverlayFrame == 0
+      || state->totalFrames < state->cachedOverlayFrame
+      || (state->totalFrames - state->cachedOverlayFrame) >= (uint64_t)PHOENIX_PROFILER_OVERLAY_SORT_INTERVAL)
+  {
+    double frameTimes[PHOENIX_PROFILER_RING_CAPACITY];
+    size_t i;
+    for (i = 0; i < state->ringCount; ++i)
+      frameTimes[i] = state->samples[i].frameTimeMs;
+    phoenixProfilerSortDoubles(frameTimes, state->ringCount);
+    state->cachedOverlayP95Ms = phoenixProfilerPercentileFromSorted(frameTimes, state->ringCount, 0.95);
+    state->cachedOverlayP99Ms = phoenixProfilerPercentileFromSorted(frameTimes, state->ringCount, 0.99);
+    state->cachedOverlayFrame = state->totalFrames;
+  }
+
+  p95Ft = state->cachedOverlayP95Ms;
+  p99Ft = state->cachedOverlayP99Ms;
   low1PctFps = p99Ft > 0.0 ? (1000.0 / p99Ft) : 0.0;
   allocKb = (double)lastSample.allocBytes / 1024.0;
 
@@ -1915,7 +2013,7 @@ static inline int phoenixProfilerFormatOverlay(
 }
 
 /* ============================================================================
- * Directory Creation, Strict Path Normalization & .log File Export
+ * Directory Creation, Strict Path Normalization & Atomic .log File Export
  * ============================================================================ */
 
 static inline int phoenixProfilerMakeDirSingle(const char *path)
@@ -2064,6 +2162,20 @@ static inline int phoenixProfilerResolveLogPath(
   return 1;
 }
 
+static inline int phoenixProfilerFinalizeTempFile(const char *tempPath, const char *finalPath)
+{
+  if (tempPath == NULL || finalPath == NULL)
+    return 0;
+#if defined(_WIN32) || defined(_WIN64)
+  if (MoveFileExA(tempPath, finalPath, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+    return 1;
+  (void)remove(finalPath);
+  return rename(tempPath, finalPath) == 0 ? 1 : 0;
+#else
+  return rename(tempPath, finalPath) == 0 ? 1 : 0;
+#endif
+}
+
 static inline const char *phoenixProfilerDominantSubsystem(const PhoenixFrameSample *sample)
 {
   double maxVal;
@@ -2093,6 +2205,15 @@ static inline const char *phoenixProfilerDominantSubsystem(const PhoenixFrameSam
   return label;
 }
 
+/*
+ * Exports a complete 6-section .log report to `debug/log/<basename>.log`.
+ * - Non-destructive to any active in-flight frame (`samples` and `totalFrames`
+ *   contain only completed frames).
+ * - Guarded by `state->exportInProgress` against re-entrant export calls.
+ * - Writes to `<resolvedPath>.tmp`, verifies `ferror`/`fflush`/`fclose`, and
+ *   atomically renames to `<resolvedPath>` so failed or partial writes never
+ *   corrupt an existing log file or leave a partial `.log` file behind.
+ */
 static inline int phoenixProfilerExportLog(
   PhoenixProfilerState *state,
   const char *requestedPath,
@@ -2102,6 +2223,7 @@ static inline int phoenixProfilerExportLog(
   size_t outResolvedCapacity)
 {
   char resolvedPath[PHOENIX_PROFILER_PATH_MAX];
+  char tempPath[PHOENIX_PROFILER_PATH_MAX + 16];
   char safeEngineVer[64];
   char safePlatform[64];
   char safeStateName[PHOENIX_PROFILER_STATE_NAME_MAX];
@@ -2118,12 +2240,8 @@ static inline int phoenixProfilerExportLog(
   if (outResolvedPath != NULL && outResolvedCapacity > 0)
     outResolvedPath[0] = '\0';
 
-  if (state == NULL || !state->initialized)
+  if (state == NULL || !state->initialized || state->exportInProgress)
     return 0;
-
-  /* If a frame was left mid-flight when export was triggered (e.g. during exit), abort it cleanly */
-  if (state->inFlightFrame)
-    phoenixProfilerAbortInFlightFrame(state);
 
   if (!phoenixProfilerResolveLogPath(requestedPath, resolvedPath, sizeof(resolvedPath)))
     return 0;
@@ -2131,9 +2249,15 @@ static inline int phoenixProfilerExportLog(
   if (!phoenixProfilerEnsureParentDirs(resolvedPath))
     return 0;
 
-  fp = fopen(resolvedPath, "wb");
+  snprintf(tempPath, sizeof(tempPath), "%s.tmp", resolvedPath);
+
+  state->exportInProgress = 1;
+  fp = fopen(tempPath, "wb");
   if (fp == NULL)
+  {
+    state->exportInProgress = 0;
     return 0;
+  }
 
   phoenixProfilerComputeSummary(state, &summary);
 
@@ -2386,21 +2510,32 @@ static inline int phoenixProfilerExportLog(
   if (ferror(fp) != 0)
   {
     fclose(fp);
-    (void)remove(resolvedPath);
+    (void)remove(tempPath);
+    state->exportInProgress = 0;
     return 0;
   }
   if (fflush(fp) != 0)
   {
     fclose(fp);
-    (void)remove(resolvedPath);
+    (void)remove(tempPath);
+    state->exportInProgress = 0;
     return 0;
   }
   if (fclose(fp) != 0)
   {
-    (void)remove(resolvedPath);
+    (void)remove(tempPath);
+    state->exportInProgress = 0;
     return 0;
   }
 
+  if (!phoenixProfilerFinalizeTempFile(tempPath, resolvedPath))
+  {
+    (void)remove(tempPath);
+    state->exportInProgress = 0;
+    return 0;
+  }
+
+  state->exportInProgress = 0;
   if (outResolvedPath != NULL && outResolvedCapacity > 0)
   {
     snprintf(outResolvedPath, outResolvedCapacity, "%s", resolvedPath);

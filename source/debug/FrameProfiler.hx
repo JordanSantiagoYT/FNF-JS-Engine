@@ -24,11 +24,13 @@ import sys.io.File;
  * Per-frame sample snapshot captured by the Phoenix Engine frame profiler.
  *
  * Units & Semantics:
- * - All durations (`timestampMs`, `frameTimeMs`, `workTimeMs`, `updateTimeMs`,
- *   `renderTimeMs`, `audioTimeMs`, `gcPauseMs`, `otherTimeMs`) are in milliseconds.
- * - Subsystem durations (`updateTimeMs`, `renderTimeMs`, `audioTimeMs`, `gcPauseMs`)
- *   are exclusive: nested child phase durations are subtracted from their enclosing
- *   parent phase via an explicit LIFO phase stack.
+ * - All durations are in milliseconds.
+ * - Exclusive durations (`updateTimeMs`, `renderTimeMs`, `audioTimeMs`, `gcPauseMs`):
+ *   Nested child phase durations are subtracted from their enclosing parent phase
+ *   via an explicit LIFO phase stack (`phaseStack`).
+ * - Inclusive durations (`updateInclusiveMs`, `renderInclusiveMs`,
+ *   `audioInclusiveMs`, `gcInclusiveMs`): Total time spent inside the outermost
+ *   activation(s) of each phase, including nested child phases.
  * - `gcPauseMs` and `gcCount`/`explicitGcCount` reflect directly measured GC pauses.
  * - `implicitGcCount` counts observed negative heap-delta intervals outside explicit
  *   GC scopes (heuristic indicator of uninstrumented collection, not an exact cycle count).
@@ -48,6 +50,10 @@ typedef FrameSample =
   var audioTimeMs:Float;
   var gcPauseMs:Float;
   var otherTimeMs:Float;
+  var updateInclusiveMs:Float;
+  var renderInclusiveMs:Float;
+  var audioInclusiveMs:Float;
+  var gcInclusiveMs:Float;
   var allocBytes:Float;
   var allocCount:Int;
   var gcReclaimedBytes:Float;
@@ -164,21 +170,38 @@ typedef FrameProfileSummary =
 /**
  * Full-engine Haxe + C/C++ Frame Profiler for FNF-Phoenix-Engine.
  *
- * Separates three distinct lifecycle states:
- * 1. Overlay Visibility (`ClientPrefs.frameProfiler` / `FrameProfiler.overlayVisible`):
- *    Controls whether the compact HUD profiler lines are shown in `FPSCounter`.
- *    Toggling overlay visibility (F3) never resets or corrupts recorded data.
- * 2. Metric Recording (`FrameProfiler.enabled`):
- *    Controls whether frame/subsystem/GC/heap samples are actively recorded.
- *    Disabling recording cleanly aborts any in-flight frame/phase and resets
- *    inter-frame baselines without losing previously recorded frames.
- * 3. Automatic Exit Export (`FrameProfiler.autoExportOnExit`):
- *    Controls whether a `.log` report is automatically written to `debug/log/`
- *    when the application exits (idempotent across repeated shutdown callbacks).
+ * Manages five independent lifecycle states:
+ * 1. Initialization (`FrameProfiler.initialized`):
+ *    Set by `FrameProfiler.init()`. Repeated calls to `init(targetFps)` without
+ *    `forceReset = true` update `targetFps` idempotently without clearing
+ *    collected history or registering duplicate shutdown hooks.
+ * 2. Metric Recording (`FrameProfiler.enabled`, `startRecording()`, `stopRecording()`):
+ *    Enabled by default on `init()` so background ring-buffer history is ready
+ *    when the user opens the overlay (`F3`) or exports a report (`F6`).
+ *    Calling `stopRecording()` (`enabled = false`) stops all sampling and resets
+ *    inter-frame baselines; `startRecording()` (`enabled = true`) resumes
+ *    recording while preserving previously recorded session totals.
+ * 3. Overlay Visibility (`FrameProfiler.overlayVisible` / `ClientPrefs.frameProfiler`):
+ *    Hidden by default (`false`). Toggling the HUD overlay (`F3`, `showOverlay()`,
+ *    `hideOverlay()`, `toggleOverlay()`) never stops recording, never resets
+ *    recorded samples, and never re-initializes the profiler.
+ * 4. Automatic Exit Export (`FrameProfiler.autoExportOnExit`):
+ *    Disabled by default (`false`), enabled via `--profile` / `-profile` /
+ *    `--frame-profiler` CLI flags, `-DPROFILE_FRAMES`, or setting
+ *    `FrameProfiler.autoExportOnExit = true`. Completely independent of
+ *    `overlayVisible`.
+ * 5. Export In Progress (`FrameProfiler.exportInProgress`):
+ *    True while a `.log` report is actively being written and finalized,
+ *    preventing re-entrant export calls.
  */
 class FrameProfiler
 {
   public static inline var LOG_DIR:String = "debug/log";
+
+  /**
+   * Whether `FrameProfiler.init()` has been called.
+   */
+  public static var initialized(default, null):Bool = false;
 
   /**
    * Whether metric recording is currently active.
@@ -189,6 +212,11 @@ class FrameProfiler
    * Whether the live HUD profiler overlay is visible (`ClientPrefs.frameProfiler`).
    */
   public static var overlayVisible(get, set):Bool;
+
+  /**
+   * Whether a `.log` export is currently in progress.
+   */
+  public static var exportInProgress(get, never):Bool;
 
   /**
    * Process RSS sampling interval in frames (`0` = on-demand only, `1` = every frame,
@@ -213,21 +241,33 @@ class FrameProfiler
    */
   public static var lastExportedLogPath(default, null):String = "";
 
-  private static var _initialized:Bool = false;
   private static var _recordingEnabled:Bool = false;
   private static var _collectMemory:Bool = true;
+  private static var _exitHookRegistered:Bool = false;
   private static var _exitExportCompleted:Bool = false;
   private static var _currentStateName:String = "InitialState";
   private static var _lastStateInstance:Dynamic = null;
 
-  public static function init(targetFps:Float = 60.0):Void
+  /**
+   * Initializes the frame profiler.
+   * If already initialized and `forceReset` is `false`, updates `targetFps`
+   * idempotently without wiping recorded frames or registering duplicate hooks.
+   */
+  public static function init(targetFps:Float = 60.0, forceReset:Bool = false):Void
   {
-    NativeFrameProfiler.init(targetFps);
-    _initialized = true;
-    _recordingEnabled = true;
-    _collectMemory = NativeFrameProfiler.getCollectMemoryMetrics();
-    _exitExportCompleted = false;
-    _lastStateInstance = null;
+    if (!initialized || forceReset)
+    {
+      NativeFrameProfiler.init(targetFps);
+      initialized = true;
+      _recordingEnabled = true;
+      _collectMemory = NativeFrameProfiler.getCollectMemoryMetrics();
+      _exitExportCompleted = false;
+      _lastStateInstance = null;
+    }
+    else
+    {
+      NativeFrameProfiler.ensureInit(targetFps);
+    }
 
     #if sys
     try
@@ -249,15 +289,40 @@ class FrameProfiler
     #end
   }
 
+  /**
+   * Registers the application exit callback at most once across the process lifetime.
+   */
+  public static function registerExitHook():Void
+  {
+    if (_exitHookRegistered)
+      return;
+    #if !flash
+    try
+    {
+      if (Application.current != null && Application.current.onExit != null)
+      {
+        _exitHookRegistered = true;
+        Application.current.onExit.add(function(_:Int) {
+          handleApplicationExit();
+        });
+      }
+    }
+    catch (_:Dynamic) {}
+    #end
+  }
+
   public static inline function ensureInitialized():Void
   {
-    if (!_initialized)
+    if (!initialized)
     {
       var fps:Float = (FlxG.drawFramerate > 0) ? FlxG.drawFramerate : 60.0;
-      init(fps);
+      init(fps, false);
     }
   }
 
+  /**
+   * Clears all recorded frame samples and resets cumulative session statistics.
+   */
   public static function reset():Void
   {
     ensureInitialized();
@@ -266,10 +331,25 @@ class FrameProfiler
     _lastStateInstance = null;
   }
 
+  /**
+   * Explicitly enables frame/phase metric recording.
+   */
+  public static function startRecording():Void
+  {
+    enabled = true;
+  }
+
+  /**
+   * Explicitly disables frame/phase metric recording without clearing history.
+   */
+  public static function stopRecording():Void
+  {
+    enabled = false;
+  }
+
   private static function get_enabled():Bool
   {
-    ensureInitialized();
-    return _recordingEnabled;
+    return initialized && _recordingEnabled;
   }
 
   private static function set_enabled(value:Bool):Bool
@@ -287,20 +367,34 @@ class FrameProfiler
 
   private static function set_overlayVisible(value:Bool):Bool
   {
-    ensureInitialized();
     ClientPrefs.frameProfiler = value;
-    /* Ensure recording is active when user turns on the live overlay, without resetting data */
-    if (value && !_recordingEnabled)
-    {
-      _recordingEnabled = true;
-      NativeFrameProfiler.setEnabled(true);
-    }
     return value;
+  }
+
+  private static function get_exportInProgress():Bool
+  {
+    return initialized && NativeFrameProfiler.isExportInProgress();
+  }
+
+  /**
+   * Shows the live profiler HUD overlay without resetting or altering recording state.
+   */
+  public static function showOverlay():Void
+  {
+    overlayVisible = true;
+  }
+
+  /**
+   * Hides the live profiler HUD overlay without stopping recording or resetting history.
+   */
+  public static function hideOverlay():Void
+  {
+    overlayVisible = false;
   }
 
   /**
    * Toggles the on-screen profiler overlay (`F3`) without resetting or corrupting
-   * recorded frame samples.
+   * recorded frame samples or re-initializing the profiler.
    */
   public static function toggleOverlay():Bool
   {
@@ -393,8 +487,7 @@ class FrameProfiler
    */
   public static inline function beginFrame():Void
   {
-    ensureInitialized();
-    if (!_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
 
     if (FlxG.state != null && FlxG.state != _lastStateInstance)
@@ -413,7 +506,7 @@ class FrameProfiler
    */
   public static inline function endFrame(drawCalls:Int = 0, frameTimeMs:Float = 0.0):Void
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
 
     NativeFrameProfiler.endFrame(
@@ -428,7 +521,7 @@ class FrameProfiler
    */
   public static inline function beginUpdate():Void
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
     NativeFrameProfiler.beginUpdate(queryHeapUsedBytes());
   }
@@ -438,7 +531,7 @@ class FrameProfiler
    */
   public static inline function endUpdate():Float
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return 0.0;
     return NativeFrameProfiler.endUpdate(queryHeapUsedBytes());
   }
@@ -448,7 +541,7 @@ class FrameProfiler
    */
   public static inline function beginRender():Void
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
     NativeFrameProfiler.beginRender(queryHeapUsedBytes());
   }
@@ -458,7 +551,7 @@ class FrameProfiler
    */
   public static inline function endRender():Float
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return 0.0;
     return NativeFrameProfiler.endRender(queryHeapUsedBytes());
   }
@@ -468,7 +561,7 @@ class FrameProfiler
    */
   public static inline function beginAudio():Void
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
     NativeFrameProfiler.beginAudio(queryHeapUsedBytes());
   }
@@ -478,7 +571,7 @@ class FrameProfiler
    */
   public static inline function endAudio():Float
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return 0.0;
     return NativeFrameProfiler.endAudio(queryHeapUsedBytes());
   }
@@ -490,7 +583,7 @@ class FrameProfiler
   public static inline function beginGC(major:Bool = true):Void
   {
     #if (cpp || hl || neko)
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
     NativeFrameProfiler.beginGC(queryHeapUsedBytes());
     #end
@@ -502,7 +595,7 @@ class FrameProfiler
   public static inline function endGC():Float
   {
     #if (cpp || hl || neko)
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return 0.0;
     return NativeFrameProfiler.endGC(queryHeapUsedBytes());
     #else
@@ -515,7 +608,7 @@ class FrameProfiler
    */
   public static inline function recordPhaseMs(phase:Int, durationMs:Float):Void
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
     NativeFrameProfiler.recordPhaseMs(phase, durationMs);
   }
@@ -525,7 +618,7 @@ class FrameProfiler
    */
   public static inline function recordAllocation(bytes:Float, count:Int = 1):Void
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
     NativeFrameProfiler.recordAllocation(bytes, count);
   }
@@ -535,7 +628,7 @@ class FrameProfiler
    */
   public static inline function recordGCPause(pauseMs:Float, reclaimedBytes:Float = 0.0, isExplicit:Bool = true):Void
   {
-    if (!_initialized || !_recordingEnabled)
+    if (!initialized || !_recordingEnabled)
       return;
     NativeFrameProfiler.recordGCPause(pauseMs, reclaimedBytes, isExplicit);
   }
@@ -584,6 +677,10 @@ class FrameProfiler
       audioTimeMs: NativeFrameProfiler.lastSampleAudioTimeMs(),
       gcPauseMs: NativeFrameProfiler.lastSampleGcPauseMs(),
       otherTimeMs: NativeFrameProfiler.lastSampleOtherTimeMs(),
+      updateInclusiveMs: NativeFrameProfiler.lastSampleUpdateInclusiveMs(),
+      renderInclusiveMs: NativeFrameProfiler.lastSampleRenderInclusiveMs(),
+      audioInclusiveMs: NativeFrameProfiler.lastSampleAudioInclusiveMs(),
+      gcInclusiveMs: NativeFrameProfiler.lastSampleGcInclusiveMs(),
       allocBytes: NativeFrameProfiler.lastSampleAllocBytes(),
       allocCount: NativeFrameProfiler.lastSampleAllocCount(),
       gcReclaimedBytes: NativeFrameProfiler.lastSampleGcReclaimedBytes(),
@@ -694,7 +791,8 @@ class FrameProfiler
    */
   public static function getOverlayText():String
   {
-    ensureInitialized();
+    if (!initialized)
+      return "";
     return NativeFrameProfiler.formatOverlay();
   }
 
@@ -929,6 +1027,8 @@ class FrameProfiler
   public static function exportLog(?fileName:String):String
   {
     ensureInitialized();
+    if (exportInProgress)
+      return "";
     final requested = fileName != null ? fileName : "";
     final ver = getEngineVersion();
     final plat = getPlatformLabel();
@@ -958,13 +1058,15 @@ class FrameProfiler
 
   /**
    * Handles automatic log export during application shutdown.
-   * Idempotent: running shutdown callbacks multiple times exports at most once.
+   * Safe when initialization was incomplete or recording was never started,
+   * and idempotent across repeated shutdown callbacks.
    */
   public static function handleApplicationExit():String
   {
-    if (!autoExportOnExit || _exitExportCompleted)
+    if (!initialized || !autoExportOnExit || _exitExportCompleted)
       return "";
     _exitExportCompleted = true;
+    NativeFrameProfiler.abortInFlightFrame();
     return exportLog();
   }
 

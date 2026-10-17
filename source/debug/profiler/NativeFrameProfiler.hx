@@ -1,6 +1,5 @@
 package debug.profiler;
 
-import haxe.Int64;
 #if !cpp
 import Date;
 import debug.mem.GetTotalMemory;
@@ -25,8 +24,7 @@ import sys.io.File;
  * configurable RSS sampling, and RFC 4180 CSV report formatting.
  */
 #if cpp
-@:buildXml('<include name="${haxelib:funkin}/source/debug/profiler/build.xml" />')
-@:include("phoenix_profiler.h")
+@:buildXml('<include name="../../../../source/debug/profiler/build.xml" />')
 @:cppFileCode('
 #include "phoenix_profiler.h"
 
@@ -58,6 +56,32 @@ class NativeFrameProfiler
     phoenixProfilerInit(&gPhoenixProfiler, (double)targetFps);
   ')
   public static function init(targetFps:Float = 60.0):Void {}
+
+  @:functionCode('
+    phoenixProfilerEnsureInit(&gPhoenixProfiler, (double)targetFps);
+  ')
+  public static function ensureInit(targetFps:Float = 60.0):Void {}
+
+  @:functionCode('
+    return phoenixProfilerIsInitialized(&gPhoenixProfiler) != 0;
+  ')
+  public static function isInitialized():Bool
+  {
+    return false;
+  }
+
+  @:functionCode('
+    return phoenixProfilerIsExportInProgress(&gPhoenixProfiler) != 0;
+  ')
+  public static function isExportInProgress():Bool
+  {
+    return false;
+  }
+
+  @:functionCode('
+    phoenixProfilerAbortInFlightFrame(phoenixGetProfiler());
+  ')
+  public static function abortInFlightFrame():Void {}
 
   @:functionCode('
     phoenixProfilerReset(phoenixGetProfiler());
@@ -109,8 +133,8 @@ class NativeFrameProfiler
   public static function setTargetFps(targetFps:Float):Void {}
 
   @:functionCode('
-    const char *cstr = stateName.c_str();
-    phoenixProfilerSetStateName(phoenixGetProfiler(), cstr);
+    const char *raw = stateName.utf8_str();
+    phoenixProfilerSetStateName(phoenixGetProfiler(), raw != NULL ? raw : "UnknownState");
   ')
   public static function setStateName(stateName:String):Void {}
 
@@ -195,7 +219,7 @@ class NativeFrameProfiler
   }
 
   @:functionCode('
-    phoenixProfilerRecordPhaseMs(phoenixGetProfiler(), (PhoenixProfilerPhase)phase, (double)durationMs);
+    phoenixProfilerRecordPhaseMs(phoenixGetProfiler(), phase, (double)durationMs);
   ')
   public static function recordPhaseMs(phase:Int, durationMs:Float):Void {}
 
@@ -319,6 +343,38 @@ class NativeFrameProfiler
     return gPhoenixLastSample.otherTimeMs;
   ')
   public static function lastSampleOtherTimeMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.updateInclusiveMs;
+  ')
+  public static function lastSampleUpdateInclusiveMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.renderInclusiveMs;
+  ')
+  public static function lastSampleRenderInclusiveMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.audioInclusiveMs;
+  ')
+  public static function lastSampleAudioInclusiveMs():Float
+  {
+    return 0.0;
+  }
+
+  @:functionCode('
+    return gPhoenixLastSample.gcInclusiveMs;
+  ')
+  public static function lastSampleGcInclusiveMs():Float
   {
     return 0.0;
   }
@@ -1012,9 +1068,9 @@ class NativeFrameProfiler
 
   @:functionCode('
     char resolved[PHOENIX_PROFILER_PATH_MAX];
-    const char *req = requestedPath.c_str();
-    const char *ver = engineVersion.c_str();
-    const char *plat = platformName.c_str();
+    const char *req = requestedPath.utf8_str();
+    const char *ver = engineVersion.utf8_str();
+    const char *plat = platformName.utf8_str();
     if (phoenixProfilerExportLog(phoenixGetProfiler(), req, ver, plat, resolved, sizeof(resolved)))
       return ::String(resolved);
     return ::String("");
@@ -1031,6 +1087,7 @@ class NativeFrameProfiler
   private static var _initialized:Bool = false;
   private static var _enabled:Bool = true;
   private static var _inFlight:Bool = false;
+  private static var _exportInProgress:Bool = false;
   private static var _collectMemory:Bool = true;
   private static var _rssSampleInterval:Int = DEFAULT_RSS_SAMPLE_INTERVAL;
   private static var _targetFps:Float = 60.0;
@@ -1041,6 +1098,10 @@ class NativeFrameProfiler
   private static var _rollingWindowMs:Float = 0.0;
   private static var _rollingWindowCount:Int = 0;
   private static var _currentStateName:String = "InitialState";
+
+  private static var _cachedOverlayFrame:Int = 0;
+  private static var _cachedOverlayP95:Float = 0.0;
+  private static var _cachedOverlayP99:Float = 0.0;
 
   private static var _phaseStack:Array<{phase:Int, startMs:Float, childDurationMs:Float}> = [];
   private static var _phaseDepth:Array<Int> = [0, 0, 0, 0];
@@ -1165,7 +1226,7 @@ class NativeFrameProfiler
       var c = StringTools.fastCodeAt(s, i);
       if (c == "\"".code)
       {
-        buf.add("\"\"" );
+        buf.add("\"\"");
       }
       else if (c < 32 || c == 127)
       {
@@ -1195,17 +1256,50 @@ class NativeFrameProfiler
     reset();
   }
 
+  public static function ensureInit(targetFps:Float = 60.0):Void
+  {
+    if (!_initialized)
+      init(targetFps);
+    else if (isFiniteFloat(targetFps) && targetFps > 0.0)
+      _targetFps = targetFps;
+  }
+
+  public static function isInitialized():Bool
+  {
+    return _initialized;
+  }
+
+  public static function isExportInProgress():Bool
+  {
+    return _exportInProgress;
+  }
+
+  public static function abortInFlightFrame():Void
+  {
+    if (!_inFlight)
+      return;
+    _inFlight = false;
+    _phaseStack = [];
+    _phaseDepth = [0, 0, 0, 0];
+    if (_hasObservedHeap)
+      _lastObservedHeap = _frameStartHeap;
+  }
+
   public static function reset():Void
   {
     if (!_initialized)
       _initialized = true;
     _inFlight = false;
+    _exportInProgress = false;
     _sessionStartMs = nowMs();
     _currentFrameStartMs = 0.0;
     _lastFrameEndMs = 0.0;
     _currentRollingFps = 0.0;
     _rollingWindowMs = 0.0;
     _rollingWindowCount = 0;
+    _cachedOverlayFrame = 0;
+    _cachedOverlayP95 = 0.0;
+    _cachedOverlayP99 = 0.0;
     _phaseStack = [];
     _phaseDepth = [0, 0, 0, 0];
     _hasObservedHeap = false;
@@ -1368,13 +1462,7 @@ class NativeFrameProfiler
     if (!_enabled)
       return;
     if (_inFlight)
-    {
-      _inFlight = false;
-      _phaseStack = [];
-      _phaseDepth = [0, 0, 0, 0];
-      if (_hasObservedHeap)
-        _lastObservedHeap = _frameStartHeap;
-    }
+      abortInFlightFrame();
     var now = nowMs();
     _inFlight = true;
     _currentFrameStartMs = now;
@@ -1392,6 +1480,10 @@ class NativeFrameProfiler
       audioTimeMs: 0.0,
       gcPauseMs: 0.0,
       otherTimeMs: 0.0,
+      updateInclusiveMs: 0.0,
+      renderInclusiveMs: 0.0,
+      audioInclusiveMs: 0.0,
+      gcInclusiveMs: 0.0,
       allocBytes: 0.0,
       allocCount: 0,
       gcReclaimedBytes: 0.0,
@@ -1475,14 +1567,24 @@ class NativeFrameProfiler
       observeHeap(heapUsedBytes, phase == PHASE_GC);
 
     if (phase == PHASE_UPDATE)
+    {
       _activeSample.updateTimeMs += exclusive;
+      _activeSample.updateInclusiveMs += raw;
+    }
     else if (phase == PHASE_RENDER)
+    {
       _activeSample.renderTimeMs += exclusive;
+      _activeSample.renderInclusiveMs += raw;
+    }
     else if (phase == PHASE_AUDIO)
+    {
       _activeSample.audioTimeMs += exclusive;
+      _activeSample.audioInclusiveMs += raw;
+    }
     else if (phase == PHASE_GC)
     {
       _activeSample.gcPauseMs += exclusive;
+      _activeSample.gcInclusiveMs += raw;
       _activeSample.explicitGcCount += 1;
       _activeSample.gcCount += 1;
     }
@@ -1578,15 +1680,23 @@ class NativeFrameProfiler
     if (phase == PHASE_UPDATE)
     {
       _activeSample.updateTimeMs += cleanMs;
+      _activeSample.updateInclusiveMs += cleanMs;
       _activeSample.updateSteps += 1;
     }
     else if (phase == PHASE_RENDER)
+    {
       _activeSample.renderTimeMs += cleanMs;
+      _activeSample.renderInclusiveMs += cleanMs;
+    }
     else if (phase == PHASE_AUDIO)
+    {
       _activeSample.audioTimeMs += cleanMs;
+      _activeSample.audioInclusiveMs += cleanMs;
+    }
     else if (phase == PHASE_GC)
     {
       _activeSample.gcPauseMs += cleanMs;
+      _activeSample.gcInclusiveMs += cleanMs;
       _activeSample.gcCount += 1;
       _activeSample.explicitGcCount += 1;
     }
@@ -1614,6 +1724,7 @@ class NativeFrameProfiler
     if (cleanPauseMs > 0.0)
     {
       _activeSample.gcPauseMs += cleanPauseMs;
+      _activeSample.gcInclusiveMs += cleanPauseMs;
       if (_phaseStack.length > 0 && _phaseStack[_phaseStack.length - 1].phase != PHASE_GC)
         _phaseStack[_phaseStack.length - 1].childDurationMs += cleanPauseMs;
     }
@@ -1842,6 +1953,10 @@ class NativeFrameProfiler
   public static function lastSampleAudioTimeMs():Float return _loadedSample != null ? _loadedSample.audioTimeMs : 0.0;
   public static function lastSampleGcPauseMs():Float return _loadedSample != null ? _loadedSample.gcPauseMs : 0.0;
   public static function lastSampleOtherTimeMs():Float return _loadedSample != null ? _loadedSample.otherTimeMs : 0.0;
+  public static function lastSampleUpdateInclusiveMs():Float return _loadedSample != null ? _loadedSample.updateInclusiveMs : 0.0;
+  public static function lastSampleRenderInclusiveMs():Float return _loadedSample != null ? _loadedSample.renderInclusiveMs : 0.0;
+  public static function lastSampleAudioInclusiveMs():Float return _loadedSample != null ? _loadedSample.audioInclusiveMs : 0.0;
+  public static function lastSampleGcInclusiveMs():Float return _loadedSample != null ? _loadedSample.gcInclusiveMs : 0.0;
   public static function lastSampleAllocBytes():Float return _loadedSample != null ? _loadedSample.allocBytes : 0.0;
   public static function lastSampleAllocCount():Int return _loadedSample != null ? _loadedSample.allocCount : 0;
   public static function lastSampleGcReclaimedBytes():Float return _loadedSample != null ? _loadedSample.gcReclaimedBytes : 0.0;
@@ -1939,6 +2054,9 @@ class NativeFrameProfiler
     _summaryP95 = percentile(ft, 0.95);
     _summaryP99 = percentile(ft, 0.99);
     _summaryP999 = percentile(ft, 0.999);
+    _cachedOverlayFrame = _totalFrames;
+    _cachedOverlayP95 = _summaryP95;
+    _cachedOverlayP99 = _summaryP99;
     _summarySlowest1PctFps = slowestTailMeanFps(ft, 0.01);
     _summarySlowest01PctFps = slowestTailMeanFps(ft, 0.001);
     _summaryP95Update = percentile(ut, 0.95);
@@ -2034,12 +2152,20 @@ class NativeFrameProfiler
   {
     if (_ringCount == 0 || !loadLastFrame())
       return "";
-    var ft:Array<Float> = [];
-    for (i in 0..._ringCount)
-      ft.push(_samples[i].frameTimeMs);
-    ft.sort(Reflect.compare);
-    var p95 = percentile(ft, 0.95);
-    var p99 = percentile(ft, 0.99);
+    if (_cachedOverlayFrame == 0
+        || _totalFrames < _cachedOverlayFrame
+        || (_totalFrames - _cachedOverlayFrame) >= 15)
+    {
+      var ft:Array<Float> = [];
+      for (i in 0..._ringCount)
+        ft.push(_samples[i].frameTimeMs);
+      ft.sort(Reflect.compare);
+      _cachedOverlayP95 = percentile(ft, 0.95);
+      _cachedOverlayP99 = percentile(ft, 0.99);
+      _cachedOverlayFrame = _totalFrames;
+    }
+    var p95 = _cachedOverlayP95;
+    var p99 = _cachedOverlayP99;
     var low1 = p99 > 0.0 ? (1000.0 / p99) : 0.0;
     var allocKb = _loadedSample.allocBytes / 1024.0;
     return 'Frame: ${roundStr(_loadedSample.frameTimeMs, 2)}ms (P95 ${roundStr(p95, 2)} / P99 ${roundStr(p99, 2)}ms) | 1% Low: ${roundStr(low1, 1)} FPS\n'
@@ -2098,15 +2224,11 @@ class NativeFrameProfiler
     platformName:String = "Haxe"):String
   {
     #if sys
-    if (_inFlight)
-    {
-      _inFlight = false;
-      _phaseStack = [];
-      _phaseDepth = [0, 0, 0, 0];
-      if (_hasObservedHeap)
-        _lastObservedHeap = _frameStartHeap;
-    }
+    if (!_initialized || _exportInProgress)
+      return "";
+    _exportInProgress = true;
     var resolved = resolveLogPath(requestedPath);
+    var tempPath = '${resolved}.tmp';
     try
     {
       if (!FileSystem.exists("debug"))
@@ -2114,11 +2236,27 @@ class NativeFrameProfiler
       if (!FileSystem.exists("debug/log"))
         FileSystem.createDirectory("debug/log");
       var report = debug.FrameProfiler.formatReport(engineVersion, platformName);
-      File.saveContent(resolved, report);
-      if (FileSystem.exists(resolved) && !FileSystem.isDirectory(resolved))
-        return resolved;
+      File.saveContent(tempPath, report);
+      if (FileSystem.exists(tempPath) && !FileSystem.isDirectory(tempPath))
+      {
+        if (FileSystem.exists(resolved))
+          FileSystem.deleteFile(resolved);
+        FileSystem.rename(tempPath, resolved);
+        _exportInProgress = false;
+        if (FileSystem.exists(resolved) && !FileSystem.isDirectory(resolved))
+          return resolved;
+      }
     }
-    catch (_:Dynamic) {}
+    catch (_:Dynamic)
+    {
+      try
+      {
+        if (FileSystem.exists(tempPath))
+          FileSystem.deleteFile(tempPath);
+      }
+      catch (_:Dynamic) {}
+    }
+    _exportInProgress = false;
     return "";
     #else
     return "";
@@ -2141,6 +2279,10 @@ private typedef FallbackSample =
   var audioTimeMs:Float;
   var gcPauseMs:Float;
   var otherTimeMs:Float;
+  var updateInclusiveMs:Float;
+  var renderInclusiveMs:Float;
+  var audioInclusiveMs:Float;
+  var gcInclusiveMs:Float;
   var allocBytes:Float;
   var allocCount:Int;
   var gcReclaimedBytes:Float;

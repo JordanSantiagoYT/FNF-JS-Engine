@@ -1,4 +1,4 @@
-"""Behavioral, statistical, security, and overhead benchmark tests for the Haxe + C/C++ frame profiler."""
+"""Behavioral, statistical, security, sanitizer, and overhead benchmark tests for the Haxe + C/C++ frame profiler."""
 from __future__ import annotations
 
 import csv
@@ -41,7 +41,7 @@ def reference_slowest_tail_mean_fps(sorted_values: list[float], tail_fraction: f
 
 
 class FrameProfilerNativeTests(unittest.TestCase):
-    def run_native_suite(self, compiler: str, standard: str) -> None:
+    def run_native_suite(self, compiler: str, standard: str, use_sanitizers: bool = False) -> None:
         if not shutil.which(compiler):
             self.skipTest(f"{compiler} is not installed")
 
@@ -76,8 +76,14 @@ static void testComplexNestedPhasesAndHonestGC(void)
   PhoenixProfilerSummary summary;
 
   phoenixProfilerInit(&state, 60.0);
+  assert(phoenixProfilerIsInitialized(&state) == 1);
   assert(phoenixProfilerIsEnabled(&state) == 1);
   phoenixProfilerSetStateName(&state, "play.PlayState");
+
+  /* Repeated idempotent ensureInit must update targetFps without wiping state */
+  phoenixProfilerEnsureInit(&state, 120.0);
+  assert(approx(state.targetFps, 120.0, 1e-4));
+  phoenixProfilerSetTargetFps(&state, 60.0);
 
   /*
    * Frame 1: Complex 3-level nesting + sibling child phases inside UPDATE:
@@ -87,11 +93,11 @@ static void testComplexNestedPhasesAndHonestGC(void)
    *   - AUDIO begins at t=1002.0 (heap=1,020,000 -> +20,000 alloc)
    *     - Explicit GC begins at t=1002.5 (heap=1,030,000 -> +10,000 alloc)
    *     - Explicit GC ends at t=1004.0 (1.5ms GC pause, heap=830,000 -> 200,000 reclaimed)
-   *   - AUDIO ends at t=1005.0 (raw 3.0ms - 1.5ms GC = 1.5ms exclusive audio; heap=840,000 -> +10,000 alloc)
+   *   - AUDIO ends at t=1005.0 (raw inclusive 3.0ms, minus 1.5ms GC = 1.5ms exclusive audio; heap=840,000 -> +10,000 alloc)
    *   - RENDER (e.g. FFmpeg pipeFrame inside PlayState.update) begins at t=1005.5 (heap=840,000)
-   *   - RENDER ends at t=1007.5 (2.0ms exclusive render; heap=860,000 -> +20,000 alloc)
-   * - UPDATE ends at t=1010.0 (raw 9.0ms - 3.0ms audio_raw - 2.0ms render_raw = 4.0ms exclusive update; heap=900,000 -> +40,000 alloc)
-   * - Unmatched endPhase calls outside active phases must return 0.0 and not corrupt state
+   *   - RENDER ends at t=1007.5 (2.0ms exclusive/inclusive render; heap=860,000 -> +20,000 alloc)
+   * - UPDATE ends at t=1010.0 (raw inclusive 9.0ms, minus 3.0ms audio_raw - 2.0ms render_raw = 4.0ms exclusive update; heap=900,000 -> +40,000 alloc)
+   * - Unmatched endPhase and invalid phase IDs must return 0.0 and not corrupt state
    * - Main RENDER begins at t=1010.5 (heap=900,000) and ends at t=1013.5 (3.0ms; heap=920,000 -> +20,000 alloc)
    * - Frame ends at t=1016.0 (work=16.0ms, frameTime=16.0ms, heap=920,000)
    */
@@ -110,7 +116,13 @@ static void testComplexNestedPhasesAndHonestGC(void)
 
   assert(approx(phoenixProfilerEndPhaseAt(&state, PHOENIX_PHASE_UPDATE, 1010.0, 900000), 4.0, 1e-4));
 
-  /* Unmatched phase ends must be safe no-ops */
+  /* Unmatched phase ends and invalid phase IDs (-1, 99) must be safe no-ops */
+  phoenixProfilerBeginPhaseAt(&state, -1, 1010.1, 900000);
+  phoenixProfilerBeginPhaseAt(&state, 99, 1010.1, 900000);
+  phoenixProfilerRecordPhaseMs(&state, -1, 5.0);
+  phoenixProfilerRecordPhaseMs(&state, 99, 5.0);
+  assert(approx(phoenixProfilerEndPhaseAt(&state, -1, 1010.2, 900000), 0.0, 1e-6));
+  assert(approx(phoenixProfilerEndPhaseAt(&state, 99, 1010.2, 900000), 0.0, 1e-6));
   assert(approx(phoenixProfilerEndPhaseAt(&state, PHOENIX_PHASE_UPDATE, 1010.2, 900000), 0.0, 1e-6));
   assert(approx(phoenixProfilerEndPhaseAt(&state, PHOENIX_PHASE_AUDIO, 1010.2, 900000), 0.0, 1e-6));
   assert(approx(phoenixProfilerEndPhaseAt(&state, PHOENIX_PHASE_RENDER, 1010.2, 900000), 0.0, 1e-6));
@@ -125,10 +137,15 @@ static void testComplexNestedPhasesAndHonestGC(void)
   assert(sample.frameIndex == 1);
   assert(approx(sample.frameTimeMs, 16.0, 1e-4));
   assert(approx(sample.workTimeMs, 16.0, 1e-4));
+  /* Verify both exclusive and inclusive subsystem durations */
   assert(approx(sample.updateTimeMs, 4.0, 1e-4));
+  assert(approx(sample.updateInclusiveMs, 9.0, 1e-4));
   assert(approx(sample.audioTimeMs, 1.5, 1e-4));
+  assert(approx(sample.audioInclusiveMs, 3.0, 1e-4));
   assert(approx(sample.renderTimeMs, 5.0, 1e-4)); /* 2.0ms nested + 3.0ms main */
+  assert(approx(sample.renderInclusiveMs, 5.0, 1e-4));
   assert(approx(sample.gcPauseMs, 1.5, 1e-4));
+  assert(approx(sample.gcInclusiveMs, 1.5, 1e-4));
   assert(approx(sample.otherTimeMs, 4.0, 1e-4)); /* 16.0 - (4.0 + 1.5 + 5.0 + 1.5) */
   assert(sample.allocBytes == 120000);
   assert(sample.gcReclaimedBytes == 200000);
@@ -172,23 +189,35 @@ static void testComplexNestedPhasesAndHonestGC(void)
   assert(sample.allocBytes - sample.gcReclaimedBytes == sample.netHeapDeltaBytes);
 
   /*
-   * Frame 3: Unclosed child phase inside UPDATE + unclosed RENDER at endFrame:
+   * Frame 3: Unclosed child phase inside UPDATE + mid-frame snapshot export + unclosed RENDER at endFrame:
    * - UPDATE starts at 1037.0
    * - AUDIO starts at 1038.0 and is NOT explicitly closed before UPDATE ends at 1041.0
-   *   -> AUDIO auto-closes at 1041.0 (3.0ms), leaving UPDATE with 1.0ms exclusive time!
-   * - RENDER starts at 1042.0 and is left open until endFrame at 1046.0
-   *   -> RENDER auto-closes at 1046.0 (4.0ms)!
+   *   -> AUDIO auto-closes at 1041.0 (3.0ms), leaving UPDATE with 1.0ms exclusive time (4.0ms inclusive)!
+   * - RENDER starts at 1042.0
+   * - Export log is triggered mid-frame while Frame 3 is still in flight -> must NOT abort Frame 3!
+   * - Frame 3 finishes at 1046.0 -> RENDER auto-closes at 1046.0 (4.0ms)!
    */
   phoenixProfilerBeginFrameAt(&state, 1036.5, 750000, 4000000);
   phoenixProfilerBeginPhaseAt(&state, PHOENIX_PHASE_UPDATE, 1037.0, 750000);
   phoenixProfilerBeginPhaseAt(&state, PHOENIX_PHASE_AUDIO, 1038.0, 750000);
   assert(approx(phoenixProfilerEndPhaseAt(&state, PHOENIX_PHASE_UPDATE, 1041.0, 750000), 1.0, 1e-4));
   phoenixProfilerBeginPhaseAt(&state, PHOENIX_PHASE_RENDER, 1042.0, 750000);
+
+  /* Mid-frame export must export the 2 completed frames without disturbing in-flight Frame 3 */
+  {
+    char midExportPath[PHOENIX_PROFILER_PATH_MAX];
+    assert(phoenixProfilerExportLog(&state, "mid_frame_snapshot.log", "0.3.2", "Test", midExportPath, sizeof(midExportPath)) == 1);
+    assert(state.inFlightFrame == 1);
+  }
+
   assert(phoenixProfilerEndFrameAt(&state, 1046.0, 0.0, 750000, 4000000, 15) != NULL);
 
   assert(phoenixProfilerGetLastFrame(&state, &sample) == 1);
+  assert(sample.frameIndex == 3);
   assert(approx(sample.updateTimeMs, 1.0, 1e-4));
+  assert(approx(sample.updateInclusiveMs, 4.0, 1e-4));
   assert(approx(sample.audioTimeMs, 3.0, 1e-4));
+  assert(approx(sample.audioInclusiveMs, 3.0, 1e-4));
   assert(approx(sample.renderTimeMs, 4.0, 1e-4));
 
   /* Verify summary avgGcPauseMs is NOT diluted by Frame 2's implicit heap contraction */
@@ -240,8 +269,9 @@ static void testNaNAndInvalidInputs(void)
   static PhoenixProfilerState state;
   PhoenixProfilerSummary summary;
   PhoenixFrameSample sample;
-  double nanVal = 0.0 / 0.0;
-  double infVal = 1.0 / 0.0;
+  volatile double zero = 0.0;
+  double nanVal = zero / zero;
+  double infVal = 1.0 / zero;
 
   phoenixProfilerInit(&state, nanVal);
   phoenixProfilerComputeSummary(&state, &summary);
@@ -295,6 +325,11 @@ int main(void)
     /* Empty-session log export (0 frames recorded) must succeed and write valid report */
     assert(phoenixProfilerExportLog(&state, "empty_session.log", "0.3.2", "TestPlatform", resolvedPath, sizeof(resolvedPath)) == 1);
     assert(strcmp(resolvedPath, "debug/log/empty_session.log") == 0);
+
+    /* Re-entrant export guard: while exportInProgress == 1, exportLog must return 0 */
+    state.exportInProgress = 1;
+    assert(phoenixProfilerExportLog(&state, "reentrant.log", "0.3.2", "TestPlatform", resolvedPath, sizeof(resolvedPath)) == 0);
+    state.exportInProgress = 0;
   }
 
   /* Timing-only mode (collectMemoryMetrics = 0) must mark heap/RSS unavailable and print N/A */
@@ -303,9 +338,10 @@ int main(void)
   phoenixProfilerBeginFrameAt(&state, 100.0, 500000, 2000000);
   phoenixProfilerRecordPhaseMs(&state, PHOENIX_PHASE_UPDATE, 4.0);
   phoenixProfilerEndFrameAt(&state, 116.0, 16.0, 550000, 2000000, 12);
-  /* Start an interrupted frame and export mid-frame -> interrupted frame must be aborted cleanly */
+  /* Start an interrupted frame and abort it on shutdown before export */
   phoenixProfilerBeginFrameAt(&state, 120.0, 550000, 2000000);
   phoenixProfilerBeginPhaseAt(&state, PHOENIX_PHASE_UPDATE, 121.0, 600000);
+  phoenixProfilerAbortInFlightFrame(&state);
   assert(phoenixProfilerExportLog(&state, "timing_only.log", "0.3.2", "TestPlatform", resolvedPath, sizeof(resolvedPath)) == 1);
   phoenixProfilerComputeSummary(&state, &summary);
   assert(summary.totalFrames == 1);
@@ -342,6 +378,8 @@ int main(void)
       assert(sample.rssSampled == 0);
   }
 
+  /* Export twice to the same path to verify atomic overwrite and absence of leftover .tmp files */
+  assert(phoenixProfilerExportLog(&state, "session_profile.log", "0.3.2", "TestPlatform", resolvedPath, sizeof(resolvedPath)) == 1);
   assert(phoenixProfilerExportLog(&state, "session_profile.log", "0.3.2", "TestPlatform", resolvedPath, sizeof(resolvedPath)) == 1);
   assert(strcmp(resolvedPath, "debug/log/session_profile.log") == 0);
 
@@ -397,25 +435,33 @@ int main(void)
                 encoding="utf-8",
             )
             executable = root / "test_profiler"
-            subprocess.run(
-                [
-                    compiler,
-                    f"-std={standard}",
-                    "-Wall",
-                    "-Wextra",
-                    "-Werror",
-                    "-I",
-                    str(INCLUDE),
-                    str(root / "main.c"),
-                    str(root / "second_tu.c"),
-                    "-o",
-                    str(executable),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
+            cmd = [
+                compiler,
+                f"-std={standard}",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-Wformat=2",
+                "-Wshadow",
+                "-Wpointer-arith",
+            ]
+            if use_sanitizers:
+                cmd.append("-fsanitize=address,undefined")
+            cmd.extend([
+                "-I",
+                str(INCLUDE),
+                str(root / "main.c"),
+                str(root / "second_tu.c"),
+                "-o",
+                str(executable),
+            ])
+            subprocess.run(cmd, check=True, capture_output=True, text=True)
             subprocess.run([str(executable)], cwd=str(root), check=True)
+
+            # Verify no .tmp file was left behind after atomic finalize
+            self.assertFalse((root / "debug/log/session_profile.log.tmp").exists())
+            mid_log = (root / "debug/log/mid_frame_snapshot.log").read_text(encoding="utf-8")
+            self.assertIn("Total Frames Recorded  : 2", mid_log)
 
             # Compare C summary against independent Python reference implementation
             summary_data = json.loads((root / "summary.json").read_text(encoding="utf-8"))
@@ -492,7 +538,6 @@ int main(void)
             # Verify export failure handling when debug/log cannot be created
             blocked_dir = root / "blocked_workspace"
             blocked_dir.mkdir()
-            # Create a regular file named "debug" so mkdir("debug") / mkdir("debug/log") fails
             (blocked_dir / "debug").write_text("file blocking directory creation", encoding="utf-8")
             (blocked_dir / "fail_test.c").write_text(
                 r'''
@@ -508,6 +553,7 @@ int main(void)
   phoenixProfilerInit(&state, 60.0);
   assert(phoenixProfilerExportLog(&state, "should_fail.log", "0.3.2", "Test", outPath, sizeof(outPath)) == 0);
   assert(strcmp(outPath, "") == 0);
+  assert(state.exportInProgress == 0);
   return 0;
 }
 ''',
@@ -521,16 +567,16 @@ int main(void)
             subprocess.run([str(fail_exe)], cwd=str(blocked_dir), check=True)
 
     def test_c_gnu99(self) -> None:
-        self.run_native_suite("cc", "gnu99")
+        self.run_native_suite("cc", "gnu99", use_sanitizers=True)
 
     def test_cpp_11(self) -> None:
-        self.run_native_suite("c++", "c++11")
+        self.run_native_suite("c++", "c++11", use_sanitizers=True)
 
     def test_cpp_17(self) -> None:
-        self.run_native_suite("c++", "c++17")
+        self.run_native_suite("c++", "c++17", use_sanitizers=True)
 
     def test_reproducible_overhead_benchmark(self) -> None:
-        """Measures profiler hot-path overhead across modes with warmup and multiple trials."""
+        """Measures profiler overhead across all 5 required scenarios with warmup and multiple trials."""
         compiler = "cc"
         if not shutil.which(compiler):
             self.skipTest("cc is not installed")
@@ -562,14 +608,22 @@ static double runBaselineTrial(int frames)
   return phoenixProfilerNowMs() - t0;
 }
 
-static double runProfiledTrial(PhoenixProfilerState *state, int frames, int collectMem, uint32_t rssInterval)
+static double runProfiledTrial(
+  PhoenixProfilerState *state,
+  int frames,
+  int enabled,
+  int collectMem,
+  uint32_t rssInterval,
+  int formatOverlayEachFrame)
 {
   int i;
   double t0;
+  char overlayBuf[512];
   phoenixProfilerInit(state, 60.0);
   phoenixProfilerSetStateName(state, "play.PlayState");
   phoenixProfilerSetCollectMemoryMetrics(state, collectMem);
   phoenixProfilerSetRssSampleInterval(state, rssInterval);
+  phoenixProfilerSetEnabled(state, enabled);
 
   t0 = phoenixProfilerNowMs();
   for (i = 0; i < frames; ++i)
@@ -584,6 +638,11 @@ static double runProfiledTrial(PhoenixProfilerState *state, int frames, int coll
     phoenixProfilerBeginRender(state, heapBase + 2048);
     phoenixProfilerEndRender(state, heapBase + 4096);
     phoenixProfilerEndFrame(state, heapBase + 4096, 4000000, 32);
+    if (formatOverlayEachFrame)
+    {
+      (void)phoenixProfilerFormatOverlay(state, overlayBuf, sizeof(overlayBuf));
+      gSink ^= (uint64_t)overlayBuf[0];
+    }
   }
   return phoenixProfilerNowMs() - t0;
 }
@@ -592,35 +651,52 @@ int main(void)
 {
   static PhoenixProfilerState state;
   const int warmupFrames = 500;
-  const int trialFrames = 2000;
+  const int trialFrames = 2500;
   const int trials = 7;
-  double baseUs[7], timingOnlyUs[7], defaultFullUs[7], everyFrameRssUs[7];
+  double baseUs[7], disabledUs[7], timingHiddenUs[7], fullHiddenUs[7], fullVisibleUs[7], everyRssUs[7];
+  double exportMs = 0.0;
+  char resolved[PHOENIX_PROFILER_PATH_MAX];
   int t;
 
   (void)runBaselineTrial(warmupFrames);
-  (void)runProfiledTrial(&state, warmupFrames, 1, 60);
+  (void)runProfiledTrial(&state, warmupFrames, 1, 1, 60, 1);
 
   for (t = 0; t < trials; ++t)
   {
     baseUs[t] = (runBaselineTrial(trialFrames) * 1000.0) / (double)trialFrames;
-    timingOnlyUs[t] = (runProfiledTrial(&state, trialFrames, 0, 0) * 1000.0) / (double)trialFrames;
-    defaultFullUs[t] = (runProfiledTrial(&state, trialFrames, 1, 60) * 1000.0) / (double)trialFrames;
-    everyFrameRssUs[t] = (runProfiledTrial(&state, trialFrames, 1, 1) * 1000.0) / (double)trialFrames;
+    disabledUs[t] = (runProfiledTrial(&state, trialFrames, 0, 1, 60, 0) * 1000.0) / (double)trialFrames;
+    timingHiddenUs[t] = (runProfiledTrial(&state, trialFrames, 1, 0, 0, 0) * 1000.0) / (double)trialFrames;
+    fullHiddenUs[t] = (runProfiledTrial(&state, trialFrames, 1, 1, 60, 0) * 1000.0) / (double)trialFrames;
+    fullVisibleUs[t] = (runProfiledTrial(&state, trialFrames, 1, 1, 60, 1) * 1000.0) / (double)trialFrames;
+    everyRssUs[t] = (runProfiledTrial(&state, trialFrames, 1, 1, 1, 0) * 1000.0) / (double)trialFrames;
+  }
+
+  /* Measure full 2048-frame export duration outside hot path */
+  {
+    double tExport0 = phoenixProfilerNowMs();
+    (void)phoenixProfilerExportLog(&state, "bench_export.log", "0.3.2", "Bench", resolved, sizeof(resolved));
+    exportMs = phoenixProfilerNowMs() - tExport0;
   }
 
   phoenixProfilerSortDoubles(baseUs, trials);
-  phoenixProfilerSortDoubles(timingOnlyUs, trials);
-  phoenixProfilerSortDoubles(defaultFullUs, trials);
-  phoenixProfilerSortDoubles(everyFrameRssUs, trials);
+  phoenixProfilerSortDoubles(disabledUs, trials);
+  phoenixProfilerSortDoubles(timingHiddenUs, trials);
+  phoenixProfilerSortDoubles(fullHiddenUs, trials);
+  phoenixProfilerSortDoubles(fullVisibleUs, trials);
+  phoenixProfilerSortDoubles(everyRssUs, trials);
 
   printf(
-    "{\"baseline_p50_us\":%.4f,\"timing_only_p50_us\":%.4f,\"default_full_p50_us\":%.4f,"
-    "\"default_full_p95_us\":%.4f,\"every_frame_rss_p50_us\":%.4f}\n",
+    "{\"baseline_p50_us\":%.4f,\"disabled_p50_us\":%.4f,\"timing_hidden_p50_us\":%.4f,"
+    "\"full_hidden_p50_us\":%.4f,\"full_hidden_p95_us\":%.4f,\"full_visible_p50_us\":%.4f,"
+    "\"every_rss_p50_us\":%.4f,\"export_2048_frames_ms\":%.4f}\n",
     phoenixProfilerPercentileFromSorted(baseUs, trials, 0.50),
-    phoenixProfilerPercentileFromSorted(timingOnlyUs, trials, 0.50),
-    phoenixProfilerPercentileFromSorted(defaultFullUs, trials, 0.50),
-    phoenixProfilerPercentileFromSorted(defaultFullUs, trials, 0.95),
-    phoenixProfilerPercentileFromSorted(everyFrameRssUs, trials, 0.50));
+    phoenixProfilerPercentileFromSorted(disabledUs, trials, 0.50),
+    phoenixProfilerPercentileFromSorted(timingHiddenUs, trials, 0.50),
+    phoenixProfilerPercentileFromSorted(fullHiddenUs, trials, 0.50),
+    phoenixProfilerPercentileFromSorted(fullHiddenUs, trials, 0.95),
+    phoenixProfilerPercentileFromSorted(fullVisibleUs, trials, 0.50),
+    phoenixProfilerPercentileFromSorted(everyRssUs, trials, 0.50),
+    exportMs);
   return 0;
 }
 ''',
@@ -633,14 +709,15 @@ int main(void)
             )
             proc = subprocess.run([str(exe)], cwd=str(root), check=True, capture_output=True, text=True)
             metrics = json.loads(proc.stdout.strip())
-            default_overhead_us = metrics["default_full_p50_us"] - metrics["baseline_p50_us"]
-            every_rss_overhead_us = metrics["every_frame_rss_p50_us"] - metrics["baseline_p50_us"]
+            disabled_overhead = metrics["disabled_p50_us"] - metrics["baseline_p50_us"]
+            full_hidden_overhead = metrics["full_hidden_p50_us"] - metrics["baseline_p50_us"]
+            every_rss_overhead = metrics["every_rss_p50_us"] - metrics["baseline_p50_us"]
 
-            # Budget check: default mode overhead must be well below 25us/frame (<0.15% of 16.67ms frame)
-            # and strictly cheaper than querying OS RSS every single frame.
-            self.assertLess(default_overhead_us, 25.0)
-            self.assertLess(metrics["default_full_p50_us"], metrics["every_frame_rss_p50_us"])
-            self.assertLess(default_overhead_us, every_rss_overhead_us)
+            self.assertLess(disabled_overhead, 2.0)
+            self.assertLess(full_hidden_overhead, 25.0)
+            self.assertLess(metrics["full_hidden_p50_us"], metrics["every_rss_p50_us"])
+            self.assertLess(full_hidden_overhead, every_rss_overhead)
+            self.assertGreater(metrics["export_2048_frames_ms"], 0.0)
 
 
 class FrameProfilerIntegrationTests(unittest.TestCase):
@@ -659,12 +736,17 @@ class FrameProfilerIntegrationTests(unittest.TestCase):
         self.assertIn('LOG_DIR:String = "debug/log"', profiler_hx)
         self.assertIn("exportLog", profiler_hx)
         self.assertIn("handleApplicationExit", profiler_hx)
+        self.assertIn("registerExitHook", profiler_hx)
         self.assertIn("toggleOverlay", profiler_hx)
+        self.assertIn("startRecording", profiler_hx)
+        self.assertIn("stopRecording", profiler_hx)
+        self.assertIn("exportInProgress", profiler_hx)
         self.assertIn("escapeCsvField", profiler_hx)
         self.assertIn("[5] TOP SLOWEST FRAMES (BOTTLENECK ANALYSIS)", profiler_hx)
         self.assertIn("[6] PER-FRAME TIMELINE (CSV)", profiler_hx)
 
         self.assertIn("phoenix_profiler.h", native_hx)
+        self.assertIn('../../../../source/debug/profiler/build.xml', native_hx)
         self.assertIn("FrameProfiler.beginFrame()", flx_game)
         self.assertIn("FrameProfiler.endFrame(", flx_game)
         self.assertIn("FrameProfiler.beginUpdate()", flx_game)
@@ -677,7 +759,7 @@ class FrameProfilerIntegrationTests(unittest.TestCase):
         self.assertIn("FrameProfiler.beginGC(", paths_hx)
         self.assertIn("FrameProfiler.endGC()", paths_hx)
         self.assertIn("FrameProfiler.init(", main_hx)
-        self.assertIn("FrameProfiler.handleApplicationExit()", main_hx)
+        self.assertIn("FrameProfiler.registerExitHook()", main_hx)
         self.assertNotIn("ClientPrefs.frameProfiler)\n        FrameProfiler.exportLog()", main_hx)
         self.assertIn("FrameProfiler.toggleOverlay()", funkin_game_hx)
         self.assertIn("FrameProfiler.getOverlayText()", fps_hx)
