@@ -58,11 +58,11 @@ menu track without renaming engine assets. `ClientPrefs.daMenuMusic` and
 
 `music.MusicPlayer` is the overlay in `states.FreeplayState` that lets you listen to songs
 from the song list: play/pause (`pauseOrResume`), seek, track time (`curTime`) and
-`switchPlayMusic()` to toggle between browsing and listening. On Android it feeds
-`android.platform.AndroidMedia`, so the song appears in the system media controls, the
-lock screen, Bluetooth devices and Android Auto — the metadata (title, artist, artwork,
-position, playback state) is pushed through the media session, and
-`PhoenixMediaService` keeps it alive while the app is backgrounded.
+`switchPlayMusic()` to toggle between browsing and listening. It owns Freeplay previews
+separately from gameplay. The Android Media3 session is currently attached by
+`PlayStateAndroidMedia` once a chart enters `PlayState`, so chart playback—not a Freeplay
+preview—is exposed to system media controls, the lock screen, Bluetooth devices and
+Android Auto.
 
 ## Sound tray
 

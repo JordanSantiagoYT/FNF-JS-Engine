@@ -106,7 +106,7 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 
 ### MEDIA / AUDIO
 
-- **[P1] ~~Android MediaSession / Media3 integration~~ DONE** (`PhoenixMedia` MediaSession + `AndroidMedia`; wired into `PlayState` via `PlayStateAndroidMedia` — title/artist/duration/state/position published, lock screen & BT controls work) — Expose the currently playing song to Android's media system, including title, artist/creator, album, artwork, playback state, position, and duration. Integrate with system media controls, lock screen, Bluetooth media controls, Android Auto, and other Android media clients.
+- **[P1] ~~Android MediaSession / Media3 integration~~ DONE** (`PhoenixMedia` now mirrors Haxe/Flixel through a Media3 `MediaSession`; `PhoenixMediaService` hosts it as a `MediaSessionService`; `PlayStateAndroidMedia` publishes title, chart creator, engine album, optional artwork, duration, state, position and actual playback rate) — Expose the currently playing song to Android's media system, including title, artist/creator, album, artwork, playback state, position, and duration. Integrate with system media controls, lock screen, Bluetooth media controls, Android Auto, and other Android media clients.
 - **[P1] ~~Android media action bridge~~ DONE** (play/pause/stop mapped onto gameplay pause/resume in `PlayStateAndroidMedia`; `seek`/`next`/`previous` exposed as `AndroidMedia` signals for mods) — Map Android media actions (`play`, `pause`, `stop`, `next`, `previous`, `seek`, etc.) back into the Haxe audio/gameplay layer.
 - **[P1] ~~Android Audio Focus~~ DONE** (request/abandon around gameplay, loss → auto-pause, duck → volume dip, gain → restore) — Request/release audio focus appropriately and handle interruptions, audio ducking, playback resumption, and headphone/Bluetooth disconnection.
 - **[P2] ~~Android audio latency information~~ DONE** (`AndroidMedia.getAudioInfo()` exposes sample rate / channels / buffer size) — Expose native audio output information such as sample rate, channel count, buffer size, and available output-latency information to Haxe for rhythm-game timing and audio-offset calibration.
@@ -116,7 +116,7 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 
 - **[P1] ~~Android lifecycle bridge~~ DONE** (`PhoenixCore` Extension → `AndroidLifecycle` signals; audio auto-pauses when backgrounded) — Expose native Activity lifecycle events (`onCreate`, `onStart`, `onResume`, `onPause`, `onStop`, `onDestroy`, etc.) to Haxe and properly synchronize gameplay/audio state when the application loses or regains focus.
 - **[P2] ~~Android process-death recovery~~ DONE** (gameplay persists a recovery blob; `TitleState` offers to resume the interrupted song after a process kill) — Handle cases where Android destroys the application process while backgrounded; restore relevant engine state where possible instead of assuming static/global Haxe state survives.
-- **[P2] ~~Android foreground-service support~~ DONE** (`PhoenixMediaService`, MediaStyle foreground service, manifest template declares it with `mediaPlayback` type) — Provide a native service abstraction for tasks that legitimately need to continue outside the Activity, particularly Media3/media playback functionality.
+- **[P2] ~~Android foreground-service support~~ DONE** (`PhoenixMediaService` extends Media3 `MediaSessionService`; the manifest exports its media-browser discovery actions and declares `mediaPlayback`) — Provide a native service abstraction for tasks that legitimately need to continue outside the Activity, particularly Media3/media playback functionality.
 
 ### INPUT / CONTROLLERS
 
@@ -153,7 +153,7 @@ Audited; these 5 sites were flagged but NOT changed (only 3 charting sites conve
 ### NOTIFICATIONS
 
 - **[P2] ~~Android notification API~~ DONE** (`AndroidNotification` — channel, notify/cancel, runtime permission request) — Expose native notification channels, notifications, progress indicators, actions, and other relevant Android notification functionality to the engine where appropriate.
-- **[P2] ~~MediaStyle notification integration~~ DONE** (`PhoenixMediaService` MediaStyle notification kept in sync with the MediaSession) — Use Android's media notification APIs for active playback where required, keeping notification metadata and playback controls synchronized with the MediaSession.
+- **[P2] ~~MediaStyle notification integration~~ DONE** (Media3's `MediaSessionService` notification provider follows the mirrored player/session state) — Use Android's media notification APIs for active playback where required, keeping notification metadata and playback controls synchronized with the MediaSession.
 
 ### DISCORD / EXTERNAL SERVICES
 

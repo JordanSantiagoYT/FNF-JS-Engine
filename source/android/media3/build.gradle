@@ -1,0 +1,20 @@
+// Android-only dependency shim copied into Lime's generated Gradle project.
+// Keep the Media3 version pinned here so native MediaSession APIs stay
+// reproducible independently of the host machine's Gradle cache.
+apply plugin: 'com.android.library'
+
+android {
+	namespace "quack.fnf.phoenix.media3bridge"
+	compileSdkVersion Integer.parseInt(project.ANDROID_BUILD_SDK_VERSION)
+	buildToolsVersion project.ANDROID_BUILD_TOOLS_VERSION
+
+	defaultConfig {
+		minSdkVersion Integer.parseInt(project.ANDROID_BUILD_MIN_SDK_VERSION)
+	}
+}
+
+dependencies {
+	// MediaSessionService, MediaSession and the compatibility bridge used by
+	// Android Auto, lock-screen controls and Bluetooth media clients.
+	api "androidx.media3:media3-session:1.6.1"
+}
