@@ -6,6 +6,7 @@ import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.DisplayCutout;
 import android.view.Surface;
@@ -25,46 +26,54 @@ import org.json.JSONObject;
 public class PhoenixDisplay extends Extension
 {
 	private static DisplayManager.DisplayListener displayListener = null;
-	private static View insetContent;
-	private static boolean respectCutout;
-	private static int paddingLeft, paddingTop, paddingRight, paddingBottom;
+	private static final String LOG_TAG = "PhoenixDisplay";
+	private static volatile String cutoutMode = "never";
 
-	/** Android 15+ enforces edge-to-edge for our target SDK. Inset the actual
-	 * content container so SDL receives a resized surface (and matching input).
-	 * Keep physical cutout reporting unchanged for bridge callers.
-	 */
-	private static void updateCutoutPadding(Activity activity, boolean respect)
+	/** Implemented by our Activity; no static Activity/view ownership. */
+	public interface CutoutHost
 	{
-		respectCutout = respect;
-		final View content = activity.findViewById(android.R.id.content);
-		if (content == null)
+		void setRespectCutoutInsets(boolean respect);
+	}
+
+	/** Called on the UI thread after creation, resume and focus restoration. */
+	public static void applyCutoutToActivity(Activity activity)
+	{
+		if (Build.VERSION.SDK_INT < 28 || activity == null || activity != mainActivity
+			|| activity.isFinishing() || activity.isDestroyed())
 			return;
-		if (insetContent != content)
+		String stage = "obtaining window";
+		try
 		{
-			insetContent = content;
-			paddingLeft = content.getPaddingLeft();
-			paddingTop = content.getPaddingTop();
-			paddingRight = content.getPaddingRight();
-			paddingBottom = content.getPaddingBottom();
-			content.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener()
+			android.view.Window window = activity.getWindow();
+			if (window == null)
 			{
-				@Override public WindowInsets onApplyWindowInsets(View view, WindowInsets insets)
-				{
-					DisplayCutout cutout = insets.getDisplayCutout();
-					boolean safe = respectCutout && cutout != null;
-					view.setPadding(paddingLeft + (safe ? cutout.getSafeInsetLeft() : 0),
-						paddingTop + (safe ? cutout.getSafeInsetTop() : 0),
-						paddingRight + (safe ? cutout.getSafeInsetRight() : 0),
-						paddingBottom + (safe ? cutout.getSafeInsetBottom() : 0));
-					return insets;
-				}
-			});
+				Log.w(LOG_TAG, "Cutout window unavailable; will retry on resume/focus");
+				return;
+			}
+			String mode = cutoutMode;
+			boolean inset = PhoenixCutoutPolicy.needsSafeInsets(Build.VERSION.SDK_INT,
+				activity.getApplicationInfo().targetSdkVersion, mode);
+			stage = "updating cutout attributes";
+			WindowManager.LayoutParams attributes = window.getAttributes();
+			// Explicit ALWAYS prevents platform letterboxing plus our padding
+			// from both reserving the same cutout on enforced-edge-to-edge builds.
+			attributes.layoutInDisplayCutoutMode = inset
+				? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+				: PhoenixCutoutPolicy.windowMode(Build.VERSION.SDK_INT, mode);
+			window.setAttributes(attributes);
+			stage = "updating native content insets";
+			if (activity instanceof CutoutHost)
+				((CutoutHost) activity).setRespectCutoutInsets(inset);
+			else if (inset)
+				Log.e(LOG_TAG, "Respect cutout requires the Phoenix MainActivity content host");
+			stage = "requesting window insets/layout";
+			window.getDecorView().requestApplyInsets();
+			window.getDecorView().requestLayout();
 		}
-		// Drop the previous safe padding immediately; the next inset pass adds
-		// current (possibly rotated) values back only in respect mode.
-		content.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
-		content.requestApplyInsets();
-		content.requestLayout();
+		catch (RuntimeException error)
+		{
+			Log.e(LOG_TAG, "Cutout failed while " + stage, error);
+		}
 	}
 
 	/**
@@ -168,7 +177,10 @@ public class PhoenixDisplay extends Extension
 					}
 				}
 			}
-			catch (Exception ignored) {}
+			catch (RuntimeException error)
+			{
+				Log.e(LOG_TAG, "Unable to retrieve physical cutout insets", error);
+			}
 		}
 
 		cutout.put(left);
@@ -261,42 +273,30 @@ public class PhoenixDisplay extends Extension
 	 */
 	public static void setCutoutMode(final String mode)
 	{
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P)
+		cutoutMode = mode;
+		if (Build.VERSION.SDK_INT < 28)
 			return;
-
 		final Activity activity = mainActivity;
-		if (activity == null)
-			return;
-
-		activity.runOnUiThread(new Runnable()
+		if (activity == null || activity.isFinishing() || activity.isDestroyed())
 		{
-			@Override public void run()
+			Log.w(LOG_TAG, "Cutout Activity unavailable; preference retained for creation/resume");
+			return;
+		}
+		try
+		{
+			activity.runOnUiThread(new Runnable()
 			{
-				try
+				@Override public void run()
 				{
-					WindowManager.LayoutParams attributes = activity.getWindow().getAttributes();
-					if ("always".equals(mode) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-					else if ("never".equals(mode))
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-					else if ("shortEdges".equals(mode) || "always".equals(mode))
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-					else
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
-					// API 35+ may ignore NEVER for non-floating windows. Use an
-					// edge-to-edge window plus native content padding instead.
-					if (Build.VERSION.SDK_INT >= 35)
-					{
-						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-						updateCutoutPadding(activity, "never".equals(mode));
-					}
-					activity.getWindow().setAttributes(attributes);
-					activity.getWindow().getDecorView().requestApplyInsets();
-					activity.getWindow().getDecorView().requestLayout();
+					// Revalidate identity and use the latest preference, not a stale queued value.
+					applyCutoutToActivity(activity);
 				}
-				catch (Exception ignored) {}
-			}
-		});
+			});
+		}
+		catch (RuntimeException error)
+		{
+			Log.e(LOG_TAG, "Unable to schedule cutout window update", error);
+		}
 	}
 
 	/**
@@ -404,6 +404,5 @@ public class PhoenixDisplay extends Extension
 	@Override public void onDestroy()
 	{
 		unregisterDisplayListener();
-		insetContent = null;
 	}
 }

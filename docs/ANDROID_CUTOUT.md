@@ -2,59 +2,122 @@
 
 Android: **Options → Visuals and UI → Respect cut-out**. Checked (default)
 keeps the game clear of the camera/notch; unchecked selects **Real Fullscreen**.
-The preference uses ClientPrefs persistence, is flushed when changed, and is
-applied after preferences load. No activity restart is requested.
+ClientPrefs saves the boolean through its existing reflection-based persistence,
+flushes it when changed, and applies it after loading. No restart is requested.
 
-Implementation lives in `source/android/src/quack/fnf/phoenix/android/PhoenixDisplay.java`;
-Haxe only supplies the preference/menu and calls the existing JNI bridge.
+## Native implementation
 
-- API <28: no cutout API, so no-op.
+- API 21–27: no cutout window API calls or extra content wrapper.
 - API 28–29: NEVER versus SHORT_EDGES (ALWAYS was added in API 30).
 - API 30–34: NEVER versus ALWAYS.
-- API 35+: this project targets SDK 36. Edge-to-edge enforcement can interpret
-  NEVER/DEFAULT/SHORT_EDGES as ALWAYS for non-floating windows. Use ALWAYS and
-  apply physical cutout safe insets as padding on the native content container
-  only in respect mode. The inset listener recalculates after rotation and
-  layout changes, preserves original padding, and does not accumulate insets.
-  The SDL surface resizes with its container; this is not a Haxe camera offset.
+- API 35–36 with target SDK >=35: respect mode uses ALWAYS plus safe-area
+  padding on a **Phoenix-owned FrameLayout**, around SDL's existing layout.
+  Fullscreen uses ALWAYS with zero wrapper padding. Current project min/target
+  are 21/36 (`project.hxp`, `configureAndroidRuntime`).
+- `default` and `shortEdges` bridge requests retain their native values and do
+  not add safe padding. They are not silently rewritten to ALWAYS by our code;
+  Android can still reinterpret them under platform edge-to-edge enforcement.
 
-Window attributes change on the UI thread and request layout and fresh insets.
-Physical cutout reporting through AndroidDisplay remains unchanged (even when
-Real Fullscreen is selected). No cached safe-inset values are used.
-This option does not change the logical game aspect ratio or stretch gameplay;
-aspect-ratio bars can still exist on ultrawide displays. System navigation and
-transient bars remain controlled by the existing immersive-mode API.
+Only the owned wrapper's padding is changed. The framework content view and SDL
+layout retain all original padding and listeners, including subsequent changes
+by other owners. Insets are passed downstream without consumption. No listener
+is installed on an existing view. Padding is assigned from the latest insets,
+not added to prior values. Without a cutout it is zero.
 
-## Other platforms reviewed
+`MainActivity.setContentView(View)` is called by the pinned SDLActivity with its
+RelativeLayout. For enforced-edge-to-edge platforms we put that layout inside
+our wrapper with MATCH_PARENT dimensions. We leave SDL's `mLayout`, `mSurface`,
+SurfaceHolder, touch and mouse listeners intact. On older platforms the original
+view hierarchy is unchanged. No status/navigation visibility or decor-fitting
+flags are changed by this preference.
 
-- iOS: the repository has an Info.plist template, but no native UIKit safe-area
-  layout implementation or cutout preference bridge. Rendering is delegated to
-  Lime/SDL. Android window flags cannot affect iOS; a corresponding iOS option
-  would require a UIKit/Lime implementation and on-device verification. The
-  Android-only menu entry is deliberately not offered as a nonfunctional iOS toggle.
-- Desktop: window decorations are outside the client drawable area, managed by
-  Lime/SDL/the window manager. WindowBackend changes Windows decoration colors,
-  not safe-area insets. This option does not remove desktop decorations or alter
-  existing fullscreen behavior. macOS notched-display behavior is likewise left
-  to the native backend; no cross-platform notch support is claimed.
+The pinned SDLSurface's `surfaceChanged` reports the resized surface dimensions
+through `nativeSetScreenResolution` / `onNativeResize`. Touch handling uses
+surface-local MotionEvent coordinates divided by those dimensions; mouse input
+also uses local coordinates. This is architectural evidence for matching layout
+and input, **not device verification**. FrameLayout measurement, SurfaceView
+resizing, SDL native resize delivery, and actual edge touch alignment still need
+Android runtime acceptance. No Haxe camera/input offset is introduced.
 
-## Validation
+Window updates run on the UI thread. Queued updates check current Activity
+identity, finishing/destroyed state and use the latest requested mode. Only the
+mode is retained statically, not an Activity, View or padding. Creation, resume
+and focus restoration reapply it after Lime's initialization/window setup.
+Each Activity owns its wrapper and clears its reference on destruction. Android
+inset dispatch updates safe padding after rotation/configuration changes. A
+missing window/content is retried only at those lifecycle points, without loops.
+Failures log contextual `PhoenixDisplay` diagnostics. Existing unrelated silent
+catches in immersive/refresh-rate/display-watch code are outside this change.
 
-Source integration checks: `python3 -m unittest discover -s tests -p 'test_android_cutout.py'`.
-These do not replace Android builds or device testing.
+Physical cutout reporting through AndroidDisplay is unchanged. The preference
+neither stretches the logical game aspect ratio nor guarantees removal of
+aspect-ratio letterboxing on ultrawide displays.
 
-Device acceptance checklist (API 28/29, 30–34, and 35/36):
+## Audit evidence
 
-1. Launch on a notched/hole-punch device in landscape. Checked must keep game
-   content clear of the cutout. Uncheck: the native surface must expand into that
-   area without restarting. Touch targets must still align with rendered controls.
-2. Toggle repeatedly: no cumulative padding. Rotate to both landscape directions
-   (and portrait if supported): safe padding follows the physical cutout.
-3. Background/resume and show/dismiss transient system bars: selection remains
-   effective. Force-stop/relaunch: saved selection is reapplied.
-4. Reset options to defaults: respect mode returns. Repeat on a device without
-   a cutout: neither choice should introduce safe padding.
-5. Check JNI/logcat errors and verify old Android versions do not access ALWAYS.
+Inspected actual dependency revision from `hmm.json`:
 
-This workspace has no Haxe/Lime toolchain, Android SDK, emulator or attached
-cutout device. Full build and visual acceptance remain unverified here.
+- [Lime GameActivity, commit 45816ca](https://github.com/JS-Engine-things/lime-8.1.2/blob/45816ca456764761cbea8d3cc57701a592f892f1/templates/android/template/app/src/main/java/org/haxe/lime/GameActivity.java):
+  sets Extension.mainActivity/mainView after SDL creation; applies its cutout
+  template setting, then forwards extension lifecycle callbacks. Extension
+  instances are retained in a static list. Destruction alone did not reapply the
+  PR's cutout state to a newly created view.
+- [Pinned SDLActivity / SDLSurface](https://github.com/JS-Engine-things/lime-8.1.2/blob/45816ca456764761cbea8d3cc57701a592f892f1/templates/android/template/app/src/main/java/org/libsdl/app/SDLActivity.java):
+  owns the RelativeLayout/SurfaceView and resize/input handling described above.
+  No existing content inset listener was found in these pinned Java templates
+  or the project's original Java code. The old PR nonetheless replaced the
+  framework content listener slot unconditionally; the owned wrapper removes
+  that ownership risk rather than claiming a demonstrated listener collision.
+- [Android 15 WindowManager SDK documentation in AOSP](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-15.0.0_r1/core/java/android/view/WindowManager.java):
+  DEFAULT, SHORT_EDGES, NEVER, ALWAYS semantics; ALWAYS permits all edges.
+- [Android 15 ViewRootImpl](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-15.0.0_r1/core/java/android/view/ViewRootImpl.java):
+  `adjustLayoutInDisplayCutoutMode` rewrites to ALWAYS when edge-to-edge is
+  enforced for a fullscreen window with no fit-inset types/sides. Our modern
+  respect path explicitly uses ALWAYS to avoid native letterboxing plus padding.
+
+## Other platforms
+
+- iOS: only an Info.plist template is present, not a UIKit safe-area bridge.
+  Lime/SDL owns rendering; Android flags cannot affect it. A corresponding iOS
+  preference needs a native implementation and device testing, so the option
+  is Android-only.
+- Desktop: decorations are outside the client drawable, owned by Lime/SDL/the
+  window manager. WindowBackend changes Windows decoration colors, not safe
+  insets. No desktop fullscreen or macOS notch policy is changed or claimed.
+
+## Regression coverage and validation
+
+`python3 -m unittest discover -s tests -p 'test_android_cutout.py' -v`
+
+Static checks cover the Haxe default, persistence wiring, startup application,
+menu flush/application, lifecycle hooks and no shared-view listener replacement.
+Host-JVM tests compile the production policy, layout, display bridge and rendered
+MainActivity template against small Android API doubles. They exercise API groups,
+repeat toggles, padding reset, changing inset edges/no cutout, Activity/view
+recreation, resume/focus calls, stale queued work, latest-mode selection, missing
+Activity/window, finishing/destroyed state and diagnostic error paths. They do
+**not** emulate Android layout measurement, SurfaceView, SDL native code, event
+dispatch, platform enforcement or actual Haxe save-file serialization.
+
+Local audit environment: no Haxe/Lime, Android SDK/emulator or device. A temporary
+Eclipse compiler 3.32.0 and Java 17 runtime allowed all 38 repository tests,
+including the Java suites, to execute (no skips) after incorporating the PR
+branch's concurrent merge of Media3 changes from main. CI uses actual javac 17 via
+`checks.yml`; `main.yml` has the Android build with SDK 36 / NDK 27.0.12077973.
+The full local Android build cannot run (`haxelib: command not found`). Haxe
+Formatter/Checkstyle likewise require the missing toolchain.
+
+## Device acceptance still required
+
+On API 28/29, 30–34 and 35/36 cutout and non-cutout displays:
+
+1. Toggle repeatedly: checked must avoid the cutout; unchecked must expand into
+   it without restarting. No accumulating bars or padding.
+2. Verify touch, clicks and dragging at all four surface edges and on mobile
+   controls. Check resize events, native surface size and rendered coordinates.
+3. Rotate both landscape directions (portrait if supported), background/resume,
+   and show/dismiss transient bars. Padding must follow the current cutout.
+4. Recreate Activity, force-stop/relaunch, reopen options and reset defaults:
+   saved selection must reapply; default must respect the cutout.
+5. Non-cutout devices must gain no cutout padding; unrelated bars/IME behavior
+   and desktop/iOS behavior must remain unchanged. Inspect logcat diagnostics.
