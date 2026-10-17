@@ -4,6 +4,24 @@ Generated from full repo audit. Priority: `[P0]` critical/blocker, `[P1]` high, 
 
 ---
 
+## 0. PRIORITY-ish / UNCATEGORIZED
+
+- FIX `BF-CLICKER`!!! _(i wont release v0.0.1 UNTIL i fix this)_
+
+- FIX UPDATE SCREEN TO USE THIS REPO INSTEAD OF JSE!!! _(i also wont release v0.0.1 UNTIL i fix this)_
+
+- FIX IN-GAME ENGINE WATERMARK VERSIONING (its 0.3.2 instead or the real one) _(i ALSO wont release v0.0.1 UNTIL i fix this)_
+
+- Windows 7 support by patching some libs _(prob impossible but whatever)_
+
+- COMPRESS ALL IMAGES **AND FIX ITS XML SPRITESHEET COORDINATES!!!!!!!!!!** to 2 times lower res _(for low end devices, but will prob be low-res by default since its the main Phoenix engine focus)_
+
+- Rewrite all code from [x] to [y]:
+  - C -> Rust
+  - Java -> Kotlin
+  - Objective-C -> Swift (maybe???)
+  - JavaScript -> TypeScript (only for complex code bits)
+
 ## 1. BUILD / TOOLCHAIN (all targets green)
 
 - **[P0] HashLink target blocked.** `lime.hdll` missing locally, HL wasn't verifiable, HL agent dead-ended. Install a compatible HashLink (`lime.hdll` + `lime-hdiowrap`), fix any compile errors, re-enable the `hl` CI job in `.github/workflows/main.yml`. ([#63](https://github.com/havaianasdestruido/FNF-Phoenix-Engine/issues/63))

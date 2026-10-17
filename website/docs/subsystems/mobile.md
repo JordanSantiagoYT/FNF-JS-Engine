@@ -46,7 +46,7 @@ dialog — accepting it works fine.
 | `mobile.flixel.FlxHitbox` | the four-lane gameplay hitbox |
 | `mobile.flixel.FlxButton` | touch-friendly button base |
 | `mobile.MobileControlsSelectSubState` | layout picker |
-| `mobile.options.MobileOptionsSubState` | mobile-only settings |
+| `mobile.options.MobileOptionsSubState` | mobile-only settings (listed in the options menu on android/ios only) |
 
 Opacity and extra toggles come from `ClientPrefs.mobileCAlpha` and `mobileCEx`.
 Menus add a virtual pad; `PlayState` adds the hitbox. Both route into the same

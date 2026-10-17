@@ -186,6 +186,8 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var rainbowTime:Float = 5.0;
 	public static var autosaveCharts:Bool = true;
 	public static var autosaveTime:Int = 240;
+	// Whether this copy claimed the phoenix:// scheme (Windows: Options -> Misc).
+	public static var deeplinkEnabled:Bool = false;
 
 	//Gameplay Modifiers
 	public static var gameplaySettings:Map<String, Dynamic> = [

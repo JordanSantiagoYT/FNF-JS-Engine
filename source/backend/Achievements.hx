@@ -48,6 +48,7 @@ class Achievements {
 		createAchievement('wowza',				{name: "Wowza!!", description: "Have 10 or more mods enabled at once."});
 		createAchievement('mr_robot',			{name: "Mr. Robot", description: "Use the frame profiler for the first time."});
 		createAchievement('lol',					{name: "Get a Job!", description: "Play the game for 50 hours.", maxScore: 50, maxDecimals: 2});
+		createAchievement('bad_mod',				{name: "Bad Mod", description: "Add a mod with invalid data."});
 
 		//dont delete this thing below
 		_originalLength = _sortID + 1;
@@ -237,6 +238,7 @@ class Achievements {
 							lime.app.Application.current.window.alert(errorMsg, errorTitle);
 							#end
 							trace('$errorTitle - $errorMsg');
+							if(Mods.currentModDirectory != null) Mods.markInvalidMod();
 							continue;
 						}
 
@@ -249,6 +251,7 @@ class Achievements {
 							lime.app.Application.current.window.alert(errorMsg, errorTitle);
 							#end
 							trace('$errorTitle - $errorMsg');
+							if(Mods.currentModDirectory != null) Mods.markInvalidMod();
 							continue;
 						}
 						key = key.trim();
@@ -264,6 +267,7 @@ class Achievements {
 				lime.app.Application.current.window.alert(errorMsg, errorTitle);
 				#end
 				trace('$errorTitle - $errorMsg');
+				if(Mods.currentModDirectory != null) Mods.markInvalidMod();
 			}
 		}
 		return retVal;

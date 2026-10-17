@@ -26,8 +26,34 @@ class Mods
 
 	private static var globalMods:Array<String> = [];
 
+	/**
+	 * Folders of mods that were installed but whose data couldn't be parsed
+	 * (invalid `pack.json`, broken `achievements.json`, ...).
+	 * Used by the `bad_mod` achievement.
+	 */
+	public static var invalidMods:Array<String> = [];
+
 	inline public static function getGlobalMods()
 		return globalMods;
+
+	/**
+	 * Registers a mod folder that contains invalid data and awards the `bad_mod` achievement.
+	 * @param folder Mod folder, defaults to the currently loaded mod.
+	 */
+	public static function markInvalidMod(?folder:String = null):Void
+	{
+		if(folder == null) folder = currentModDirectory;
+		if(folder == null) folder = '';
+
+		if(invalidMods.contains(folder)) return;
+
+		invalidMods.push(folder);
+		trace('Mod "$folder" has invalid data.');
+
+		#if ACHIEVEMENTS_ALLOWED
+		if(Achievements.exists('bad_mod')) Achievements.unlock('bad_mod');
+		#end
+	}
 
 	inline public static function pushGlobalMods() // prob a better way to do this but idc
 	{
@@ -133,6 +159,7 @@ class Mods
 				if(rawJson != null && rawJson.length > 0) return tjson.TJSON.parse(rawJson);
 			} catch(e:Dynamic) {
 				trace(e);
+				markInvalidMod(folder);
 			}
 		}
 		#end

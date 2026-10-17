@@ -26,8 +26,9 @@ Under `GAMEMODE_ALLOWED` (Linux desktop), requests Feral GameMode. Failure is no
 
 In order:
 
-1. `backend.deeplink.DeepLinks.init()` — registers the `phoenix://` handler so a link that
-   launched the app is queued before any state exists.
+1. `backend.deeplink.DeepLinks.init()` — arms the native callbacks so a `phoenix://` link
+   that launched the app is queued before any state exists. It registers nothing: on
+   Windows the scheme is claimed by the player from Options → Misc ("Toggle Deeplink").
 2. **Mobile only**: `mobile.StorageUtil.requestPermissions()`, then on Android
    `android.platform.AndroidPlatform.init()` (lifecycle, media session, audio focus,
    gamepads, memory handling), then `Sys.setCwd(StorageUtil.getStorageDirectory())` so all

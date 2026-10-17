@@ -91,6 +91,8 @@ class Main extends Sprite
   public function new()
   {
     super();
+    // Only queues any phoenix:// link that launched the game; registering the
+    // scheme itself is opt-in from Options -> Misc, never done on startup.
     backend.deeplink.DeepLinks.init();
     #if mobile
     #if android

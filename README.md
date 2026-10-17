@@ -32,7 +32,7 @@ Run it locally with `cd website && npm install && npm start`.
 
 ---
 
-<b>IMPORTANT: if you want to clone the repo (for making a pull request or for building locally), use <code>git clone -b main --single-branch https://github.com/havaianasdestruido/FNF-Phoenix-Engine.git</code> so you only git clone _only the main branch_, the other ones are for experiments or are extremely old.</b>
+**IMPORTANT: You are in the `main` branch, where i will ONLY add stuff that is 100% (ok, maybe 99.9%) sure it will work, if you want a more "Canary"-ish experiency, go check `bleeding` for bleeding-edge updates.** _Keep in mind that small patches CAN go directly to main if i think its good enough..._
 
 Phoenix Engine focuses on making both Hardmodding (Hardcoded mods, using `Haxe`) *AND* Softmodding (mods you place on `mods/` folder, made with `Lua`/`Luau` or `Python`) easier.
 
@@ -498,7 +498,7 @@ _____________________________________
 * You can add a head icon, name, description and a Redirect link for when the player presses Enter while the item is currently selected.
 
 ## Awards/Achievements
-* The engine comes with 16 example achievements that you can mess with and learn how it works (Check Achievements.hx and search for "checkForAchievement" on PlayState.hx)
+* The engine comes with 21 example achievements that you can mess with and learn how it works (Check Achievements.hx and search for "checkForAchievement" on play/helpers/PlayStatePlayback.hx)
 
 ## Options menu:
 * You can change Note colors, Delay and Combo Offset, Controls and Preferences there.
