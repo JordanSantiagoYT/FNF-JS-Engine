@@ -688,6 +688,12 @@ class Project extends HXProject
 		// these into the generated Gradle project's java source set.
 		this.javaPaths.push("source/android/src");
 
+		// Lime treats a directory containing build.gradle as an Android library
+		// dependency and wires it into the generated app module. Keep Media3 in
+		// this tiny Android-only shim rather than copying/owning Lime's app
+		// build.gradle template, so normal Lime template updates keep applying.
+		this.dependencies.push(new Dependency("phoenix-media3", "source/android/media3"));
+
 		// Engine platform templates (MainActivity, AndroidManifest overrides).
 		// Pushed so they take priority over haxelib template paths.
 		this.templatePaths.push("source/templates");

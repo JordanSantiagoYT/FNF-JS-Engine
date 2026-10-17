@@ -89,7 +89,7 @@ gameplay → android.platform.*  →  AndroidBridge (JNI)  →  quack.fnf.phoeni
 |---|---|
 | `AndroidPlatform` | boots everything from `Main` |
 | `AndroidLifecycle` | pause/resume/focus events |
-| `AndroidMedia` + `PhoenixMedia`/`PhoenixMediaService` | MediaSession / Media3 metadata, lock-screen and Bluetooth controls, background playback |
+| `AndroidMedia` + `PhoenixMedia`/`PhoenixMediaService` | Media3 MediaSession metadata, lock-screen and Bluetooth controls, MediaSessionService-backed background visibility |
 | `AndroidDisplay` | cutouts, insets, refresh rate, immersive mode |
 | `AndroidStorage` | permissions and scoped storage |
 | `AndroidHardwareInput`, `AndroidGamepad`, `AndroidHaptics` | keys, controllers, vibration |

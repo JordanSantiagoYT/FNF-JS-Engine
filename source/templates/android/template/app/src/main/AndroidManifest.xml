@@ -48,12 +48,18 @@
 
 		</activity>
 
-		<!-- Foreground service keeping media playback (and its MediaStyle
-		     notification) alive while the Activity is backgrounded. -->
+		<!-- Media3 owns the foreground media notification and exports this
+		     session to system clients (lock screen, Bluetooth, Android Auto). -->
 		<service
 			android:name="quack.fnf.phoenix.android.PhoenixMediaService"
-			android:exported="false"
-			android:foregroundServiceType="mediaPlayback" />
+			android:exported="true"
+			android:foregroundServiceType="mediaPlayback">
+			<intent-filter>
+				<action android:name="androidx.media3.session.MediaSessionService" />
+				<!-- Lets legacy MediaBrowser clients discover the Media3 session. -->
+				<action android:name="android.media.browse.MediaBrowserService" />
+			</intent-filter>
+		</service>
 
 		::if (ANDROID_USE_ANDROIDX)::
 		<provider

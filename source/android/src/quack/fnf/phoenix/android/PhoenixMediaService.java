@@ -1,87 +1,69 @@
+/*
+ * Copyright (C) 2026 Phoenix Engine Contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
 package quack.fnf.phoenix.android;
 
-import android.app.Notification;
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
+import android.util.Log;
+
+import androidx.media3.session.MediaSession;
+import androidx.media3.session.MediaSessionService;
 
 /**
- * Foreground service backing the MediaStyle notification so playback state
- * can legitimately survive the Activity moving to the background.
+ * Hosts Phoenix's Media3 session while gameplay is backgrounded.
  *
- * Playback itself stays in the Haxe/Flixel layer; this service only keeps
- * the process (and the notification) alive and forwards its action buttons
- * to Haxe through PhoenixCore's event channel.
+ * MediaSessionService supplies the synchronized MediaStyle notification and
+ * makes the session discoverable to system media clients. The actual audio
+ * remains in the Haxe/Flixel layer; PhoenixMedia's mirrored Player forwards
+ * controller actions back to that layer.
  *
  * Part of the Phoenix Android platform layer. See docs/ANDROID_PLATFORM.md.
  */
-public class PhoenixMediaService extends Service
+public class PhoenixMediaService extends MediaSessionService
 {
-	private static final int SERVICE_NOTIFICATION_ID = PhoenixMedia.MEDIA_NOTIFICATION_ID;
-
-	@Override public int onStartCommand(Intent intent, int flags, int startId)
+	@Override public void onCreate()
 	{
-		String action = intent != null ? intent.getAction() : null;
+		super.onCreate();
 
-		if (PhoenixMedia.ACTION_STOP.equals(action))
+		try
 		{
-			PhoenixCore.dispatch("media", "stop");
-			stopForeground(true);
-			stopSelf();
-			PhoenixMedia.setForegroundServiceRunningInternal(false);
-			return START_NOT_STICKY;
+			MediaSession session = PhoenixMedia.getSessionForService(getApplicationContext());
+			if (session != null)
+				addSession(session);
+			PhoenixMedia.onMediaServiceCreated();
 		}
-
-		if (PhoenixMedia.ACTION_PLAY.equals(action) || PhoenixMedia.ACTION_PAUSE.equals(action))
+		catch (Exception e)
 		{
-			PhoenixCore.dispatch("media", PhoenixMedia.ACTION_PLAY.equals(action) ? "play" : "pause");
-
-			// Notification-button intents carry no extras: only forward the
-			// event and let the engine refresh the notification itself.
-			// Rebuilding it here would wipe the metadata. Only intents
-			// started by the engine (which attach title/artist) promote or
-			// update the notification below.
-			if (intent == null || !intent.hasExtra("title"))
-				return START_NOT_STICKY;
+			Log.e(PhoenixMedia.LOG_TAG, "MediaSessionService setup failed: " + e);
 		}
+	}
 
-		String title = intent != null ? intent.getStringExtra("title") : null;
-		String artist = intent != null ? intent.getStringExtra("artist") : null;
-		boolean playing = intent == null || intent.getBooleanExtra("playing", true);
-
-		Notification notification = PhoenixMedia.buildMediaNotification(
-			title != null ? title : "", artist != null ? artist : "", playing);
-
-		if (notification != null)
-		{
-			try
-			{
-				startForeground(SERVICE_NOTIFICATION_ID, notification);
-				// Foreground promotion really happened: make sure cleanup can
-				// stop the foreground service later.
-				PhoenixMedia.setForegroundServiceRunningInternal(true);
-				return START_STICKY;
-			}
-			catch (Exception e)
-			{
-				// Foreground service constraints (e.g. started from the
-				// background) can reject startForeground; fall back to a
-				// regular notification rather than crashing.
-				PhoenixMedia.notify(SERVICE_NOTIFICATION_ID, notification);
-			}
-		}
-
-		return START_NOT_STICKY;
+	@Override public MediaSession onGetSession(MediaSession.ControllerInfo controllerInfo)
+	{
+		return PhoenixMedia.getSessionForService(getApplicationContext());
 	}
 
 	@Override public void onDestroy()
 	{
-		PhoenixMedia.setForegroundServiceRunningInternal(false);
+		PhoenixMedia.onMediaServiceDestroyed();
 		super.onDestroy();
-	}
-
-	@Override public IBinder onBind(Intent intent)
-	{
-		return null;
 	}
 }

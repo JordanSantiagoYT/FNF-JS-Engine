@@ -55,21 +55,27 @@ The Android pieces are injected **only for the Android target**
 
 - `javaPaths.push("source/android/src")` — Lime copies the Java extensions into
   the generated Gradle project's java source set.
+- `dependencies.push(new Dependency("phoenix-media3", "source/android/media3"))`
+  adds a tiny local Android library module. Its pinned
+  `androidx.media3:media3-session:1.6.1` dependency reaches the app without
+  replacing Lime's entire `app/build.gradle` template.
 - `templatePaths.push("source/templates")` — engine templates override Lime's:
   - `source/templates/android/MainActivity.java` — deep-link intents
     (`onNewIntent`) and hardware-key interception.
   - `source/templates/android/template/app/src/main/AndroidManifest.xml` —
-    `phoenix://` intent filter, `PhoenixMediaService`
-    (`foregroundServiceType="mediaPlayback"`), FileProvider, and the
-    `PhoenixDocumentsProvider` SAF provider. Its registration remains behind
-    Lime's `SHARE_FILES` template condition (derived from `SHARE_MOBILE_FILES`).
-- `config.set("android.extension", [...])` — registers the five
+    `phoenix://` intent filter, the exported Media3 `PhoenixMediaService`
+    (`foregroundServiceType="mediaPlayback"` plus the
+    `androidx.media3.session.MediaSessionService` discovery action),
+    FileProvider, and the `PhoenixDocumentsProvider` SAF provider. Its
+    registration remains behind Lime's `SHARE_FILES` template condition
+    (derived from `SHARE_MOBILE_FILES`).
+- `config.push("android.extension", extension, true)` — registers the five
   `Extension` subclasses (`PhoenixCore`, `PhoenixDisplay`,
   `PhoenixInput`, `PhoenixMedia`, `PhoenixStorage`) with Lime's
   GameActivity. `PhoenixMediaService` is an Android `Service` and
   `PhoenixDocumentsProvider` is a framework `DocumentsProvider`; both
   are declared directly in the manifest template.
-- `config.set("android.permission", [...])` — Lime's defaults plus
+- `config.push("android.permission", permission, true)` — Lime's defaults plus
   `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`,
   `FOREGROUND_SERVICE_MEDIA_PLAYBACK`.
 - Signing: `PHOENIX_KEYSTORE`, `PHOENIX_KEYSTORE_PASSWORD`,
@@ -151,7 +157,7 @@ a no-op outside `#if android` unless noted.
 | `AndroidPlatform` | One-shot boot | `init(autoPauseAudio, watchDisplay)` |
 | `AndroidBridge` | JNI plumbing | Event dispatch, `ensureRegistered()` |
 | `AndroidLifecycle` | Activity lifecycle | `onCreate/onResume/onPause/onStop/onDestroy` signals, optional auto-pause of `FlxG.sound.music` |
-| `AndroidMedia` | MediaSession/audio focus | `updateNowPlaying(title, artist, ?durationMs)`, `setPlaybackState(state, positionMs, speed)`, `updateNotification`, foreground service start/stop, `requestAudioFocus()`/`abandonAudioFocus()`, `getAudioInfo()`, signals `onPlay/onPause/onStop/onNext/onPrevious/onSeek/onAudioFocusChanged` |
+| `AndroidMedia` | Media3 MediaSession/audio focus | `updateNowPlaying(title, artist, ?durationMs, ?album, ?artworkPath)`, `setPlaybackState(state, positionMs, speed)`, MediaSessionService start/stop, `requestAudioFocus()`/`abandonAudioFocus()`, `getAudioInfo()`, signals `onPlay/onPause/onStop/onNext/onPrevious/onSeek/onAudioFocusChanged` |
 | `AndroidSystem` | Device state | `onLowMemory`/`onTrimMemory`, `getBatteryInfo()`, `acquireWakeLock()`/`releaseWakeLock()`, `setRecoveryState(blob)`/`consumeRecoveryState()` |
 | `AndroidDisplay` | Screen info | `getInfo()` (size, DPI, orientation, refresh), `getCutoutInsets()`, `getRefreshRate()`, `setImmersive()`, `setCutoutMode()`, `setPreferredRefreshRate()`, `onChanged` |
 | `AndroidGamepad` | Controllers | `getDevices()`/`getDevice(id)` with Xbox/PlayStation/Switch/HID identification, `onConnected`/`onDisconnected`, rumble via `vibrate(deviceId, ms)` |
@@ -173,20 +179,29 @@ and break `lime.system.System` on Android.
 `PlayState.create()` starts and `PlayState.destroy()` stops the Android
 media integration:
 
-- The current song is published to the MediaSession
-  (title/duration at create; state + position refreshed once per second).
+- The current song is published to Media3's `MediaSession` (title, chart
+  creator, engine album, optional creator artwork and duration at create;
+  state, pitch and position refresh once per second). Artwork paths can point
+  at a mod file, a Lime Android asset, or a `content://` URI; small local
+  artwork is copied into session metadata so outside clients do not need
+  access to the game's private files.
+- `PhoenixMediaService` extends Media3's `MediaSessionService`. Media3 keeps
+  its MediaStyle foreground notification synchronized with the mirrored
+  player, and advertises the session to lock-screen controls, Bluetooth,
+  Android Auto and compatible media browsers.
 - Audio focus is requested on start and abandoned on stop; focus **loss
   pauses the game**, **duck** lowers music volume, **gain** restores it.
 - The screen is kept on for the duration of gameplay via
   `FLAG_KEEP_SCREEN_ON` on the activity window.
-- A MediaStyle notification is kept in sync via `PhoenixMediaService`.
 - A recovery blob (`{type:"song", song, difficulty, difficulties, mod}`) is persisted while
   playing and cleared on a clean exit, so a process kill mid-song can be
   recovered (see below).
 
 Media buttons: **play** resumes from the pause menu, **pause/stop** open
-it. `seek` is exposed as a signal (`AndroidMedia.onSeek`) rather than
-applied automatically, because seeking mid-song would desync the chart.
+it. Physical **next** and **previous** media-button events are forwarded as
+`AndroidMedia` signals for mods or custom song queues. `seek` is also exposed
+as a signal (`AndroidMedia.onSeek`) rather than applied automatically, because
+seeking mid-song would desync the chart.
 
 ### Process-death recovery
 
