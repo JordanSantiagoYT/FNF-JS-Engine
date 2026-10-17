@@ -25,6 +25,12 @@ class PhillyStreetsBF extends BaseStage
 	var scrollingSky:FlxTiledSprite;
 	var phillyTraffic:BGSprite;
 
+	override public function onViewportResize():Void
+	{
+		if (scrollingSky != null)
+			scrollingSky.width = Math.max(scrollingSky.graphic.width + 400, (FlxG.width + 900) / 0.65);
+	}
+
 	var phillyCars:BGSprite;
 	var phillyCars2:BGSprite;
 
@@ -44,6 +50,7 @@ class PhillyStreetsBF extends BaseStage
 			scrollingSky.setPosition(-650, -375);
 			scrollingSky.scrollFactor.set(0.1, 0.1);
 			scrollingSky.scale.set(0.65, 0.65);
+			onViewportResize();
 			add(scrollingSky);
 
 			var phillySkyline:BGSprite = new BGSprite('phillyStreets/phillySkyline', -545, -273, 0.2, 0.2);

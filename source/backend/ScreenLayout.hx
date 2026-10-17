@@ -29,7 +29,9 @@ class ScreenLayout
 	/** Preserve a button's distance from its nearest edge on a resize. */
 	public static inline function anchoredPosition(position:Float, oldSize:Int, newSize:Int, extent:Float):Float
 	{
-		var moved:Float = position + (position >= oldSize / 2 ? newSize - oldSize : 0);
+		// Classify by the button's center, not its left edge: wide buttons
+		// straddling the midpoint still belong to the right-side cluster.
+		var moved:Float = position + (position + extent / 2 >= oldSize / 2 ? newSize - oldSize : 0);
 		return Math.max(0, Math.min(Math.max(0, newSize - extent), moved));
 	}
 }

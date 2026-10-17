@@ -24,7 +24,7 @@ ratio; the preference does not force an orientation or override cutout policy.
 | Main menu, title, options, freeplay, story, achievements, credits, mods, warnings | Cover large menu artwork without non-uniform scaling; fill solid backgrounds/bars; re-center menu entries and reflow their `Alphabet.startPosition` animation targets. Keep freeplay search controls at the right edge and story character/art arrangements within the centered 1280-wide area. |
 | Pause, options, gameplay changes, score reset, mobile-controls selector, fade transition | Reflow the open substate on resize, including solid overlay coverage, text, virtual pads and button hitboxes. |
 | Mobile hitboxes and custom virtual pad | Use contiguous integer lane boundaries that reach the rightmost pixel even at odd widths; rebuild graphics *and* button bounds on resize; keep extra lanes adjacent, right-side buttons at the right edge and saved custom positions relative to their original viewport width. Dispose resize listeners with their owner. |
-| Stage spotlight, lightning, cutscene and full-screen flashes | Use a scalable solid overscan region for camera zoom and live resize. World animations keep their 1280-based timings/positions; rain shaders already receive the current camera/view dimensions every frame. |
+| Stage spotlight, lightning, cutscene and full-screen flashes | Use a scalable solid overscan region for camera zoom and live resize. World animations keep their 1280-based timings/positions; rain shaders already receive the current camera/view dimensions every frame. Weekend Philly skies extend tiled geometry to both wide edges without stretching the artwork. |
 | Dialogue, cutscene video, skip affordances | Reflow portraits, text and cover sprites. Video preserves its source aspect ratio, crops to cover rather than stretching; the skip control stays at the screen edge. |
 | Fragment shaders | The 3D projection reads OpenFL's live texture dimensions instead of hard-coding 16:9. Other active shaders use their source texture or the per-frame screen resolution; the unused fixed VFD size is removed. |
 | Screenshot and FFmpeg frame capture | Screenshot flash/preview track **physical** surface pixels. FFmpeg's raw RGBA frames and declared `-s` both use physical window pixels, including optional letterboxing. An in-progress recording is finalized if the physical window/frame size changes, rather than writing malformed frames; odd output dimensions are padded for encoders requiring even sizes. |
@@ -48,8 +48,9 @@ interpreter test executes the production viewport and touch math for 16:9,
 Both run in the Checks workflow (which installs Haxe 4.3.7 for the latter).
 The interpreter runner copies the production math module to an isolated
 classpath, since the application's global `source/import.hx` needs the full
-Flixel/OpenFL dependency graph. Desktop builds run in the normal PR workflow;
-mobile builds can be requested separately from the Mobile workflow.
+Flixel/OpenFL dependency graph. Windows and Android builds are selected in
+the normal PR workflow; extra targets can be requested separately from the
+Build/Mobile workflows.
 
 The pure geometry tests and integration guards **cannot prove pixel-perfect
 rendering**. For release validation, compare screenshots at 1280×720,

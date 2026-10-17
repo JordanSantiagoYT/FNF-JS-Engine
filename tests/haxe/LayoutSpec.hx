@@ -64,6 +64,7 @@ class LayoutSpec
 		equal(ScreenLayout.anchoredPosition(1148, 1280, 1720, 132), 1588.0, 'right edge');
 		equal(ScreenLayout.anchoredPosition(1588, 1720, 1280, 132), 1148.0, 'right edge rollback');
 		equal(ScreenLayout.anchoredPosition(105, 1280, 1720, 132), 105.0, 'left edge');
+		equal(ScreenLayout.anchoredPosition(628, 1280, 1720, 132), 1068.0, 'right button straddles midpoint');
 		equal(ScreenLayout.anchoredPosition(2000, 2560, 1280, 132), 720.0, 'right edge shift');
 		equal(ScreenLayout.anchoredPosition(3000, 2560, 1280, 132), 1148.0, 'clamped to screen');
 		trace('LayoutSpec passed');

@@ -116,6 +116,12 @@ class WidescreenIntegration(unittest.TestCase):
                      "stages/Mall.hx", "stages/School.hx", "stages/SchoolEvil.hx"):
             with self.subTest(name=name):
                 self.assertIn("ViewportVisuals.overscan(", source(name))
+        for name in ("stages/PhillyBlazin.hx", "stages/PhillyStreets.hx",
+                     "stages/PhillyStreetsBF.hx"):
+            with self.subTest(name=name):
+                self.assertIn("override public function onViewportResize()", source(name))
+                self.assertIn("scrollingSky.width = Math.max(", source(name))
+                self.assertIn("onViewportResize();", source(name))
         render = source("play/helpers/PlayStateRender.hx")
         self.assertIn("state.img = window.readPixels()", render)
         self.assertIn("state.img.width != state.renderWidth", render)
