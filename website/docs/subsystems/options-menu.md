@@ -57,7 +57,7 @@ redraw is guarded, because this menu used to re-layout every frame.
 | Visuals and UI | `VisualsUISubState` |
 | Gameplay | `GameplaySettingsSubState` |
 | Misc | `MiscSettingsSubState` |
-| Mobile Options | `mobile.options.MobileOptionsSubState` |
+| Mobile Options *(android/ios)* | `mobile.options.MobileOptionsSubState` |
 
 `options.SuperSecretDebugMenu` is the hidden debug menu behind `FEATURE_DEBUG_FUNCTIONS`.
 Helpers live in `options/helpers/` (`NotesSubStateHelpers` for the colour previews,
