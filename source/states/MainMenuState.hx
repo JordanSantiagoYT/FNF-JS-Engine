@@ -242,6 +242,7 @@ class MainMenuState extends MusicBeatState
 
     #if MODS_ALLOWED
     Achievements.reloadList();
+    if (Mods.parseList().enabled.length >= 10) Achievements.unlock('wowza');
     #end
     #end
 

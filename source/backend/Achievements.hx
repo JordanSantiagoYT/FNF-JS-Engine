@@ -45,6 +45,7 @@ class Achievements {
 		createAchievement('two_keys',				{name: "Just the Two of Us", description: "Finish a Song pressing only two keys."});
 		createAchievement('toastier',				{name: "Toaster Gamer", description: "Have you tried to run the game on a toaster?"});
 		createAchievement('debugger',				{name: "Debugger", description: "Beat the \"Test\" Stage from the Chart Editor.", hidden: true});
+		createAchievement('wowza',				{name: "Wowza!!", description: "Have 10 or more mods enabled at once."});
 
 		//dont delete this thing below
 		_originalLength = _sortID + 1;
