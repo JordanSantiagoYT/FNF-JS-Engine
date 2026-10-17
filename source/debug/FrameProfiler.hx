@@ -4,6 +4,9 @@ import Date;
 import DateTools;
 import Type;
 import backend.ClientPrefs;
+#if ACHIEVEMENTS_ALLOWED
+import backend.Achievements;
+#end
 import debug.profiler.NativeFrameProfiler;
 import flixel.FlxG;
 import lime.app.Application;
@@ -382,6 +385,7 @@ class FrameProfiler
   public static function showOverlay():Void
   {
     overlayVisible = true;
+    awardFirstUseAchievement();
   }
 
   /**
@@ -399,7 +403,18 @@ class FrameProfiler
   public static function toggleOverlay():Bool
   {
     overlayVisible = !overlayVisible;
+    if (overlayVisible)
+      awardFirstUseAchievement();
     return overlayVisible;
+  }
+
+  /** Awards the badge only when the player actively opens the profiler. */
+  private static function awardFirstUseAchievement():Void
+  {
+    #if ACHIEVEMENTS_ALLOWED
+    if (!Achievements.isUnlocked("mr_robot") && Achievements.exists("mr_robot"))
+      Achievements.unlock("mr_robot");
+    #end
   }
 
   private static function get_rssSampleIntervalFrames():Int
