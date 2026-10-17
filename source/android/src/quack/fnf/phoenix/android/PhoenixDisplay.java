@@ -25,6 +25,47 @@ import org.json.JSONObject;
 public class PhoenixDisplay extends Extension
 {
 	private static DisplayManager.DisplayListener displayListener = null;
+	private static View insetContent;
+	private static boolean respectCutout;
+	private static int paddingLeft, paddingTop, paddingRight, paddingBottom;
+
+	/** Android 15+ enforces edge-to-edge for our target SDK. Inset the actual
+	 * content container so SDL receives a resized surface (and matching input).
+	 * Keep physical cutout reporting unchanged for bridge callers.
+	 */
+	private static void updateCutoutPadding(Activity activity, boolean respect)
+	{
+		respectCutout = respect;
+		final View content = activity.findViewById(android.R.id.content);
+		if (content == null)
+			return;
+		if (insetContent != content)
+		{
+			insetContent = content;
+			paddingLeft = content.getPaddingLeft();
+			paddingTop = content.getPaddingTop();
+			paddingRight = content.getPaddingRight();
+			paddingBottom = content.getPaddingBottom();
+			content.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener()
+			{
+				@Override public WindowInsets onApplyWindowInsets(View view, WindowInsets insets)
+				{
+					DisplayCutout cutout = insets.getDisplayCutout();
+					boolean safe = respectCutout && cutout != null;
+					view.setPadding(paddingLeft + (safe ? cutout.getSafeInsetLeft() : 0),
+						paddingTop + (safe ? cutout.getSafeInsetTop() : 0),
+						paddingRight + (safe ? cutout.getSafeInsetRight() : 0),
+						paddingBottom + (safe ? cutout.getSafeInsetBottom() : 0));
+					return insets;
+				}
+			});
+		}
+		// Drop the previous safe padding immediately; the next inset pass adds
+		// current (possibly rotated) values back only in respect mode.
+		content.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+		content.requestApplyInsets();
+		content.requestLayout();
+	}
 
 	/**
 	 * Returns display information as a JSON object:
@@ -234,15 +275,24 @@ public class PhoenixDisplay extends Extension
 				try
 				{
 					WindowManager.LayoutParams attributes = activity.getWindow().getAttributes();
-					if ("always".equals(mode))
+					if ("always".equals(mode) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
 						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 					else if ("never".equals(mode))
 						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
-					else if ("shortEdges".equals(mode))
+					else if ("shortEdges".equals(mode) || "always".equals(mode))
 						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 					else
 						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
+					// API 35+ may ignore NEVER for non-floating windows. Use an
+					// edge-to-edge window plus native content padding instead.
+					if (Build.VERSION.SDK_INT >= 35)
+					{
+						attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+						updateCutoutPadding(activity, "never".equals(mode));
+					}
 					activity.getWindow().setAttributes(attributes);
+					activity.getWindow().getDecorView().requestApplyInsets();
+					activity.getWindow().getDecorView().requestLayout();
 				}
 				catch (Exception ignored) {}
 			}
@@ -354,5 +404,6 @@ public class PhoenixDisplay extends Extension
 	@Override public void onDestroy()
 	{
 		unregisterDisplayListener();
+		insetContent = null;
 	}
 }

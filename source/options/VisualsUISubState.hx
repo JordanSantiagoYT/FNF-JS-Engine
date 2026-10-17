@@ -26,6 +26,17 @@ class VisualsUISubState extends BaseOptionsMenu
 		title = 'Visuals and UI';
 		rpcTitle = 'Visuals & UI Settings Menu'; //for Discord Rich Presence
 
+    #if android
+    var cutoutOption = new Option('Respect cut-out',
+      'Checked: keep content clear of the notch/camera.\nUnchecked: Real Fullscreen, including the cut-out area. Applies immediately.',
+      'respectCutout', 'bool', true);
+    addOption(cutoutOption);
+    cutoutOption.onChange = function() {
+      ClientPrefs.applyCutoutPreference();
+      ClientPrefs.saveSettings();
+    };
+    #end
+
 		// for note skins
 		notes = new FlxTypedGroup<StrumNote>();
 		for (i in 0...Note.colArray.length)
