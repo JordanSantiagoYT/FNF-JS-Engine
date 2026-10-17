@@ -23,11 +23,11 @@
 package mobile;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.group.FlxSpriteGroup;
 import flixel.math.FlxPoint;
-import flixel.util.FlxDestroyUtil;
 import flixel.util.FlxSignal;
 import mobile.flixel.FlxButton;
 import mobile.flixel.FlxHitbox;
@@ -85,13 +85,9 @@ class MobileControls extends FlxSpriteGroup
 
 	override public function destroy():Void
 	{
-		super.destroy();
-
-		if (virtualPad != null)
-			virtualPad = FlxDestroyUtil.destroy(virtualPad);
-
-		if (hitbox != null)
-			hitbox = FlxDestroyUtil.destroy(hitbox);
+		super.destroy(); // Children own their resize listeners; avoid destroying twice.
+		virtualPad = null;
+		hitbox = null;
 	}
 
 	private static function get_mode():String
@@ -120,10 +116,14 @@ class MobileControls extends FlxSpriteGroup
 			return virtualPad;
 
 		var tempCount:Int = 0;
-		for (buttons in virtualPad)
+		final savedWidth:Int = FlxG.save.data.buttonsWidth == null ? ScreenLayout.BASE_WIDTH : Std.int(FlxG.save.data.buttonsWidth);
+		for (button in virtualPad)
 		{
-			buttons.x = FlxG.save.data.buttons[tempCount].x;
-			buttons.y = FlxG.save.data.buttons[tempCount].y;
+			if (tempCount < FlxG.save.data.buttons.length && FlxG.save.data.buttons[tempCount] != null)
+			{
+				button.x = ScreenLayout.anchoredPosition(FlxG.save.data.buttons[tempCount].x, savedWidth, FlxG.width, button.width);
+				button.y = FlxG.save.data.buttons[tempCount].y;
+			}
 			tempCount++;
 		}
 
@@ -132,26 +132,10 @@ class MobileControls extends FlxSpriteGroup
 
 	private static function set_customVirtualPad(virtualPad:FlxVirtualPad):FlxVirtualPad
 	{
-		if (FlxG.save.data.buttons == null)
-		{
-			FlxG.save.data.buttons = new Array();
-			for (buttons in virtualPad)
-			{
-				FlxG.save.data.buttons.push(FlxPoint.get(buttons.x, buttons.y));
-				FlxG.save.flush();
-			}
-		}
-		else
-		{
-			var tempCount:Int = 0;
-			for (buttons in virtualPad)
-			{
-				FlxG.save.data.buttons[tempCount] = FlxPoint.get(buttons.x, buttons.y);
-				FlxG.save.flush();
-				tempCount++;
-			}
-		}
-
+		FlxG.save.data.buttons = [for (button in virtualPad) FlxPoint.get(button.x, button.y)];
+		// Legacy saves without this field were authored in the 1280-wide viewport.
+		FlxG.save.data.buttonsWidth = FlxG.width;
+		FlxG.save.flush();
 		return virtualPad;
 	}
 

@@ -8,6 +8,8 @@ import flixel.ui.FlxButton;
 
 // REFACTOR: imports for relocated root classes
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.DiscordClient;
 import backend.MusicBeatSubstate;
 import objects.Alphabet;
@@ -32,6 +34,28 @@ class BaseOptionsMenu extends MusicBeatSubstate
 
 	var optionSearchText:FlxUIInputText;
 	var searchText:FlxText;
+	private var buttonTop:FlxButton;
+	private var background:FlxSprite;
+	private var titleText:Alphabet;
+	private var layoutWidth:Int = 0;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.cover(background);
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		if (grpOptions != null) grpOptions.forEach(item -> { item.startPosition.x += shift; item.x += shift; });
+		if (grpTexts != null) grpTexts.forEach(item -> item.x += shift);
+		if (checkboxGroup != null) checkboxGroup.forEach(item -> item.x += shift);
+		if (titleText != null) titleText.x += shift;
+		if (descText != null) descText.x += shift;
+		if (descBox != null) descBox.x += shift;
+		if (boyfriend != null) boyfriend.x += shift;
+		if (optionSearchText != null) optionSearchText.x = FlxG.width - optionSearchText.width;
+		if (buttonTop != null) buttonTop.x = FlxG.width - buttonTop.width;
+		if (searchText != null && buttonTop != null) searchText.x = buttonTop.x + 195;
+		layoutWidth = FlxG.width;
+	}
 
 	public var title:String;
 	public var rpcTitle:String;
@@ -39,6 +63,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 	public function new()
 	{
 		super();
+		layoutWidth = FlxG.width;
 
 		if(title == null) title = 'Options';
 		if(rpcTitle == null) rpcTitle = 'Options Menu';
@@ -47,11 +72,11 @@ class BaseOptionsMenu extends MusicBeatSubstate
 		DiscordClient.changePresence(rpcTitle, null);
 		#end
 
-		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
-		bg.color = 0xFFea71fd;
-		bg.screenCenter();
-		bg.antialiasing = ClientPrefs.globalAntialiasing;
-		add(bg);
+		background = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		background.color = 0xFFea71fd;
+		ViewportVisuals.cover(background);
+		background.antialiasing = ClientPrefs.globalAntialiasing;
+		add(background);
 
 		// avoids lagspikes while scrolling through menus!
 		grpOptions = new FlxTypedGroup<Alphabet>();
@@ -67,13 +92,13 @@ class BaseOptionsMenu extends MusicBeatSubstate
 		descBox.alpha = 0.6;
 		add(descBox);
 
-		var titleText:Alphabet = new Alphabet(75, 40, title, true);
+		titleText = new Alphabet(ScreenLayout.contentLeft(FlxG.width) + 75, 40, title, true);
 		titleText.scaleX = 0.6;
 		titleText.scaleY = 0.6;
 		titleText.alpha = 0.4;
 		add(titleText);
 
-		descText = new FlxText(50, 600, 1180, "", 32);
+		descText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 50, 600, 1180, "", 32);
 		descText.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		descText.scrollFactor.set();
 		descText.borderSize = 2.4;
@@ -90,7 +115,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 		optionSearchText.x = FlxG.width - optionSearchText.width;
 		add(optionSearchText);
 
-		var buttonTop:FlxButton = new FlxButton(0, optionSearchText.y + optionSearchText.height + 5, "", function() {
+		buttonTop = new FlxButton(0, optionSearchText.y + optionSearchText.height + 5, "", function() {
 			optionsSearch(optionSearchText.text);
 		});
 		buttonTop.setGraphicSize(Std.int(optionSearchText.width), 50);
@@ -99,7 +124,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 		buttonTop.x = FlxG.width - buttonTop.width;
 		add(buttonTop);
 
-		searchText = new FlxText(975, buttonTop.y + 20, 100, "Search", 24);
+		searchText = new FlxText(buttonTop.x + 195, buttonTop.y + 20, 100, "Search", 24);
 		searchText.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.BLACK);
 		add(searchText);
 		FlxG.mouse.visible = true;
@@ -432,7 +457,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 			boyfriend.destroy();
 		}
 
-		boyfriend = new Character(840, 170, 'bf', true);
+		boyfriend = new Character(ScreenLayout.contentLeft(FlxG.width) + 840, 170, 'bf', true);
 		boyfriend.setGraphicSize(Std.int(boyfriend.width * 0.75));
 		boyfriend.updateHitbox();
 		boyfriend.dance();

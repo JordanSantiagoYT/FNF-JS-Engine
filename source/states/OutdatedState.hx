@@ -1,6 +1,8 @@
 package states;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.MusicBeatState;
 import backend.Paths;
@@ -25,6 +27,16 @@ class OutdatedState extends MusicBeatState
 	var updateText:FlxText;
 	var checker:FlxBackdrop;
 	var bg:FlxSprite;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.cover(bg, 1.1);
+		if (warnText != null) { warnText.fieldWidth = FlxG.width; warnText.screenCenter(X); }
+		if (changelog != null) changelog.x = ScreenLayout.contentLeft(FlxG.width) + 100;
+		if (updateText != null) updateText.fieldWidth = FlxG.width - 20;
+	}
+
 	override function create()
 	{
 		Paths.clearStoredMemory();
@@ -36,7 +48,7 @@ class OutdatedState extends MusicBeatState
 
 		bg = new FlxSprite(0, 0).loadGraphic(Paths.image("aboutMenu", "preload"));
 		bg.color = 0xFFffd700;
-		bg.scale.set(1.1, 1.1);
+		ViewportVisuals.cover(bg, 1.1);
 		bg.antialiasing = ClientPrefs.globalAntialiasing;
 		add(bg);
 
@@ -57,7 +69,7 @@ class OutdatedState extends MusicBeatState
 		warnText.screenCenter(X);
 		add(warnText);
 
-		changelog = new FlxText(100, warnText.y + warnText.height + 20, 1080, currChanges, 16);
+		changelog = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 100, warnText.y + warnText.height + 20, 1080, currChanges, 16);
 		changelog.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(changelog);
 

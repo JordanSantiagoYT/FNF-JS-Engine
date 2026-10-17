@@ -1,6 +1,7 @@
 package stages;
 import backend.Achievements;
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import backend.Paths;
 import objects.BGSprite;
 import objects.Note;
@@ -111,7 +112,7 @@ class Limo extends BaseStage
 
 					var dancers:Array<BackgroundDancer> = grpLimoDancers.members;
 					for (i in 0...dancers.length) {
-						if(dancers[i].x < FlxG.width * 1.5 && limoLight.x > (370 * i) + 170) {
+						if(dancers[i].x < ScreenLayout.BASE_WIDTH * 1.5 && limoLight.x > (370 * i) + 170) {
 							switch(i) {
 								case 0 | 3:
 									if(i == 0) FlxG.sound.play(Paths.sound('dancerdeath'), 0.5);
@@ -133,11 +134,11 @@ class Limo extends BaseStage
 								case 2:
 									limoCorpseTwo.visible = true;
 							} //Note: Nobody cares about the fifth dancer because he is mostly hidden offscreen :(
-							dancers[i].x += FlxG.width * 2;
+							dancers[i].x += ScreenLayout.BASE_WIDTH * 2;
 						}
 					}
 
-					if(limoMetalPole.x > FlxG.width * 2) {
+					if(limoMetalPole.x > ScreenLayout.BASE_WIDTH * 2) {
 						resetLimoKill();
 						limoSpeed = 800;
 						limoKillingState = SPEEDING_OFFSCREEN;
@@ -146,7 +147,7 @@ class Limo extends BaseStage
 				case SPEEDING_OFFSCREEN:
 					limoSpeed -= 4000 * elapsed;
 					bgLimo.x -= limoSpeed * elapsed;
-					if(bgLimo.x > FlxG.width * 1.5) {
+					if(bgLimo.x > ScreenLayout.BASE_WIDTH * 1.5) {
 						limoSpeed = 3000;
 						limoKillingState = SPEEDING;
 					}

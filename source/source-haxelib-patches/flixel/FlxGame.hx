@@ -450,9 +450,42 @@ class FlxGame extends Sprite
 
 	function resizeGame(width:Int, height:Int):Void
 	{
+		if (width <= 0 || height <= 0) return; // minimized window / transient mobile surface
+
+		final oldWidth:Int = FlxG.width;
+		final oldHeight:Int = FlxG.height;
 		FlxG.resizeGame(width, height);
 
+		// Flixel's normal resize only updates camera scale, not camera size.
+		// Resize full-viewport cameras (including HUD, overlays and touch input),
+		// but leave intentional split-screen / editor cameras alone.
+		if (oldWidth != FlxG.width || oldHeight != FlxG.height)
+		{
+			for (camera in FlxG.cameras.list)
+			{
+				if (camera != null && camera.width == oldWidth && camera.height == oldHeight)
+				{
+					camera.setSize(FlxG.width, FlxG.height);
+					if (camera == FlxG.camera)
+					{
+						camera.scroll.x -= (FlxG.width - oldWidth) * 0.5;
+						camera.scroll.y -= (FlxG.height - oldHeight) * 0.5;
+					}
+				}
+			}
+			// Flixel initializes worldBounds at (-10, -10, width + 20,
+			// height + 20). Keep that margin when expanding, or the newly
+			// visible sides have no quadtree collision coverage. Respect custom
+			// bounds set by stages/mods.
+			if (FlxG.worldBounds.x == -10 && FlxG.worldBounds.y == -10
+				&& FlxG.worldBounds.width == oldWidth + 20 && FlxG.worldBounds.height == oldHeight + 20)
+				FlxG.worldBounds.set(-10, -10, FlxG.width + 20, FlxG.height + 20);
+			else if (FlxG.worldBounds.width == oldWidth && FlxG.worldBounds.height == oldHeight)
+				FlxG.worldBounds.set(FlxG.worldBounds.x, FlxG.worldBounds.y, FlxG.width, FlxG.height);
+		}
+
 		_state.onResize(width, height);
+		if (_state.subState != null) _state.subState.onResize(width, height);
 
 		FlxG.cameras.resize();
 		FlxG.signals.gameResized.dispatch(width, height);

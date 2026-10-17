@@ -10,6 +10,20 @@ class CustomFadeTransition extends MusicBeatSubstate {
 	var transGradient:FlxSprite;
 
 	var duration:Float;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		if (transGradient == null || transBlack == null) return;
+		final newWidth:Int = Std.int(FlxG.width / Math.max(camera.zoom, 0.001));
+		transGradient.scale.x = newWidth;
+		transGradient.updateHitbox();
+		transGradient.screenCenter(X);
+		transBlack.scale.x = newWidth;
+		transBlack.updateHitbox();
+		transBlack.screenCenter(X);
+	}
+
 	public function new(duration:Float, isTransIn:Bool)
 	{
 		this.duration = duration;

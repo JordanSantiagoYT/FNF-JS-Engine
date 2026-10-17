@@ -1,6 +1,8 @@
 package states.substates;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.Conductor;
 import backend.CoolUtil;
 import backend.Controls.Control;
@@ -33,6 +35,9 @@ class PauseSubState extends MusicBeatSubstate
 	var practiceText:FlxText;
 	var skipTimeText:FlxText;
 	var skipTimeTracker:Alphabet;
+	private var background:FlxSprite;
+	private var rightLabels:Array<FlxText> = [];
+	private var layoutWidth:Int = 0;
 	var curTime:Float = Math.max(0, Conductor.songPosition);
 
 	public static var inPause:Bool = false;
@@ -40,8 +45,21 @@ class PauseSubState extends MusicBeatSubstate
 
 	public static var songName:String = '';
 
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.fill(background);
+		for (label in rightLabels) label.x = FlxG.width - label.width - 20;
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		if (menuItemGroup != null)
+			menuItemGroup.forEach(item -> { item.startPosition.x += shift; item.x += shift; });
+		if (skipTimeText != null) skipTimeText.x += shift;
+		layoutWidth = FlxG.width;
+	}
+
 	override function create()
 	{
+		layoutWidth = FlxG.width;
 		if(CoolUtil.difficulties.length < 2) menuItemsOG.remove('Change Difficulty'); //No need to change difficulty if there is only one!
 
 		if(PlayState.chartingMode)
@@ -77,12 +95,11 @@ class PauseSubState extends MusicBeatSubstate
 
 		FlxG.sound.list.add(pauseMusic);
 
-		var bg:FlxSprite = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
-		bg.scale.set(FlxG.width, FlxG.height);
-		bg.updateHitbox();
-		bg.alpha = 0;
-		bg.scrollFactor.set();
-		add(bg);
+		background = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		ViewportVisuals.fill(background);
+		background.alpha = 0;
+		background.scrollFactor.set();
+		add(background);
 
 		var levelInfo:FlxText = new FlxText(20, 15, 0, PlayState.SONG.song, 32);
 		levelInfo.scrollFactor.set();
@@ -127,7 +144,9 @@ class PauseSubState extends MusicBeatSubstate
 		levelDifficulty.x = FlxG.width - (levelDifficulty.width + 20);
 		blueballedTxt.x = FlxG.width - (blueballedTxt.width + 20);
 
-		FlxTween.tween(bg, {alpha: 0.6}, 0.4, {ease: FlxEase.quartInOut});
+		rightLabels = [levelInfo, levelDifficulty, blueballedTxt, practiceText, chartingText];
+
+		FlxTween.tween(background, {alpha: 0.6}, 0.4, {ease: FlxEase.quartInOut});
 		FlxTween.tween(levelInfo, {alpha: 1, y: 20}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.3});
 		FlxTween.tween(levelDifficulty, {alpha: 1, y: levelDifficulty.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.5});
 		FlxTween.tween(blueballedTxt, {alpha: 1, y: blueballedTxt.y + 5}, 0.4, {ease: FlxEase.quartInOut, startDelay: 0.7});
@@ -414,7 +433,7 @@ class PauseSubState extends MusicBeatSubstate
 		}
 
 		for (i in 0...menuItems.length) {
-			var item = new Alphabet(90, 320, menuItems[i], true);
+			var item = new Alphabet(ScreenLayout.contentLeft(FlxG.width) + 90, 320, menuItems[i], true);
 			item.isMenuItem = true;
 			item.targetY = i;
 			menuItemGroup.add(item);

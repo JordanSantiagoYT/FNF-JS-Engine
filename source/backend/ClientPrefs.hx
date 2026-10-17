@@ -92,6 +92,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var hitboxPos:Bool = true;
 
 	//Graphics
+	public static var widescreen:Bool = true;
 	public static var lowQuality:Bool = false;
 	public static var globalAntialiasing:Bool = true;
 	public static var shaders:Bool = true;
@@ -338,6 +339,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 		}
 
     applyCutoutPreference();
+    applyWidescreenPreference();
 
 		for (flixelS in importantMap.get("flixelSound"))
 		{
@@ -366,6 +368,13 @@ class ClientPrefs { //default settings if it can't find a save file containing y
     #if android
     android.platform.AndroidDisplay.setCutoutMode(respectCutout ? "never" : "always");
     #end
+  }
+
+  /** Re-measure the live window after loading or changing the widescreen option. */
+  public static function applyWidescreenPreference():Void {
+    // During InitState.loadPrefs() Main has not installed the scale mode yet.
+    if (FlxG.game != null && Std.isOfType(FlxG.scaleMode, flixel.system.scaleModes.PhoenixScaleMode))
+      @:privateAccess FlxG.game.onResize(null);
   }
 
 	inline public static function getGameplaySetting(name:String, defaultValue:Dynamic):Dynamic {

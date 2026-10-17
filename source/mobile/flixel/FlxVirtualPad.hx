@@ -23,12 +23,12 @@
 package mobile.flixel;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import flixel.FlxG;
 import flixel.graphics.FlxGraphic;
 import flixel.graphics.frames.FlxTileFrames;
 import flixel.group.FlxSpriteGroup;
 import flixel.math.FlxPoint;
-import flixel.util.FlxDestroyUtil;
 import mobile.flixel.FlxButton;
 import openfl.display.BitmapData;
 import openfl.utils.Assets;
@@ -73,6 +73,8 @@ enum FlxActionMode
  */
 class FlxVirtualPad extends FlxTypedSpriteGroup<FlxButton>
 {
+	private var layoutWidth:Int;
+
 	public var buttonLeft:FlxButton = new FlxButton(0, 0);
 	public var buttonUp:FlxButton = new FlxButton(0, 0);
 	public var buttonRight:FlxButton = new FlxButton(0, 0);
@@ -156,8 +158,8 @@ class FlxVirtualPad extends FlxTypedSpriteGroup<FlxButton>
 				add(buttonDown = createButton(127, 125, 'down', 0xFF00FFFF));
 				add(buttonUp2 = createButton(127, 393, 'up', 0xFF12FA05));
 				add(buttonLeft2 = createButton(0, 393, 'left', 0xFFC24B99));
-				add(buttonRight2 = createButton(1145, 393, 'right', 0xFFF9393F));
-				add(buttonDown2 = createButton(1015, 393, 'down', 0xFF00FFFF));
+				add(buttonRight2 = createButton(FlxG.width - 135, 393, 'right', 0xFFF9393F));
+				add(buttonDown2 = createButton(FlxG.width - 265, 393, 'down', 0xFF00FFFF));
 			case NONE: // do nothing
 		}
 
@@ -257,20 +259,28 @@ class FlxVirtualPad extends FlxTypedSpriteGroup<FlxButton>
 			case NONE: // do nothing
 		}
 
-		if (Extra) add(buttonEx = createButton((DPad == LEFT_FULL) ? 1149 : 0, 589, 'g', 0x3D3722));
+		if (Extra) add(buttonEx = createButton((DPad == LEFT_FULL) ? FlxG.width - 131 : 0, 589, 'g', 0x3D3722));
 
 		scrollFactor.set();
+		// Right-edge buttons above use FlxG.width at construction; anchor their
+		// existing positions only on subsequent viewport changes.
+		layoutWidth = FlxG.width;
+		FlxG.signals.gameResized.add(onGameResized);
 	}
 
-	/**
-	 * Clean up memory.
-	 */
+	private function onGameResized(_:Int, _:Int):Void
+	{
+		if (layoutWidth == FlxG.width) return;
+		for (button in this)
+			button.x = ScreenLayout.anchoredPosition(button.x, layoutWidth, FlxG.width, button.width);
+		layoutWidth = FlxG.width;
+	}
+
+	/** Remove the listener; FlxTypedSpriteGroup owns the child buttons. */
 	override public function destroy():Void
 	{
+		FlxG.signals.gameResized.remove(onGameResized);
 		super.destroy();
-		for (field in Reflect.fields(this))
-			if (Std.isOfType(Reflect.field(this, field), FlxButton))
-				Reflect.setField(this, field, FlxDestroyUtil.destroy(Reflect.field(this, field)));
 	}
 
 	private function createButton(X:Float, Y:Float, Graphic:String, Color:Int = 0xFFFFFF):FlxButton

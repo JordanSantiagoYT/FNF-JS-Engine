@@ -1,6 +1,7 @@
 package stages;
 import objects.Note.EventNote;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import objects.BGSprite;
 import objects.Note;
 import play.BaseStage;
@@ -13,6 +14,9 @@ class StageWeek1 extends BaseStage
 	var dadbattleBlack:BGSprite;
 	var dadbattleLight:BGSprite;
 	var dadbattleFog:DadBattleFog;
+	override public function onViewportResize():Void
+		ViewportVisuals.overscan(dadbattleBlack);
+
 	override function create()
 	{
 		var bg:BGSprite = new BGSprite('stageback', -600, -200, 0.9, 0.9);
@@ -44,8 +48,9 @@ class StageWeek1 extends BaseStage
 		switch(event.event)
 		{
 			case "Dadbattle Spotlight":
-				dadbattleBlack = new BGSprite(null, -800, -400, 0, 0);
-				dadbattleBlack.makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.BLACK);
+				dadbattleBlack = new BGSprite(null, 0, 0, 0, 0);
+				dadbattleBlack.makeGraphic(1, 1, FlxColor.BLACK);
+				ViewportVisuals.overscan(dadbattleBlack);
 				dadbattleBlack.alpha = 0.25;
 				dadbattleBlack.visible = false;
 				add(dadbattleBlack);

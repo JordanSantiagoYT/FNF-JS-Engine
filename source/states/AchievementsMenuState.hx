@@ -2,6 +2,7 @@ package states;
 
 import backend.Achievements;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.DiscordClient;
 import backend.MusicBeatState;
@@ -28,6 +29,28 @@ class AchievementsMenuState extends MusicBeatState
 	public var progressBar:FlxBar;
 
 	var camFollow:FlxObject;
+	private var menuBackground:FlxSprite;
+	private var achievementsBox:FlxSprite;
+	private var detailsBox:FlxSprite;
+	private var layoutWidth:Int = 0;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.cover(menuBackground, 1.1);
+		final shift:Float = (FlxG.width - layoutWidth) / 2;
+		if (grpOptions != null) grpOptions.x += shift;
+		if (achievementsBox != null) achievementsBox.screenCenter(X);
+		if (detailsBox != null)
+		{
+			detailsBox.scale.set(FlxG.width, FlxG.height - detailsBox.y);
+			detailsBox.updateHitbox();
+		}
+		for (text in [nameText, descText, progressTxt])
+			if (text != null) text.fieldWidth = FlxG.width - 100;
+		if (progressBar != null) progressBar.screenCenter(X);
+		layoutWidth = FlxG.width;
+	}
 
 	var MAX_PER_ROW:Int = 4;
 
@@ -35,6 +58,7 @@ class AchievementsMenuState extends MusicBeatState
 
 	override function create()
 	{
+		layoutWidth = FlxG.width;
 		Paths.clearStoredMemory();
 		Paths.clearUnusedMemory();
 
@@ -57,13 +81,11 @@ class AchievementsMenuState extends MusicBeatState
 		FlxG.camera.follow(camFollow, null, 0);
 		FlxG.camera.scroll.y = -FlxG.height;
 
-		var menuBG:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuBGBlue'));
-		menuBG.antialiasing = ClientPrefs.globalAntialiasing;
-		menuBG.setGraphicSize(Std.int(menuBG.width * 1.1));
-		menuBG.updateHitbox();
-		menuBG.screenCenter();
-		menuBG.scrollFactor.set();
-		add(menuBG);
+		menuBackground = new FlxSprite().loadGraphic(Paths.image('menuBGBlue'));
+		menuBackground.antialiasing = ClientPrefs.globalAntialiasing;
+		ViewportVisuals.cover(menuBackground, 1.1);
+		menuBackground.scrollFactor.set();
+		add(menuBackground);
 
 		grpOptions = new FlxSpriteGroup();
 		grpOptions.scrollFactor.x = 0;
@@ -98,23 +120,23 @@ class AchievementsMenuState extends MusicBeatState
 		}
 		#if MODS_ALLOWED Mods.loadTopMod(); #end
 
-		var box:FlxSprite = new FlxSprite(0, -30).makeGraphic(1, 1, FlxColor.BLACK);
-		box.scale.set(grpOptions.width + 60, grpOptions.height + 60);
-		box.updateHitbox();
-		box.alpha = 0.6;
-		box.scrollFactor.x = 0;
-		box.screenCenter(X);
-		add(box);
+		achievementsBox = new FlxSprite(0, -30).makeGraphic(1, 1, FlxColor.BLACK);
+		achievementsBox.scale.set(grpOptions.width + 60, grpOptions.height + 60);
+		achievementsBox.updateHitbox();
+		achievementsBox.alpha = 0.6;
+		achievementsBox.scrollFactor.x = 0;
+		achievementsBox.screenCenter(X);
+		add(achievementsBox);
 		add(grpOptions);
 
-		var box:FlxSprite = new FlxSprite(0, 570).makeGraphic(1, 1, FlxColor.BLACK);
-		box.scale.set(FlxG.width, FlxG.height - box.y);
-		box.updateHitbox();
-		box.alpha = 0.6;
-		box.scrollFactor.set();
-		add(box);
+		detailsBox = new FlxSprite(0, 570).makeGraphic(1, 1, FlxColor.BLACK);
+		detailsBox.scale.set(FlxG.width, FlxG.height - detailsBox.y);
+		detailsBox.updateHitbox();
+		detailsBox.alpha = 0.6;
+		detailsBox.scrollFactor.set();
+		add(detailsBox);
 
-		nameText = new FlxText(50, box.y + 10, FlxG.width - 100, "", 32);
+		nameText = new FlxText(50, detailsBox.y + 10, FlxG.width - 100, "", 32);
 		nameText.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER);
 		nameText.scrollFactor.set();
 
@@ -292,36 +314,50 @@ class ResetAchievementSubstate extends MusicBeatSubstate
 	var onYes:Bool = false;
 	var yesText:Alphabet;
 	var noText:Alphabet;
+	var background:FlxSprite;
+	var heading:Alphabet;
+	var achievementText:FlxText;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.fill(background);
+		if (heading != null) heading.screenCenter(X);
+		if (achievementText != null) achievementText.fieldWidth = FlxG.width - 100;
+		if (yesText != null) { yesText.screenCenter(X); yesText.x -= 200; }
+		if (noText != null) { noText.screenCenter(X); noText.x += 200; }
+	}
 
 	public function new()
 	{
 		super();
 
-		var bg:FlxSprite = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
-		bg.alpha = 0;
-		bg.scrollFactor.set();
-		add(bg);
-		FlxTween.tween(bg, {alpha: 0.6}, 0.4, {ease: FlxEase.quartInOut});
+		background = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		ViewportVisuals.fill(background);
+		background.alpha = 0;
+		background.scrollFactor.set();
+		add(background);
+		FlxTween.tween(background, {alpha: 0.6}, 0.4, {ease: FlxEase.quartInOut});
 
-		var text:Alphabet = new Alphabet(0, 180, "Reset Achievement:", true);
-		text.screenCenter(X);
-		text.scrollFactor.set();
-		add(text);
+		heading = new Alphabet(0, 180, "Reset Achievement:", true);
+		heading.screenCenter(X);
+		heading.scrollFactor.set();
+		add(heading);
 
 		var state:AchievementsMenuState = cast FlxG.state;
-		var text:FlxText = new FlxText(50, text.y + 90, FlxG.width - 100, state.options[state.curSelected].displayName, 40);
-		text.setFormat(Paths.font("vcr.ttf"), 40, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		text.scrollFactor.set();
-		text.borderSize = 2;
-		add(text);
+		achievementText = new FlxText(50, heading.y + 90, FlxG.width - 100, state.options[state.curSelected].displayName, 40);
+		achievementText.setFormat(Paths.font("vcr.ttf"), 40, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		achievementText.scrollFactor.set();
+		achievementText.borderSize = 2;
+		add(achievementText);
 
-		yesText = new Alphabet(0, text.y + 120, 'Yes', true);
+		yesText = new Alphabet(0, achievementText.y + 120, 'Yes', true);
 		yesText.screenCenter(X);
 		yesText.x -= 200;
 		yesText.scrollFactor.set();
 		for(letter in yesText.letters) letter.color = FlxColor.RED;
 		add(yesText);
-		noText = new Alphabet(0, text.y + 120, 'No', true);
+		noText = new Alphabet(0, achievementText.y + 120, 'No', true);
 		noText.screenCenter(X);
 		noText.x += 200;
 		noText.scrollFactor.set();

@@ -1,5 +1,6 @@
-﻿package stages;
+package stages;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.Paths;
 import objects.BGSprite;
 import play.BaseStage;
@@ -28,6 +29,9 @@ class PhillyBlazin extends BaseStage
 	var lightningTimer:Float = 3.0;
 
 	var abot:ABotSpeaker;
+
+	override public function onViewportResize():Void
+		ViewportVisuals.overscan(additionalLighten);
 
 	override function create()
 	{
@@ -70,10 +74,9 @@ class PhillyBlazin extends BaseStage
 			foregroundMultiply.visible = false;
 			add(foregroundMultiply);
 
-			additionalLighten = new FlxSprite(-600, -175).makeGraphic(1, 1, FlxColor.WHITE);
+			additionalLighten = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
 			additionalLighten.scrollFactor.set();
-			additionalLighten.scale.set(2500, 2500);
-			additionalLighten.updateHitbox();
+			ViewportVisuals.overscan(additionalLighten);
 			additionalLighten.blend = ADD;
 			additionalLighten.visible = false;
 			add(additionalLighten);

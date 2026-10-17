@@ -42,6 +42,7 @@ class CutsceneHandler extends FlxBasic
 		});
 		FlxG.state.add(this);
 
+		FlxG.signals.gameResized.add(onGameResized);
 		this._canSkip = canSkip;
 		if(canSkip)
 		{
@@ -53,6 +54,21 @@ class CutsceneHandler extends FlxBasic
 			skipSprite.cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
 			FlxG.state.add(skipSprite);
 		}
+	}
+
+	private function onGameResized(_:Int, _:Int):Void
+	{
+		if (skipSprite != null)
+		{
+			skipSprite.x = FlxG.width - skipSprite.width - 80;
+			skipSprite.y = FlxG.height - skipSprite.height - 72;
+		}
+	}
+
+	override public function destroy():Void
+	{
+		FlxG.signals.gameResized.remove(onGameResized);
+		super.destroy();
 	}
 
 	private var cutsceneTime:Float = 0;

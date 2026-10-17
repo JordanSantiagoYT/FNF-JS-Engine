@@ -3,6 +3,8 @@ package options.helpers;
 // REFACTOR: option-row building extracted from options.BaseOptionsMenu
 import options.BaseOptionsMenu;
 import options.Option;
+import backend.ScreenLayout;
+import flixel.FlxG;
 
 import objects.Alphabet;
 import objects.AttachedText;
@@ -17,7 +19,7 @@ class OptionsMenuHelpers
 	{
 		for (i in 0...optionsArray.length)
 		{
-			var optionText:Alphabet = new Alphabet(290, 260, optionsArray[i].name, false);
+			var optionText:Alphabet = new Alphabet(ScreenLayout.contentLeft(FlxG.width) + 290, 260, optionsArray[i].name, false);
 			optionText.isMenuItem = true;
 			/*optionText.forceX = 300;
 			optionText.yMult = 90;*/

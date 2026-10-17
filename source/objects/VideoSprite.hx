@@ -1,6 +1,7 @@
 package objects;
 
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.Controls;
 import flixel.addons.display.FlxPieDial;
 import play.PlayState;
@@ -38,8 +39,7 @@ class VideoSprite extends FlxSpriteGroup
     if (!waiting)
     {
       cover = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
-      cover.scale.set(FlxG.width + 100, FlxG.height + 100);
-      cover.screenCenter();
+      ViewportVisuals.fill(cover);
       cover.scrollFactor.set();
       add(cover);
     }
@@ -54,22 +54,33 @@ class VideoSprite extends FlxSpriteGroup
     // callbacks
     if (!shouldLoop) videoSprite.bitmap.onEndReached.add(destroy);
 
-    videoSprite.bitmap.onFormatSetup.add(function() {
-      /*
-        #if hxvlc
-        var wd:Int = videoSprite.bitmap.formatWidth;
-        var hg:Int = videoSprite.bitmap.formatHeight;
-        trace('Video Resolution: ${wd}x${hg}');
-        videoSprite.scale.set(FlxG.width / wd, FlxG.height / hg);
-        #end
-       */
-      videoSprite.setGraphicSize(FlxG.width);
-      videoSprite.updateHitbox();
-      videoSprite.screenCenter();
-    });
+    videoSprite.bitmap.onFormatSetup.add(layoutVideo);
+    FlxG.signals.gameResized.add(onGameResized);
 
-    // start video and adjust resolution to screen size
     videoSprite.load(videoName, shouldLoop ? ['input-repeat=65545'] : null);
+  }
+
+  private function layoutVideo():Void
+  {
+    if (videoSprite == null) return;
+    final width:Float = videoSprite.frameWidth > 0 ? videoSprite.frameWidth : videoSprite.bitmap.formatWidth;
+    final height:Float = videoSprite.frameHeight > 0 ? videoSprite.frameHeight : videoSprite.bitmap.formatHeight;
+    if (width <= 0 || height <= 0) return;
+    final scale:Float = Math.max(FlxG.width / width, FlxG.height / height);
+    videoSprite.scale.set(scale, scale);
+    videoSprite.updateHitbox();
+    videoSprite.screenCenter();
+  }
+
+  private function onGameResized(_:Int, _:Int):Void
+  {
+    ViewportVisuals.fill(cover);
+    layoutVideo();
+    if (skipSprite != null)
+    {
+      skipSprite.x = FlxG.width - skipSprite.width - 80;
+      skipSprite.y = FlxG.height - skipSprite.height - 72;
+    }
   }
 
   var alreadyDestroyed:Bool = false;
@@ -79,6 +90,7 @@ class VideoSprite extends FlxSpriteGroup
     if (alreadyDestroyed) return;
 
     trace('Video destroyed');
+    FlxG.signals.gameResized.remove(onGameResized);
     if (cover != null)
     {
       remove(cover);

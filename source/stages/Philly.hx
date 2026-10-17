@@ -1,6 +1,7 @@
 package stages;
 import objects.Note.EventNote;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.Conductor;
 import backend.Paths;
 import objects.BGSprite;
@@ -24,6 +25,12 @@ class Philly extends BaseStage
 	var phillyGlowParticles:FlxTypedGroup<PhillyGlowParticle>;
 	var phillyWindowEvent:BGSprite;
 	var curLightEvent:Int = -1;
+
+	override public function onViewportResize():Void
+	{
+		ViewportVisuals.overscan(blammedLightsBlack);
+		if (phillyGlowGradient != null) phillyGlowGradient.onViewportResize();
+	}
 
 	override function create()
 	{
@@ -60,7 +67,8 @@ class Philly extends BaseStage
 		switch(event.event)
 		{
 			case "Philly Glow":
-				blammedLightsBlack = new FlxSprite(FlxG.width * -0.5, FlxG.height * -0.5).makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.BLACK);
+				blammedLightsBlack = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+				ViewportVisuals.overscan(blammedLightsBlack);
 				blammedLightsBlack.visible = false;
 				insert(members.indexOf(phillyStreet), blammedLightsBlack);
 

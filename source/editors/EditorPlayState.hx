@@ -1,6 +1,8 @@
 package editors;
 import backend.Conductor;
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.MusicBeatState;
 import backend.Paths;
@@ -74,17 +76,39 @@ class EditorPlayState extends MusicBeatState
 	private var keysArray:Array<Dynamic>;
 
 	public static var instance:EditorPlayState;
+	private var layoutWidth:Int = 0;
+	private var background:FlxSprite;
+	private var tipText:FlxText;
 
 	public static var cpuControlled:Bool = false;
 
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		if (layoutWidth != 0 && layoutWidth != FlxG.width)
+		{
+			final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+			if (strumLineNotes != null) strumLineNotes.forEachAlive(strum -> strum.x += shift);
+			for (group in [notes, sustainNotes])
+				if (group != null) group.forEachAlive(note -> { if (note.copyX) note.x += shift; });
+			for (text in [scoreTxt, stepTxt, beatTxt, sectionTxt, botplayTxt, tipText])
+				if (text != null) text.x += shift;
+		}
+		layoutWidth = FlxG.width;
+		ViewportVisuals.cover(background);
+		if (stages != null) for (stage in stages) if (stage != null) stage.onViewportResize();
+	}
+
 	override function create()
 	{
+		layoutWidth = FlxG.width;
 		instance = this;
 
-		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
-		bg.scrollFactor.set();
-		bg.color = FlxColor.fromHSB(FlxG.random.int(0, 359), FlxG.random.float(0, 0.8), FlxG.random.float(0.3, 1));
-		add(bg);
+		background = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		background.scrollFactor.set();
+		background.color = FlxColor.fromHSB(FlxG.random.int(0, 359), FlxG.random.float(0, 0.8), FlxG.random.float(0.3, 1));
+		ViewportVisuals.cover(background);
+		add(background);
 
 		keysArray = [
 			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('note_left')),
@@ -128,38 +152,38 @@ class EditorPlayState extends MusicBeatState
 
 		generateSong(startPos);
 
-		scoreTxt = new FlxText(10, FlxG.height - 50, FlxG.width - 20, "Hits: 0 | Misses: 0", 20);
+		scoreTxt = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, FlxG.height - 50, ScreenLayout.BASE_WIDTH - 20, "Hits: 0 | Misses: 0", 20);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
 		scoreTxt.borderSize = 1.25;
 		scoreTxt.visible = !ClientPrefs.hideHud;
 		add(scoreTxt);
 
-		sectionTxt = new FlxText(10, 550, FlxG.width - 20, "Section: 0", 20);
+		sectionTxt = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, 550, ScreenLayout.BASE_WIDTH - 20, "Section: 0", 20);
 		sectionTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		sectionTxt.scrollFactor.set();
 		sectionTxt.borderSize = 1.25;
 		add(sectionTxt);
 
-		beatTxt = new FlxText(10, sectionTxt.y + 30, FlxG.width - 20, "Beat: 0", 20);
+		beatTxt = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, sectionTxt.y + 30, ScreenLayout.BASE_WIDTH - 20, "Beat: 0", 20);
 		beatTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		beatTxt.scrollFactor.set();
 		beatTxt.borderSize = 1.25;
 		add(beatTxt);
 
-		stepTxt = new FlxText(10, beatTxt.y + 30, FlxG.width - 20, "Step: 0", 20);
+		stepTxt = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, beatTxt.y + 30, ScreenLayout.BASE_WIDTH - 20, "Step: 0", 20);
 		stepTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		stepTxt.scrollFactor.set();
 		stepTxt.borderSize = 1.25;
 		add(stepTxt);
 
-		botplayTxt = new FlxText(10, stepTxt.y + 30, FlxG.width - 20, "Botplay: OFF", 20);
+		botplayTxt = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, stepTxt.y + 30, ScreenLayout.BASE_WIDTH - 20, "Botplay: OFF", 20);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
 		add(botplayTxt);
 
-		var tipText:FlxText = new FlxText(10, FlxG.height - 44, 0, 'Press ESC to Go Back to Chart Editor\nPress SIX to turn on Botplay', 16);
+		tipText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, FlxG.height - 44, 0, 'Press ESC to Go Back to Chart Editor\nPress SIX to turn on Botplay', 16);
 		tipText.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		tipText.borderSize = 2;
 		tipText.scrollFactor.set();

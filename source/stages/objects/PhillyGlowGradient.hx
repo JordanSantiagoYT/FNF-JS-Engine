@@ -7,6 +7,16 @@ class PhillyGlowGradient extends FlxSprite
 	public var originalY:Float;
 	public var originalHeight:Int = 400;
 	public var intendedAlpha:Float = 1;
+
+	private function viewportWidth():Int
+		return Std.int(Math.max(2000, FlxG.width + 800));
+
+	public function onViewportResize():Void
+	{
+		setGraphicSize(viewportWidth(), Std.int(height));
+		updateHitbox();
+	}
+
 	public function new(x:Float, y:Float)
 	{
 		super(x, y);
@@ -14,7 +24,7 @@ class PhillyGlowGradient extends FlxSprite
 
 		loadGraphic(Paths.image('philly/gradient'));
 		scrollFactor.set(0, 0.75);
-		setGraphicSize(2000, originalHeight);
+		setGraphicSize(viewportWidth(), originalHeight);
 		updateHitbox();
 		antialiasing = ClientPrefs.globalAntialiasing;
 	}
@@ -25,7 +35,7 @@ class PhillyGlowGradient extends FlxSprite
 		if(newHeight > 0)
 		{
 			alpha = intendedAlpha;
-			setGraphicSize(2000, newHeight);
+			setGraphicSize(viewportWidth(), newHeight);
 			updateHitbox();
 			y = originalY + (originalHeight - height);
 		}
@@ -40,7 +50,7 @@ class PhillyGlowGradient extends FlxSprite
 
 	public function bop()
 	{
-		setGraphicSize(2000, originalHeight);
+		setGraphicSize(viewportWidth(), originalHeight);
 		updateHitbox();
 		y = originalY;
 		alpha = intendedAlpha;

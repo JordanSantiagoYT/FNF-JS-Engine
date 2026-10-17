@@ -1,4 +1,6 @@
-﻿package objects;
+package objects;
+
+import backend.ScreenLayout;
 
 // REFACTOR: explicit imports for shader subtypes
 import shaders.RGBPalette.RGBShaderReference;
@@ -151,7 +153,8 @@ class StrumNote extends FlxSprite
 		playAnim('static');
 		x += Note.swagWidth * noteData;
 		x += 50;
-		x += ((FlxG.width / 2) * player);
+		// Keep the two 16:9 note lanes together in the center of a wider HUD.
+		x += ScreenLayout.contentLeft(FlxG.width) + (ScreenLayout.BASE_WIDTH / 2) * player;
 		ID = noteData;
 	}
 

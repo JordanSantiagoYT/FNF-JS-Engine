@@ -23,6 +23,7 @@
 package mobile;
 
 import backend.CoolUtil;
+import backend.ViewportVisuals;
 import backend.MusicBeatState;
 
 #if mobile
@@ -57,6 +58,7 @@ class CopyState extends MusicBeatState
 	public static var maxLoopTimes:Int = 0;
 
 	public var loadingImage:FlxSprite;
+	private var background:FlxSprite;
 	public var loadingBar:FlxBar;
 	public var loadedText:FlxText;
 	public var thread:ThreadPool;
@@ -66,6 +68,29 @@ class CopyState extends MusicBeatState
 	var shouldCopy:Bool = false;
 	var canUpdate:Bool = true;
 	var loopTimes:Int = 0;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.fill(background);
+		if (loadingImage != null) loadingImage.screenCenter();
+		if (loadingBar != null && loadingBar.width != FlxG.width)
+		{
+			final index:Int = members.indexOf(loadingBar);
+			final progress:Float = loadingBar.percent;
+			remove(loadingBar, true);
+			loadingBar.destroy();
+			loadingBar = new FlxBar(0, FlxG.height - 26, FlxBarFillDirection.LEFT_TO_RIGHT, FlxG.width, 26);
+			loadingBar.setRange(0, maxLoopTimes);
+			loadingBar.percent = progress;
+			insert(index, loadingBar);
+		}
+		if (loadedText != null)
+		{
+			loadedText.fieldWidth = FlxG.width;
+			loadedText.y = FlxG.height - 22;
+		}
+	}
 
 	override function create()
 	{
@@ -82,7 +107,9 @@ class CopyState extends MusicBeatState
 
 		shouldCopy = true;
 
-		add(new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, 0xffcaff4d));
+		background = new FlxSprite(0, 0).makeGraphic(1, 1, 0xffcaff4d);
+		ViewportVisuals.fill(background);
+		add(background);
 
 		loadingImage = new FlxSprite(0, 0, Paths.image('funkay', 'shared'));
 		loadingImage.setGraphicSize(0, FlxG.height);

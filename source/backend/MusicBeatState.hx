@@ -61,7 +61,10 @@ class MusicBeatState extends FlxUIState
 			controls.removeVirtualControlsInput(trackedInputsVirtualPad);
 
 		if (virtualPad != null)
+		{
 			remove(virtualPad);
+			virtualPad = FlxDestroyUtil.destroy(virtualPad);
+		}
 
 		if (virtualPadCamera != null)
 		{
@@ -104,7 +107,10 @@ class MusicBeatState extends FlxUIState
 			controls.removeVirtualControlsInput(trackedInputsMobileControls);
 
 		if (mobileControls != null)
+		{
 			remove(mobileControls);
+			mobileControls = FlxDestroyUtil.destroy(mobileControls);
+		}
 
 		if (mobileControlsCamera != null)
 		{
@@ -150,13 +156,9 @@ class MusicBeatState extends FlxUIState
 			virtualPadCamera = null;
 		}
 
-		super.destroy();
-
-		if (virtualPad != null)
-			virtualPad = FlxDestroyUtil.destroy(virtualPad);
-
-		if (mobileControls != null)
-			mobileControls = FlxDestroyUtil.destroy(mobileControls);
+		super.destroy(); // destroys pads still owned by this state exactly once
+		virtualPad = null;
+		mobileControls = null;
 	}
 
 	var _psychCameraInitialized:Bool = false;

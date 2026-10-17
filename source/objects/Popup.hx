@@ -1,8 +1,9 @@
-﻿package objects;
+package objects;
 
 import backend.Paths;
 import backend.Conductor;
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import play.PlayState;
 
 import data.Song;
@@ -12,7 +13,9 @@ import data.Song;
 
 class Popup extends FlxSprite {
     public var popTime:Float = 0; //The song position that the popup was spawned at.
-    final placement = FlxG.width * 0.35; //Offset for the popups.
+    var placement(get, never):Float; // Keep ratings in the centered 16:9 HUD area.
+    inline function get_placement():Float
+        return ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH * 0.35;
     var playbackRate(get, null):Float = 1.0;
     var showRating(get, null):Bool = true;
 

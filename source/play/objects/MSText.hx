@@ -1,6 +1,7 @@
 package play.objects;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import play.PlayState;
 
 typedef MSTextProperties =
@@ -86,7 +87,7 @@ class MSText extends FlxText
     text = cpuControlled ? "0 MS (Bot)" : FlxMath.roundDecimal(-noteDiff, 3) + " MS";
 
     screenCenter();
-    x = (FlxG.width * 0.35) + 80;
+    x = ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH * 0.35 + 80;
 
     x += ClientPrefs.comboOffset[0];
     y -= ClientPrefs.comboOffset[1];

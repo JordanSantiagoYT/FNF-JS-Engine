@@ -1,6 +1,7 @@
 package objects;
 
 import backend.Paths;
+import backend.ScreenLayout;
 import backend.PlayerSettings;
 import play.PlayState;
 import flixel.addons.text.FlxTypeText;
@@ -28,6 +29,30 @@ class DialogueBox extends FlxSpriteGroup
 
 	var handSelect:FlxSprite;
 	var bgFade:FlxSprite;
+	private var spiritFace:FlxSprite;
+	private var layoutWidth:Int = 0;
+
+	private function onGameResized(_:Int, _:Int):Void
+	{
+		if (bgFade != null)
+		{
+			bgFade.setGraphicSize(FlxG.width + 400, FlxG.height + 400);
+			bgFade.updateHitbox();
+		}
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		if (box != null) box.screenCenter(X);
+		if (portraitLeft != null) portraitLeft.screenCenter(X);
+		for (sprite in [portraitRight, handSelect, spiritFace]) if (sprite != null) sprite.x += shift;
+		if (swagDialogue != null) swagDialogue.x += shift;
+		if (dropText != null) dropText.x += shift;
+		layoutWidth = FlxG.width;
+	}
+
+	override public function destroy():Void
+	{
+		FlxG.signals.gameResized.remove(onGameResized);
+		super.destroy();
+	}
 
 	public function new(talkingRight:Bool = true, ?dialogueList:Array<String>)
 	{
@@ -43,7 +68,9 @@ class DialogueBox extends FlxSpriteGroup
 				FlxG.sound.music.fadeIn(1, 0, 0.8);
 		}
 
-		bgFade = new FlxSprite(-200, -200).makeGraphic(Std.int(FlxG.width * 1.3), Std.int(FlxG.height * 1.3), 0xFFB3DFd8);
+		bgFade = new FlxSprite(-200, -200).makeGraphic(1, 1, 0xFFB3DFd8);
+		bgFade.setGraphicSize(FlxG.width + 400, FlxG.height + 400);
+		bgFade.updateHitbox();
 		bgFade.scrollFactor.set();
 		bgFade.alpha = 0;
 		add(bgFade);
@@ -79,9 +106,9 @@ class DialogueBox extends FlxSpriteGroup
 				box.animation.addByPrefix('normalOpen', 'Spirit Textbox spawn', 24, false);
 				box.animation.addByIndices('normal', 'Spirit Textbox spawn instance 1', [11], "", 24);
 
-				var face:FlxSprite = new FlxSprite(320, 170).loadGraphic(Paths.image('weeb/spiritFaceForward'));
-				face.setGraphicSize(Std.int(face.width * 6));
-				add(face);
+			spiritFace = new FlxSprite(ScreenLayout.contentLeft(FlxG.width) + 320, 170).loadGraphic(Paths.image('weeb/spiritFaceForward'));
+			spiritFace.setGraphicSize(Std.int(spiritFace.width * 6));
+			add(spiritFace);
 		}
 
 		this.dialogueList = dialogueList;
@@ -98,7 +125,7 @@ class DialogueBox extends FlxSpriteGroup
 		add(portraitLeft);
 		portraitLeft.visible = false;
 
-		portraitRight = new FlxSprite(0, 40);
+		portraitRight = new FlxSprite(ScreenLayout.contentLeft(FlxG.width), 40);
 		portraitRight.frames = Paths.getSparrowAtlas('weeb/bfPortrait');
 		portraitRight.animation.addByPrefix('enter', 'Boyfriend portrait enter', 24, false);
 		portraitRight.setGraphicSize(Std.int(portraitRight.width * PlayState.daPixelZoom * 0.9));
@@ -115,7 +142,7 @@ class DialogueBox extends FlxSpriteGroup
 		box.screenCenter(X);
 		portraitLeft.screenCenter(X);
 
-		handSelect = new FlxSprite(1042, 590).loadGraphic(Paths.image('weeb/pixelUI/hand_textbox'));
+		handSelect = new FlxSprite(ScreenLayout.contentLeft(FlxG.width) + 1042, 590).loadGraphic(Paths.image('weeb/pixelUI/hand_textbox'));
 		handSelect.setGraphicSize(Std.int(handSelect.width * PlayState.daPixelZoom * 0.9));
 		handSelect.updateHitbox();
 		handSelect.visible = false;
@@ -126,16 +153,18 @@ class DialogueBox extends FlxSpriteGroup
 			// box.flipX = true;
 		}
 
-		dropText = new FlxText(242, 502, Std.int(FlxG.width * 0.6), "", 32);
+		dropText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 242, 502, Std.int(ScreenLayout.BASE_WIDTH * 0.6), "", 32);
 		dropText.font = 'Pixel Arial 11 Bold';
 		dropText.color = 0xFFD89494;
 		add(dropText);
 
-		swagDialogue = new FlxTypeText(240, 500, Std.int(FlxG.width * 0.6), "", 32);
+		swagDialogue = new FlxTypeText(ScreenLayout.contentLeft(FlxG.width) + 240, 500, Std.int(ScreenLayout.BASE_WIDTH * 0.6), "", 32);
 		swagDialogue.font = 'Pixel Arial 11 Bold';
 		swagDialogue.color = 0xFF3F2021;
 		swagDialogue.sounds = [FlxG.sound.load(Paths.sound('pixelText'), 0.6)];
 		add(swagDialogue);
+		layoutWidth = FlxG.width;
+		FlxG.signals.gameResized.add(onGameResized);
 	}
 
 	var dialogueOpened:Bool = false;

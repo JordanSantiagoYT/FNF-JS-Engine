@@ -23,6 +23,8 @@
 package mobile;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxSubState;
@@ -44,6 +46,8 @@ class MobileControlsSelectSubState extends FlxSubState
 
 	private var virtualPad:FlxVirtualPad;
 	private var hitbox:FlxHitbox;
+	private var background:FlxSprite;
+	private var exitButton:FlxButton;
 	private var upPosition:FlxText;
 	private var downPosition:FlxText;
 	private var leftPosition:FlxText;
@@ -63,13 +67,14 @@ class MobileControlsSelectSubState extends FlxSubState
 			if (controlsItems[i] == MobileControls.mode)
 				curSelected = i;
 
-		var bg:FlxSprite = new FlxSprite(0,
-			0).makeGraphic(FlxG.width, FlxG.height, FlxColor.fromRGB(FlxG.random.int(0, 255), FlxG.random.int(0, 255), FlxG.random.int(0, 255)));
-		bg.scrollFactor.set();
-		bg.alpha = 0.4;
-		add(bg);
+		background = new FlxSprite(0, 0).makeGraphic(1, 1,
+			FlxColor.fromRGB(FlxG.random.int(0, 255), FlxG.random.int(0, 255), FlxG.random.int(0, 255)));
+		ViewportVisuals.fill(background);
+		background.scrollFactor.set();
+		background.alpha = 0.4;
+		add(background);
 
-		var exitButton:FlxButton = new FlxButton(FlxG.width - 200, 50, 'Exit', function()
+		exitButton = new FlxButton(FlxG.width - 200, 50, 'Exit', function()
 		{
 			MobileControls.mode = controlsItems[Math.floor(curSelected)];
 
@@ -88,7 +93,9 @@ class MobileControlsSelectSubState extends FlxSubState
 		{
 			if (controlsItems[Math.floor(curSelected)] == 'Pad-Custom' && resetButton.visible)
 			{
-				MobileControls.customVirtualPad = new FlxVirtualPad(RIGHT_FULL, NONE, ClientPrefs.mobileCEx);
+				final defaults = new FlxVirtualPad(RIGHT_FULL, NONE, ClientPrefs.mobileCEx);
+				MobileControls.customVirtualPad = defaults;
+				defaults.destroy();
 				reloadMobileControls('Pad-Custom');
 			}
 		});
@@ -117,31 +124,31 @@ class MobileControlsSelectSubState extends FlxSubState
 		rightArrow.animation.play('idle');
 		add(rightArrow);
 
-		rightPosition = new FlxText(10, FlxG.height - 24, 0, '', 16);
+		rightPosition = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, FlxG.height - 24, 0, '', 16);
 		rightPosition.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, true);
 		rightPosition.borderSize = 3;
 		rightPosition.borderQuality = 1;
 		add(rightPosition);
 
-		leftPosition = new FlxText(10, FlxG.height - 44, 0, '', 16);
+		leftPosition = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, FlxG.height - 44, 0, '', 16);
 		leftPosition.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, true);
 		leftPosition.borderSize = 3;
 		leftPosition.borderQuality = 1;
 		add(leftPosition);
 
-		downPosition = new FlxText(10, FlxG.height - 64, 0, '', 16);
+		downPosition = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, FlxG.height - 64, 0, '', 16);
 		downPosition.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, true);
 		downPosition.borderSize = 3;
 		downPosition.borderQuality = 1;
 		add(downPosition);
 
-		upPosition = new FlxText(10, FlxG.height - 84, 0, '', 16);
+		upPosition = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, FlxG.height - 84, 0, '', 16);
 		upPosition.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, true);
 		upPosition.borderSize = 3;
 		upPosition.borderQuality = 1;
 		add(upPosition);
 
-		exPosition = new FlxText(10, FlxG.height - 104, 0, '', 16);
+		exPosition = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, FlxG.height - 104, 0, '', 16);
 		exPosition.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, true);
 		exPosition.borderSize = 3;
 		exPosition.borderQuality = 1;
@@ -152,6 +159,22 @@ class MobileControlsSelectSubState extends FlxSubState
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
 
 		super.create();
+	}
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.fill(background);
+		if (exitButton != null) exitButton.x = FlxG.width - 200;
+		if (resetButton != null) resetButton.x = FlxG.width - 200;
+		if (grpControls != null)
+		{
+			grpControls.screenCenter(X);
+			if (leftArrow != null) leftArrow.x = grpControls.x - 60;
+			if (rightArrow != null) rightArrow.x = grpControls.x + grpControls.width + 10;
+		}
+		for (text in [upPosition, downPosition, leftPosition, rightPosition, exPosition])
+			if (text != null) text.x = ScreenLayout.contentLeft(FlxG.width) + 10;
 	}
 
 	override function update(elapsed:Float)
@@ -310,9 +333,17 @@ class MobileControlsSelectSubState extends FlxSubState
 	private function removeControls():Void
 	{
 		if (virtualPad != null)
+		{
 			remove(virtualPad);
+			virtualPad.destroy();
+			virtualPad = null;
+		}
 
 		if (hitbox != null)
+		{
 			remove(hitbox);
+			hitbox.destroy();
+			hitbox = null;
+		}
 	}
 }

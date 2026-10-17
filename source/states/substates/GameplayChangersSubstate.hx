@@ -1,6 +1,8 @@
 package states.substates;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.Controls;
 import backend.MusicBeatSubstate;
 import backend.Paths;
@@ -24,6 +26,19 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 	private var grpTexts:FlxTypedGroup<AttachedText>;
 	public static var inThePauseMenu:Bool = false;
 	public var pauseState:PauseSubState;
+	private var background:FlxSprite;
+	private var layoutWidth:Int = 0;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.fill(background);
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		if (grpOptions != null) grpOptions.forEach(item -> { item.startPosition.x += shift; item.x += shift; });
+		if (grpTexts != null) grpTexts.forEach(item -> item.x += shift);
+		if (checkboxGroup != null) checkboxGroup.forEach(item -> item.x += shift);
+		layoutWidth = FlxG.width;
+	}
 
 	function getOptions()
 	{
@@ -38,10 +53,12 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 	public function new(?pause:MusicBeatSubstate = null)
 	{
 		super();
+		layoutWidth = FlxG.width;
 
-		var bg:FlxSprite = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
-		bg.alpha = 0.6;
-		add(bg);
+		background = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		ViewportVisuals.fill(background);
+		background.alpha = 0.6;
+		add(background);
 
 		// avoids lagspikes while scrolling through menus!
 		grpOptions = new FlxTypedGroup<Alphabet>();
@@ -57,7 +74,7 @@ class GameplayChangersSubstate extends MusicBeatSubstate
 
 		for (i in 0...optionsArray.length)
 		{
-			var optionText:Alphabet = new Alphabet(200, 360, optionsArray[i].name, true);
+			var optionText:Alphabet = new Alphabet(ScreenLayout.contentLeft(FlxG.width) + 200, 360, optionsArray[i].name, true);
 			optionText.isMenuItem = true;
 			optionText.setScale(0.8);
 			optionText.targetY = i;

@@ -1,6 +1,7 @@
 package stages;
 import objects.Note.EventNote;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.Paths;
 import objects.BGSprite;
@@ -15,6 +16,10 @@ import stages.objects.*;
 
 class SchoolEvil extends BaseStage
 {
+	var introOverlay:FlxSprite;
+	override public function onViewportResize():Void
+		ViewportVisuals.overscan(introOverlay);
+
 	override function create()
 	{
 		var _song = PlayState.SONG;
@@ -113,9 +118,10 @@ class SchoolEvil extends BaseStage
 	function schoolIntro():Void
 	{
 		inCutscene = true;
-		var red:FlxSprite = new FlxSprite(-100, -100).makeGraphic(FlxG.width * 2, FlxG.height * 2, 0xFFff1b31);
-		red.scrollFactor.set();
-		add(red);
+		introOverlay = new FlxSprite().makeGraphic(1, 1, 0xFFff1b31);
+		ViewportVisuals.overscan(introOverlay);
+		introOverlay.scrollFactor.set();
+		add(introOverlay);
 
 		var senpaiEvil:FlxSprite = new FlxSprite();
 		senpaiEvil.frames = Paths.getSparrowAtlas('weeb/senpaiCrazy');
@@ -147,8 +153,9 @@ class SchoolEvil extends BaseStage
 						{
 							remove(senpaiEvil);
 							senpaiEvil.destroy();
-							remove(red);
-							red.destroy();
+							remove(introOverlay);
+							introOverlay.destroy();
+							introOverlay = null;
 							FlxG.camera.fade(FlxColor.WHITE, 0.01, true, function()
 							{
 								add(doof);

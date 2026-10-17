@@ -94,19 +94,21 @@ class SSPlugin extends flixel.FlxBasic
 		}
 
 		current = this;
+		lastWidth = FlxG.stage.stageWidth;
+		lastHeight = FlxG.stage.stageHeight;
 		daContainer = new Sprite();
 		daContainer.mouseEnabled = false;
 		FlxG.stage.addChild(daContainer);
 		flashSprite = new Sprite();
 		flashSprite.alpha = 0;
 		flashSprite.mouseEnabled = false;
-		flashBitmap = new Bitmap(new BitmapData(FlxG.width, FlxG.height, true, 0xFFFFFFFF));
+		flashBitmap = new Bitmap(new BitmapData(lastWidth, lastHeight, true, flashColor));
 		flashSprite.addChild(flashBitmap);
 		screenshotSprite = new Sprite();
 		screenshotSprite.alpha = 0;
 		screenshotSprite.mouseEnabled = false;
 		daContainer.addChild(screenshotSprite);
-		outlineBitmap = new Bitmap(new BitmapData(Std.int(FlxG.width / 5) + 10, Std.int(FlxG.height / 5) + 10, true, 0xffffffff));
+		outlineBitmap = new Bitmap(new BitmapData(Std.int(lastWidth / 5) + 10, Std.int(lastHeight / 5) + 10, true, outlineColor));
 		outlineBitmap.x = 5;
 		outlineBitmap.y = 5;
 		screenshotSprite.addChild(outlineBitmap);
@@ -115,13 +117,9 @@ class SSPlugin extends flixel.FlxBasic
 		shotDisplayBitmap.scaleY /= 5;
 		screenshotSprite.addChild(shotDisplayBitmap);
 		daContainer.addChild(flashSprite);
-		#if sys
-		@:privateAccess openfl.Lib.application.window.onResize.add((w, h) ->
-		{
-			flashBitmap.bitmapData = new BitmapData(w, h, true, 0xFFFFFFFF);
-			outlineBitmap.bitmapData = new BitmapData(Std.int(w / 5) + 10, Std.int(h / 5) + 10, true, 0xffffffff);
-		});
-		#end
+		// Match the physical screenshot pixel dimensions, not the logical
+		// camera dimensions (which vary with the widescreen preference).
+		FlxG.signals.gameResized.add(resizeBitmap);
 	}
 
 	var buggedKillTime:Float = 1.5;
@@ -197,12 +195,17 @@ class SSPlugin extends flixel.FlxBasic
 		});
 	}
 
-	inline private function resizeBitmap(width:Int, height:Int)
+	private function resizeBitmap(width:Int, height:Int):Void
 	{
+		if (width <= 0 || height <= 0 || (width == lastWidth && height == lastHeight)) return;
 		lastWidth = width;
 		lastHeight = height;
-		flashBitmap.bitmapData = new BitmapData(lastWidth, lastHeight, true, flashColor);
-		outlineBitmap.bitmapData = new BitmapData(Std.int(lastWidth / 5) + 10, Std.int(lastHeight / 5) + 10, true, outlineColor);
+		final oldFlash = flashBitmap.bitmapData;
+		final oldOutline = outlineBitmap.bitmapData;
+		flashBitmap.bitmapData = new BitmapData(width, height, true, flashColor);
+		outlineBitmap.bitmapData = new BitmapData(Std.int(width / 5) + 10, Std.int(height / 5) + 10, true, outlineColor);
+		oldFlash.dispose();
+		oldOutline.dispose();
 	}
 
 	override public function destroy():Void

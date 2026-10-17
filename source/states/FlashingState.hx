@@ -1,6 +1,7 @@
 package states;
 
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.MusicBeatState;
 import backend.Paths;
 import flixel.effects.FlxFlicker;
@@ -15,6 +16,19 @@ class FlashingState extends MusicBeatState
 	public static var leftState:Bool = false;
 
 	var warnText:FlxText;
+	var background:FlxSprite;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.fill(background);
+		if (warnText != null)
+		{
+			warnText.fieldWidth = FlxG.width;
+			warnText.screenCenter(Y);
+		}
+	}
+
 	override function create()
 	{
 		Paths.clearStoredMemory();
@@ -24,8 +38,9 @@ class FlashingState extends MusicBeatState
 
 		super.create();
 
-		var bg:FlxSprite = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
-		add(bg);
+		background = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		ViewportVisuals.fill(background);
+		add(background);
 
 		warnText = new FlxText(0, 0, FlxG.width,
 			"Hey, watch out!\n
