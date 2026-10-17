@@ -1,4 +1,4 @@
-﻿package backend;
+package backend;
 
 import flixel.FlxCamera;
 
@@ -46,6 +46,8 @@ class Achievements {
 		createAchievement('toastier',				{name: "Toaster Gamer", description: "Have you tried to run the game on a toaster?"});
 		createAchievement('debugger',				{name: "Debugger", description: "Beat the \"Test\" Stage from the Chart Editor.", hidden: true});
 		createAchievement('wowza',				{name: "Wowza!!", description: "Have 10 or more mods enabled at once."});
+		createAchievement('mr_robot',			{name: "Mr. Robot", description: "Use the frame profiler for the first time."});
+		createAchievement('lol',					{name: "Get a Job!", description: "Play the game for 50 hours.", maxScore: 50, maxDecimals: 2});
 
 		//dont delete this thing below
 		_originalLength = _sortID + 1;

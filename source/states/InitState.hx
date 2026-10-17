@@ -8,6 +8,9 @@ import backend.PlayerSettings;
 import flixel.FlxState;
 
 import backend.Achievements;
+#if ACHIEVEMENTS_ALLOWED
+import backend.PlaytimeTracker;
+#end
 
 /**
  * Handles initialization of variables when first opening the game.
@@ -41,6 +44,10 @@ class InitState extends FlxState {
         // ClientPrefs.loadDefaultKeys();
 		ClientPrefs.loadPrefs();
 		Conductor.recalculateTimings(); // #43: apply the saved safeFrames before any song starts
+
+		#if ACHIEVEMENTS_ALLOWED
+		FlxG.plugins.addIfUniqueType(new PlaytimeTracker());
+		#end
 
         /*
         #if ACHIEVEMNTS_ALLOWED
