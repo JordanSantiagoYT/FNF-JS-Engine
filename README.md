@@ -32,7 +32,7 @@ Run it locally with `cd website && npm install && npm start`.
 
 ---
 
-<b>IMPORTANT: if you want to clone the repo (for making a pull request or for building locally), use <code>git clone -b main --single-branch https://github.com/havaianasdestruido/FNF-Phoenix-Engine.git</code> so you only git clone _only the main branch_, the other ones are for experiments or are extremely old.</b>
+<b>IMPORTANT: You are in the `main` branch, where i will ONLY add stuff that is 100% (ok, maybe 99.9%) sure it will work, if you want a more "Canary"-ish experiency, go check `bleeding` for bleeding-edge updates.</b>
 
 Phoenix Engine focuses on making both Hardmodding (Hardcoded mods, using `Haxe`) *AND* Softmodding (mods you place on `mods/` folder, made with `Lua`/`Luau` or `Python`) easier.
 
