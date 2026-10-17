@@ -2,18 +2,20 @@
 
 ## Version 1: menu navigation
 
-Phoenix registers the custom scheme **`phoenix`** on Android, iOS and Windows.
-For example, a website can offer:
+Phoenix uses the custom scheme **`phoenix`** on Android, iOS and Windows. On Windows
+the handler is claimed by the player from Options → Misc, never by a startup or an
+installer. For example, a website can offer:
 
 ```html
 <a href="phoenix://menu/misc">Open Phoenix Misc settings</a>
 <a href="phoenix://mods">Open Phoenix Mods</a>
 ```
 
-The app must be installed (and registered on Windows). Browsers may ask for
-permission before opening it. This is a custom scheme, **not** an HTTPS Android
-App Link or iOS Universal Link; there is no website ownership verification or
-web fallback. Another installed app can claim the same scheme.
+The app must be installed, and on Windows registered from **Options → Misc →
+Toggle Deeplink**. Browsers may ask for permission before opening it. This is a
+custom scheme, **not** an HTTPS Android App Link or iOS Universal Link; there is
+no website ownership verification or web fallback. Another installed app can
+claim the same scheme.
 
 ### Complete supported route table
 
@@ -65,6 +67,9 @@ an allowlisted internal route; it never resolves a class from external text.
 ## Startup and lifecycle behavior
 
 - Native events queue a destination; they never switch Flixel states directly.
+- Startup never registers anything. On Windows the scheme is only claimed when the
+  player checks **Toggle Deeplink** in Options → Misc, and that choice is not
+  re-applied, re-verified or unregistered on any later launch.
 - A cold launch still performs storage permission/copy setup, preferences,
   saves, mods, splash, title initialization, and the first-run flashing warning.
   After the title intro objects/music have initialized, the link is dispatched
@@ -123,12 +128,25 @@ with the game foregrounded, backgrounded and terminated.
 
 ### Windows
 
-Registration is per-user. Windows builds include `uri/Register-PhoenixURI.ps1` and
-`uri/Unregister-PhoenixURI.ps1` alongside the executable. The engine also
-performs a best-effort registration on startup: it checks the registry first and
-only writes when the scheme is missing or already points at this executable, so
-it never overwrites another copy's handler. Manual registration still works and
-is required when PowerShell/registry access is restricted. From the game directory:
+Registration is per-user and **opt-in**: launching the game never writes the
+registry. **Options → Misc → Toggle Deeplink** does the work, and its state is
+the `deeplinkEnabled` preference in `ClientPrefs`.
+
+- Checking it runs `uri/Register-PhoenixURI.ps1` (shipped next to the
+  executable) against the running `.exe`. The script checks the registry first
+  and refuses to overwrite another copy's handler; the engine reads the value
+  back and, when the scheme could not be claimed, snaps the checkbox back off
+  and says why. Toggling it on when this copy is already registered writes
+  nothing.
+- Unchecking deletes `HKCU\Software\Classes\phoenix` outright, even when the
+  entry points at another or a deleted copy, so a stale handler never keeps
+  offering links to a game that opted out. `uri\Unregister-PhoenixURI.ps1` is
+  still there if you would rather have that ownership check.
+- The choice is remembered but never re-applied on a later launch: nothing is
+  registered, unregistered or verified at startup, so moving or deleting the
+  folder leaves the entry alone until you use the option again.
+- Manual registration always works and is required when PowerShell/registry
+  access is restricted. From the game directory:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\uri\Register-PhoenixURI.ps1
@@ -158,11 +176,13 @@ strict validator; when several valid URIs are supplied, the last wins.
 IPC or forwarding to an already-running game. Avoid concurrent sessions that
 write the same save. This differs from mobile warm delivery.
 
-Re-register after moving the folder. Registering another copy replaces the
-per-user handler; only one copy can own this scheme. To uninstall, run the
-unregister script before deleting the game (or supply its old executable path).
-It refuses to remove a registration pointing to a different copy. No elevation
-is required; enterprise policy may restrict protocol handlers or PowerShell.
+Re-register after moving the folder: turn the option off and on again, or run the
+script by hand. Registering another copy replaces the per-user handler; only one
+copy can own this scheme. To uninstall, uncheck the option (or run the unregister
+script) before deleting the game; the unregister script is the one that refuses to
+remove a registration pointing at a different copy. No elevation is required;
+enterprise policy may restrict protocol handlers or PowerShell, in which case the
+checkbox stays off and the manual commands above are the fallback.
 
 ## Validation and release checklist
 
@@ -197,7 +217,10 @@ Before release, test on **each platform**:
    foreground, background and terminated mobile launches on actual devices.
 7. Windows executable path containing spaces; launch from an unrelated working
    directory; move/re-register/unregister; confirm another copy's registration
-   cannot be inadvertently removed.
+   cannot be inadvertently overwritten. Then exercise the option itself: check
+   **Toggle Deeplink**, restart and confirm the registry is untouched (no write,
+   no verification, no popup) while links still route; uncheck it and confirm the
+   handler is gone and the checkbox survives a restart as off.
 
 Implementation environment: native builds and Haxe parser execution could not
 be run in the editing sandbox (Haxe/haxelib and platform SDKs unavailable;
