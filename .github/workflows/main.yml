@@ -626,7 +626,7 @@ jobs:
       # ==========================================
       # Verify the actual merged Android manifest
       # ==========================================
-      - name: Verify Android SAF manifest and SDK levels
+      - name: Verify Android Media3/SAF manifest and SDK levels
         if: steps.target-selection.outputs.enabled == 'true' && matrix.target == 'android'
         shell: bash
         run: |
@@ -641,7 +641,7 @@ jobs:
             exit 1
           fi
           python3 tools/check_android_documents_manifest.py "$merged_manifest" \
-            --provider present --minimum-sdk 21 --target-sdk 36
+            --provider present --media-service present --minimum-sdk 21 --target-sdk 36
 
       # ==========================================
       # Verify the APK ships the NDK C++ runtime

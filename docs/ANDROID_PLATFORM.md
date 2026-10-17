@@ -181,14 +181,19 @@ media integration:
 
 - The current song is published to Media3's `MediaSession` (title, chart
   creator, engine album, optional creator artwork and duration at create;
-  state, pitch and position refresh once per second). Artwork paths can point
-  at a mod file, a Lime Android asset, or a `content://` URI; small local
-  artwork is copied into session metadata so outside clients do not need
-  access to the game's private files.
-- `PhoenixMediaService` extends Media3's `MediaSessionService`. Media3 keeps
-  its MediaStyle foreground notification synchronized with the mirrored
-  player, and advertises the session to lock-screen controls, Bluetooth,
-  Android Auto and compatible media browsers.
+  state, pitch and position refresh once per second). Local artwork paths can
+  point at a mod file, a Lime Android asset, or a `content://` URI. A bounded
+  background worker reads and bounds-validates small artwork before returning
+  only the current metadata generation to the main looper; an unreadable,
+  oversized, corrupt, or stale image simply leaves playback running without
+  artwork. Public `http(s)` artwork URIs can be published directly.
+- `PhoenixMediaService` extends Media3's `MediaSessionService`. The bridge
+  requests it only after Haxe has mirrored actual ready playback, never while a
+  selected song is merely paused/buffering. Media3 then keeps its MediaStyle
+  foreground notification synchronized with the mirrored player and owns its
+  foreground promotion/demotion (including its post-playback timeout), while
+  advertising the session to lock-screen controls, Bluetooth, Android Auto and
+  compatible media browsers.
 - Audio focus is requested on start and abandoned on stop; focus **loss
   pauses the game**, **duck** lowers music volume, **gain** restores it.
 - The screen is kept on for the duration of gameplay via

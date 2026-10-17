@@ -46,13 +46,25 @@ public class PhoenixMediaService extends MediaSessionService
 		try
 		{
 			MediaSession session = PhoenixMedia.getSessionForService(getApplicationContext());
-			if (session != null)
-				addSession(session);
+			if (session == null)
+			{
+				// A controller/service must not manufacture a new, unbacked player
+				// after gameplay released its shared session.
+				PhoenixMedia.onMediaServiceCreationFailed();
+				stopSelf();
+				return;
+			}
+
+			// Media3 owns the notification and foreground lifecycle after this
+			// shared session is registered. Do not call startForeground here.
+			addSession(session);
 			PhoenixMedia.onMediaServiceCreated();
 		}
 		catch (Exception e)
 		{
+			PhoenixMedia.onMediaServiceCreationFailed();
 			Log.e(PhoenixMedia.LOG_TAG, "MediaSessionService setup failed: " + e);
+			stopSelf();
 		}
 	}
 

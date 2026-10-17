@@ -71,10 +71,11 @@ class PlayStateAndroidMedia
 		// both into Media3 rather than publishing every song as a generic FNF
 		// track, while preserving a useful fallback for older/mod charts.
 		AndroidMedia.updateNowPlaying(title, artist, duration, album, artworkPath);
-		AndroidMedia.setPlaybackState(initiallyPlaying ? AndroidMedia.STATE_PLAYING : AndroidMedia.STATE_BUFFERING, 0,
+		// Do not advertise buffering/playWhenReady before Flixel has actually
+		// started sound. PhoenixMedia asks Media3 to start its service only when
+		// a later STATE_PLAYING update mirrors real playback.
+		AndroidMedia.setPlaybackState(initiallyPlaying ? AndroidMedia.STATE_PLAYING : AndroidMedia.STATE_PAUSED, 0,
 			playState.playbackRate);
-		AndroidMedia.updateNotification(title, artist, initiallyPlaying);
-		AndroidMedia.startForegroundService(title, artist, initiallyPlaying);
 		AndroidMedia.requestAudioFocus();
 		AndroidSystem.acquireWakeLock();
 
@@ -149,7 +150,9 @@ class PlayStateAndroidMedia
 			// speed to Android media clients.
 			AndroidMedia.setPlaybackState(AndroidMedia.STATE_PLAYING, position, state.playbackRate);
 		else
-			AndroidMedia.setPlaybackState(AndroidMedia.STATE_BUFFERING, position, state.playbackRate);
+			// A selected-but-not-playing song is paused, not buffering: Media3
+			// treats playWhenReady + BUFFERING as foreground-playback eligible.
+			AndroidMedia.setPlaybackState(AndroidMedia.STATE_PAUSED, position, state.playbackRate);
 	}
 
 	/** Returns a chart creator credit, with a stable fallback for old charts. */

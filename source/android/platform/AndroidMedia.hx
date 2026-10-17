@@ -117,8 +117,8 @@ class AndroidMedia
 
 	/**
 	 * Compatibility helper for older callers. Media3 derives its notification
-	 * from `updateNowPlaying` and `setPlaybackState`; this only makes sure its
-	 * service is available while playback is active.
+	 * from `updateNowPlaying` and `setPlaybackState`; it requests its service
+	 * only if the native bridge already mirrors ready playback.
 	 */
 	public static function updateNotification(title:String, artist:String, playing:Bool):Void
 	{
@@ -128,10 +128,11 @@ class AndroidMedia
 	}
 
 	/**
-	 * Starts the Media3 MediaSessionService. Media3 owns the foreground
-	 * MediaStyle notification whenever the mirrored player is playing.
-	 * Requires FOREGROUND_SERVICE_MEDIA_PLAYBACK (declared by the engine's
-	 * manifest template). The Haxe audio player remains the audio owner.
+	 * Compatibility request for the Media3 MediaSessionService. It is ignored
+	 * until the native bridge already mirrors ready playback; Media3 owns the
+	 * foreground MediaStyle notification thereafter. Requires
+	 * FOREGROUND_SERVICE_MEDIA_PLAYBACK (declared by the engine's manifest
+	 * template). The Haxe audio player remains the audio owner.
 	 */
 	public static function startForegroundService(title:String, artist:String, playing:Bool = true):Void
 	{

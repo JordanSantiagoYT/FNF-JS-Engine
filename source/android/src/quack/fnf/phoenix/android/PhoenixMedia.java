@@ -28,6 +28,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -59,6 +60,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Android media bridge for Phoenix Engine.
@@ -85,14 +90,15 @@ public class PhoenixMedia extends Extension
 
 	private static final String SESSION_ID = "PhoenixEngineMedia";
 	private static final int MAX_ARTWORK_BYTES = 2 * 1024 * 1024;
+	private static final long MAX_ARTWORK_PIXELS = 4L * 1024L * 1024L;
 
 	private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+	private static final PhoenixMediaBridgeState BRIDGE_STATE = new PhoenixMediaBridgeState();
+	private static final ThreadPoolExecutor ARTWORK_EXECUTOR = createArtworkExecutor();
 
 	private static volatile HaxeMediaPlayer player = null;
 	private static volatile MediaSession session = null;
 	private static volatile boolean sessionActive = false;
-	private static volatile boolean foregroundServiceRunning = false;
-	private static volatile boolean foregroundServiceStartRequested = false;
 
 	private static AudioManager audioManager = null;
 	private static AudioFocusRequest audioFocusRequest = null;
@@ -136,11 +142,24 @@ public class PhoenixMedia extends Extension
 		{
 			@Override public void run()
 			{
+				if (ensureSessionInternal(context) == null)
+				{
+					BRIDGE_STATE.invalidateArtworkUpdates();
+					sessionActive = false;
+					return;
+				}
+
+				String safeArtworkPath = safeString(artworkPath);
+				long artworkGeneration = BRIDGE_STATE.beginArtworkUpdate();
 				HaxeMediaPlayer mediaPlayer = ensurePlayerInternal();
-				ensureSessionInternal(context);
-				mediaPlayer.updateMetadata(context, safeString(title), safeString(artist), safeString(album),
-					durationMs, safeString(artworkPath));
+				mediaPlayer.updateMetadata(safeString(title), safeString(artist), safeString(album), durationMs,
+					getRemoteArtworkUri(safeArtworkPath), artworkGeneration);
 				sessionActive = true;
+
+				// File/content/asset I/O and image-header validation must never run
+				// on Media3's application/main looper. The bounded worker posts only
+				// a current result back to the mirrored player.
+				scheduleArtworkLoad(context, safeArtworkPath, artworkGeneration);
 			}
 		});
 	}
@@ -160,15 +179,17 @@ public class PhoenixMedia extends Extension
 		{
 			@Override public void run()
 			{
+				if (ensureSessionInternal(context) == null)
+					return;
+
 				HaxeMediaPlayer mediaPlayer = ensurePlayerInternal();
-				ensureSessionInternal(context);
 				mediaPlayer.updatePlaybackState(state, positionMs, speed);
 
-				// A MediaSessionService promotes itself to foreground only once the
-				// mirrored Player is actually playing. Starting it after the state
-				// update avoids Android's foreground-service start timeout.
+				// Do not start a service merely because a song was selected or is
+				// paused. Once Haxe has mirrored real ready playback, Media3 owns
+				// notification posting and foreground promotion from its service.
 				if (state == 1)
-					startMediaServiceInternal(context, true);
+					startMediaServiceForReadyPlayback(context, mediaPlayer);
 			}
 		});
 	}
@@ -188,9 +209,7 @@ public class PhoenixMedia extends Extension
 		{
 			@Override public void run()
 			{
-				if (active)
-					ensureSessionInternal(context);
-				sessionActive = active;
+				sessionActive = active && ensureSessionInternal(context) != null;
 			}
 		});
 	}
@@ -210,6 +229,11 @@ public class PhoenixMedia extends Extension
 		{
 			@Override public void run()
 			{
+				// Invalidate before releasing the player so a queued artwork result
+				// can never update a new session with old song art.
+				BRIDGE_STATE.invalidateArtworkUpdates();
+				ARTWORK_EXECUTOR.getQueue().clear();
+
 				MediaSession oldSession = session;
 				HaxeMediaPlayer oldPlayer = player;
 				session = null;
@@ -246,29 +270,31 @@ public class PhoenixMedia extends Extension
 	}
 
 	/**
-	 * Called by PhoenixMediaService on Android's main thread. A service may be
-	 * created by a system controller before the activity/extension, therefore
-	 * this method takes a Context instead of relying only on Extension.mainContext.
+	 * Returns the session already created by the bridge. A controller cannot
+	 * recreate an empty session after gameplay released it; no Haxe audio exists
+	 * to back such a session after process/session teardown.
 	 */
 	static MediaSession getSessionForService(Context context)
 	{
-		if (context == null)
-			return null;
-		return ensureSessionInternal(context.getApplicationContext());
+		return context == null ? null : session;
 	}
 
-	/** Marks the MediaSessionService as created. */
+	/** Marks the MediaSessionService as created after it attached the shared session. */
 	static void onMediaServiceCreated()
 	{
-		foregroundServiceRunning = true;
-		foregroundServiceStartRequested = true;
+		BRIDGE_STATE.onMediaServiceCreated();
+	}
+
+	/** Resets a requested start when service setup cannot attach a session. */
+	static void onMediaServiceCreationFailed()
+	{
+		BRIDGE_STATE.onMediaServiceStartFailed();
 	}
 
 	/** Marks the MediaSessionService as gone so a later song can restart it. */
 	static void onMediaServiceDestroyed()
 	{
-		foregroundServiceRunning = false;
-		foregroundServiceStartRequested = false;
+		BRIDGE_STATE.onMediaServiceDestroyed();
 	}
 
 	private static Context getApplicationContext()
@@ -294,6 +320,9 @@ public class PhoenixMedia extends Extension
 
 	private static MediaSession ensureSessionInternal(Context context)
 	{
+		if (context == null)
+			return null;
+
 		HaxeMediaPlayer mediaPlayer = ensurePlayerInternal();
 		if (session != null)
 			return session;
@@ -349,21 +378,23 @@ public class PhoenixMedia extends Extension
 	// ------------------------------------------------------------------
 
 	/**
-	 * Starts the Media3 service. The default Media3 notification provider keeps
-	 * its MediaStyle notification synchronized with the mirrored Player.
+	 * Compatibility entry point for callers that previously started the service
+	 * directly. It only requests the service after the mirrored player already
+	 * reports ready playback; Media3 itself posts/promotes its notification.
 	 */
 	public static void startForegroundService(String title, String artist, final boolean playing)
 	{
 		final Context context = getApplicationContext();
-		if (context == null)
+		if (context == null || !playing)
 			return;
 
 		runOnMainThread(new Runnable()
 		{
 			@Override public void run()
 			{
-				ensureSessionInternal(context);
-				startMediaServiceInternal(context, playing);
+				MediaSession mediaSession = ensureSessionInternal(context);
+				if (mediaSession != null)
+					startMediaServiceForReadyPlayback(context, ensurePlayerInternal());
 			}
 		});
 	}
@@ -382,70 +413,80 @@ public class PhoenixMedia extends Extension
 	}
 
 	/**
-	 * Compatibility entry point for the Haxe API. Media3 builds and updates the
-	 * actual MediaStyle notification from setMetadata/setPlaybackState, so this
-	 * only makes sure the service is available while playback is active.
+	 * Compatibility entry point for the Haxe API. Media3 builds its MediaStyle
+	 * notification from metadata and player state; this must not pre-start a
+	 * service while the mirrored player is inactive.
 	 */
 	public static void notifyMedia(String title, String artist, final boolean playing)
 	{
 		final Context context = getApplicationContext();
-		if (context == null)
+		if (context == null || !playing)
 			return;
 
 		runOnMainThread(new Runnable()
 		{
 			@Override public void run()
 			{
-				ensureSessionInternal(context);
-				if (playing)
-					startMediaServiceInternal(context, true);
+				MediaSession mediaSession = ensureSessionInternal(context);
+				if (mediaSession != null)
+					startMediaServiceForReadyPlayback(context, ensurePlayerInternal());
 			}
 		});
 	}
 
-	private static void startMediaServiceInternal(Context context, boolean foreground)
+	/**
+	 * Starts the service only after a READY, playWhenReady mirrored player has
+	 * been published. Media3's MediaNotificationManager then owns notification
+	 * updates, startForeground and its post-playback foreground timeout.
+	 */
+	private static void startMediaServiceForReadyPlayback(Context context, HaxeMediaPlayer mediaPlayer)
 	{
-		if (context == null || foregroundServiceStartRequested)
+		if (context == null || mediaPlayer == null || !mediaPlayer.isReadyPlayback()
+			|| !BRIDGE_STATE.requestMediaServiceStart(true))
 			return;
 
 		try
 		{
 			Intent intent = new Intent(context, PhoenixMediaService.class);
-			if (foreground && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
 				context.startForegroundService(intent);
 			else
 				context.startService(intent);
-			foregroundServiceStartRequested = true;
 		}
 		catch (Exception e)
 		{
 			// Android 12+ can reject a foreground-service start from the
 			// background. The MediaSession remains usable in the foreground
-			// activity, so do not let that policy error crash gameplay.
+			// activity, so do not let that policy error crash gameplay and allow
+			// the next genuine playback update to retry.
+			BRIDGE_STATE.onMediaServiceStartFailed();
 			Log.e(LOG_TAG, "startMediaService failed: " + e);
 		}
 	}
 
 	private static void stopMediaServiceInternal(Context context)
 	{
-		if (context != null)
+		if (!BRIDGE_STATE.requestMediaServiceStop() || context == null)
+			return;
+
+		try
 		{
-			try
-			{
-				context.stopService(new Intent(context, PhoenixMediaService.class));
-			}
-			catch (Exception e)
-			{
-				Log.e(LOG_TAG, "stopMediaService failed: " + e);
-			}
+			context.stopService(new Intent(context, PhoenixMediaService.class));
 		}
-		foregroundServiceRunning = false;
-		foregroundServiceStartRequested = false;
+		catch (Exception e)
+		{
+			Log.e(LOG_TAG, "stopMediaService failed: " + e);
+		}
 	}
 
+	/**
+	 * Returns whether a MediaSessionService instance is alive. This deliberately
+	 * does not claim foreground status: Media3 owns that state and may retain it
+	 * during its post-playback timeout.
+	 */
 	public static boolean isForegroundServiceRunning()
 	{
-		return foregroundServiceRunning;
+		return BRIDGE_STATE.isMediaServiceCreated();
 	}
 
 	/** Creates the notification channels used by simple engine notifications. */
@@ -574,8 +615,10 @@ public class PhoenixMedia extends Extension
 			super(Looper.getMainLooper());
 		}
 
-		void updateMetadata(Context context, String title, String artist, String album, long durationMs,
-			String artworkPath)
+		private long artworkGeneration = 0;
+
+		void updateMetadata(String title, String artist, String album, long durationMs, Uri artworkUri,
+			long artworkGeneration)
 		{
 			verifyApplicationThread();
 
@@ -583,8 +626,9 @@ public class PhoenixMedia extends Extension
 			this.artist = artist;
 			this.album = album;
 			this.durationMs = durationMs > 0 ? durationMs : C.TIME_UNSET;
-			this.artworkData = loadArtworkData(context, artworkPath);
-			this.artworkUri = this.artworkData == null ? parseArtworkUri(artworkPath) : null;
+			this.artworkData = null;
+			this.artworkUri = artworkUri;
+			this.artworkGeneration = artworkGeneration;
 			this.hasTrack = true;
 			this.trackId++;
 			this.mediaItemUid = new Object();
@@ -592,6 +636,18 @@ public class PhoenixMedia extends Extension
 			if (playbackState == Player.STATE_IDLE)
 				playbackState = Player.STATE_READY;
 
+			invalidateState();
+		}
+
+		/** Applies a validated worker result only to the metadata that requested it. */
+		void updateArtwork(long artworkGeneration, byte[] artworkData)
+		{
+			verifyApplicationThread();
+			if (artworkData == null || artworkGeneration != this.artworkGeneration)
+				return;
+
+			this.artworkData = artworkData;
+			this.artworkUri = null;
 			invalidateState();
 		}
 
@@ -625,6 +681,12 @@ public class PhoenixMedia extends Extension
 			}
 
 			invalidateState();
+		}
+
+		/** True only for the user-engaged state which may start a Media3 service. */
+		boolean isReadyPlayback()
+		{
+			return hasTrack && playWhenReady && playbackState == Player.STATE_READY;
 		}
 
 		@Override protected State getState()
@@ -677,23 +739,21 @@ public class PhoenixMedia extends Extension
 
 		@Override protected ListenableFuture<?> handleSetPlayWhenReady(boolean requestedPlayWhenReady)
 		{
-			PhoenixCore.dispatch("media", requestedPlayWhenReady ? "play" : "pause");
+			PhoenixCore.dispatch("media", PhoenixMediaAction.playWhenReady(requestedPlayWhenReady));
 			return Futures.immediateVoidFuture();
 		}
 
 		@Override protected ListenableFuture<?> handleStop()
 		{
-			PhoenixCore.dispatch("media", "stop");
+			PhoenixCore.dispatch("media", PhoenixMediaAction.stop());
 			return Futures.immediateVoidFuture();
 		}
 
 		@Override protected ListenableFuture<?> handleSeek(int mediaItemIndex, long requestedPositionMs,
 			@Player.Command int seekCommand)
 		{
-			long safePosition = requestedPositionMs == C.TIME_UNSET ? 0 : Math.max(0, requestedPositionMs);
-			if (durationMs != C.TIME_UNSET)
-				safePosition = Math.min(safePosition, durationMs);
-			PhoenixCore.dispatch("media", "seek:" + safePosition);
+			PhoenixCore.dispatch("media", PhoenixMediaAction.seek(requestedPositionMs, durationMs,
+				durationMs != C.TIME_UNSET, requestedPositionMs == C.TIME_UNSET));
 			return Futures.immediateVoidFuture();
 		}
 
@@ -727,10 +787,10 @@ public class PhoenixMedia extends Extension
 				switch (event.getKeyCode())
 				{
 					case KeyEvent.KEYCODE_MEDIA_NEXT:
-						PhoenixCore.dispatch("media", "next");
+						PhoenixCore.dispatch("media", PhoenixMediaAction.next());
 						return true;
 					case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-						PhoenixCore.dispatch("media", "previous");
+						PhoenixCore.dispatch("media", PhoenixMediaAction.previous());
 						return true;
 					default:
 						return false;
@@ -744,6 +804,101 @@ public class PhoenixMedia extends Extension
 		}
 	}
 
+	private static ThreadPoolExecutor createArtworkExecutor()
+	{
+		ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 15, TimeUnit.SECONDS,
+			new ArrayBlockingQueue<Runnable>(1), new ThreadFactory()
+			{
+				@Override public Thread newThread(Runnable runnable)
+				{
+					Thread thread = new Thread(runnable, "PhoenixMediaArtwork");
+					thread.setPriority(Thread.NORM_PRIORITY - 1);
+					return thread;
+				}
+			}, new ThreadPoolExecutor.DiscardOldestPolicy());
+		executor.allowCoreThreadTimeOut(true);
+		return executor;
+	}
+
+	private static void scheduleArtworkLoad(final Context context, final String artworkPath,
+		final long artworkGeneration)
+	{
+		if (!shouldLoadArtworkData(artworkPath))
+			return;
+
+		try
+		{
+			ARTWORK_EXECUTOR.execute(new Runnable()
+			{
+				@Override public void run()
+				{
+					final byte[] artworkData = loadArtworkData(context, artworkPath);
+					if (artworkData == null)
+						return;
+
+					runOnMainThread(new Runnable()
+					{
+						@Override public void run()
+						{
+							if (!BRIDGE_STATE.acceptsArtwork(artworkGeneration))
+								return;
+
+							HaxeMediaPlayer mediaPlayer = player;
+							if (mediaPlayer != null)
+								mediaPlayer.updateArtwork(artworkGeneration, artworkData);
+						}
+					});
+				}
+			});
+		}
+		catch (RuntimeException e)
+		{
+			// Metadata is still useful without artwork. A bounded executor should
+			// not reject normally, but never let an artwork scheduling issue affect
+			// playback or MediaSession publication.
+			Log.w(LOG_TAG, "scheduleArtworkLoad failed: " + e);
+		}
+	}
+
+	private static boolean shouldLoadArtworkData(String artworkPath)
+	{
+		if (artworkPath == null || artworkPath.trim().length() == 0)
+			return false;
+
+		try
+		{
+			String scheme = Uri.parse(artworkPath.trim()).getScheme();
+			return scheme == null || "file".equalsIgnoreCase(scheme)
+				|| "content".equalsIgnoreCase(scheme) || "android.resource".equalsIgnoreCase(scheme);
+		}
+		catch (Exception ignored)
+		{
+			return false;
+		}
+	}
+
+	/** Allows only public network artwork URIs to be sent directly to controllers. */
+	private static Uri getRemoteArtworkUri(String artworkPath)
+	{
+		if (artworkPath == null || artworkPath.trim().length() == 0)
+			return null;
+
+		try
+		{
+			Uri uri = Uri.parse(artworkPath.trim());
+			String scheme = uri.getScheme();
+			if ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme))
+				return uri;
+		}
+		catch (Exception ignored) {}
+		return null;
+	}
+
+	/**
+	 * Runs only on ARTWORK_EXECUTOR. Reads a bounded byte stream and performs a
+	 * bounds-only decode so corrupt, oversized, or decompression-bomb artwork is
+	 * discarded before it reaches Media3 metadata.
+	 */
 	private static byte[] loadArtworkData(Context context, String artworkPath)
 	{
 		if (context == null || artworkPath == null || artworkPath.trim().length() == 0)
@@ -767,7 +922,11 @@ public class PhoenixMedia extends Extension
 					return null;
 				output.write(buffer, 0, read);
 			}
-			return output.toByteArray();
+
+			if (total == 0)
+				return null;
+			byte[] artworkData = output.toByteArray();
+			return isSafeArtworkData(artworkData) ? artworkData : null;
 		}
 		catch (Exception ignored)
 		{
@@ -783,6 +942,25 @@ public class PhoenixMedia extends Extension
 				}
 				catch (Exception ignored) {}
 			}
+		}
+	}
+
+	private static boolean isSafeArtworkData(byte[] artworkData)
+	{
+		try
+		{
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inJustDecodeBounds = true;
+			BitmapFactory.decodeByteArray(artworkData, 0, artworkData.length, options);
+			if (options.outWidth <= 0 || options.outHeight <= 0)
+				return false;
+
+			long pixels = (long) options.outWidth * (long) options.outHeight;
+			return pixels <= MAX_ARTWORK_PIXELS;
+		}
+		catch (Exception ignored)
+		{
+			return false;
 		}
 	}
 
@@ -810,26 +988,6 @@ public class PhoenixMedia extends Extension
 			if (artworkPath.startsWith("assets/"))
 				return context.getAssets().open(artworkPath.substring("assets/".length()));
 			throw ignored;
-		}
-	}
-
-	private static Uri parseArtworkUri(String artworkPath)
-	{
-		if (artworkPath == null || artworkPath.trim().length() == 0)
-			return null;
-
-		try
-		{
-			Uri uri = Uri.parse(artworkPath.trim());
-			if (uri.getScheme() != null)
-				return uri;
-
-			File file = new File(artworkPath);
-			return file.isAbsolute() ? Uri.fromFile(file) : null;
-		}
-		catch (Exception ignored)
-		{
-			return null;
 		}
 	}
 
