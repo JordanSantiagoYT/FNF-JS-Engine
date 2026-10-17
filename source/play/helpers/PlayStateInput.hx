@@ -170,16 +170,15 @@ class PlayStateInput
 			if (state.strumsHeld[i]) state.strumHeldAmount++;
 		}
 
-		// TO DO: Find a better way to handle controller inputs, this should work for now
-		if(ClientPrefs.controllerMode)
+		// Touch controls report NOTE_* actions without generating keyboard events.
+		if (ClientPrefs.controllerMode || mobile.MobileControls.enabled)
 		{
-			if(state.pressArray.contains(true))
+			for (i in 0...state.pressArray.length)
 			{
-				for (i in 0...state.pressArray.length)
-				{
-					if(state.pressArray[i] && state.strumsBlocked[i] != true)
-						onKeyPress(state, new KeyboardEvent(KeyboardEvent.KEY_DOWN, true, true, -1, state.keysArray[i][0]));
-				}
+				// Physical keyboard presses already reach onKeyPress outside controller mode.
+				if (state.pressArray[i] && state.strumsBlocked[i] != true
+					&& (ClientPrefs.controllerMode || !FlxG.keys.anyJustPressed(state.keysArray[i])))
+					keyPressed(state, i);
 			}
 		}
 
@@ -228,15 +227,16 @@ class PlayStateInput
 			#end
 		}
 
-		// TO DO: Find a better way to handle controller inputs, this should work for now
-		if((ClientPrefs.controllerMode || mobile.MobileControls.enabled) || state.strumsBlocked.contains(true))
+		if ((ClientPrefs.controllerMode || mobile.MobileControls.enabled) || state.strumsBlocked.contains(true))
 		{
-			if(state.releaseArray.contains(true))
+			if (state.releaseArray.contains(true))
 			{
 				for (i in 0...state.releaseArray.length)
 				{
-					if(state.releaseArray[i] || state.strumsBlocked[i] == true)
-						onKeyRelease(state, new KeyboardEvent(KeyboardEvent.KEY_UP, true, true, -1, state.keysArray[i][0]));
+					// Like presses, polled releases use the lane directly and must not duplicate keyboard callbacks.
+					if (state.strumsBlocked[i] == true || (state.releaseArray[i]
+						&& (ClientPrefs.controllerMode || !FlxG.keys.anyJustReleased(state.keysArray[i]))))
+						keyReleased(state, i);
 				}
 			}
 		}
