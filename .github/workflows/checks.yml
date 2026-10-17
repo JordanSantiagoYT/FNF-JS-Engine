@@ -1,8 +1,8 @@
 name: Checks
 
 # Fast regression guards for the Arena audit fixes (#42-#55, #57-#60).
-# These need no Haxe or Android SDK; Java 17 is used to exercise the production
-# SAF path-policy class against real temporary directories.
+# These need no Haxe or Android SDK; Java 17 exercises the Android-free
+# production SAF path-policy and Media3 bridge lifecycle/action classes.
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       - name: Dependency manifests agree and are pinned
         run: python3 tools/check_dependencies.py
 
-      - name: Setup Java 17 for filesystem-policy tests
+      - name: Setup Java 17 for host-JVM regression tests
         uses: actions/setup-java@v4
         with:
           distribution: temurin

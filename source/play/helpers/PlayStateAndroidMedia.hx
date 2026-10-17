@@ -27,17 +27,21 @@ import android.platform.AndroidMedia;
 import android.platform.AndroidSystem;
 import backend.Conductor;
 import backend.CoolUtil;
+import backend.Paths;
 import flixel.FlxG;
+import openfl.utils.AssetType;
 import flixel.util.FlxTimer;
 import haxe.Json;
+import StringTools;
 import play.PlayState;
 import states.substates.PauseSubState;
 #end
 
 /**
- * Wires Android's media system (MediaSession, lock screen / Bluetooth
- * controls, audio focus, wake lock) into gameplay. No-op on every other
- * platform — the module only compiles its body on Android.
+ * Wires Android's Media3 MediaSession (lock-screen / Bluetooth / Android Auto
+ * controls), audio focus and wake lock into gameplay. The native player only
+ * mirrors Flixel; it never decodes a second copy of the chart audio. No-op on
+ * every other platform — the module only compiles its body on Android.
  *
  * Started from PlayState.create(), stopped from PlayState.destroy().
  */
@@ -57,11 +61,21 @@ class PlayStateAndroidMedia
 		state = playState;
 
 		var title:String = PlayState.SONG != null ? PlayState.SONG.song : "Unknown";
+		var artist:String = getSongArtist();
+		var album:String = "Friday Night Funkin' - Phoenix Engine";
+		var artworkPath:String = getSongArtworkPath();
 		var duration:Float = FlxG.sound.music != null ? FlxG.sound.music.length : 0;
+		var initiallyPlaying:Bool = FlxG.sound.music != null && FlxG.sound.music.playing;
 
-		AndroidMedia.updateNowPlaying(title, 'Friday Night Funkin\'', duration);
-		AndroidMedia.setPlaybackState(AndroidMedia.STATE_PLAYING, 0);
-		AndroidMedia.updateNotification(title, 'Friday Night Funkin\'', true);
+		// The chart carries the creator credit and optional creator image. Feed
+		// both into Media3 rather than publishing every song as a generic FNF
+		// track, while preserving a useful fallback for older/mod charts.
+		AndroidMedia.updateNowPlaying(title, artist, duration, album, artworkPath);
+		// Do not advertise buffering/playWhenReady before Flixel has actually
+		// started sound. PhoenixMedia asks Media3 to start its service only when
+		// a later STATE_PLAYING update mirrors real playback.
+		AndroidMedia.setPlaybackState(initiallyPlaying ? AndroidMedia.STATE_PLAYING : AndroidMedia.STATE_PAUSED, 0,
+			playState.playbackRate);
 		AndroidMedia.requestAudioFocus();
 		AndroidSystem.acquireWakeLock();
 
@@ -109,6 +123,10 @@ class PlayStateAndroidMedia
 
 		if (state != null)
 		{
+			if (ducked && FlxG.sound.music != null)
+				FlxG.sound.music.volume = volumeBeforeDuck;
+			ducked = false;
+
 			AndroidMedia.abandonAudioFocus();
 			AndroidSystem.releaseWakeLock();
 			AndroidSystem.setRecoveryState("");
@@ -123,10 +141,48 @@ class PlayStateAndroidMedia
 			return;
 
 		var position:Float = Conductor.songPosition > 0 ? Conductor.songPosition : 0;
+		var musicIsPlaying:Bool = FlxG.sound.music != null && FlxG.sound.music.playing;
 		if (state.paused)
-			AndroidMedia.setPlaybackState(AndroidMedia.STATE_PAUSED, position);
+			AndroidMedia.setPlaybackState(AndroidMedia.STATE_PAUSED, position, state.playbackRate);
+		else if (musicIsPlaying && !state.endingSong)
+			// playbackRate is the actual Flixel sound pitch; songSpeed only
+			// controls chart/note scrolling and would report a wrong timeline
+			// speed to Android media clients.
+			AndroidMedia.setPlaybackState(AndroidMedia.STATE_PLAYING, position, state.playbackRate);
 		else
-			AndroidMedia.setPlaybackState(AndroidMedia.STATE_PLAYING, position, state.songSpeed);
+			// A selected-but-not-playing song is paused, not buffering: Media3
+			// treats playWhenReady + BUFFERING as foreground-playback eligible.
+			AndroidMedia.setPlaybackState(AndroidMedia.STATE_PAUSED, position, state.playbackRate);
+	}
+
+	/** Returns a chart creator credit, with a stable fallback for old charts. */
+	static function getSongArtist():String
+	{
+		var credit:String = PlayState.SONG != null ? PlayState.SONG.songCredit : null;
+		if (credit != null && StringTools.trim(credit).length > 0)
+			return credit;
+		return "Friday Night Funkin'";
+	}
+
+	/**
+	 * Resolves the optional song-creator image to a path Java can load from a
+	 * mod directory or the Android AssetManager. The native side gracefully
+	 * falls back to no artwork if a legacy chart's icon is absent.
+	 */
+	static function getSongArtworkPath():String
+	{
+		var icon:String = PlayState.SONG != null ? PlayState.SONG.songCreditIcon : null;
+		if (icon == null || StringTools.trim(icon).length == 0)
+			return "";
+
+		try
+		{
+			return Paths.getPath('images/songCreators/$icon.png', AssetType.IMAGE, null, true);
+		}
+		catch (e:Dynamic)
+		{
+			return "";
+		}
 	}
 
 	// ------------------------------------------------------------------

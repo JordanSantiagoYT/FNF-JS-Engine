@@ -79,6 +79,11 @@ class TestAndroidDocumentsProvider(unittest.TestCase):
                 "uses-sdk",
                 {ANDROID + "minSdkVersion": "21", ANDROID + "targetSdkVersion": "36"},
             )
+            for permission_name in (
+                "android.permission.FOREGROUND_SERVICE",
+                "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+            ):
+                ElementTree.SubElement(root, "uses-permission", {ANDROID + "name": permission_name})
             application = ElementTree.SubElement(root, "application")
             provider = ElementTree.SubElement(
                 application,
@@ -91,17 +96,44 @@ class TestAndroidDocumentsProvider(unittest.TestCase):
                     ANDROID + "permission": "android.permission.MANAGE_DOCUMENTS",
                 },
             )
-            intent = ElementTree.SubElement(provider, "intent-filter")
+            provider_intent = ElementTree.SubElement(provider, "intent-filter")
             ElementTree.SubElement(
-                intent,
+                provider_intent,
                 "action",
                 {ANDROID + "name": "android.content.action.DOCUMENTS_PROVIDER"},
             )
+            media_service = ElementTree.SubElement(
+                application,
+                "service",
+                {
+                    ANDROID + "name": "quack.fnf.phoenix.android.PhoenixMediaService",
+                    ANDROID + "exported": "true",
+                    ANDROID + "foregroundServiceType": "mediaPlayback",
+                },
+            )
+            media_intent = ElementTree.SubElement(media_service, "intent-filter")
+            for action_name in (
+                "androidx.media3.session.MediaSessionService",
+                "android.media.browse.MediaBrowserService",
+            ):
+                ElementTree.SubElement(media_intent, "action", {ANDROID + "name": action_name})
             ElementTree.register_namespace("android", "http://schemas.android.com/apk/res/android")
             ElementTree.ElementTree(root).write(manifest_path, encoding="utf-8", xml_declaration=True)
 
             enabled = subprocess.run(
-                [sys.executable, str(checker), str(manifest_path), "--provider", "present", "--minimum-sdk", "21", "--target-sdk", "36"],
+                [
+                    sys.executable,
+                    str(checker),
+                    str(manifest_path),
+                    "--provider",
+                    "present",
+                    "--media-service",
+                    "present",
+                    "--minimum-sdk",
+                    "21",
+                    "--target-sdk",
+                    "36",
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -111,20 +143,86 @@ class TestAndroidDocumentsProvider(unittest.TestCase):
             application.remove(provider)
             ElementTree.ElementTree(root).write(manifest_path, encoding="utf-8", xml_declaration=True)
             disabled = subprocess.run(
-                [sys.executable, str(checker), str(manifest_path), "--provider", "absent", "--minimum-sdk", "21", "--target-sdk", "36"],
+                [
+                    sys.executable,
+                    str(checker),
+                    str(manifest_path),
+                    "--provider",
+                    "absent",
+                    "--media-service",
+                    "present",
+                    "--minimum-sdk",
+                    "21",
+                    "--target-sdk",
+                    "36",
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
             )
             self.assertEqual(disabled.returncode, 0, disabled.stdout + disabled.stderr)
 
-            wrongly_expected = subprocess.run(
-                [sys.executable, str(checker), str(manifest_path), "--provider", "present", "--minimum-sdk", "21", "--target-sdk", "36"],
+            wrongly_expected_provider = subprocess.run(
+                [
+                    sys.executable,
+                    str(checker),
+                    str(manifest_path),
+                    "--provider",
+                    "present",
+                    "--media-service",
+                    "present",
+                    "--minimum-sdk",
+                    "21",
+                    "--target-sdk",
+                    "36",
+                ],
                 check=False,
                 capture_output=True,
                 text=True,
             )
-            self.assertNotEqual(wrongly_expected.returncode, 0)
+            self.assertNotEqual(wrongly_expected_provider.returncode, 0)
+
+            application.remove(media_service)
+            ElementTree.ElementTree(root).write(manifest_path, encoding="utf-8", xml_declaration=True)
+            media_disabled = subprocess.run(
+                [
+                    sys.executable,
+                    str(checker),
+                    str(manifest_path),
+                    "--provider",
+                    "absent",
+                    "--media-service",
+                    "absent",
+                    "--minimum-sdk",
+                    "21",
+                    "--target-sdk",
+                    "36",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(media_disabled.returncode, 0, media_disabled.stdout + media_disabled.stderr)
+
+            wrongly_expected_media = subprocess.run(
+                [
+                    sys.executable,
+                    str(checker),
+                    str(manifest_path),
+                    "--provider",
+                    "absent",
+                    "--media-service",
+                    "present",
+                    "--minimum-sdk",
+                    "21",
+                    "--target-sdk",
+                    "36",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(wrongly_expected_media.returncode, 0)
 
     def test_project_keeps_share_mobile_files_enabled_for_mobile_builds(self):
         project = (ROOT / "project.hxp").read_text(encoding="utf-8")
@@ -155,6 +253,8 @@ class TestAndroidDocumentsProvider(unittest.TestCase):
         self.assertIn("/ndk/27.0.12077973", mobile_workflow)
         self.assertIn('java-version: "17"', checks_workflow)
         self.assertIn("--minimum-sdk 21 --target-sdk 36", main_workflow)
+        self.assertIn("--media-service present", main_workflow)
+        self.assertIn("--media-service present", mobile_workflow)
         self.assertIn("Minimum Android API | 21", platform_docs)
         self.assertIn("Target Android API | 36", platform_docs)
         self.assertIn("Compile SDK | 36", platform_docs)

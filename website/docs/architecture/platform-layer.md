@@ -57,10 +57,13 @@ Gameplay code
 | `AndroidIntents`, `AndroidNotification`, `AndroidDiscord`, `AndroidSystem` | intents, notifications, RPC, system info |
 
 Java side: `PhoenixCore` (registration + `dispatch(event, arg)`), `PhoenixMedia` and
-`PhoenixMediaService` (media session, background playback), `PhoenixDisplay`,
-`PhoenixStorage`, `PhoenixInput`. They are registered through
-`config.set("android.extension", ...)` in `project.hxp`, and Lime's `GameActivity`
-instantiates them.
+`PhoenixMediaService` (a Media3 `MediaSession` / `MediaSessionService` mirror for
+background media-session visibility and external controls), `PhoenixDisplay`, `PhoenixStorage`,
+`PhoenixInput`. The extension classes are registered through
+`config.push("android.extension", ...)` in `project.hxp`, and Lime's `GameActivity`
+instantiates them. `project.hxp` also adds the Android-only `source/android/media3`
+Gradle shim, which pins `androidx.media3:media3-session` without affecting desktop,
+web or iOS builds.
 
 Data crossing the boundary: arrays become CSV strings, byte buffers go through
 `haxe.io.Bytes.ofData`, and JNI method handles are created lazily and cached.
