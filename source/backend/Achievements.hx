@@ -45,6 +45,7 @@ class Achievements {
 		createAchievement('two_keys',				{name: "Just the Two of Us", description: "Finish a Song pressing only two keys."});
 		createAchievement('toastier',				{name: "Toaster Gamer", description: "Have you tried to run the game on a toaster?"});
 		createAchievement('debugger',				{name: "Debugger", description: "Beat the \"Test\" Stage from the Chart Editor.", hidden: true});
+		createAchievement('lol',					{name: "Get a Job!", description: "Play the game for 50 hours.", maxScore: 50, maxDecimals: 2});
 
 		//dont delete this thing below
 		_originalLength = _sortID + 1;
