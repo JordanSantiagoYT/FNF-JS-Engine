@@ -498,7 +498,7 @@ _____________________________________
 * You can add a head icon, name, description and a Redirect link for when the player presses Enter while the item is currently selected.
 
 ## Awards/Achievements
-* The engine comes with 16 example achievements that you can mess with and learn how it works (Check Achievements.hx and search for "checkForAchievement" on PlayState.hx)
+* The engine comes with 21 example achievements that you can mess with and learn how it works (Check Achievements.hx and search for "checkForAchievement" on play/helpers/PlayStatePlayback.hx)
 
 ## Options menu:
 * You can change Note colors, Delay and Combo Offset, Controls and Preferences there.
