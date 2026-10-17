@@ -36,6 +36,8 @@ public class MainActivity extends org.haxe.lime.GameActivity implements PhoenixD
 		cutoutLayout.addView(view, new ViewGroup.LayoutParams(
 			ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 		super.setContentView(cutoutLayout);
+		// Also handle content replacement while the Activity is already running.
+		PhoenixDisplay.applyCutoutToActivity(this);
 	}
 
 	@Override public void setRespectCutoutInsets(boolean respect)

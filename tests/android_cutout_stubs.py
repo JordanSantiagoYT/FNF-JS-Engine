@@ -84,20 +84,20 @@ STUBS['quack/fnf/phoenix/android/PhoenixCore.java'] = STUBS['quack/fnf/phoenix/a
     'public static void dispatch', 'public static void handleNewIntent(android.content.Intent i){} public static void dispatch')
 
 STUBS.update({
-            'android/os/Build.java': 'package android.os; public class Build { public static class VERSION { public static int SDK_INT; } public static class VERSION_CODES {public static final int P=28,R=30,M=23;}}',
-            'android/view/DisplayCutout.java': '''package android.view; public class DisplayCutout {
-                int l,t,r,b; public DisplayCutout(int l,int t,int r,int b) {this.l=l;this.t=t;this.r=r;this.b=b;}
-                public int getSafeInsetLeft(){return l;} public int getSafeInsetTop(){return t;}
-                public int getSafeInsetRight(){return r;} public int getSafeInsetBottom(){return b;}}''',
-            'android/view/WindowInsets.java': '''package android.view; public class WindowInsets {
-                DisplayCutout c; public WindowInsets(DisplayCutout c){this.c=c;}
-                public static class Type {public static int statusBars(){return 1;} public static int navigationBars(){return 2;}}
-                public DisplayCutout getDisplayCutout(){if(android.os.Build.VERSION.SDK_INT<28) throw new AssertionError(); return c;}}''',
-            'android/widget/FrameLayout.java': '''package android.widget; public class FrameLayout extends android.view.View {
-                int l,t,r,b; public FrameLayout(android.content.Context c){}
-                public void setPadding(int l,int t,int r,int b){this.l=l;this.t=t;this.r=r;this.b=b;}
-                public int getPaddingLeft(){return l;} public int getPaddingTop(){return t;}
-                public int getPaddingRight(){return r;} public int getPaddingBottom(){return b;}
-                public void addView(android.view.View view,android.view.ViewGroup.LayoutParams params){}
-                public void requestApplyInsets(){} public android.view.WindowInsets onApplyWindowInsets(android.view.WindowInsets i){return i;}}''',
-        })
+    'android/os/Build.java': 'package android.os; public class Build { public static class VERSION { public static int SDK_INT; } public static class VERSION_CODES {public static final int P=28,R=30,M=23;}}',
+    'android/view/DisplayCutout.java': '''package android.view; public class DisplayCutout {
+        int l,t,r,b; public DisplayCutout(int l,int t,int r,int b) {this.l=l;this.t=t;this.r=r;this.b=b;}
+        public int getSafeInsetLeft(){return l;} public int getSafeInsetTop(){return t;}
+        public int getSafeInsetRight(){return r;} public int getSafeInsetBottom(){return b;}}''',
+    'android/view/WindowInsets.java': '''package android.view; public class WindowInsets {
+        DisplayCutout c; public WindowInsets(DisplayCutout c){this.c=c;}
+        public static class Type {public static int statusBars(){return 1;} public static int navigationBars(){return 2;}}
+        public DisplayCutout getDisplayCutout(){if(android.os.Build.VERSION.SDK_INT<28) throw new AssertionError(); return c;}}''',
+    'android/widget/FrameLayout.java': '''package android.widget; public class FrameLayout extends android.view.View {
+        int l,t,r,b; public FrameLayout(android.content.Context c){}
+        public void setPadding(int l,int t,int r,int b){this.l=l;this.t=t;this.r=r;this.b=b;}
+        public int getPaddingLeft(){return l;} public int getPaddingTop(){return t;}
+        public int getPaddingRight(){return r;} public int getPaddingBottom(){return b;}
+        public void addView(android.view.View view,android.view.ViewGroup.LayoutParams params){}
+        public void requestApplyInsets(){} public android.view.WindowInsets onApplyWindowInsets(android.view.WindowInsets i){return i;}}''',
+})

@@ -44,6 +44,11 @@ public final class PhoenixCutoutTest
 		PhoenixDisplay.setCutoutMode("never");
 		padding(newContent,0,0,55,0);
 		padding(oldContent,0,0,0,0);
+		second.setContentView(new android.view.View());
+		PhoenixCutoutLayout replacement = (PhoenixCutoutLayout) second.content;
+		check(replacement != newContent);
+		replacement.onApplyWindowInsets(new WindowInsets(new DisplayCutout(0,25,0,0)));
+		padding(replacement,0,25,0,0); // Active-view replacement reapplies selection.
 		for (int sdk : new int[]{21,27,28,29,30,34}) {
 			Build.VERSION.SDK_INT = sdk;
 			ActivityHarness legacy = new ActivityHarness();
