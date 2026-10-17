@@ -81,6 +81,7 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 	public static var peOGCrash:Bool = false;
 
 	//Mobile Settings
+  public static var respectCutout:Bool = true;
 	public static var mobileCAlpha:Float = #if mobile 0.6 #else 0 #end;
 	public static var mobileCEx:Bool = false;
 	public static var mobileCPlayStateVpad:Bool = false;
@@ -334,6 +335,8 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 			}
 		}
 
+    applyCutoutPreference();
+
 		for (flixelS in importantMap.get("flixelSound"))
 		{
 			var flxProp:Dynamic = Reflect.field(FlxG.save.data, flixelS);
@@ -355,6 +358,13 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 			reloadControls();
 		}
 	}
+
+  /** Apply immediately; Android owns window layout and inset recomputation. */
+  public static function applyCutoutPreference():Void {
+    #if android
+    android.platform.AndroidDisplay.setCutoutMode(respectCutout ? "never" : "always");
+    #end
+  }
 
 	inline public static function getGameplaySetting(name:String, defaultValue:Dynamic):Dynamic {
 		return (gameplaySettings.exists(name) ? gameplaySettings.get(name) : defaultValue);
