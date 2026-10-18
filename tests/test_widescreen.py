@@ -21,7 +21,7 @@ class WidescreenIntegration(unittest.TestCase):
         scale = source("source-haxelib-patches/flixel/system/scaleModes/PhoenixScaleMode.hx")
         main = source("Main.hx")
         graphics = source("options/GraphicsSettingsSubState.hx")
-        self.assertIn("public static var widescreen:Bool = true;", prefs)
+        self.assertIn("public static var widescreen:Bool = false;", prefs)
         self.assertIn("applyWidescreenPreference();", prefs)
         self.assertIn("FlxG.game.onResize(null)", prefs)
         self.assertIn("ScreenLayout.viewportWidth(Width, Height, ClientPrefs.widescreen)", scale)
@@ -30,7 +30,7 @@ class WidescreenIntegration(unittest.TestCase):
         self.assertIn("else updateGameSize(Width, Height)", scale)  # 16:9 fallback
         self.assertIn("FlxG.scaleMode = new PhoenixScaleMode()", main)
         self.assertLess(main.index("addChild(funkinGame);"), main.index("FlxG.scaleMode = new PhoenixScaleMode()"))
-        self.assertIn("'widescreen', 'bool', true", graphics)
+        self.assertIn("'widescreen', 'bool', false", graphics)
         self.assertIn("ClientPrefs.applyWidescreenPreference()", graphics)
         self.assertIn("ClientPrefs.saveSettings()", graphics)
 

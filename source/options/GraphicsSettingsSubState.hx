@@ -20,7 +20,7 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		//I'd suggest using "Low Quality" as an example for making your own option since it is the simplest here
 		var option:Option = new Option('Widescreen',
 			'Expand the scene to fill wide displays without stretching.\nUncheck for the original 16:9 letterboxed view. Applies immediately.',
-			'widescreen', 'bool', true);
+			'widescreen', 'bool', false);
 		option.onChange = function() {
 			ClientPrefs.applyWidescreenPreference();
 			ClientPrefs.saveSettings();

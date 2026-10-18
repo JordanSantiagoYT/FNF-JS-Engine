@@ -2,10 +2,10 @@
 
 ## Player behavior
 
-**Options → Graphics → Widescreen** is enabled by default and saved with the
+**Options → Graphics → Widescreen** is disabled by default and saved with the
 other `ClientPrefs`. It takes effect immediately, including while the Graphics
-substate is open. When disabled, the logical game stays **1280×720** and Flixel
-letterboxes wider windows as before. When enabled, the logical height remains
+substate is open. With the default setting, the logical game stays **1280×720**
+and Flixel letterboxes wider windows as before. When enabled, the logical height remains
 720 and the width grows to cover the physical aspect ratio (21:9, 32:9, etc.);
 narrow windows continue to letterbox. Minimizing a window does not divide by
 zero or discard the last valid viewport.
