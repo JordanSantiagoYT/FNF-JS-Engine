@@ -73,15 +73,17 @@ class FlxHitbox extends FlxSpriteGroup
 
 		if (laneCount > 0 && layoutWidth >= laneCount && layoutHeight > 0)
 		{
+			final extraHeight:Int = ScreenLayout.hitboxExtraHeight(layoutHeight, ClientPrefs.mobileCEx);
+			final mainHeight:Int = layoutHeight - extraHeight;
+			final mainY:Int = extraHeight > 0 && !ClientPrefs.hitboxPos ? extraHeight : 0;
 			for (i in 0...laneCount)
 			{
 				final start:Int = ScreenLayout.laneStart(i, laneCount, layoutWidth);
 				final end:Int = ScreenLayout.laneStart(i + 1, laneCount, layoutWidth);
-				add(hints[i] = createHint(start, 0, end - start, layoutHeight, laneColors[i]));
+				add(hints[i] = createHint(start, mainY, end - start, mainHeight, laneColors[i]));
 			}
-			if (ClientPrefs.mobileCEx)
-				add(hints[laneCount] = createHint(0, 0, layoutWidth, Std.int(Math.max(1, layoutHeight / 4)), 0xFF0066FF));
-			updateLayout(layoutWidth, layoutHeight);
+			if (extraHeight > 0)
+				add(hints[laneCount] = createHint(0, ClientPrefs.hitboxPos ? mainHeight : 0, layoutWidth, extraHeight, 0xFF0066FF));
 		}
 
 		scrollFactor.set();
@@ -96,10 +98,27 @@ class FlxHitbox extends FlxSpriteGroup
 	/** Rebuild the graphics and hit tests together, without replacing bound buttons. */
 	public function updateLayout(width:Int, height:Int):Void
 	{
-		if (width <= 0 || height <= 0 || laneCount <= 0 || width < laneCount) return;
-		final extraHeight:Int = ClientPrefs.mobileCEx ? Std.int(height / 4) : 0;
-		final mainY:Int = ClientPrefs.mobileCEx && !ClientPrefs.hitboxPos ? extraHeight : 0;
+		if (width <= 0 || height <= 0 || laneCount <= 0 || width < laneCount || hints.length < laneCount) return;
+		final extraHeight:Int = ScreenLayout.hitboxExtraHeight(height, ClientPrefs.mobileCEx);
+		final mainY:Int = extraHeight > 0 && !ClientPrefs.hitboxPos ? extraHeight : 0;
 		final mainHeight:Int = height - extraHeight;
+
+		// The preference can change before the next orientation/window resize.
+		// Keep the actual fifth button in sync so no dead quarter is left behind.
+		if (extraHeight > 0 && hints.length == laneCount)
+		{
+			final extra = createHint(0, ClientPrefs.hitboxPos ? mainHeight : 0, width, extraHeight, 0xFF0066FF);
+			// FlxSpriteGroup.add() does not inherit the parent's visibility.
+			// A hidden gameplay hitbox must not accept touch during a resize.
+			extra.visible = hints[0].visible;
+			add(hints[laneCount] = extra);
+		}
+		else if (extraHeight == 0 && hints.length > laneCount)
+		{
+			final extra:FlxButton = hints.pop();
+			remove(extra, true);
+			extra.destroy();
+		}
 
 		for (i in 0...laneCount)
 		{
@@ -110,14 +129,12 @@ class FlxHitbox extends FlxSpriteGroup
 				hint.loadGraphic(createHintGraphic(end - start, mainHeight, laneColors[i]));
 			hint.setPosition(start, mainY);
 		}
-		if (ClientPrefs.mobileCEx && hints.length > laneCount)
+		if (extraHeight > 0)
 		{
 			final extra:FlxButton = hints[laneCount];
-			final y:Int = ClientPrefs.hitboxPos ? mainHeight : 0;
-			final h:Int = height - mainHeight;
-			if (extra.width != width || extra.height != h)
-				extra.loadGraphic(createHintGraphic(width, h, 0xFF0066FF));
-			extra.setPosition(0, y);
+			if (extra.width != width || extra.height != extraHeight)
+				extra.loadGraphic(createHintGraphic(width, extraHeight, 0xFF0066FF));
+			extra.setPosition(0, ClientPrefs.hitboxPos ? mainHeight : 0);
 		}
 		layoutWidth = width;
 		layoutHeight = height;

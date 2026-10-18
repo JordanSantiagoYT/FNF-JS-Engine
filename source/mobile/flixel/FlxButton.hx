@@ -36,6 +36,7 @@ import flixel.math.FlxPoint;
 import flixel.text.FlxText;
 import flixel.util.FlxDestroyUtil;
 import flixel.system.FlxSound;
+import mobile.flixel.HitboxTouchLogic;
 
 /**
  * A simple button class that calls a function when clicked by the touch.
@@ -395,12 +396,43 @@ class FlxTypedButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	 */
 	function updateButton():Void
 	{
+		if (multiTouch)
+		{
+			updateMultiTouch();
+			return;
+		}
+
 		var overlapFound = checkTouchOverlap();
 
 		if (currentInput != null && currentInput.justReleased && overlapFound)
 			onUpHandler();
 
 		if (status != FlxButton.NORMAL && (!overlapFound || (currentInput != null && currentInput.justReleased)))
+			onOutHandler();
+	}
+
+	/** Aggregate all fingers so releasing one does not release a still-held hitbox lane. */
+	function updateMultiTouch():Void
+	{
+		var anyPressedOver:Bool = false;
+		var anyReleasedOver:Bool = false;
+		for (camera in cameras)
+			for (touch in FlxG.touches.list)
+			{
+				if (!touch.pressed && !touch.justReleased) continue;
+				if (!overlapsPoint(touch.getWorldPosition(camera, _point), true, camera)) continue;
+				if (touch.pressed && (allowSwiping || touch.justPressed || status == FlxButton.PRESSED))
+					anyPressedOver = true;
+				else if (touch.justReleased)
+					anyReleasedOver = true;
+			}
+
+		final action:Int = HitboxTouchLogic.transition(status == FlxButton.PRESSED, anyPressedOver, anyReleasedOver);
+		if (action == HitboxTouchLogic.PRESS)
+			onDownHandler();
+		else if (action == HitboxTouchLogic.RELEASE)
+			onUpHandler();
+		else if (action == HitboxTouchLogic.CANCEL || (status == FlxButton.HIGHLIGHT && !anyPressedOver))
 			onOutHandler();
 	}
 

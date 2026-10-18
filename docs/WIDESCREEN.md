@@ -23,7 +23,7 @@ ratio; the preference does not force an orientation or override cutout policy.
 | Receptors, notes, splashes, ratings, health/time/energy HUD, editor playtest | Keep Psych/JS-Engine's 1280-wide gameplay/HUD area centered; shift existing on-screen objects when the logical width changes and preserve scripted offsets. World-space stage and character coordinates remain unchanged. |
 | Main menu, title, options, freeplay, story, achievements, credits, mods, warnings | Cover large menu artwork without non-uniform scaling; fill solid backgrounds/bars; re-center menu entries and reflow their `Alphabet.startPosition` animation targets. Keep freeplay search controls at the right edge and story character/art arrangements within the centered 1280-wide area. |
 | Pause, options, gameplay changes, score reset, mobile-controls selector, fade transition | Reflow the open substate on resize, including solid overlay coverage, text, virtual pads and button hitboxes. |
-| Mobile hitboxes and custom virtual pad | Use contiguous integer lane boundaries that reach the rightmost pixel even at odd widths; rebuild graphics *and* button bounds on resize; keep extra lanes adjacent, right-side buttons at the right edge and saved custom positions relative to their original viewport width. Dispose resize listeners with their owner. |
+| Mobile hitboxes and custom virtual pad | Use contiguous integer lane boundaries that reach the rightmost pixel even at odd widths; rebuild graphics *and* button bounds on resize. Keep the optional fifth control adjacent, even if its preference changes before a resize. Aggregate fingers on the same lane so releasing one cannot interrupt a held note; keep right-side buttons at the right edge and saved custom positions relative to their original viewport width. Dispose resize listeners with their owner. |
 | Stage spotlight, lightning, cutscene and full-screen flashes | Use a scalable solid overscan region for camera zoom and live resize. World animations keep their 1280-based timings/positions; rain shaders already receive the current camera/view dimensions every frame. Weekend Philly skies extend tiled geometry to both wide edges without stretching the artwork. |
 | Dialogue, cutscene video, skip affordances | Reflow portraits, text and cover sprites. Video preserves its source aspect ratio, crops to cover rather than stretching; the skip control stays at the screen edge. |
 | Fragment shaders | The 3D projection reads OpenFL's live texture dimensions instead of hard-coding 16:9. Other active shaders use their source texture or the per-frame screen resolution; the unused fixed VFD size is removed. |
@@ -42,22 +42,25 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 bash tests/haxe/run-layout.sh
 ```
 
-The Python tests guard all rendering/resize integration paths; the Haxe
-interpreter test executes the production viewport and touch math for 16:9,
-21:9, 32:9, narrow, invalid, odd-width and toggle/resize-rollback cases.
+The Python tests guard rendering/resize and mobile-input integration paths;
+the Haxe interpreter test executes the production viewport, touch-lane and
+same-lane multitouch transition math for 16:9, 21:9, 32:9, narrow, invalid,
+odd-width and toggle/resize-rollback cases.
 Both run in the Checks workflow (which installs Haxe 4.3.7 for the latter).
-The interpreter runner copies the production math module to an isolated
+The interpreter runner copies the production math/input modules to an isolated
 classpath, since the application's global `source/import.hx` needs the full
 Flixel/OpenFL dependency graph. Windows and Android builds are selected in
-the normal PR workflow; extra targets can be requested separately from the
-Build/Mobile workflows.
+the normal `main`-targeted PR workflow; extra targets can be requested
+separately from the Build/Mobile workflows.
 
 The pure geometry tests and integration guards **cannot prove pixel-perfect
 rendering**. For release validation, compare screenshots at 1280×720,
 2560×1080 and 3840×1080 while switching Widescreen on/off and dragging the
 window during gameplay, menus, dialogue, a pause/options substate and a
 full-screen flash. On a mobile build, repeat with the four-lane hitbox (including
-the last pixel at an odd-width surface), a right-side virtual pad, custom pad
-positions and Android cutout/inset modes. Check both a widescreen capture and
-a recording that is resized mid-song; recording should finalize, not corrupt.
+the last pixel at an odd-width surface), two fingers holding the same lane while
+one lifts, the optional extra control at both top and bottom, a right-side
+virtual pad, custom pad positions and Android cutout/inset modes. Check both
+a widescreen capture and a recording that is resized mid-song; recording
+should finalize, not corrupt.
 Mod-provided stage art requires its own coverage review at ultrawide widths.

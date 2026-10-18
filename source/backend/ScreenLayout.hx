@@ -26,6 +26,10 @@ class ScreenLayout
 	public static inline function laneStart(index:Int, lanes:Int, viewportWidth:Int):Int
 		return Std.int(Math.floor(index * viewportWidth / lanes));
 
+	/** Reserve a positive extra-control strip without creating a zero-height lane. */
+	public static inline function hitboxExtraHeight(height:Int, enabled:Bool):Int
+		return enabled && height > 1 ? Std.int(Math.max(1, Math.floor(height / 4))) : 0;
+
 	/** Preserve a button's distance from its nearest edge on a resize. */
 	public static inline function anchoredPosition(position:Float, oldSize:Int, newSize:Int, extent:Float):Float
 	{
