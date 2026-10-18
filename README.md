@@ -32,7 +32,7 @@ Run it locally with `cd website && npm install && npm start`.
 
 ---
 
-**IMPORTANT: You are in the `main` branch, where i will ONLY add stuff that is 100% (ok, maybe 99.9%) sure it will work, if you want a more "Canary"-ish experiency, go check `bleeding` for bleeding-edge updates.** _Keep in mind that small patches CAN go directly to main if i think its good enough..._
+**IMPORTANT: You are in the `bleeding` branch, where you'll find bleeding-edge updates that may be experimental, unstable, or not fully tested yet. If you prefer a stable experience with changes that are 100% (okay, maybe 99.9%) guaranteed to work, stick to the `main` branch.** _Keep in mind that small patches CAN go directly to main if i think its good enough..._
 
 Phoenix Engine focuses on making both Hardmodding (Hardcoded mods, using `Haxe`) *AND* Softmodding (mods you place on `mods/` folder, made with `Lua`/`Luau` or `Python`) easier.
 
