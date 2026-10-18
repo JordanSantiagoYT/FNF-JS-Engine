@@ -21,6 +21,7 @@ import objects.*;
 import openfl.events.KeyboardEvent;
 import openfl.system.System;
 import play.objects.*;
+import play.RatingQuotes;
 #if SHADERS_ALLOWED
 import shaders.ErrorHandledShader;
 #end
@@ -30,14 +31,14 @@ class PlayState extends MusicBeatState
 	private var singAnimations:Array<String> = ['singLEFT', 'singDOWN', 'singUP', 'singRIGHT'];
 
 	public static var instance:PlayState;
-	public static var STRUM_X = 48;
-	public static var STRUM_X_MIDDLESCROLL = -278;
+	public static var STRUM_X:Float = 48;
+	public static var STRUM_X_MIDDLESCROLL:Float = -278;
 
 	public var renderPath(default, null):String = ClientPrefs.renderPath;
 
 	public static var middleScroll:Bool = false;
 
-	public static var ratingStuff:Array<Dynamic> = [];
+	public static var ratingStuff:Array<RatingQuote> = [];
 
 	var lastUpdateTime:Float = 0.0;
 
@@ -715,46 +716,7 @@ class PlayState extends MusicBeatState
 			startCharacterLua(gf.curCharacter);
 		}
 
-		var ratingQuoteStuff:Array<Dynamic> = Mods.mergeAllTextsNamed('data/ratingQuotes/${ClientPrefs.rateNameStuff}.txt', '', true);
-		if (ratingQuoteStuff == null || ratingQuoteStuff.indexOf(null) != -1){
-			trace('Failed to find quotes for ratings!');
-			// this should help fix a crash
-			ratingQuoteStuff = [
-				['How are you this bad?', 0.1],
-				['You Suck!', 0.2],
-				['Horribly Shit', 0.3],
-				['Shit', 0.4],
-				['Bad', 0.5],
-				['Bruh', 0.6],
-				['Meh', 0.69],
-				['Nice', 0.7],
-				['Good', 0.8],
-				['Great', 0.9],
-				['Sick!', 1],
-				['Perfect!!', 1]
-			];
-			ratingStuff = ratingQuoteStuff.copy();
-		}
-		else
-		{
-			for (i in 0...ratingQuoteStuff.length)
-			{
-				var quotes:Array<Dynamic> = ratingQuoteStuff[i].split(',');
-				if (quotes.length > 2) //In case your quote has more than 1 comma
-				{
-					var quotesToRemove:Int = 0;
-					for (i in 1...quotes.length-1)
-					{
-						quotesToRemove++;
-						quotes[0] += ',' + quotes[i];
-					}
-					if (quotesToRemove > 0)
-						quotes.splice(1, quotesToRemove);
-
-				}
-				ratingStuff.push(quotes);
-			}
-		}
+		ratingStuff = RatingQuotes.loadRatingQuotes();
 
 		if (!ClientPrefs.charsAndBG)
 		{
@@ -5993,7 +5955,8 @@ class PlayState extends MusicBeatState
 	public var ratingString:String;
 	public var ratingPercent:Float;
 	public var ratingFC:String;
-	public function RecalculateRating(badHit:Bool = false) {
+	public function RecalculateRating(badHit:Bool = false)
+	{
 		setOnLuas('score', songScore);
 		setOnLuas('misses', songMisses);
 		setOnLuas('hits', songHits);
@@ -6001,75 +5964,20 @@ class PlayState extends MusicBeatState
 		if (badHit) missRecalcsPerFrame += 1;
 
 		final ret:Dynamic = callOnLuas('onRecalculateRating');
-		if(ret != FunkinLua.Function_Stop)
+		if (ret != FunkinLua.Function_Stop)
 		{
-			if(totalPlayed < 1) //Prevent divide by 0
+			if (totalPlayed < 1) // Prevent divide by 0
 				ratingName = '?';
 			else
 			{
-				// Rating Percent
 				ratingPercent = Math.min(1, Math.max(0, totalNotesHit / totalPlayed));
-
-			if (Math.isNaN(ratingPercent))
-				ratingString = '?';
-
-				// Rating Name
-
-				if (ratingStuff.length <= 0) {
-					ratingName = 'Error!';
-				}
-				else {
-					if(ratingPercent >= 1)
-					{
-						ratingName = ratingStuff[ratingStuff.length-1][0]; //Uses last string
-					}
-					else
-					{
-						for (i in 0...ratingStuff.length-1)
-						{
-							if(ratingPercent < ratingStuff[i][1])
-							{
-								ratingName = ratingStuff[i][0];
-								break;
-							}
-						}
-					}
-				}
+				ratingName = getRatingName(ratingPercent);
 			}
 
-			/**
-			 * - Rating FC and other stuff -
-			 *
-			 * > Now with better evaluation instead of using regular spaghetti code
-			 *
-			 * # @Equinoxtic was here, hi :3
-			 */
+			final fcIndex:Int = getFCIndex();
+			ratingFC = (fcIndex >= 0) ? fcStrings[fcIndex] : '';
 
-			final fcConditions:Array<Bool> = [
-				(totalPlayed == 0), // 'No Play'
-				(perfects > 0), // 'PFC'
-				(sicks > 0), // 'SFC'
-				(goods > 0), // 'GFC'
-				(bads > 0), // 'BFC'
-				(shits > 0), // 'FC'
-				(songMisses > 0 && songMisses < 10), // 'SDCB'
-				(songMisses >= 10), // 'Clear'
-				(songMisses >= 100), // 'TDCB'
-				(songMisses >= 1000) // 'QDCB'
-			];
-
-			var cond:Int = fcConditions.length - 1;
-			ratingFC = "";
-			while (cond >= 0)
-			{
-				if (fcConditions[cond]) {
-					ratingFC = fcStrings[cond];
-					break;
-				}
-				cond--;
-			}
-
-			// basically same stuff, doesn't update every frame but it also means no memory leaks during botplay
+			// doesn't update every frame, so no memory leaks during botplay
 			if (scoreTxt != null)
 				updateScore(badHit);
 		}
@@ -6077,6 +5985,38 @@ class PlayState extends MusicBeatState
 		setOnLuas('rating', ratingPercent);
 		setOnLuas('ratingName', ratingName);
 		setOnLuas('ratingFC', ratingFC);
+	}
+
+	function getRatingName(percent:Float):String
+	{
+		if (ratingStuff.length == 0)
+			return 'Error!';
+
+		final last:RatingQuote = ratingStuff[ratingStuff.length - 1];
+		if (percent >= 1)
+			return last.quote; // Perfect uses the last entry
+
+		for (i in 0...ratingStuff.length - 1)
+		{
+			if (percent < ratingStuff[i].threshold)
+				return ratingStuff[i].quote;
+		}
+		return last.quote; // fallback so a custom file can't leave a stale name
+	}
+
+	function getFCIndex():Int
+	{
+		if (songMisses >= 1000) return 9; // QDCB
+		if (songMisses >= 100) return 8;  // TDCB
+		if (songMisses >= 10) return 7;   // Clear
+		if (songMisses > 0) return 6;     // SDCB
+		if (shits > 0) return 5;          // FC
+		if (bads > 0) return 4;           // BFC
+		if (goods > 0) return 3;          // GFC
+		if (sicks > 0) return 2;          // SFC
+		if (perfects > 0) return 1;       // PFC
+		if (totalPlayed == 0) return 0;   // No Play
+		return -1;
 	}
 
 	#if ACHIEVEMENTS_ALLOWED

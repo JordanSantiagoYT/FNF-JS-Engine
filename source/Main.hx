@@ -6,12 +6,23 @@ import backend.FunkinGame;
 import lime.app.Application;
 import openfl.Lib;
 import openfl.display.Sprite;
+import flixel.util.typeLimit.NextState;
 #if (linux && !debug)
 import hxgamemode.GamemodeClient;
 #end
 #if (linux || mac)
 import lime.graphics.Image;
 #end
+
+typedef GameStruct =
+{
+  width:Int,
+  height:Int,
+  initialState:Class<FlxState>,
+  framerate:Int,
+  skipSplash:Bool,
+  startFullscreen:Bool
+}
 
 #if windows
 @:buildXml('
@@ -27,16 +38,15 @@ import lime.graphics.Image;
 #end
 class Main extends Sprite
 {
-  final game =
-    {
-      width: 1280,
-      height: 720,
-      initialState: InitState,
-      zoom: -1.0,
-      framerate: 60,
-      skipSplash: true,
-      startFullscreen: false
-    };
+  public static final game:GameStruct =
+  {
+    width: 1280,
+    height: 720,
+    initialState: TitleState,
+    framerate: 60,
+    skipSplash: true,
+    startFullscreen: false
+  };
 
   public static var fpsVar:FPSCounter;
   public static var instance:Main;
@@ -86,27 +96,15 @@ class Main extends Sprite
   public static function isPlayState():Bool
     return Type.getClassName(Type.getClass(FlxG.state)) == 'PlayState';
 
+  public static function getFirstState():NextState
+    return (!ClientPrefs.disableSplash) ? () -> new StartupState() : () -> Type.createInstance(Main.game.initialState, []);
+
   private function setupGame():Void
   {
-    var stageWidth:Int = Lib.current.stage.stageWidth;
-    var stageHeight:Int = Lib.current.stage.stageHeight;
-    #if (openfl <= "9.2.0")
-    if (game.zoom == -1.0)
-    {
-      var ratioX:Float = stageWidth / game.width;
-      var ratioY:Float = stageHeight / game.height;
-      game.zoom = Math.min(ratioX, ratioY);
-      game.width = Math.ceil(stageWidth / game.zoom);
-      game.height = Math.ceil(stageHeight / game.zoom);
-    };
-    #end
     ClientPrefs.loadDefaultStuff();
     #if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
 
-    final funkinGame:FunkinGame = new FunkinGame(game.width, game.height, game.initialState, #if (flixel < "5.0.0") game.zoom, #end game.framerate, game.framerate,
-      game.skipSplash, game.startFullscreen);
-    // Literally just from Vanilla FNF but I implemented it my own way. -Torch
-    // torch is my friend btw :3 -moxie
+    final funkinGame:FunkinGame = new FunkinGame(game.width, game.height, InitState, game.framerate, game.framerate, game.skipSplash, game.startFullscreen);
     @:privateAccess {
       final soundFrontEnd:flixel.system.frontEnds.SoundFrontEnd = new objects.CustomSoundTray.CustomSoundFrontEnd();
       FlxG.sound = soundFrontEnd;

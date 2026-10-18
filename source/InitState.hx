@@ -23,9 +23,7 @@ class InitState extends FlxState {
 
 		FlxG.save.bind('funkin', CoolUtil.getSavePath());
 
-		#if (flixel >= "5.0.0")
 		trace('save status: ${FlxG.save.status}');
-		#end
 
 		FlxG.fixedTimestep = false;
 
@@ -53,8 +51,6 @@ class InitState extends FlxState {
         Paths.clearStoredMemory();
 		Paths.clearUnusedMemory();
 
-        final state:Class<FlxState> = (ClientPrefs.disableSplash) ? TitleState : StartupState;
-
-        FlxG.switchState(Type.createInstance(state, []));
+        FlxG.switchState(Main.getFirstState());
     }
 }
