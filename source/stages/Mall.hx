@@ -1,5 +1,6 @@
 package stages;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.Paths;
 import objects.BGSprite;
 import play.BaseStage;
@@ -13,6 +14,9 @@ class Mall extends BaseStage
 	var upperBoppers:BGSprite;
 	var bottomBoppers:MallCrowd;
 	var santa:BGSprite;
+	var blackOverlay:FlxSprite;
+	override public function onViewportResize():Void
+		ViewportVisuals.overscan(blackOverlay);
 
 	override function create()
 	{
@@ -91,8 +95,8 @@ class Mall extends BaseStage
 		{
 			FlxG.sound.play(Paths.sound('Lights_Shut_off'));
 
-			var blackOverlay:FlxSprite = new FlxSprite(-FlxG.width * FlxG.camera.zoom,
-				-FlxG.height * FlxG.camera.zoom).makeGraphic(FlxG.width * 3, FlxG.height * 3, FlxColor.BLACK);
+			blackOverlay = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+			ViewportVisuals.overscan(blackOverlay);
 			blackOverlay.scrollFactor.set();
 			add(blackOverlay);
 			camHUD.visible = false;

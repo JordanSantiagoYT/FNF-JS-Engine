@@ -34,6 +34,17 @@ class GameOverSubstate extends MusicBeatSubstate
 
 	public static var instance:GameOverSubstate;
 	var parentPlayState:PlayState = null; // assuring PlayState isn't null
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		if (genericCharacter != null)
+		{
+			genericCharacter.screenCenter(X);
+			if (camFollowPos != null) camFollowPos.x = FlxG.width / 2;
+		}
+	}
+
 	public function new(?char:Character, ps:PlayState)
 	{
 		super();

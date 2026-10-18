@@ -4,7 +4,9 @@ package play;
 import shaders.ErrorHandledShader.ErrorHandledRuntimeShader;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import backend.Conductor;
+import play.helpers.PlayStateLayout;
 import backend.Conductor.Rating;
 import backend.CoolUtil;
 import backend.DiscordClient;
@@ -315,6 +317,7 @@ class PlayState extends MusicBeatState
 	public var camHUD:FlxCamera;
 	public var camGame:FlxCamera;
 	public var camOther:FlxCamera;
+	private var layoutWidth:Int = 0;
 	public var cameraSpeed:Float = 1;
 	var hitsoundImage:FlxSprite;
 	var hitsoundImageToLoad:String;
@@ -457,8 +460,16 @@ class PlayState extends MusicBeatState
 	public var startCallback:Void->Void = null;
 	public var endCallback:Void->Void = null;
 
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		if (layoutWidth != 0) PlayStateLayout.resize(this, layoutWidth);
+		layoutWidth = FlxG.width;
+	}
+
 	override public function create()
 	{
+		layoutWidth = FlxG.width;
 		FlxG.mouse.visible = false;
 		//Stops playing on a height that isn't divisible by 2
 		if (ClientPrefs.ffmpegMode && ClientPrefs.resolution != null) {
@@ -474,9 +485,7 @@ class PlayState extends MusicBeatState
 
 					if (width != null && height != null) {
 						CoolUtil.resetResScale(width, height);
-						FlxG.resizeGame(width, height);
-						lime.app.Application.current.window.width = width;
-						lime.app.Application.current.window.height = height;
+						FlxG.resizeWindow(width, height); // also updates cameras and touch mapping
 					}
 				}
 			}
@@ -1098,7 +1107,7 @@ class PlayState extends MusicBeatState
 		timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
 
 		energyBarBG = new AttachedSprite('timeBar');
-		energyBarBG.x = FlxG.width * 0.81;
+		energyBarBG.x = ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH * 0.81;
 		energyBarBG.y = FlxG.height / 2;  // Adjust y position if needed for specific timeBarTypes
 		energyBarBG.scrollFactor.set();
 		energyBarBG.alpha = 0;
@@ -1119,7 +1128,7 @@ class PlayState extends MusicBeatState
 		add(energyBar);
 		energyBarBG.sprTracker = energyBar;
 
-		energyTxt = new FlxText(FlxG.width * 0.81, FlxG.height / 2, 400, "", 20);
+		energyTxt = new FlxText(ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH * 0.81, FlxG.height / 2, 400, "", 20);
 		energyTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE,FlxColor.BLACK);
 		energyTxt.scrollFactor.set();
 		energyTxt.alpha = 0;
@@ -1297,7 +1306,7 @@ class PlayState extends MusicBeatState
 
 		//figured i'd optimize the code for the enginewatermark creation. after all a lot of lines here were mostly the same
 
-		EngineWatermark = new FlxText(4,FlxG.height * 0.9 + 50,0,"", 16);
+		EngineWatermark = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 4, FlxG.height * 0.9 + 50, 0, "", 16);
 		EngineWatermark.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, RIGHT, OUTLINE,FlxColor.BLACK);
 		EngineWatermark.scrollFactor.set();
 		EngineWatermark.text = SONG.song;
@@ -1308,7 +1317,7 @@ class PlayState extends MusicBeatState
 			case 'Vanilla': EngineWatermark.text = SONG.song + " " + CoolUtil.difficultyString() + " | JSE " + MainMenuState.psychEngineJSVersion;
 			case 'Forever Engine':
 				EngineWatermark.text = "JS Engine v" + MainMenuState.psychEngineJSVersion;
-				EngineWatermark.x = FlxG.width - EngineWatermark.width - 5;
+				EngineWatermark.x = ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH - EngineWatermark.width - 5;
 			case 'JS Engine':
 				if (!ClientPrefs.downScroll) EngineWatermark.y = FlxG.height * 0.1 - 70;
 				EngineWatermark.text = "Playing " + SONG.song + " on " + CoolUtil.difficultyString() + " - JSE v" + MainMenuState.psychEngineJSVersion;
@@ -1402,7 +1411,7 @@ class PlayState extends MusicBeatState
 		add(renderedTxt);
 
 		//create default botplay text
-		botplayTxt = new FlxText(400, timeBarBG.y + 55, FlxG.width - 800, "BOTPLAY", 32);
+		botplayTxt = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 400, timeBarBG.y + 55, ScreenLayout.BASE_WIDTH - 800, "BOTPLAY", 32);
 		botplayTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 		botplayTxt.scrollFactor.set();
 		botplayTxt.borderSize = 1.25;
@@ -3221,6 +3230,8 @@ class PlayState extends MusicBeatState
 	#if sys
 	public static var process:Process;
 	var ffmpegExists:Bool = false;
+	var renderWidth:Int = 0;
+	var renderHeight:Int = 0;
 	#end
 
 	private function initRender(renderPath:String = "assets/gameRenders/", ?prefixName:String = null):Void

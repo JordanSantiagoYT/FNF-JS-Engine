@@ -1,6 +1,8 @@
 package states;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.Conductor;
 import backend.CoolUtil;
 import backend.Highscore;
@@ -47,6 +49,9 @@ class TitleState extends MusicBeatState
   var canPause:Bool = true;
 
   var blackScreen:FlxSprite;
+  var background:FlxSprite;
+  var hasBackgroundArt:Bool = false;
+  var layoutWidth:Int = 0;
   var credGroup:FlxGroup;
   var creditText:Alphabet;
   var textGroup:FlxGroup;
@@ -63,8 +68,25 @@ class TitleState extends MusicBeatState
 
   public static var updateVersion:String = '';
 
+  override public function onResize(width:Int, height:Int):Void
+  {
+    super.onResize(width, height);
+    if (hasBackgroundArt) ViewportVisuals.cover(background);
+    else ViewportVisuals.fill(background);
+    ViewportVisuals.fill(blackScreen);
+    final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+    for (sprite in [logoBl, gfDance, titleText]) if (sprite != null) sprite.x += shift;
+    if (ngSpr != null) ngSpr.screenCenter(X);
+    if (creditText != null) creditText.screenCenter(X);
+    if (textGroup != null)
+      for (item in textGroup.members)
+        if (Std.isOfType(item, Alphabet)) (cast item : Alphabet).screenCenter(X);
+    layoutWidth = FlxG.width;
+  }
+
   override public function create():Void
   {
+    layoutWidth = FlxG.width;
     Paths.clearStoredMemory();
     Paths.clearUnusedMemory();
 
@@ -294,19 +316,21 @@ class TitleState extends MusicBeatState
     }
     persistentUpdate = true;
 
-    var bg:FlxSprite = new FlxSprite();
-
-    if (titleJSON.backgroundSprite != null && titleJSON.backgroundSprite.length > 0 && titleJSON.backgroundSprite != "none")
+    background = new FlxSprite();
+    hasBackgroundArt = titleJSON.backgroundSprite != null && titleJSON.backgroundSprite.length > 0 && titleJSON.backgroundSprite != "none";
+    if (hasBackgroundArt)
     {
-      bg.loadGraphic(Paths.image(titleJSON.backgroundSprite));
+      background.loadGraphic(Paths.image(titleJSON.backgroundSprite));
+      ViewportVisuals.cover(background);
     }
     else
     {
-      bg.makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
+      background.makeGraphic(1, 1, FlxColor.BLACK);
+      ViewportVisuals.fill(background);
     }
-    add(bg);
+    add(background);
 
-    logoBl = new FlxSprite(titleJSON.titlex, titleJSON.titley);
+    logoBl = new FlxSprite(ScreenLayout.contentLeft(FlxG.width) + titleJSON.titlex, titleJSON.titley);
     logoBl.frames = Paths.getSparrowAtlas('logoBumpin');
 
     logoBl.antialiasing = ClientPrefs.globalAntialiasing;
@@ -321,7 +345,7 @@ class TitleState extends MusicBeatState
     // would treat a missing .xml path as literal XML and fail to parse it.
     if (Paths.image('gfDanceTitle') != null && Paths.fileExists('images/gfDanceTitle.xml', TEXT))
     {
-      gfDance = new FlxSprite(titleJSON.gfx, titleJSON.gfy);
+      gfDance = new FlxSprite(ScreenLayout.contentLeft(FlxG.width) + titleJSON.gfx, titleJSON.gfy);
 
       gfDance.frames = Paths.getSparrowAtlas('gfDanceTitle');
       gfDance.animation.addByIndices('danceLeft', 'gfDance', [30, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14], "", 24, false);
@@ -334,7 +358,7 @@ class TitleState extends MusicBeatState
     add(logoBl);
     logoBl.shader = swagShader.shader;
 
-    titleText = new FlxSprite(titleJSON.startx, titleJSON.starty);
+    titleText = new FlxSprite(ScreenLayout.contentLeft(FlxG.width) + titleJSON.startx, titleJSON.starty);
 	titleText.frames = Paths.getSparrowAtlas('titleEnter');
     var animFrames:Array<FlxFrame> = [];
     @:privateAccess {
@@ -366,7 +390,8 @@ class TitleState extends MusicBeatState
     add(credGroup);
     textGroup = new FlxGroup();
 
-    blackScreen = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
+    blackScreen = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+    ViewportVisuals.fill(blackScreen);
     credGroup.add(blackScreen);
 
     creditText = new Alphabet(0, 0, "", true);

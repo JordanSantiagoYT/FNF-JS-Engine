@@ -41,7 +41,10 @@ class PlayStateRender
 				FileSystem.createDirectory(renderPath);
 		}
 
-		state.ffmpegExists = true;
+		state.ffmpegExists = false;
+		state.renderWidth = lime.app.Application.current.window.width;
+		state.renderHeight = lime.app.Application.current.window.height;
+		if (state.renderWidth <= 0 || state.renderHeight <= 0) return;
 
 		var fileName = '$renderPath$prefixName';
 		if(FileSystem.exists(fileName + '.mp4')) {
@@ -50,11 +53,13 @@ class PlayStateRender
 		}
 
 		try{
-			PlayState.process = new Process('ffmpeg', ['-v', 'quiet', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', lime.app.Application.current.window.width + 'x' + lime.app.Application.current.window.height, '-r', Std.string(state.targetFPS), '-i', '-', '-c:v', ClientPrefs.vidEncoder, '-b', Std.string(ClientPrefs.renderBitrate * 1000000), fileName + '.mp4']);
+			PlayState.process = new Process('ffmpeg', ['-v', 'quiet', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', state.renderWidth + 'x' + state.renderHeight, '-r', Std.string(state.targetFPS), '-i', '-', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', '-c:v', ClientPrefs.vidEncoder, '-b', Std.string(ClientPrefs.renderBitrate * 1000000), fileName + '.mp4']);
+			state.ffmpegExists = true;
 			FlxG.autoPause = false;
 		}catch(e:Dynamic){
 			trace("Error initializing FFmpeg process: " + e);
 			PlayState.process = null;
+			state.ffmpegExists = false;
 		}
 		#else
 		trace('Video rendering is not supported on this platform.');
@@ -67,10 +72,48 @@ class PlayStateRender
 		if (!state.ffmpegExists || PlayState.process == null)
 			return;
 
+		final window = lime.app.Application.current.window;
+		// FFmpeg's rawvideo stride is fixed at startup. The scale-mode game
+		// dimensions are logical, NOT physical: capture the whole window at
+		// exactly the -s dimensions, including 16:9 letterboxing when disabled.
+		// Stop cleanly on a physical resize rather than feeding corrupt frames.
+		if (window.width != state.renderWidth || window.height != state.renderHeight)
+		{
+			FlxG.log.warn('Window resized while recording; closing the current video to avoid corrupted frames.');
+			state.ffmpegExists = false;
+			stopRender();
+			return;
+		}
+
 		debug.FrameProfiler.beginRender();
-		state.img = lime.app.Application.current.window.readPixels(new lime.math.Rectangle(FlxG.scaleMode.offset.x, FlxG.scaleMode.offset.y, FlxG.scaleMode.gameSize.x, FlxG.scaleMode.gameSize.y));
+		state.img = window.readPixels();
+		if (state.img == null || state.img.width != state.renderWidth || state.img.height != state.renderHeight)
+		{
+			debug.FrameProfiler.endRender();
+			FlxG.log.warn('Unexpected video frame dimensions; stopping the render to avoid corrupted frames.');
+			state.ffmpegExists = false;
+			stopRender();
+			return;
+		}
 		state.bytes = state.img.getPixels(new lime.math.Rectangle(0, 0, state.img.width, state.img.height));
-		PlayState.process.stdin.writeBytes(state.bytes, 0, state.bytes.length);
+		if (state.bytes.length != state.renderWidth * state.renderHeight * 4)
+		{
+			debug.FrameProfiler.endRender();
+			FlxG.log.warn('Invalid RGBA frame size; stopping the render.');
+			state.ffmpegExists = false;
+			stopRender();
+			return;
+		}
+		try
+		{
+			PlayState.process.stdin.writeBytes(state.bytes, 0, state.bytes.length);
+		}
+		catch (e:Dynamic)
+		{
+			FlxG.log.warn('FFmpeg could not write the video frame: ' + e);
+			state.ffmpegExists = false;
+			stopRender();
+		}
 		debug.FrameProfiler.endRender();
 		#end
 	}
@@ -78,15 +121,18 @@ class PlayStateRender
 	public static function stopRender():Void
 	{
 		#if sys
-		if (!ClientPrefs.ffmpegMode || PlayState.process == null)
+		if (PlayState.process == null)
 			return;
 
-		PlayState.process?.stdin?.close();
-
-		PlayState.process?.close();
-
-		PlayState.process?.kill();
-
+		final process = PlayState.process;
+		PlayState.process = null;
+		try
+		{
+			process.stdin.close(); // EOF lets FFmpeg finalize its MP4 index.
+			process.exitCode();
+		}
+		catch (e:Dynamic) FlxG.log.warn('FFmpeg closed with an error: ' + e);
+		process.close();
 		FlxG.autoPause = ClientPrefs.autoPause;
 		#end
 	}

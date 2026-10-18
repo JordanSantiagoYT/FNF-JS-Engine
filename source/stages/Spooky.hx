@@ -1,5 +1,6 @@
-﻿package stages;
+package stages;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.Paths;
 import objects.BGSprite;
 import play.BaseStage;
@@ -11,6 +12,14 @@ class Spooky extends BaseStage
 {
 	var halloweenBG:BGSprite;
 	var halloweenWhite:BGSprite;
+	var lightningFlash:FlxSprite;
+
+	override public function onViewportResize():Void
+	{
+		ViewportVisuals.overscan(halloweenWhite);
+		ViewportVisuals.overscan(lightningFlash);
+	}
+
 	override function create()
 	{
 		if(!ClientPrefs.lowQuality) {
@@ -36,8 +45,9 @@ class Spooky extends BaseStage
 	}
 	override function createPost()
 	{
-		halloweenWhite = new BGSprite(null, -800, -400, 0, 0);
-		halloweenWhite.makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.WHITE);
+		halloweenWhite = new BGSprite(null, 0, 0, 0, 0);
+		halloweenWhite.makeGraphic(1, 1, FlxColor.WHITE);
+		ViewportVisuals.overscan(halloweenWhite);
 		halloweenWhite.alpha = 0;
 		halloweenWhite.blend = ADD;
 		add(halloweenWhite);
@@ -103,17 +113,19 @@ class Spooky extends BaseStage
 		boyfriend.playAnim('scared', true);
 
 		// white flash
-		var whiteScreen:FlxSprite = new FlxSprite().makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.WHITE);
-		whiteScreen.scrollFactor.set();
-		whiteScreen.blend = ADD;
-		add(whiteScreen);
-		FlxTween.tween(whiteScreen, {alpha: 0}, 1, {
+		lightningFlash = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
+		ViewportVisuals.overscan(lightningFlash);
+		lightningFlash.scrollFactor.set();
+		lightningFlash.blend = ADD;
+		add(lightningFlash);
+		FlxTween.tween(lightningFlash, {alpha: 0}, 1, {
 			startDelay: 0.1,
 			ease: FlxEase.linear,
 			onComplete: function(twn:FlxTween)
 			{
-				remove(whiteScreen);
-				whiteScreen.destroy();
+				remove(lightningFlash);
+				lightningFlash.destroy();
+				lightningFlash = null;
 
 				camHUD.visible = true;
 				startCountdown();

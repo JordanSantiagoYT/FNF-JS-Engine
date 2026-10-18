@@ -5,6 +5,7 @@ import flixel.graphics.FlxGraphic;
 import flixel.input.keyboard.FlxKey;
 
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.DiscordClient;
 import backend.MusicBeatState;
@@ -34,7 +35,8 @@ class OptionsState extends MusicBeatState
 	var options:Array<String> = ['Note Colors', 'Controls', 'Adjust Delay and Combo', 'Graphics', 'Optimization' #if (desktop || android), 'Game Rendering' #end, 'Visuals and UI', 'Gameplay', 'Misc' #if (android || ios), 'Mobile Options' #end];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
-	public static var menuBG:FlxSprite;
+	public static var menuBG:FlxSprite; // retained for source/mod compatibility
+	private var optionsBackground:FlxSprite;
 	public static var onPlayState:Bool = false;
 	public var enteringDebugMenu:Bool = false;
 	private var mainCamera:FlxCamera;
@@ -80,6 +82,25 @@ class OptionsState extends MusicBeatState
 	var camFollow:FlxObject;
 	var camFollowPos:FlxObject;
 
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.cover(optionsBackground);
+		if (optionsBackground != null) optionsBackground.y -= 5;
+		if (grpOptions != null)
+		{
+			grpOptions.forEach(item -> item.screenCenter(X));
+			final selected = grpOptions.members[curSelected];
+			if (selected != null && selectorLeft != null && selectorRight != null)
+			{
+				selectorLeft.x = selected.x - 63;
+				selectorRight.x = selected.x + selected.width + 15;
+			}
+		}
+		if (camFollow != null) camFollow.x = FlxG.width / 2;
+		if (camFollowPos != null) camFollowPos.x = FlxG.width / 2;
+	}
+
 	override function create() {
 		Paths.clearStoredMemory();
 		Paths.clearUnusedMemory();
@@ -106,15 +127,13 @@ class OptionsState extends MusicBeatState
 		#end
 
 		var yScroll:Float = Math.max(0.25 - (0.05 * (options.length - options.length)), 0.1);
-		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
-		bg.color = 0xFFea71fd;
-		bg.updateHitbox();
-		bg.scrollFactor.set(0, 0);
-
-		bg.screenCenter();
-		bg.y -= 5;
-		bg.antialiasing = ClientPrefs.globalAntialiasing;
-		add(bg);
+		optionsBackground = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		optionsBackground.color = 0xFFea71fd;
+		optionsBackground.scrollFactor.set(0, 0);
+		ViewportVisuals.cover(optionsBackground);
+		optionsBackground.y -= 5;
+		optionsBackground.antialiasing = ClientPrefs.globalAntialiasing;
+		add(optionsBackground);
 
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);

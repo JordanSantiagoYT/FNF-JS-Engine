@@ -32,3 +32,14 @@ jobs:
 
       - name: Run regression tests
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+  widescreen-layout:
+    name: Widescreen geometry (Haxe)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: krdlab/setup-haxe@master
+        with:
+          haxe-version: "4.3.7"
+      - name: Test viewport, touch lanes and resize rollback
+        run: bash tests/haxe/run-layout.sh

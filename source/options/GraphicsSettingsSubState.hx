@@ -1,4 +1,4 @@
-﻿package options;
+package options;
 
 import backend.Controls;
 import flixel.graphics.FlxGraphic;
@@ -18,6 +18,15 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		rpcTitle = 'Graphics Settings Menu'; //for Discord Rich Presence
 
 		//I'd suggest using "Low Quality" as an example for making your own option since it is the simplest here
+		var option:Option = new Option('Widescreen',
+			'Expand the scene to fill wide displays without stretching.\nUncheck for the original 16:9 letterboxed view. Applies immediately.',
+			'widescreen', 'bool', false);
+		option.onChange = function() {
+			ClientPrefs.applyWidescreenPreference();
+			ClientPrefs.saveSettings();
+		};
+		addOption(option);
+
 		var option:Option = new Option('Low Quality', //Name
 			'If checked, disables some background details,\ndecreases loading times and improves performance.', //Description
 			'lowQuality', //Save data variable name
@@ -143,9 +152,9 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 
             			if (width != null && height != null) {
 					CoolUtil.resetResScale(width, height);
-                			FlxG.resizeGame(width, height);
-					lime.app.Application.current.window.width = width;
-					lime.app.Application.current.window.height = height;
+					// The window resize event re-measures the logical viewport and
+					// all cameras. FlxG.resizeGame alone does neither of those.
+					FlxG.resizeWindow(width, height);
             			}
         		}
     		}

@@ -2,6 +2,7 @@ package objects;
 
 import backend.Paths;
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import backend.PlayerSettings;
 import flixel.addons.text.FlxTypeText;
 import flixel.input.FlxKeyManager;
@@ -191,6 +192,32 @@ class DialogueBoxPsych extends FlxSpriteGroup
 	var textBoxTypes:Array<String> = ['normal', 'angry'];
 
 	var curCharacter:String = "";
+	private var layoutWidth:Int = 0;
+
+	private function onGameResized(_:Int, _:Int):Void
+	{
+		if (bgFade != null)
+		{
+			bgFade.setGraphicSize(FlxG.width + 1000, FlxG.height + 1000);
+			bgFade.updateHitbox();
+		}
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		for (char in arrayCharacters)
+		{
+			char.x += shift;
+			if (char.jsonFile.dialogue_pos != 'center') char.startingPos += shift;
+		}
+		if (box != null) box.x += shift;
+		if (daText != null && daText.exists) daText.x += shift;
+		layoutWidth = FlxG.width;
+	}
+
+	override public function destroy():Void
+	{
+		FlxG.signals.gameResized.remove(onGameResized);
+		super.destroy();
+	}
+
 	//var charPositionList:Array<String> = ['left', 'center', 'right'];
 
 	public function new(dialogueList:DialogueFile, ?song:String = null)
@@ -202,7 +229,9 @@ class DialogueBoxPsych extends FlxSpriteGroup
 			FlxG.sound.music.fadeIn(2, 0, 1);
 		}
 
-		bgFade = new FlxSprite(-500, -500).makeGraphic(FlxG.width * 2, FlxG.height * 2, FlxColor.WHITE);
+		bgFade = new FlxSprite(-500, -500).makeGraphic(1, 1, FlxColor.WHITE);
+		bgFade.setGraphicSize(FlxG.width + 1000, FlxG.height + 1000);
+		bgFade.updateHitbox();
 		bgFade.scrollFactor.set();
 		bgFade.visible = true;
 		bgFade.alpha = 0;
@@ -211,7 +240,7 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		this.dialogueList = dialogueList;
 		spawnCharacters();
 
-		box = new FlxSprite(70, 370);
+		box = new FlxSprite(ScreenLayout.contentLeft(FlxG.width) + 70, 370);
 		box.frames = Paths.getSparrowAtlas('speech_bubble');
 		box.scrollFactor.set();
 		box.antialiasing = ClientPrefs.globalAntialiasing;
@@ -229,12 +258,14 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		box.updateHitbox();
 		add(box);
 
-		daText = new TypedAlphabet(DEFAULT_TEXT_X, DEFAULT_TEXT_Y, '');
+		daText = new TypedAlphabet(ScreenLayout.contentLeft(FlxG.width) + DEFAULT_TEXT_X, DEFAULT_TEXT_Y, '');
 		daText.scaleX = 0.7;
 		daText.scaleY = 0.7;
 		add(daText);
 
 		startNextDialog();
+		layoutWidth = FlxG.width;
+		FlxG.signals.gameResized.add(onGameResized);
 	}
 
 	var dialogueStarted:Bool = false;
@@ -256,7 +287,7 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		}
 
 		for (individualChar in charsMap.keys()) {
-			var x:Float = LEFT_CHAR_X;
+			var x:Float = ScreenLayout.contentLeft(FlxG.width) + LEFT_CHAR_X;
 			var y:Float = DEFAULT_CHAR_Y;
 			var char:DialogueCharacter = new DialogueCharacter(x + offsetPos, y, individualChar);
 			char.setGraphicSize(Std.int(char.width * DialogueCharacter.DEFAULT_SCALE * char.jsonFile.scale));
@@ -274,7 +305,7 @@ class DialogueBoxPsych extends FlxSpriteGroup
 					char.y = FlxG.height + 50;
 					saveY = true;
 				case 'right':
-					x = FlxG.width - char.width + RIGHT_CHAR_X;
+					x = ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH - char.width + RIGHT_CHAR_X;
 					char.x = x - offsetPos;
 			}
 			x += char.jsonFile.position[0];

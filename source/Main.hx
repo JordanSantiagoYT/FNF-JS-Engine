@@ -4,6 +4,7 @@ import backend.SSPlugin as ScreenShotPlugin;
 import debug.FPSCounter;
 import debug.FrameProfiler;
 import backend.FunkinGame;
+import flixel.system.scaleModes.PhoenixScaleMode;
 // REFACTOR: relocated root classes
 import backend.CrashHandler;
 import states.InitState;
@@ -131,8 +132,8 @@ class Main extends Sprite
       var ratioX:Float = stageWidth / game.width;
       var ratioY:Float = stageHeight / game.height;
       game.zoom = Math.min(ratioX, ratioY);
-      game.width = Math.ceil(stageWidth / game.zoom);
-      game.height = Math.ceil(stageHeight / game.zoom);
+      // Keep the logical 1280x720 base even on older OpenFL. PhoenixScaleMode
+      // decides whether the extra physical width is exposed or letterboxed.
     };
     #end
     ClientPrefs.loadDefaultStuff();
@@ -152,6 +153,9 @@ class Main extends Sprite
     #end
 
     addChild(funkinGame);
+    // FlxGame has created its initial state by now. Installing a scale mode
+    // earlier calls FlxGame.onResize before that state exists.
+    FlxG.scaleMode = new PhoenixScaleMode();
 
     fpsVar = new FPSCounter(3, 3, 0x00FFFFFF);
     addChild(fpsVar);

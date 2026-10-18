@@ -1,5 +1,6 @@
 package stages;
 import backend.Paths;
+import backend.ViewportVisuals;
 import objects.BGSprite;
 import play.BaseStage;
 import play.PlayState;
@@ -8,6 +9,10 @@ import stages.objects.*;
 
 class MallEvil extends BaseStage
 {
+	var blackout:FlxSprite;
+	override public function onViewportResize():Void
+		ViewportVisuals.overscan(blackout);
+
 	override function create()
 	{
 		var bg:BGSprite = new BGSprite('christmas/evilBG', -400, -500, 0.2, 0.2);
@@ -43,14 +48,17 @@ class MallEvil extends BaseStage
 		FlxG.camera.follow(new FlxObject(400, -2050));
 
 		// blackout at the start
-		var blackScreen:FlxSprite = new FlxSprite().makeGraphic(Std.int(FlxG.width * 2), Std.int(FlxG.height * 2), FlxColor.BLACK);
-		blackScreen.scrollFactor.set();
-		add(blackScreen);
+		blackout = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		ViewportVisuals.overscan(blackout);
+		blackout.scrollFactor.set();
+		add(blackout);
 
-		FlxTween.tween(blackScreen, {alpha: 0}, 0.7, {
+		FlxTween.tween(blackout, {alpha: 0}, 0.7, {
 			ease: FlxEase.linear,
 			onComplete: function(twn:FlxTween) {
-				remove(blackScreen);
+				remove(blackout);
+				blackout.destroy();
+				blackout = null;
 			}
 		});
 

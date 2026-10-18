@@ -2,6 +2,7 @@ package play.helpers;
 
 import backend.ClientPrefs;
 import backend.Conductor;
+import backend.ScreenLayout;
 
 import objects.Note;
 import objects.NoteSplash;
@@ -157,7 +158,7 @@ class PlayStateNoteHelpers
 				{
 					babyArrow.x += 310;
 					if(i > 1) { //Up and Right
-						babyArrow.x += FlxG.width / 2 + 25;
+						babyArrow.x += ScreenLayout.BASE_WIDTH / 2 + 25;
 					}
 				}
 				if (!PlayState.opponentChart || PlayState.opponentChart && PlayState.middleScroll) state.opponentStrums.add(babyArrow);

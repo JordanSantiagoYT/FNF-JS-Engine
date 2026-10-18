@@ -1,5 +1,6 @@
 package stages.objects;
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import backend.Paths;
 import objects.BGSprite;
 import play.PlayState;
@@ -90,7 +91,7 @@ class PhillyTrain extends BGSprite
 			PlayState.instance.gf.playAnim('hairFall');
 			PlayState.instance.gf.specialAnim = true;
 		}
-		x = FlxG.width + 200;
+		x = ScreenLayout.BASE_WIDTH + 200;
 		moving = false;
 		cars = 8;
 		finishing = false;

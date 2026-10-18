@@ -50,7 +50,10 @@ class MusicBeatSubstate extends FlxSubState
 			controls.removeVirtualControlsInput(trackedInputsVirtualPad);
 
 		if (virtualPad != null)
+		{
 			remove(virtualPad);
+			virtualPad = FlxDestroyUtil.destroy(virtualPad);
+		}
 
 		if (virtualPadCamera != null)
 		{
@@ -87,10 +90,8 @@ class MusicBeatSubstate extends FlxSubState
 			virtualPadCamera = null;
 		}
 
-		super.destroy();
-
-		if (virtualPad != null)
-			virtualPad = FlxDestroyUtil.destroy(virtualPad);
+		super.destroy(); // destroys any pad still owned by this substate
+		virtualPad = null;
 	}
 
 	override function update(elapsed:Float)

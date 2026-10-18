@@ -2,6 +2,8 @@ package states;
 
 import backend.Achievements;
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.Conductor;
 import backend.DiscordClient;
@@ -69,6 +71,9 @@ class MainMenuState extends MusicBeatState
   ];
 
   var magenta:FlxSprite;
+  var menuBackground:FlxSprite;
+  var versionLabels:Array<FlxText> = [];
+  var layoutWidth:Int = 0;
   var camFollow:FlxObject;
   var camFollowPos:FlxObject;
   var debugKeys:Array<FlxKey>;
@@ -87,8 +92,21 @@ class MainMenuState extends MusicBeatState
 
   var funnycatperson:FlxSprite;
 
+  override public function onResize(width:Int, height:Int):Void
+  {
+    super.onResize(width, height);
+    ViewportVisuals.cover(menuBackground, 1.175);
+    ViewportVisuals.cover(magenta, 1.175);
+    if (tipBackground != null) ViewportVisuals.fill(tipBackground, Std.int(tipBackground.height));
+    final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+    for (label in versionLabels) label.x += shift;
+    layoutWidth = FlxG.width;
+    if (menuItems != null) menuItems.forEach(item -> item.screenCenter(X));
+  }
+
   override function create()
   {
+    layoutWidth = FlxG.width;
     MusicBeatState.windowNameSuffix = " - Main Menu";
     Paths.clearStoredMemory();
     Paths.clearUnusedMemory();
@@ -140,13 +158,11 @@ class MainMenuState extends MusicBeatState
     persistentUpdate = persistentDraw = true;
 
     var yScroll:Float = Math.max(0.25 - (0.05 * (menuOptions.length - 4)), 0.1);
-    var bg:FlxSprite = new FlxSprite(-80).loadGraphic(Paths.image('menuBG'));
-    bg.scrollFactor.set(0, yScroll);
-    bg.setGraphicSize(Std.int(bg.width * 1.175));
-    bg.updateHitbox();
-    bg.screenCenter();
-    bg.antialiasing = ClientPrefs.globalAntialiasing;
-    add(bg);
+    menuBackground = new FlxSprite(-80).loadGraphic(Paths.image('menuBG'));
+    menuBackground.scrollFactor.set(0, yScroll);
+    ViewportVisuals.cover(menuBackground, 1.175);
+    menuBackground.antialiasing = ClientPrefs.globalAntialiasing;
+    add(menuBackground);
 
     camFollow = new FlxObject(0, 0, 1, 1);
     camFollowPos = new FlxObject(0, 0, 1, 1);
@@ -155,9 +171,7 @@ class MainMenuState extends MusicBeatState
 
     magenta = new FlxSprite(-80).loadGraphic(Paths.image('menuDesat'));
     magenta.scrollFactor.set(0, yScroll);
-    magenta.setGraphicSize(Std.int(magenta.width * 1.175));
-    magenta.updateHitbox();
-    magenta.screenCenter();
+    ViewportVisuals.cover(magenta, 1.175);
     magenta.visible = false;
     magenta.antialiasing = ClientPrefs.globalAntialiasing;
     magenta.color = 0xFFfd719b;
@@ -193,26 +207,27 @@ class MainMenuState extends MusicBeatState
 
     FlxG.camera.follow(camFollow, null, 1);
 
-    var PhoenixVersion:FlxText = new FlxText(12, FlxG.height - 84, 0, "Phoenix Engine v" + phoenixEngineVersion, 12);
+    var PhoenixVersion:FlxText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 12, FlxG.height - 84, 0, "Phoenix Engine v" + phoenixEngineVersion, 12);
     PhoenixVersion.scrollFactor.set();
     PhoenixVersion.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     add(PhoenixVersion);
-    var JSVersion:FlxText = new FlxText(12, FlxG.height - 64, 0, "JS Engine v" + psychEngineJSVersion, 12);
+    var JSVersion:FlxText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 12, FlxG.height - 64, 0, "JS Engine v" + psychEngineJSVersion, 12);
     JSVersion.scrollFactor.set();
     JSVersion.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     add(JSVersion);
-    var PsychVersion:FlxText = new FlxText(12, FlxG.height - 44, 0, "Psych Engine v" + psychEngineVersion, 12);
+    var PsychVersion:FlxText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 12, FlxG.height - 44, 0, "Psych Engine v" + psychEngineVersion, 12);
     PsychVersion.scrollFactor.set();
     PsychVersion.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     add(PsychVersion);
     #if !flash
-    var FNFVersion:FlxText = new FlxText(12, FlxG.height - 24, 0, "Friday Night Funkin' v" + Application.current.meta.get('version'), 12);
+    var FNFVersion:FlxText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 12, FlxG.height - 24, 0, "Friday Night Funkin' v" + Application.current.meta.get('version'), 12);
     #else
-    var FNFVersion:FlxText = new FlxText(12, FlxG.height - 24, 0, "Friday Night Funkin'", 12);
+    var FNFVersion:FlxText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 12, FlxG.height - 24, 0, "Friday Night Funkin'", 12);
     #end
     FNFVersion.scrollFactor.set();
     FNFVersion.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     add(FNFVersion);
+    versionLabels = [PhoenixVersion, JSVersion, PsychVersion, FNFVersion];
 
     tipBackground = new FlxSprite();
     tipBackground.scrollFactor.set();

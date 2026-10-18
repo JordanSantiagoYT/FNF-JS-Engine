@@ -16,6 +16,7 @@ import shaders.RGBPalette;
 
 // REFACTOR: imports for relocated root classes
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.Controls;
 import backend.CoolUtil;
 import backend.DiscordClient;
@@ -54,6 +55,24 @@ class NotesSubState extends MusicBeatSubstate
 	var modeBG:FlxSprite;
 	var notesBG:FlxSprite;
 	var coverBG:FlxSprite;
+	var background:FlxSprite;
+	var shadowBG:FlxSprite;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.cover(background);
+		if (coverBG != null)
+		{
+			coverBG.setGraphicSize(FlxG.width - 720, FlxG.height);
+			coverBG.updateHitbox();
+		}
+		if (shadowBG != null)
+		{
+			shadowBG.setGraphicSize(FlxG.width - 780, 540);
+			shadowBG.updateHitbox();
+		}
+	}
 
 	var tipTxt:FlxText;
 
@@ -74,11 +93,11 @@ class NotesSubState extends MusicBeatSubstate
 		DiscordClient.changePresence("Note Colors Menu", null);
 		#end
 
-		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
-		bg.color = 0xFFEA71FD;
-		bg.screenCenter();
-		bg.antialiasing = ClientPrefs.globalAntialiasing;
-		add(bg);
+		background = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		background.color = 0xFFEA71FD;
+		ViewportVisuals.cover(background);
+		background.antialiasing = ClientPrefs.globalAntialiasing;
+		add(background);
 
 		var grid:FlxBackdrop = new FlxBackdrop(FlxGridOverlay.createGrid(80, 80, 160, 160, true, 0x33FFFFFF, 0x0));
 		grid.velocity.set(40, 40);
@@ -113,9 +132,9 @@ class NotesSubState extends MusicBeatSubstate
 		coverBG.alpha = 0.25;
 		add(coverBG);
 
-		var bg:FlxSprite = new FlxSprite(750, 160).makeGraphic(FlxG.width - 780, 540, FlxColor.BLACK);
-		bg.alpha = 0.25;
-		add(bg);
+		shadowBG = new FlxSprite(750, 160).makeGraphic(FlxG.width - 780, 540, FlxColor.BLACK);
+		shadowBG.alpha = 0.25;
+		add(shadowBG);
 
 		var thing:String;
 		var thingPosX:Int;

@@ -1,6 +1,8 @@
 package states;
 
 import backend.CoolUtil;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.DiscordClient;
 import backend.MusicBeatState;
 import backend.Paths;
@@ -26,6 +28,18 @@ class CreditsState extends MusicBeatState
 	var descBox:AttachedSprite;
 
 	var offsetThing:Float = -75;
+	var layoutWidth:Int = 0;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.cover(bg);
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		if (grpOptions != null)
+			grpOptions.forEach(item -> { item.x += shift; item.startPosition.x += shift; });
+		if (descText != null) descText.x += shift;
+		layoutWidth = FlxG.width;
+	}
 
 	override function create()
 	{
@@ -40,9 +54,10 @@ class CreditsState extends MusicBeatState
 		#end
 
 		persistentUpdate = true;
+		layoutWidth = FlxG.width;
 		bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
+		ViewportVisuals.cover(bg);
 		add(bg);
-		bg.screenCenter();
 
 		grpOptions = new FlxTypedGroup<Alphabet>();
 		add(grpOptions);
@@ -140,7 +155,7 @@ class CreditsState extends MusicBeatState
 		descBox.alpha = 0.6;
 		add(descBox);
 
-		descText = new FlxText(50, FlxG.height + offsetThing - 25, 1180, "", 32);
+			descText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 50, FlxG.height + offsetThing - 25, 1180, "", 32);
 		descText.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER);
 		descText.scrollFactor.set();
 		descBox.sprTracker = descText;
@@ -225,7 +240,7 @@ class CreditsState extends MusicBeatState
 				}
 				else
 				{
-					item.x = FlxMath.lerp(item.x, 200 + -40 * Math.abs(item.targetY), lerpVal);
+					item.x = FlxMath.lerp(item.x, ScreenLayout.contentLeft(FlxG.width) + 200 - 40 * Math.abs(item.targetY), lerpVal);
 				}
 			}
 		}

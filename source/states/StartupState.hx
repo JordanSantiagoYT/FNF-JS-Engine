@@ -61,6 +61,13 @@ class StartupState extends MusicBeatState
 		return null;
 	}
 
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		if (logo != null) logo.screenCenter();
+		if (skipTxt != null) skipTxt.y = FlxG.height - skipTxt.textField.textHeight;
+	}
+
 	override public function create():Void
 	{
 		if (DateUtils.isChristmas()) //Only triggers if the date is between 12/16 and 12/31

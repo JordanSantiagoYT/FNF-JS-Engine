@@ -1,6 +1,7 @@
 package states.substates;
 
 import backend.CoolUtil;
+import backend.ViewportVisuals;
 import backend.Highscore;
 import backend.MusicBeatSubstate;
 import backend.Paths;
@@ -26,6 +27,21 @@ class ResetScoreSubState extends MusicBeatSubstate
   var difficulty:Int;
   var week:Int;
 
+  override public function onResize(width:Int, height:Int):Void
+  {
+    super.onResize(width, height);
+    ViewportVisuals.fill(bg);
+    for (text in alphabetArray) text.screenCenter(X);
+    if (week == -1 && alphabetArray.length > 1)
+    {
+      final scale:Float = alphabetArray[1].text.length > 18 ? 0.8 : 1;
+      alphabetArray[1].x += 60 * scale;
+      if (icon != null) icon.x = alphabetArray[1].x - icon.width + 10 * scale;
+    }
+    if (yesText != null) { yesText.screenCenter(X); yesText.x -= 200; }
+    if (noText != null) { noText.screenCenter(X); noText.x += 200; }
+  }
+
   // Week -1 = Freeplay
   public function new(song:String, difficulty:Int, character:String, week:Int = -1)
   {
@@ -42,7 +58,8 @@ class ResetScoreSubState extends MusicBeatSubstate
     }
     name += ' (' + CoolUtil.difficulties[difficulty] + ')?';
 
-    bg = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
+    bg = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+    ViewportVisuals.fill(bg);
     bg.alpha = 0;
     bg.scrollFactor.set();
     add(bg);

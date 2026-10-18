@@ -1,4 +1,6 @@
 package stages.objects;
+
+import backend.ScreenLayout;
 import backend.ClientPrefs;
 import backend.Conductor;
 import backend.Paths;
@@ -50,9 +52,9 @@ class TankmenBG extends FlxSprite
 		{
 			var speed:Float = (Conductor.songPosition - strumTime) * tankSpeed;
 			if(goingRight)
-				x = (0.02 * FlxG.width - endingOffset) + speed;
+				x = (0.02 * ScreenLayout.BASE_WIDTH - endingOffset) + speed;
 			else
-				x = (0.74 * FlxG.width + endingOffset) - speed;
+				x = (0.74 * ScreenLayout.BASE_WIDTH + endingOffset) - speed;
 		}
 		else if(animation.curAnim.finished)
 		{

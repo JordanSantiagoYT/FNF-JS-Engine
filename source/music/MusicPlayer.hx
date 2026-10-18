@@ -300,6 +300,11 @@ class MusicPlayer extends FlxGroup
 		playbackTxt.text = text + 'x';
 	}
 
+	public function onViewportResize():Void
+	{
+		if (playingMusic) positionSong();
+	}
+
 	function positionSong()
 	{
 		var length:Int = instance.songs[FreeplayState.curSelected].songName.length;

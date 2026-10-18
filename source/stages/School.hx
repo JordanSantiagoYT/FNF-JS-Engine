@@ -1,5 +1,6 @@
 package stages;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.Paths;
 import objects.BGSprite;
@@ -14,6 +15,10 @@ import stages.objects.*;
 class School extends BaseStage
 {
 	var bgGirls:BackgroundGirls;
+	var introBlack:FlxSprite;
+	override public function onViewportResize():Void
+		ViewportVisuals.overscan(introBlack);
+
 	override function create()
 	{
 		var _song = PlayState.SONG;
@@ -134,15 +139,16 @@ class School extends BaseStage
 	function schoolIntro():Void
 	{
 		inCutscene = true;
-		var black:FlxSprite = new FlxSprite(-100, -100).makeGraphic(FlxG.width * 2, FlxG.height * 2, FlxColor.BLACK);
-		black.scrollFactor.set();
-		if(songName == 'senpai') add(black);
+		introBlack = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		ViewportVisuals.overscan(introBlack);
+		introBlack.scrollFactor.set();
+		if(songName == 'senpai') add(introBlack);
 
 		new FlxTimer().start(0.3, function(tmr:FlxTimer)
 		{
-			black.alpha -= 0.15;
+			introBlack.alpha -= 0.15;
 
-			if (black.alpha > 0)
+			if (introBlack.alpha > 0)
 				tmr.reset(0.3);
 			else
 			{
@@ -151,8 +157,9 @@ class School extends BaseStage
 				else
 					startCountdown();
 
-				remove(black);
-				black.destroy();
+				remove(introBlack);
+				introBlack.destroy();
+				introBlack = null;
 			}
 		});
 	}

@@ -2,6 +2,7 @@ package objects;
 
 import backend.Paths;
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 
 enum Alignment
 {
@@ -210,7 +211,7 @@ class Alphabet extends FlxSpriteGroup
 					{
 						xPos += 40 * consecutiveSpaces * scaleX;
 						rowData[rows] = xPos;
-						if(!bold && xPos >= FlxG.width * 0.65)
+						if(!bold && xPos >= ScreenLayout.BASE_WIDTH * 0.65)
 						{
 							xPos = 0;
 							rows++;

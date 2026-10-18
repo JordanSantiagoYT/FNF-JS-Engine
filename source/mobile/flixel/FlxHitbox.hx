@@ -23,10 +23,10 @@
 package mobile.flixel;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import flixel.FlxG;
 import flixel.group.FlxSpriteGroup;
 import flixel.util.FlxColor;
-import flixel.util.FlxDestroyUtil;
 import mobile.flixel.FlxButton;
 import openfl.display.BitmapData;
 import openfl.display.Shape;
@@ -38,8 +38,13 @@ import openfl.geom.Matrix;
  */
 class FlxHitbox extends FlxSpriteGroup
 {
-	final offsetFir:Int = (ClientPrefs.hitboxPos ? Std.int(FlxG.height / 4) * 3 : 0);
-	final offsetSec:Int = (ClientPrefs.hitboxPos ? 0 : Std.int(FlxG.height / 4));
+	private var laneCount:Int;
+	private var laneColors:Array<FlxColor>;
+	private var fillsViewport:Bool;
+	private var requestedWidth:Int;
+	private var requestedHeight:Int;
+	private var layoutWidth:Int;
+	private var layoutHeight:Int;
 
 	public var hints(default, null):Array<FlxButton>;
 
@@ -55,31 +60,91 @@ class FlxHitbox extends FlxSpriteGroup
 	{
 		super();
 
-		hints = new Array<FlxButton>();
+		hints = [];
+		laneCount = Std.int(ammo);
+		requestedWidth = perHintWidth * laneCount;
+		requestedHeight = perHintHeight;
+		// Preserve deliberately smaller mod hitboxes. The built-in 4-lane
+		// hitbox uses floor(width/4); give its last lane the remainder too.
+		fillsViewport = laneCount > 0 && perHintWidth == Std.int(FlxG.width / laneCount) && perHintHeight == FlxG.height;
+		laneColors = colors != null && colors.length >= laneCount ? colors : [for (i in 0...laneCount) FlxColor.WHITE];
+		layoutWidth = fillsViewport ? FlxG.width : requestedWidth;
+		layoutHeight = fillsViewport ? FlxG.height : requestedHeight;
 
-		if (colors == null || (colors != null && colors.length < Std.int(ammo)))
-			colors = [0xFFFFFF, 0xFFFFFF, 0xFFFFFF, 0xFFFFFF];
-
-		for (i in 0...ammo)
-			add(hints[i] = createHint(i * perHintWidth, (ClientPrefs.mobileCEx) ? offsetSec : 0, perHintWidth,
-				(ClientPrefs.mobileCEx) ? Std.int(FlxG.height / ammo) * 3 : perHintHeight, colors[i]));
-
-		if (ClientPrefs.mobileCEx)
-			add(hints[4] = createHint(0, offsetFir, FlxG.width, Std.int(FlxG.height / 4), 0xFF0066FF));
+		if (laneCount > 0 && layoutWidth >= laneCount && layoutHeight > 0)
+		{
+			final extraHeight:Int = ScreenLayout.hitboxExtraHeight(layoutHeight, ClientPrefs.mobileCEx);
+			final mainHeight:Int = layoutHeight - extraHeight;
+			final mainY:Int = extraHeight > 0 && !ClientPrefs.hitboxPos ? extraHeight : 0;
+			for (i in 0...laneCount)
+			{
+				final start:Int = ScreenLayout.laneStart(i, laneCount, layoutWidth);
+				final end:Int = ScreenLayout.laneStart(i + 1, laneCount, layoutWidth);
+				add(hints[i] = createHint(start, mainY, end - start, mainHeight, laneColors[i]));
+			}
+			if (extraHeight > 0)
+				add(hints[laneCount] = createHint(0, ClientPrefs.hitboxPos ? mainHeight : 0, layoutWidth, extraHeight, 0xFF0066FF));
+		}
 
 		scrollFactor.set();
+		FlxG.signals.gameResized.add(onGameResized);
 	}
 
-	/**
-	 * Clean up memory.
-	 */
+	private function onGameResized(_:Int, _:Int):Void
+	{
+		if (fillsViewport) updateLayout(FlxG.width, FlxG.height);
+	}
+
+	/** Rebuild the graphics and hit tests together, without replacing bound buttons. */
+	public function updateLayout(width:Int, height:Int):Void
+	{
+		if (width <= 0 || height <= 0 || laneCount <= 0 || width < laneCount || hints.length < laneCount) return;
+		final extraHeight:Int = ScreenLayout.hitboxExtraHeight(height, ClientPrefs.mobileCEx);
+		final mainY:Int = extraHeight > 0 && !ClientPrefs.hitboxPos ? extraHeight : 0;
+		final mainHeight:Int = height - extraHeight;
+
+		// The preference can change before the next orientation/window resize.
+		// Keep the actual fifth button in sync so no dead quarter is left behind.
+		if (extraHeight > 0 && hints.length == laneCount)
+		{
+			final extra = createHint(0, ClientPrefs.hitboxPos ? mainHeight : 0, width, extraHeight, 0xFF0066FF);
+			// FlxSpriteGroup.add() does not inherit the parent's visibility.
+			// A hidden gameplay hitbox must not accept touch during a resize.
+			extra.visible = hints[0].visible;
+			add(hints[laneCount] = extra);
+		}
+		else if (extraHeight == 0 && hints.length > laneCount)
+		{
+			final extra:FlxButton = hints.pop();
+			remove(extra, true);
+			extra.destroy();
+		}
+
+		for (i in 0...laneCount)
+		{
+			final start:Int = ScreenLayout.laneStart(i, laneCount, width);
+			final end:Int = ScreenLayout.laneStart(i + 1, laneCount, width);
+			final hint:FlxButton = hints[i];
+			if (hint.width != end - start || hint.height != mainHeight)
+				hint.loadGraphic(createHintGraphic(end - start, mainHeight, laneColors[i]));
+			hint.setPosition(start, mainY);
+		}
+		if (extraHeight > 0)
+		{
+			final extra:FlxButton = hints[laneCount];
+			if (extra.width != width || extra.height != extraHeight)
+				extra.loadGraphic(createHintGraphic(width, extraHeight, 0xFF0066FF));
+			extra.setPosition(0, ClientPrefs.hitboxPos ? mainHeight : 0);
+		}
+		layoutWidth = width;
+		layoutHeight = height;
+	}
+
+	/** Clean up memory and the resize listener when the owning state closes. */
 	override public function destroy():Void
 	{
-		super.destroy();
-
-		for (i in 0...hints.length)
-			hints[i] = FlxDestroyUtil.destroy(hints[i]);
-
+		FlxG.signals.gameResized.remove(onGameResized);
+		super.destroy(); // FlxSpriteGroup destroys its children.
 		hints.splice(0, hints.length);
 	}
 

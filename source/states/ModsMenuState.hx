@@ -1,6 +1,8 @@
 package states;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.CoolUtil;
 import backend.DiscordClient;
 import backend.MusicBeatState;
@@ -54,6 +56,26 @@ class ModsMenuState extends MusicBeatState
 	var noModsTxt:FlxText;
 
 	var startMod:String = null;
+	var layoutWidth:Int = ScreenLayout.BASE_WIDTH;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.cover(bg);
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		if (shift != 0)
+		{
+			for (sprite in [bgList, bgTitle, bgDescription, bgButtons, icon, modName,
+				modDesc, modRestartText, noModsTxt, buttonReload, buttonEnableAll, buttonDisableAll])
+				if (sprite != null) sprite.x += shift;
+			for (button in buttons) button.x += shift;
+			if (modsGroup != null && modsGroup.length > 0) updateItemPositions();
+		}
+		if (noModsTxt != null)
+			noModsTxt.fieldWidth = ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH - noModsTxt.x - 20;
+		layoutWidth = FlxG.width;
+	}
+
 	public function new(startMod:String = null)
 	{
 		this.startMod = startMod;
@@ -76,8 +98,8 @@ class ModsMenuState extends MusicBeatState
 		bg = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
 		bg.color = 0xFF665AFF;
 		bg.antialiasing = ClientPrefs.globalAntialiasing;
+		ViewportVisuals.cover(bg);
 		add(bg);
-		bg.screenCenter();
 
 		bgList = FlxSpriteUtil.drawRoundRect(new FlxSprite(40, 40).makeGraphic(340, 440, FlxColor.TRANSPARENT), 0, 0, 340, 440, 15, 15, FlxColor.BLACK);
 		bgList.alpha = 0.6;
@@ -172,7 +194,9 @@ class ModsMenuState extends MusicBeatState
 
 			FlxG.autoPause = false;
 			changeSelectedMod();
-			return super.create();
+			super.create();
+			onResize(FlxG.width, FlxG.height);
+			return;
 		}
 
 		bgTitle = FlxSpriteUtil.drawRoundRectComplex(new FlxSprite(bgList.x + bgList.width + 20, 40).makeGraphic(840, 180, FlxColor.TRANSPARENT), 0, 0, 840, 180, 15, 15, 0, 0, FlxColor.BLACK);
@@ -293,6 +317,7 @@ class ModsMenuState extends MusicBeatState
 
 		changeSelectedMod();
 		super.create();
+		onResize(FlxG.width, FlxG.height);
 	}
 	
 	var nextAttempt:Float = 1;

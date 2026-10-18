@@ -1,8 +1,10 @@
-﻿package options;
+package options;
 
 import flixel.ui.FlxBar;
 
 import backend.ClientPrefs;
+import backend.ScreenLayout;
+import backend.ViewportVisuals;
 import backend.Conductor;
 import backend.Controls;
 import backend.MusicBeatState;
@@ -35,9 +37,28 @@ class NoteOffsetState extends MusicBeatState
 	var beatTween:FlxTween;
 
 	var changeModeText:FlxText;
+	var blackBox:FlxSprite;
+	var layoutWidth:Int = 0;
+
+	override public function onResize(width:Int, height:Int):Void
+	{
+		super.onResize(width, height);
+		ViewportVisuals.fill(blackBox, 40);
+		if (timeTxt != null) timeTxt.fieldWidth = FlxG.width;
+		if (changeModeText != null) changeModeText.fieldWidth = FlxG.width;
+		if (timeBarBG != null) timeBarBG.screenCenter(X);
+		if (timeBar != null) timeBar.screenCenter(X);
+		final shift:Float = ScreenLayout.contentLeft(FlxG.width) - ScreenLayout.contentLeft(layoutWidth);
+		if (coolText != null) coolText.x += shift;
+		if (rating != null && comboNums != null && dumbTexts != null) repositionCombo();
+		if (beatText != null) beatText.x += shift;
+		if (dumbTexts != null) dumbTexts.forEach(text -> text.x += shift);
+		layoutWidth = FlxG.width;
+	}
 
 	override public function create()
 	{
+		layoutWidth = FlxG.width;
 		// Cameras
 		camGame = initPsychCamera();
 		camHUD = new FlxCamera();
@@ -93,7 +114,7 @@ class NoteOffsetState extends MusicBeatState
 
 		coolText = new FlxText(0, 0, 0, '', 32);
 		coolText.screenCenter();
-		coolText.x = FlxG.width * 0.35;
+		coolText.x = ScreenLayout.contentLeft(FlxG.width) + ScreenLayout.BASE_WIDTH * 0.35;
 
 		rating = new FlxSprite().loadGraphic(Paths.image('ratings/default/sick'));
 		rating.cameras = [camHUD];
@@ -137,7 +158,7 @@ class NoteOffsetState extends MusicBeatState
 		beatText = new Alphabet(0, 0, 'Beat Hit!', true);
 		beatText.scaleX = 0.6;
 		beatText.scaleY = 0.6;
-		beatText.x += 260;
+		beatText.x += ScreenLayout.contentLeft(FlxG.width) + 260;
 		beatText.alpha = 0;
 		beatText.acceleration.y = 250;
 		beatText.visible = false;
@@ -174,7 +195,8 @@ class NoteOffsetState extends MusicBeatState
 
 		///////////////////////
 
-		var blackBox:FlxSprite = new FlxSprite().makeGraphic(FlxG.width, 40, FlxColor.BLACK);
+		blackBox = new FlxSprite().makeGraphic(1, 1, FlxColor.BLACK);
+		ViewportVisuals.fill(blackBox, 40);
 		blackBox.scrollFactor.set();
 		blackBox.alpha = 0.6;
 		blackBox.cameras = [camHUD];
@@ -413,7 +435,7 @@ class NoteOffsetState extends MusicBeatState
 	{
 		for (i in 0...4)
 		{
-			var text:FlxText = new FlxText(10, 48 + (i * 30), 0, '', 24);
+			var text:FlxText = new FlxText(ScreenLayout.contentLeft(FlxG.width) + 10, 48 + (i * 30), 0, '', 24);
 			text.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 			text.scrollFactor.set();
 			text.borderSize = 2;

@@ -1,4 +1,4 @@
-﻿package shaders;
+package shaders;
 
 
 import openfl.display.GraphicsShader;
@@ -23,7 +23,6 @@ class VFDOverlay extends GraphicsShader
 
     void main(void) {
       vec4 col = texture2D (bitmap, openfl_TextureCoordv);
-      vec2 game_res = vec2(1280.0, 720.0);
       const float tileAmount = 10.;
 
       vec2 uv = (2. * openfl_TextureCoordv.xy * -1.);

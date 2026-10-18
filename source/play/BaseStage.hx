@@ -65,6 +65,8 @@ class BaseStage extends FlxBasic
 	//main callbacks
 	public function create() {}
 	public function createPost() {}
+	/** Reflow full-screen stage effects when the logical viewport changes. */
+	public function onViewportResize() {}
 	//public function update(elapsed:Float) {}
 	public function countdownTick(count:Countdown, num:Int) {}
 	public function startSong() {}

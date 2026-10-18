@@ -1,5 +1,6 @@
-﻿package stages;
+package stages;
 import backend.ClientPrefs;
+import backend.ViewportVisuals;
 import backend.Paths;
 import objects.BGSprite;
 import play.BaseStage;
@@ -29,6 +30,14 @@ class PhillyBlazin extends BaseStage
 
 	var abot:ABotSpeaker;
 
+	override public function onViewportResize():Void
+	{
+		ViewportVisuals.overscan(additionalLighten);
+		// The sky uses repeating UVs; extend its geometry, not its texture.
+		if (scrollingSky != null)
+			scrollingSky.width = Math.max(Std.int(scrollingSky.graphic.width * 1.1) + 475, FlxG.width + 1000);
+	}
+
 	override function create()
 	{
 		FlxTransitionableState.skipNextTransOut = true; //skip the original transition fade
@@ -45,6 +54,8 @@ class PhillyBlazin extends BaseStage
 			scrollingSky.antialiasing = ClientPrefs.globalAntialiasing;
 			scrollingSky.setPosition(-500, -120);
 			scrollingSky.scrollFactor.set();
+			// A newly created stage may already be ultrawide.
+			onViewportResize();
 			add(scrollingSky);
 
 			skyAdditive = new BGSprite('phillyBlazin/skyBlur', -600, -175, 0.0, 0.0);
@@ -70,10 +81,9 @@ class PhillyBlazin extends BaseStage
 			foregroundMultiply.visible = false;
 			add(foregroundMultiply);
 
-			additionalLighten = new FlxSprite(-600, -175).makeGraphic(1, 1, FlxColor.WHITE);
+			additionalLighten = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
 			additionalLighten.scrollFactor.set();
-			additionalLighten.scale.set(2500, 2500);
-			additionalLighten.updateHitbox();
+			ViewportVisuals.overscan(additionalLighten);
 			additionalLighten.blend = ADD;
 			additionalLighten.visible = false;
 			add(additionalLighten);

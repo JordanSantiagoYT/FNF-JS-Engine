@@ -1,4 +1,4 @@
-﻿package shaders;
+package shaders;
 
 
 import flixel.system.FlxAssets.FlxShader;
@@ -55,8 +55,9 @@ void main() {
     //Screen UV goes from 0 - 1 along each axis
     vec2 screenUV = openfl_TextureCoordv;
     vec2 p = (2.0 * screenUV) - 1.0;
-    // FIX: 1280/720 -> 1280.0/720.0 (integer division would give wrong result)
-    float screenAspect = 1280.0/720.0;
+    // OpenFL updates the source texture size when the camera/target resizes.
+    // A fixed 16:9 projection distorts 3D effects on wide viewports.
+    float screenAspect = openfl_TextureSize.x / max(openfl_TextureSize.y, 1.0);
     p.x *= screenAspect;
 
     //Normalized Ray Dir

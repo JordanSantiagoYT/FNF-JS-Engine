@@ -2,6 +2,7 @@ package editors.helpers;
 
 // REFACTOR: explicit imports for relocated static helpers
 import backend.ClientPrefs;
+import backend.ScreenLayout;
 import backend.Conductor;
 import backend.CoolUtil;
 import backend.MusicBeatState;
@@ -530,7 +531,7 @@ class EditorPlayStateHelpers
 				{
 					babyArrow.x += 310;
 					if(i > 1) { //Up and Right
-						babyArrow.x += FlxG.width / 2 + 25;
+						babyArrow.x += ScreenLayout.BASE_WIDTH / 2 + 25;
 					}
 				}
 				state.opponentStrums.add(babyArrow);

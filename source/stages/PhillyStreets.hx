@@ -38,6 +38,14 @@ class PhillyStreets extends BaseStage
 	var scrollingSky:FlxTiledSprite;
 	var phillyTraffic:BGSprite;
 
+	override public function onViewportResize():Void
+	{
+		if (scrollingSky != null)
+			// Tiled sky needs enough geometry after its 0.65 scale to cover
+			// both ultrawide edges; enlarging UVs repeats instead of stretching.
+			scrollingSky.width = Math.max(scrollingSky.graphic.width + 400, (FlxG.width + 900) / 0.65);
+	}
+
 	var phillyCars:BGSprite;
 	var phillyCars2:BGSprite;
 
@@ -57,6 +65,7 @@ class PhillyStreets extends BaseStage
 			scrollingSky.setPosition(-650, -375);
 			scrollingSky.scrollFactor.set(0.1, 0.1);
 			scrollingSky.scale.set(0.65, 0.65);
+			onViewportResize();
 			add(scrollingSky);
 			darkenable.push(scrollingSky);
 
