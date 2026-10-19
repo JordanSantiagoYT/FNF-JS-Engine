@@ -3108,7 +3108,7 @@ class PlayState extends MusicBeatState
 		if (scoreTxtUpdateFrame > 0) scoreTxtUpdateFrame = 0;
 		if (popUpsFrame > 0) popUpsFrame = 0;
 		if (missRecalcsPerFrame > 0) missRecalcsPerFrame = 0;
-		strumsHit = [false, false, false, false, false, false, false, false];
+		strumsHit = [for (i in 0...8) false];
 		for (i in 0...splashesPerFrame.length)
 			if (splashesPerFrame[i] > 0) splashesPerFrame[i] = 0;
 
@@ -4318,7 +4318,7 @@ class PlayState extends MusicBeatState
 
 	function calculateResetTime():Float {
 		if (ClientPrefs.strumLitStyle == 'BPM Based') return (Conductor.stepCrochet * 1.5 / 1000) / playbackRate;
-		return 0.15 / playbackRate;
+		return Math.max(0.15, (Conductor.stepCrochet * 1.5 / 1000)) / playbackRate;
 	}
 
 	public var transitioning = false;
@@ -5194,23 +5194,9 @@ class PlayState extends MusicBeatState
 				if((cpuControlled || usingBotEnergy && strumsHeld[note.noteData]) && ClientPrefs.botLightStrum && !strumsHit[(note.noteData % 4) + 4]) {
 					strumsHit[(note.noteData % 4) + 4] = true;
 
-					if(playerStrums.members[note.noteData] != null) {
-						if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader)
-							playerStrums.members[note.noteData].playAnim('confirm', true, note.rgbShader.r, note.rgbShader.g, note.rgbShader.b);
-						else
-							playerStrums.members[note.noteData].playAnim('confirm', true);
-
-						playerStrums.members[note.noteData].resetAnim = calculateResetTime();
-					}
+					StrumPlayAnim(false, note.noteData, calculateResetTime(), note.isSustainNote, (note.rgbShader != null ? [note.rgbShader.r, note.rgbShader.g, note.rgbShader.b] : null));
 				} else if (ClientPrefs.playerLightStrum && !cpuControlled) {
-					final spr = playerStrums.members[note.noteData];
-					if(spr != null)
-					{
-						if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader)
-							spr.playAnim('confirm', true, note.rgbShader.r, note.rgbShader.g, note.rgbShader.b);
-						else
-							spr.playAnim('confirm', true);
-					}
+					StrumPlayAnim(false, note.noteData, 0, note.isSustainNote, (note.rgbShader != null ? [note.rgbShader.r, note.rgbShader.g, note.rgbShader.b] : null));
 				}
 			}
 			else
@@ -5284,8 +5270,7 @@ class PlayState extends MusicBeatState
 				if (ClientPrefs.botLightStrum && !strumsHit[(noteAlt.noteData % 4) + 4])
 				{
 					strumsHit[(noteAlt.noteData % 4) + 4] = true;
-					playerStrums.members[noteAlt.noteData].playAnim('confirm', true);
-					playerStrums.members[noteAlt.noteData].resetAnim = calculateResetTime();
+					StrumPlayAnim(false, noteAlt.noteData, calculateResetTime(), noteAlt.isSustainNote);
 				}
 			}
 			if (!noteAlt.isSustainNote && cpuControlled)
@@ -5395,12 +5380,7 @@ class PlayState extends MusicBeatState
 			{
 				strumsHit[daNote.noteData % 4] = true;
 
-				if (ClientPrefs.noteColorStyle != 'Normal' && ClientPrefs.showNotes && ClientPrefs.enableColorShader)
-					opponentStrums.members[daNote.noteData].playAnim('confirm', true, daNote.rgbShader.r, daNote.rgbShader.g, daNote.rgbShader.b);
-				else
-					opponentStrums.members[daNote.noteData].playAnim('confirm', true);
-
-				opponentStrums.members[daNote.noteData].resetAnim = calculateResetTime();
+				StrumPlayAnim(true, daNote.noteData, calculateResetTime(), daNote.isSustainNote, (daNote.rgbShader != null ? [daNote.rgbShader.r, daNote.rgbShader.g, daNote.rgbShader.b] : null));
 			}
 			daNote.hitByOpponent = true;
 
@@ -5446,8 +5426,7 @@ class PlayState extends MusicBeatState
 			if (ClientPrefs.opponentLightStrum && !strumsHit[noteAlt.noteData % 4] && !ClientPrefs.showNotes)
 			{
 				strumsHit[noteAlt.noteData % 4] = true;
-				opponentStrums.members[noteAlt.noteData].playAnim('confirm', true);
-				opponentStrums.members[noteAlt.noteData].resetAnim = calculateResetTime();
+				StrumPlayAnim(true, noteAlt.noteData, calculateResetTime(), noteAlt.isSustainNote);
 			}
 			if (!noteAlt.isSustainNote)
 			{
@@ -5942,13 +5921,16 @@ class PlayState extends MusicBeatState
 		#end
 	}
 
-	function StrumPlayAnim(isDad:Bool, id:Int, time:Float) {
+	var strumPlay:Bool = true;
+	function StrumPlayAnim(isDad:Bool, id:Int, time:Float, ?sustain:Bool = true, ?palette:Array<FlxColor>) {
 		var spr:StrumNote = isDad ? opponentStrums.members[id] : playerStrums.members[id];
 
-		if(spr != null) {
-			spr.playAnim('confirm', true);
-			spr.resetAnim = time;
-		}
+		strumPlay = (!sustain || ClientPrefs.oldSusStyle && sustain);
+
+		if(spr != null && (strumPlay || spr.animation.curAnim.name != 'confirm')) spr.playAnim('confirm', true);
+		if (palette != null) spr.updateRGBColors(palette[0], palette[1], palette[2]);
+
+		if (time > 0) spr.resetAnim = time;
 	}
 
 	public var ratingName:String = '?';
