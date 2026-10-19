@@ -174,7 +174,6 @@ class HScript
 	{
 		#if LUA_ALLOWED
 		funk.addLocalCallback("runHaxeCode", function(codeToRun:String, ?varsToBring:Any = null, ?funcToRun:String = null, ?funcArgs:Array<Dynamic> = null) {
-			trace('runHaxeCode added');
 			var retVal:Dynamic = null;
 			final types:Array<Dynamic> = [Bool, Int, Float, String, Array];
 			#if HSCRIPT_ALLOWED
@@ -196,6 +195,8 @@ class HScript
 			#else
 			LuaUtils.luaTrace(funk.lua, "runHaxeCode: HScript isn't supported on this platform!", false, false, FlxColor.RED);
 			#end
+
+			trace('runHaxeCode added');
 
 			if(retVal != null && !LuaUtils.isOfTypes(retVal, types)) retVal = null;
 			return retVal;

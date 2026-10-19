@@ -170,8 +170,8 @@ class Project extends HXProject
 		configureApp();
 
 		displayTarget();
+		configureFeatureFlags(); //set the feature flags and then compile defines
 		configureCompileDefines();
-		configureFeatureFlags();
 		configureOutputDir();
 		configureHaxelibs();
 		configureAssets();
