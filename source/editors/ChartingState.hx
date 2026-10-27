@@ -3102,7 +3102,6 @@ class ChartingState extends MusicBeatState
           for (i in 0...controlArray.length)
           {
             if (controlArray[i]) doANoteThing(conductorTime, i, style);
-            updateGrid(false);
           }
         }
 
