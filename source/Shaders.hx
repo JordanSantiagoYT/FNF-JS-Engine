@@ -633,21 +633,21 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
 
   #pragma header
 
-  #define iResolution vec3(openfl_TextureSize, 0.)
+  #define iResolution vec3(openfl_TextureSize, 0.0)
   #define iChannel0 bitmap
   #define texture flixel_texture2D
 
   // end of ShadertoyToFlixel header
 
-  #define PI 3.141592654f
+  #define PI 3.141592654
 
   vec3 RGB_to_YIQ(vec3 RGB)
   {
     return mat3
     (
-        0.299f, 0.587f, 0.114f,
-        0.596f, -0.275f, -0.321f,
-        0.212f, -0.523f, 0.311f
+        0.299, 0.587, 0.114,
+        0.596, -0.275, -0.321,
+        0.212, -0.523, 0.311
     ) * RGB;
   }
 
@@ -655,18 +655,18 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
   {
     return mat3
     (
-        1.f, 0.956f, 0.619f,
-        1.f, -0.272f, -0.647f,
-        1.f, -1.106f, 1.703f
+        1.0, 0.956, 0.619,
+        1.0, -0.272, -0.647,
+        1.0, -1.106, 1.703
     ) * YIQ;
   }
 
   // Converts color from RGB to YIQ, blur the I and Q, then apply a dot crawl effect
   vec3 VHS_effect(vec2 fragCoord, float color_fuckery)
   {
-    vec2    IQ = vec2(0,0),
-            blur_size = vec2(16, 4),
-            focal_point = blur_size * 0.5f;
+    vec2    IQ = vec2(0.0,0.0),
+            blur_size = vec2(16.0, 4.0),
+            focal_point = blur_size * 0.5;
 
     float   smear_factor = blur_size.x * blur_size.y;
 
@@ -677,8 +677,8 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
     {
         vec2 uv_prime = vec2
         (
-            (fragCoord.x + float(i % int(blur_size.x)) - focal_point.x) / iResolution.x,
-            (fragCoord.y + float(i / int(blur_size.y)) - focal_point.y) / iResolution.y
+            (fragCoord.x + mod(float(i), floor(blur_size.x)) - focal_point.x) / iResolution.x,
+            (fragCoord.y + floor(float(i) / floor(blur_size.y)) - focal_point.y) / iResolution.y
         );
         IQ += RGB_to_YIQ(texture(iChannel0, uv_prime).xyz).yz;
     }
@@ -687,12 +687,12 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
     vec3 color = vec3
     (
         RGB_to_YIQ(texture(iChannel0, UV_Y).xyz).r,
-        IQ * (1.f + color_fuckery)
+        IQ * (1.0 + color_fuckery)
     );
 
     // NTSC Dot Crawl
     color.x += (IQ.x*sin((fragCoord.x))) *
-               (IQ.y*sin( fragCoord.y * PI * 0.5f));
+               (IQ.y*sin( fragCoord.y * PI * 0.5));
 
     color = YIQ_to_RGB(color);
 
@@ -704,7 +704,7 @@ class VCRDistortionShader extends FlxShader // https://www.shadertoy.com/view/ld
   void mainImage( out vec4 fragColor, in vec2 fragCoord )
   {
     //fragColor = vec4(vec3(sin(fragCoord.x)), texture(iChannel0, fragCoord / iResolution.xy).a);
-    fragColor = vec4(VHS_effect(fragCoord, 0.2f),1.0);
+    fragColor = vec4(VHS_effect(fragCoord, 0.2),1.0);
     //fragColor = texture(iChannel0, fragCoord / iResolution.xy);
   }
 
@@ -1493,18 +1493,19 @@ class BlockedGlitchEffect
     set_resolution(res);
     set_colorMultiplier(colorMultiplier);
     set_hasColorTransform(colorTransform);
-    PlayState.instance.shaderUpdates.push(update);
+    if (PlayState.instance != null) PlayState.instance.shaderUpdates.push(update);
   }
 
   public function update(elapsed:Float):Void
   {
+    if (shader.time.value == null) shader.time.value = [time];
     shader.time.value[0] += elapsed;
   }
 
   public function set_resolution(v:Float):Float
   {
     resolution = v;
-    shader.screenSize.value = [resolution];
+    shader.screenSize.value = [resolution, resolution];
     return this.resolution;
   }
 
@@ -1518,7 +1519,6 @@ class BlockedGlitchEffect
   function set_colorMultiplier(value:Float):Float
   {
     this.colorMultiplier = value;
-    shader.colorMultiplier.value = [value];
     return this.colorMultiplier;
   }
 
