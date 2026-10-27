@@ -12,7 +12,7 @@ class CustomSoundTray extends FlxSoundTray
 	var graphicScale:Float = 0.3;
 	var lerpYPos:Float = 0;
 	var alphaTarget:Float = 0;
-  var volumeMaxSound:String;
+  	var volumeMaxSound:String;
 
 	public function new()
 	{
@@ -54,9 +54,9 @@ class CustomSoundTray extends FlxSoundTray
 		y = -height;
 		screenCenter();
 
-    volumeUpSound = Paths.getPath("sounds/soundtray/Volup.ogg", 'shared');
-    volumeDownSound = Paths.getPath("sounds/soundtray/Voldown.ogg", 'shared');
-    volumeMaxSound = Paths.getPath("sounds/soundtray/VolMAX.ogg", 'shared');
+		volumeUpSound = Paths.getPath("sounds/soundtray/Volup.ogg", 'shared');
+		volumeDownSound = Paths.getPath("sounds/soundtray/Voldown.ogg", 'shared');
+		volumeMaxSound = Paths.getPath("sounds/soundtray/VolMAX.ogg", 'shared');
 
 		// trace('Custom Sound Tray Added!');
 	}
@@ -108,11 +108,11 @@ class CustomSoundTray extends FlxSoundTray
 			globalVolume = 0;
 		if (!silent)
 		{
-      var sound = up ? volumeUpSound : volumeDownSound;
+			var sound = up ? volumeUpSound : volumeDownSound;
 
-      if (globalVolume == 10) sound = volumeMaxSound;
+			if (globalVolume == 10) sound = volumeMaxSound;
 
-      if (sound != null) FlxG.sound.load(sound).play();
+			if (sound != null) FlxG.sound.play(sound);
 		}
 
 		FlxG.save.data.volume = FlxG.sound.volume;

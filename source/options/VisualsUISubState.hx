@@ -251,6 +251,14 @@ class VisualsUISubState extends BaseOptionsMenu
     final option:Option = new Option('FPS Counter', 'If unchecked, hides FPS Counter.', 'showFPS', 'bool', true);
     addOption(option);
     option.onChange = onChangeFPSCounter;
+
+    final option:Option = new Option('FPS Update Frequency: ', "How often should the FPS Counter update?\nTurn on the previous option to see this in effect!",
+      'fpsRate', 'int', 1);
+
+    option.minValue = 1;
+    option.maxValue = 1000;
+    option.onChange = onChangeFPSRate;
+    addOption(option);
     #end
 
     final option:Option = new Option('Show RAM Usage', "If checked, the game will show your RAM usage.", 'showRamUsage', 'bool', true);
@@ -387,6 +395,13 @@ class VisualsUISubState extends BaseOptionsMenu
   {
     if (Main.fpsVar != null) Main.fpsVar.visible = ClientPrefs.showFPS;
   }
+  
+  function onChangeFPSRate()
+	{
+		var rate:Null<Float> = ClientPrefs.fpsRate;
+		if (rate != null) Main.fpsVar.updateRate = rate;
+		else Main.fpsVar.updateRate = 1;
+	}
 
   function updateFPSText()
   {

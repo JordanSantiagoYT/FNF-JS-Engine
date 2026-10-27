@@ -2094,8 +2094,7 @@ class ChartingState extends MusicBeatState
     check_mute_inst = new FlxUICheckBox(10, 280, null, null, "Mute Instrumental (in editor)", 100);
     check_mute_inst.checked = false;
     check_mute_inst.callback = function() {
-      var vol:Float = 1;
-
+      var vol:Float = instVolume.value;
       if (check_mute_inst.checked) vol = 0;
 
       FlxG.sound.music.volume = vol;
