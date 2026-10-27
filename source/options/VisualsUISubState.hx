@@ -257,7 +257,6 @@ class VisualsUISubState extends BaseOptionsMenu
 
     option.minValue = 1;
     option.maxValue = 1000;
-    option.onChange = onChangeFPSRate;
     addOption(option);
     #end
 
@@ -395,13 +394,6 @@ class VisualsUISubState extends BaseOptionsMenu
   {
     if (Main.fpsVar != null) Main.fpsVar.visible = ClientPrefs.showFPS;
   }
-  
-  function onChangeFPSRate()
-	{
-		var rate:Null<Float> = ClientPrefs.fpsRate;
-		if (rate != null) Main.fpsVar.updateRate = rate;
-		else Main.fpsVar.updateRate = 1;
-	}
 
   function updateFPSText()
   {

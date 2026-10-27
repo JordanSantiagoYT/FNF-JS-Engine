@@ -64,8 +64,6 @@ class FPSCounter extends TextField
 
   var fpsMultiplier:Float = 1.0;
 
-  public var updateRate:Float = 1;
-
   var now:Float = 0;
 
   // Event Handlers
@@ -80,7 +78,7 @@ class FPSCounter extends TextField
 		while (times[0] < now - 1000)
 			times.shift();
 
-    if (deltaTimeout >= 1000 / updateRate)
+    if (deltaTimeout >= 1000 / ClientPrefs.fpsRate)
     {
       var multiplier:Float = 1.0;
 

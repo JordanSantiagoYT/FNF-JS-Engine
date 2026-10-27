@@ -761,7 +761,10 @@ class ChartingState extends MusicBeatState
     }
     #end
 
-    var player1DropDown = new FlxUIDropDownMenuCustom(10, stepperSpeed.y + 45, FlxUIDropDownMenuCustom.makeStrIdLabelArray(characters, true),
+    //We only need to make the labels once.
+    var charLabels = FlxUIDropDownMenuCustom.makeStrIdLabelArray(characters, true);
+
+    var player1DropDown = new FlxUIDropDownMenuCustom(10, stepperSpeed.y + 45, charLabels,
       function(character:String) {
         _song.player1 = characters[Std.parseInt(character)];
         updateJsonData();
@@ -771,7 +774,7 @@ class ChartingState extends MusicBeatState
     blockPressWhileScrolling.push(player1DropDown);
 
     var gfVersionDropDown = new FlxUIDropDownMenuCustom(player1DropDown.x, player1DropDown.y + 40,
-      FlxUIDropDownMenuCustom.makeStrIdLabelArray(characters, true), function(character:String) {
+      charLabels, function(character:String) {
         _song.gfVersion = characters[Std.parseInt(character)];
         updateJsonData();
         updateHeads();
@@ -780,7 +783,7 @@ class ChartingState extends MusicBeatState
     blockPressWhileScrolling.push(gfVersionDropDown);
 
     var player2DropDown = new FlxUIDropDownMenuCustom(player1DropDown.x, gfVersionDropDown.y + 40,
-      FlxUIDropDownMenuCustom.makeStrIdLabelArray(characters, true), function(character:String) {
+      charLabels, function(character:String) {
         _song.player2 = characters[Std.parseInt(character)];
         updateJsonData();
         updateHeads();
