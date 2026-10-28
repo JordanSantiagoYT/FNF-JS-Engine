@@ -66,8 +66,6 @@ jobs:
     name: Build Artifacts
     needs: ensure-tag
     uses: ./.github/workflows/main.yml
-    with:
-      buildFlags: officialBuild
 
   release-linux:
     name: Release linuxBuild

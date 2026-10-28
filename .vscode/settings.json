@@ -106,9 +106,9 @@
 
   "lime.targetConfigurations": [
     {
-      "label": "Windows / Debug (Official build)",
+      "label": "Windows / Debug",
       "target": "windows",
-      "args": ["-debug", "-DofficialBuild"]
+      "args": ["-debug"]
     }
   ],
 
@@ -118,16 +118,8 @@
       "args": ["-debug"]
     },
     {
-      "label": "Debug (official build)",
-      "args": ["-debug", "-DofficialBuild"]
-    }
-    {
       "label": "Release",
       "args": ["-release"]
-    },
-    {
-      "label": "Release (official build)",
-      "args": ["-release", "-DofficialBuild"]
     }
   ],
   "haxe.enableExtendedIndentation": true,

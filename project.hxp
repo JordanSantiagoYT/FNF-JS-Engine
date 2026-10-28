@@ -106,7 +106,6 @@ class Project extends HXProject
 	//
 	// FEATURES
 	//
-	static final officialBuild:FeatureFlag = "officialBuild";
 	static final MODS_ALLOWED:FeatureFlag = "MODS_ALLOWED";
 	static final LUA_ALLOWED:FeatureFlag = "LUA_ALLOWED";
 	static final VIDEOS_ALLOWED:FeatureFlag = "VIDEOS_ALLOWED";
@@ -122,6 +121,7 @@ class Project extends HXProject
 	static final CRASH_HANDLER:FeatureFlag = "CRASH_HANDLER";
 	static final TITLE_SCREEN_EASTER_EGG:FeatureFlag = "TITLE_SCREEN_EASTER_EGG";
 	static final CHECK_FOR_UPDATES:FeatureFlag = "CHECK_FOR_UPDATES";
+	static final GITHUB_BUILD:FeatureFlag = "GITHUB_BUILD";
 
 	/**
 	 * `-DULTRA_OPTIMIZED` (WIP / EXPERIMENTAL max-speed build flag).
@@ -399,8 +399,19 @@ class Project extends HXProject
         // setHaxedef("HXCPP_ALIGN_ALLOC");
         setHaxedef("HXCPP_FAST_LINK");
 		// this is part of ShadowEngines HXCPP
-		// should be fine to keep if you don't use it, but makes it so it doesn't use AVX2
+		// should be fine to keep if you don't use it, but makes it so it doesn't use AVX2 (for compatibility reasons)
         setHaxedef("HXCPP_NO_ARCH_LEVEL");
+
+		if (!GITHUB_BUILD.isEnabled(this))
+		{
+			// HXCPP caching, which you can carry across projects
+			if (!isWindows())
+				setHaxedef("HXCPP_COMPILE_CACHE", "~/.hxcpp_cache");
+			else
+				setHaxedef("HXCPP_COMPILE_CACHE", "C:/.hxcpp_cache");
+
+			setHaxedef("HXCPP_CACHE_MB", "4000");
+		}
 
 		// If we aren't using the Flixel debugger, strip it out.
 		if (!isDebug())

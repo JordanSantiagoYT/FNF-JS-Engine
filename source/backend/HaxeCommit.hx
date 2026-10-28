@@ -27,7 +27,7 @@ class HaxeCommit
 {
 	public static macro function getGitCommitHash():haxe.macro.Expr.ExprOf<String>
 	{
-		#if !commit return macro $v{null}; #end 
+		#if !GITHUB_BUILD return macro $v{null}; #end 
 		#if !display
 		// Get the current line number.
 		var pos = haxe.macro.Context.currentPos();
