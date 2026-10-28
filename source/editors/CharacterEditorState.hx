@@ -420,11 +420,9 @@ class CharacterEditorState extends MusicBeatState
 		{
 			char.isPlayer = !char.isPlayer;
 			char.flipX = (char.originalFlipX != char.isPlayer);
-			if(check_player != null) check_player.checked = char.isPlayer;
 		}
+		if(check_player != null) check_player.checked = char.isPlayer;
 		char.debugMode = true;
-
-		char.setPosition(char.positionArray[0] + OFFSET_X + 100, char.positionArray[1]);
 
 		if(pos > -1) charLayer.insert(pos, char);
 		else charLayer.add(char);
@@ -543,7 +541,7 @@ class CharacterEditorState extends MusicBeatState
 		tab_group.name = "Settings";
 
 		check_player = new FlxUICheckBox(10, 60, null, null, "Playable Character", 100);
-		check_player.checked = _char.startsWith('bf');
+		check_player.checked = char.isPlayer;
 		check_player.callback = function()
 		{
 			char.isPlayer = !char.isPlayer;
@@ -556,8 +554,9 @@ class CharacterEditorState extends MusicBeatState
 		charDropDown = new FlxUIDropDownMenuCustom(10, 30, FlxUIDropDownMenuCustom.makeStrIdLabelArray([''], true), function(character:String)
 		{
 			_char = characterList[Std.parseInt(character)];
-			check_player.checked = _char.startsWith('bf');
-			addCharacter(true);
+			addCharacter();
+			updatePointerPos();
+			reloadBGs();
 			updatePresence();
 			reloadCharacterDropDown();
 		});

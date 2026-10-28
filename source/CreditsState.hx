@@ -50,7 +50,7 @@ class CreditsState extends MusicBeatState
 			['Special Thanks'],
 			['Denpa Engine',			'denpeak',				'The crossfade code used for this engine\n(Currently not implemented yet!)',								'https://github.com/UmbratheUmbreon/PublicDenpaEngine',			'FF9300'],
 			['HRK. EXEX',			'hrk',				'Created the Old Video Rendering Mode for FNF & the Note Skipping idea,\nalong with the Rating Popup recycling idea thing',								'https://www.youtube.com/@HRK_EXEX/featured',			'01F8FF'],
-			['cabfile',			'cabfile',				'Created the new Video Rendering Mode for FNF',								'https://github.com/cabfile',			'DDDDDD'],
+			//['cabfile',			'cabfile',				'Created the new Video Rendering Mode for FNF',								'https://github.com/cabfile',			'DDDDDD'], 
 			['Buateds',			'buated',				'Came up with the initial idea of Rendering Mode.',								'https://www.youtube.com/@buateds/featured',			'8E4016'],
 			['SomeGuyWhoLovesCoding',			'sgwlc',				'Rewrote the chart loading system and ported the new Rendering Mode to source',								'https://www.youtube.com/channel/UCMSusVA3DY-4EtiGP4zKAJA',			'FFBD40'],
 			['Betopia', 'nothing', 'Freeplay Search bar creator', 'https://www.youtube.com/channel/UCfjyz9xRhZiRbLMteQloVeg', 'FFFFFF'],

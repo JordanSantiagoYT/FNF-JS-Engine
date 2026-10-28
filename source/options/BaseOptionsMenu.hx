@@ -346,7 +346,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
                     curOption.setValue(FlxMath.roundDecimal(holdValue, curOption.decimals));
                 }
                 _textThrottle += elapsed;
-                if (_textThrottle >= 0.08)
+                if (_textThrottle >= 0.05)
                 {
                   _textThrottle = 0;
                   updateTextFrom(curOption);
