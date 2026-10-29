@@ -140,13 +140,6 @@ class Project extends HXProject
 	static final ULTRA_OPTIMIZED:FeatureFlag = "ULTRA_OPTIMIZED";
 
 	/**
-	 * `-DULTRA_HTML5` (WIP / EXPERIMENTAL max-speed HTML5/JS build flag).
-	 * Sets analyzer-optimize + js-es=6 for the web target only. Independent
-	 * of ULTRA_OPTIMIZED (which is for native). See ULTRA_BUILD.md.
-	 */
-	static final ULTRA_HTML5:FeatureFlag = "ULTRA_HTML5";
-
-	/**
 	 * `-DFEATURE_DEBUG_TRACY`
 	 * If this flag is enabled, the game will have the necessary hooks for the Tracy profiler.
 	 * Only enable this if you're using the correct fork of Haxe to support this.
@@ -271,66 +264,21 @@ class Project extends HXProject
 				info('Target Platform: MacOS');
 			case Platform.LINUX:
 				info('Target Platform: Linux');
-			case Platform.ANDROID:
-				info('Target Platform: Android');
-			case Platform.IOS:
-				info('Target Platform: IOS');
-			case Platform.HTML5:
-				info('Target Platform: HTML5');
 			default:
 				error('Unsupported platform! (got ${target})');
 		}
-
-		switch (this.platformType)
-		{
-			case PlatformType.DESKTOP:
-				info('Platform Type: Desktop');
-			case PlatformType.MOBILE:
-				info('Platform Type: Mobile');
-			case PlatformType.WEB:
-				info('Platform Type: Web');
-			case PlatformType.CONSOLE:
-				info('Platform Type: Console');
-			default:
-				error('Unknown platform type! (got ${platformType})');
-		}
-
-		// Print whether we are using HXCPP, HashLink, or something else.
-		if (isWeb())
-			info('Target Language: JavaScript (HTML5)');
-		else if (isHashLink())
-			info('Target Language: HashLink');
-		else if (isNeko())
-			info('Target Language: Neko');
-		else if (isJava())
-			info('Target Language: Java');
-		else if (isNodeJS())
-			info('Target Language: JavaScript (NodeJS)');
-		else if (isCSharp())
-			info('Target Language: C#');
-		else
-			info('Target Language: C++');
 
 		for (arch in this.architectures)
 		{
 			// Display the list of target architectures.
 			switch (arch)
 			{
-				case Architecture.X86:
-					info('Architecture: x86');
 				case Architecture.X64:
 					info('Architecture: x64');
 				case Architecture.ARM64:
 					info('Architecture: ARMx64');
 				case null:
-					if (!isWeb())
-					{
-						error('Unsupported architecture (got null on non-web platform)');
-					}
-					else
-					{
-						info('Architecture: Web');
-					}
+					error('Unsupported architecture (got null on non-web platform)');
 				default:
 					error('Unsupported architecture (got ${arch})');
 			}
@@ -346,13 +294,13 @@ class Project extends HXProject
 		// For example, `-DMODS_ALLOWED` or `-DVIDEOS_ALLOWED`
 
 		// Should be true unless explicitly requested.
-		MODS_ALLOWED.apply(this, (isDesktop() || isMobile()) && !isWeb());
-		LUA_ALLOWED.apply(this, (isDesktop() || isMobile()) && (!isWeb() || !isHashLink()));
-		VIDEOS_ALLOWED.apply(this, (isDesktop() || isMobile()) && (!isWeb() || !is32Bit()));
+		MODS_ALLOWED.apply(this, (isDesktop() || isMobile()));
+		LUA_ALLOWED.apply(this, (isDesktop() || isMobile()));
+		VIDEOS_ALLOWED.apply(this, (isDesktop() || isMobile()));
 		CRASH_HANDLER.apply(this, true);
 		ACHIEVEMENTS_ALLOWED.apply(this, true);
 		CHECK_FOR_UPDATES.apply(this, true);
-		HSCRIPT_ALLOWED.apply(this, (isDesktop() || isMobile() || isWeb()));
+		HSCRIPT_ALLOWED.apply(this, (isDesktop() || isMobile()));
 		DISCORD_ALLOWED.apply(this, (isDesktop() || isMobile()));
 		SHADERS_ALLOWED.apply(this, true);
 		FUNNY_ALLOWED.apply(this, true);
@@ -360,7 +308,7 @@ class Project extends HXProject
 
 		// Should be true only on web builds.
 		// Enabling embedding and preloading is required to preload assets properly.
-		EMBED_ASSETS.apply(this, isWeb());
+		// EMBED_ASSETS.apply(this, isWeb());
 		PRELOAD_ALL.apply(this, true);
 
 		// Should be true except on MacOS.
@@ -450,7 +398,7 @@ class Project extends HXProject
 		//Set the max unroll cost of for loops to 1000 unrolls.
 		haxedefs.set("loop-unroll-max-cost", "1000");
 
-		if (ULTRA_OPTIMIZED.isEnabled(this) && !isWeb())
+		if (ULTRA_OPTIMIZED.isEnabled(this))
 		{
 			// WIP: experimental max-speed build. See the flag doc above.
 			// hxcpp 4.3.2 has NO HXCPP_OPTIMIZE_SPEED/SIZE/O3 defines (grep
@@ -496,23 +444,6 @@ class Project extends HXProject
 			// Safer to keep -dce no and rely on analyzer-optimize instead.
 
 			info("ULTRA_OPTIMIZED: experimental max-speed build enabled (native target)");
-		}
-
-		if (ULTRA_HTML5.isEnabled(this) && isWeb())
-		{
-			// WIP: experimental max-speed build for the HTML5/JS target.
-			// The JS backend ignores the hxcpp defines above; it has its own
-			// speed knobs (DCE, JS ES level, analyzer).
-			setHaxedef("analyzer-optimize");
-			setHaxedef("js-es", "6");
-			// -dce std is the safest DCE for the JS target: removes truly
-			// unreachable code without stripping the reflection-accessed
-			// surface that ClientPrefs/HScript/Lua depend on.
-			// Keep "no" if you need full mod safety; switch to "std" if your
-			// mod library is small / static. WIP.
-			// addHaxeFlag("-dce std");  // uncomment when you're sure
-
-			info("ULTRA_HTML5: experimental max-speed HTML5 build enabled");
 		}
 	}
 
