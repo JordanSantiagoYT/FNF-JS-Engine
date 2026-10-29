@@ -4786,7 +4786,7 @@ class PlayState extends MusicBeatState
 				for (i in 0...pressArray.length)
 				{
 					if(pressArray[i] && strumsBlocked[i] != true)
-						onKeyPress(new KeyboardEvent(KeyboardEvent.KEY_DOWN, true, true, -1, keysArray[i][0]));
+						keyPressed(i);
 				}
 			}
 		}
@@ -4830,7 +4830,7 @@ class PlayState extends MusicBeatState
 				for (i in 0...releaseArray.length)
 				{
 					if(releaseArray[i] || strumsBlocked[i] == true)
-						onKeyRelease(new KeyboardEvent(KeyboardEvent.KEY_UP, true, true, -1, keysArray[i][0]));
+						keyReleased(i);
 				}
 			}
 		}
