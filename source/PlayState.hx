@@ -542,7 +542,7 @@ class PlayState extends MusicBeatState
 		storyDifficultyText = CoolUtil.difficulties[storyDifficulty];
 
 		// String that contains the mode defined here so it isn't necessary to call changePresence for each mode
-		if (isStoryMode)
+		if (isStoryMode && !wasOriginallyFreeplay)
 			detailsText = "Story Mode: " + WeekData.getCurrentWeek().weekName;
 		else
 			detailsText = "Freeplay";
@@ -1332,7 +1332,7 @@ class PlayState extends MusicBeatState
 		popUpGroup.cameras = [camHUD];
 
 		startingSong = true;
-		MusicBeatState.windowNameSuffix = " - " + SONG.song + " " + (isStoryMode ? "(Story Mode)" : "(Freeplay)");
+		MusicBeatState.windowNameSuffix = " - " + SONG.song + " " + (isStoryMode && !wasOriginallyFreeplay ? "(Story Mode)" : "(Freeplay)");
 
 		#if LUA_ALLOWED
 		for (notetype in noteTypeMap.keys())
