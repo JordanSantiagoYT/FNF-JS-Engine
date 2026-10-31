@@ -11,7 +11,7 @@ class PauseSubState extends MusicBeatSubstate
 
 	var menuItems:Array<String> = [];
 	var menuItemsOG:Array<String> = ['Resume', 'Restart Song', 'Change Gameplay Settings', 'Change Difficulty', 'Options', 'Exit'];
-	var menuItemsExit:Array<String> = [(PlayState.isStoryMode ? 'Exit to Story Menu' : 'Exit to Freeplay'), 'Exit to Main Menu', 'Exit Game', 'Back'];
+	var menuItemsExit:Array<String> = [(PlayState.isStoryMode && !PlayState.wasOriginallyFreeplay ? 'Exit to Story Menu' : 'Exit to Freeplay'), 'Exit to Main Menu', 'Exit Game', 'Back'];
 	var difficultyChoices = [];
 	var curSelected:Int = 0;
 
@@ -285,11 +285,9 @@ class PauseSubState extends MusicBeatSubstate
 					PlayState.seenCutscene = false;
 
 					Mods.loadTopMod();
-					if(PlayState.isStoryMode) {
-						FlxG.switchState(StoryMenuState.new);
-					} else if (!PlayState.isStoryMode) {
-						FlxG.switchState(FreeplayState.new);
-					}
+					
+					(PlayState.isStoryMode && !PlayState.wasOriginallyFreeplay) ? FlxG.switchState(StoryMenuState.new) : FlxG.switchState(FreeplayState.new);
+
 					Paths.playMenuMusic(true);
 					PlayState.changedDifficulty = false;
 					PlayState.chartingMode = false;
@@ -349,7 +347,7 @@ class PauseSubState extends MusicBeatSubstate
 	override function destroy()
 	{
 		if (pauseMusic != null) pauseMusic.destroy();
-		if (PlayState != null) MusicBeatState.windowNameSuffix = " - " + PlayState.SONG.song + " " + (PlayState.isStoryMode ? "(Story Mode)" : "(Freeplay)");
+		if (PlayState != null) MusicBeatState.windowNameSuffix = " - " + PlayState.SONG.song + " " + (PlayState.isStoryMode && !PlayState.wasOriginallyFreeplay ? "(Story Mode)" : "(Freeplay)");
 
 		super.destroy();
 	}
