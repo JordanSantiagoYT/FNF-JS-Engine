@@ -30,7 +30,7 @@
       },
       {
         "name": "hxcpp",
-        "link": "https://github.com/JS-Engine-things/hxcpp",
+        "link": "https://github.com/JS-Engine-things/libhxcpp",
         "branch": "main"
       },
       {
