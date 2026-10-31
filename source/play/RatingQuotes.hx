@@ -53,4 +53,19 @@ class RatingQuotes {
 		}
 		return result;
 	}
+
+	/**
+	 * Same data as `load()`, but in the old `[quote, threshold]` shape,
+	 * so existing code and mods that index `ratingStuff[i][0]` / `[i][1]` keep working.
+	 */
+	public static function loadLegacy():Array<Dynamic>
+	{
+		final legacy:Array<Dynamic> = [];
+		for (q in load())
+		{
+			final pair:Array<Dynamic> = [q.quote, q.threshold];
+			legacy.push(pair);
+		}
+		return legacy;
+	}
 }

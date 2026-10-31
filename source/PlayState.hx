@@ -14,14 +14,14 @@ import editors.CharacterEditorState;
 import editors.ChartingState;
 import flixel.addons.effects.FlxTrail;
 import flixel.input.keyboard.FlxKey;
+import flixel.system.FlxAssets;
 import flixel.ui.FlxBar;
 import flixel.util.FlxSort;
-import flixel.system.FlxAssets;
 import objects.*;
 import openfl.events.KeyboardEvent;
 import openfl.system.System;
-import play.objects.*;
 import play.RatingQuotes;
+import play.objects.*;
 #if SHADERS_ALLOWED
 import shaders.ErrorHandledShader;
 #end
@@ -429,7 +429,8 @@ class PlayState extends MusicBeatState
 			}
 			#end
 		}
-		if (ffmpegMode) {
+		if (ffmpegMode)
+		{
 			if (unlockFPS)
 			{
 				FlxG.updateFramerate = 1000;
@@ -2973,7 +2974,7 @@ class PlayState extends MusicBeatState
 
 			if (screenshader.shader.waveAmplitude > 0)
 				screenshader.update(elapsed);
-			else 
+			else
 			{
 				removeShaderFromCamera('camGame', screenshader);
 				screenshader.enabled = false;
@@ -4390,7 +4391,7 @@ class PlayState extends MusicBeatState
 						FlxG.save.flush();
 					}
 					changedDifficulty = false;
-					
+
 					playerIsCheating = false;
 				}
 				else
@@ -4428,7 +4429,7 @@ class PlayState extends MusicBeatState
 				}
 				Paths.playMenuMusic(true);
 				changedDifficulty = false;
-				
+
 				playerIsCheating = false;
 			}
 			transitioning = true;
