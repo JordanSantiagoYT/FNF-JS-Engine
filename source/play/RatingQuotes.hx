@@ -61,7 +61,7 @@ class RatingQuotes {
 	public static function loadLegacy():Array<Dynamic>
 	{
 		final legacy:Array<Dynamic> = [];
-		for (q in load())
+		for (q in loadRatingQuotes())
 		{
 			final pair:Array<Dynamic> = [q.quote, q.threshold];
 			legacy.push(pair);
