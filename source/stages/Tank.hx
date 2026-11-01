@@ -132,8 +132,8 @@ class Tank extends BaseStage
 
 	// Cutscenes
 	var cutsceneHandler:CutsceneHandler;
-	var tankman:FlxAnimate;
-	var pico:FlxAnimate;
+	var tankman:PsychFlxAnimate;
+	var pico:PsychFlxAnimate;
 	var boyfriendCutscene:FlxSprite;
 	var audioPlaying:FlxSound;
 	function prepareCutscene()
@@ -144,8 +144,7 @@ class Tank extends BaseStage
 		camHUD.visible = false;
 		//inCutscene = true; //this would stop the camera movement, oops
 
-		tankman = new FlxAnimate(dad.x + 419, dad.y + 225);
-		tankman.showPivot = false;
+		tankman = new PsychFlxAnimate(dad.x + 419, dad.y + 225);
 		Paths.loadAnimateAtlas(tankman, 'cutscenes/tankman');
 		tankman.antialiasing = ClientPrefs.globalAntialiasing;
 		addBehindDad(tankman);
@@ -293,8 +292,7 @@ class Tank extends BaseStage
 		});
 		Paths.sound('stressCutscene');
 
-		pico = new FlxAnimate(gf.x + 150, gf.y + 450);
-		pico.showPivot = false;
+		pico = new PsychFlxAnimate(gf.x + 150, gf.y + 450);
 		Paths.loadAnimateAtlas(pico, 'cutscenes/picoAppears');
 		pico.antialiasing = ClientPrefs.globalAntialiasing;
 		pico.anim.addBySymbol('dance', 'GF Dancing at Gunpoint', 24, true);
@@ -305,32 +303,34 @@ class Tank extends BaseStage
 		addBehindGF(pico);
 		cutsceneHandler.push(pico);
 
-		// prepare pico animation cycle
-		function picoStressCycle() {
-			switch (pico.anim.curInstance.symbol.name) {
-				case "dieBitch", "GF Time to Die sequence":
-					pico.anim.play('picoAppears', true);
-					boyfriendGroup.alpha = 1;
-					boyfriendCutscene.visible = false;
-					boyfriend.playAnim('bfCatch', true);
-					boyfriend.animation.finishCallback = function(name:String)
-					{
-						if(name != 'idle')
-						{
-							boyfriend.playAnim('idle', true);
-							boyfriend.animation.curAnim.finish(); //Instantly goes to last frame
-						}
-					};
-				case "picoAppears", "Pico Saves them sequence":
-					pico.anim.play('picoEnd', true);
-				case "picoEnd", "Pico Dual Wield on Speaker idle":
-					gfGroup.alpha = 1;
-					pico.visible = false;
-					if (pico.anim.onComplete.has(picoStressCycle)) // for safety
-						pico.anim.onComplete.remove(picoStressCycle);
+		// Held in a var so the signal can find the same function again to remove it.
+		var picoStressCycle:Dynamic = null;
+		picoStressCycle = function(_:String):Void {
+			// flixel-animate exposes the currently playing animation name via `anim.name` (the value
+			// last passed to `play()`).
+			var playing:String = pico.anim.name;
+			if (playing == 'dieBitch') {
+				pico.anim.play('picoAppears', true);
+				boyfriendGroup.alpha = 1;
+				boyfriendCutscene.visible = false;
+				boyfriend.playAnim('bfCatch', true);
+				boyfriend.animation.finishCallback = function(name:String):Void {
+					if (name != 'idle') {
+						boyfriend.playAnim('idle', true);
+						boyfriend.animation.curAnim.finish(); // Instantly goes to last frame
+					}
+				};
+			} else if (playing == 'picoAppears') {
+				pico.anim.play('picoEnd', true);
+			} else if (playing == 'picoEnd') {
+				gfGroup.alpha = 1;
+				pico.visible = false;
+				if (pico.anim.onFinish.has(picoStressCycle)) { // for safety
+					pico.anim.onFinish.remove(picoStressCycle);
+				}
 			}
-		}
-		pico.anim.onComplete.add(picoStressCycle);
+		};
+		pico.anim.onFinish.add(picoStressCycle);
 
 		boyfriendCutscene = new FlxSprite(boyfriend.x + 5, boyfriend.y + 20);
 		boyfriendCutscene.antialiasing = ClientPrefs.globalAntialiasing;
