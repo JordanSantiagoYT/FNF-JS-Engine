@@ -13,6 +13,10 @@ import hxgamemode.GamemodeClient;
 #if (linux || mac)
 import lime.graphics.Image;
 #end
+#if mobile
+import mobile.MobileControls;
+import mobile.backend.StorageUtil;
+#end
 
 typedef GameStruct =
 {
@@ -80,6 +84,10 @@ class Main extends Sprite
   {
     super();
     instance = this;
+    #if mobile
+    // must come first: moves the working directory to the game folder on the phone (see StorageUtil)
+    StorageUtil.init();
+    #end
     CrashHandler.init();
     #if (cpp && windows)
     untyped __cpp__("
@@ -104,7 +112,16 @@ class Main extends Sprite
     ClientPrefs.loadDefaultStuff();
     #if ACHIEVEMENTS_ALLOWED Achievements.load(); #end
 
-    final funkinGame:FunkinGame = new FunkinGame(game.width, game.height, InitState, game.framerate, game.framerate, game.skipSplash, game.startFullscreen);
+    // on phones the first state copies the game files out of the APK (first launch only), then runs InitState
+    #if mobile
+    final entryState:Class<FlxState> = mobile.states.MobileInitState;
+    #else
+    final entryState:Class<FlxState> = InitState;
+    #end
+    final funkinGame:FunkinGame = new FunkinGame(game.width, game.height, entryState, game.framerate, game.framerate, game.skipSplash, game.startFullscreen);
+    #if mobile
+    FlxG.signals.postStateSwitch.add(MobileControls.onStateSwitched);
+    #end
     @:privateAccess {
       final soundFrontEnd:flixel.system.frontEnds.SoundFrontEnd = new objects.CustomSoundTray.CustomSoundFrontEnd();
       FlxG.sound = soundFrontEnd;
@@ -121,7 +138,7 @@ class Main extends Sprite
       fpsVar.visible = ClientPrefs.showFPS;
     }
 
-    #if !web
+    #if (!web && !mobile)
     FlxG.plugins.addIfUniqueType(new ScreenShotPlugin());
     #end
 
@@ -180,4 +197,4 @@ class Main extends Sprite
   {
     fpsVar.textColor = color;
   }
-}
+}

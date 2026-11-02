@@ -1,0 +1,164 @@
+name: Android Build
+
+# Builds the "FNF JS Engine Mobile Port" APK.
+# One APK that contains BOTH 32-bit (armeabi-v7a) and 64-bit (arm64-v8a) code,
+# so the same file installs and runs on old and new phones.
+#
+# Run it by hand from the Actions tab ("Run workflow"). Leave "publish" ticked to also
+# create the GitHub Release (the APK is the only file attached to it).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag (e.g. v1.0.0-mobile)"
+        required: true
+        default: "v1.0.0-mobile"
+      publish:
+        description: "Publish a GitHub Release with the APK"
+        required: true
+        type: boolean
+        default: true
+      prerelease:
+        description: "Mark the release as a pre-release"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_NAME: FNF JS Engine Mobile Port
+  APK_NAME: FNF-JS-Engine-Mobile-Port.apk
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: krdlab/setup-haxe@master
+        with:
+          haxe-version: 4.3.7
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Android NDK
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+          link-to-sdk: true
+
+      - name: Restore native build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .haxelib/
+            build/release/android/obj/
+          key: cache-android-build-${{ github.sha }}
+          restore-keys: cache-android-build-
+
+      - name: Install Haxe libraries
+        run: |
+          haxelib setup ~/haxelib
+          haxelib install hxcpp > /dev/null --quiet
+          haxelib install hxpkg --quiet
+          haxelib run hxpkg install --force
+
+      - name: Compile hxcpp tools
+        run: |
+          cd .haxelib/hxcpp/git/tools/run
+          haxe compile.hxml
+          cd ..
+          cd ./hxcpp
+          haxe compile.hxml
+          cd ../../../../..
+
+      - name: Configure Lime for Android
+        run: |
+          haxelib run lime config ANDROID_SDK "$ANDROID_HOME"
+          haxelib run lime config ANDROID_NDK_ROOT "${{ steps.ndk.outputs.ndk-path }}"
+          haxelib run lime config JAVA_HOME "$JAVA_HOME"
+          haxelib run lime config ANDROID_SETUP true
+
+      # The APK must be signed or Android refuses to install it.
+      # Add the repository secrets ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS to keep the SAME
+      # signature between releases (needed to update an installed app). Without them a new key is made for this build.
+      - name: Prepare signing key
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/sign"
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/sign/release.jks"
+            echo "ALIAS=${KS_ALIAS:-jsengine}" >> $GITHUB_ENV
+            echo "PASS=$KS_PASS" >> $GITHUB_ENV
+          else
+            keytool -genkeypair -v -keystore "$RUNNER_TEMP/sign/release.jks" -alias jsengine \
+              -keyalg RSA -keysize 2048 -validity 10000 -storepass jsengine-mobile -keypass jsengine-mobile \
+              -dname "CN=JS Engine Mobile Port"
+            echo "ALIAS=jsengine" >> $GITHUB_ENV
+            echo "PASS=jsengine-mobile" >> $GITHUB_ENV
+          fi
+          echo "KEYSTORE=$RUNNER_TEMP/sign/release.jks" >> $GITHUB_ENV
+
+      - name: Build APK (armv7 + arm64)
+        run: |
+          rm -f assets/preload/gameRenders/renderlol.bat
+          haxelib run lime build android -armv7 -arm64 -release -D GITHUB_BUILD \
+            -certificate-path="$KEYSTORE" -certificate-password="$PASS" \
+            -certificate-alias="$ALIAS" -certificate-alias-password="$PASS"
+
+      - name: Find the APK
+        run: |
+          APK=$(find build/release/android -name "*.apk" -path "*release*" | head -n 1)
+          if [ -z "$APK" ]; then echo "No APK was produced"; find build/release/android -name "*.apk"; exit 1; fi
+          mkdir -p out
+          cp "$APK" "out/$APK_NAME"
+          ls -lh out
+          # both ABIs must be inside, otherwise 32-bit phones cannot run it
+          for abi in armeabi-v7a arm64-v8a; do
+            unzip -l "out/$APK_NAME" | grep -q "lib/$abi/libApplicationMain.so" || { echo "missing $abi"; exit 1; }
+          done
+
+      - name: Save native build cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            .haxelib/
+            build/release/android/obj/
+          key: cache-android-build-${{ github.sha }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: out/${{ env.APK_NAME }}
+
+      - name: Publish release (APK only)
+        if: ${{ inputs.publish }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          name: ${{ env.RELEASE_NAME }}
+          prerelease: ${{ inputs.prerelease }}
+          files: out/${{ env.APK_NAME }}
+          body: |
+            **FNF JS Engine Mobile Port** (Android)
+
+            - One APK for every phone: 32-bit (armeabi-v7a) and 64-bit (arm64-v8a). Android 5.0+.
+            - First launch copies the game files out of the APK (about a minute), after that it opens fast.
+            - Put your mods in `Android/data/com.JordanSantiago.JSEngine/files/mods/`.

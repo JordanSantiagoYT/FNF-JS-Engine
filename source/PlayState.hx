@@ -406,6 +406,9 @@ class PlayState extends MusicBeatState
 
 	override public function create()
 	{
+		#if mobile
+		mobileHitbox = true; // gameplay uses the hitbox lanes instead of the menu pad
+		#end
 		FlxG.mouse.visible = false;
 		//Stops playing on a height that isn't divisible by 2
 		if (ClientPrefs.ffmpegMode && ClientPrefs.resolution != null) {
@@ -2943,6 +2946,11 @@ class PlayState extends MusicBeatState
 
 	override public function update(elapsed:Float)
 	{
+		#if mobile
+		// dialogue/cutscenes need A/B, so they get the pad instead of the hitbox
+		if (mobile.MobileControls.instance != null)
+			mobile.MobileControls.instance.cutsceneMode = inCutscene;
+		#end
 		grpCrossFade.update(elapsed);
 		grpCrossFade.forEachDead(function(img:CrossFade)
 		{

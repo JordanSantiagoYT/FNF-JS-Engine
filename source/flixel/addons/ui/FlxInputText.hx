@@ -4,6 +4,9 @@ import flixel.addons.ui.FlxUI.NamedString;
 import lime.system.Clipboard;
 import openfl.errors.Error;
 import openfl.events.KeyboardEvent;
+#if mobile
+import openfl.events.TextEvent;
+#end
 import openfl.geom.Rectangle;
 
 /**
@@ -221,6 +224,10 @@ class FlxInputText extends FlxText
 
 		lines = 1;
 		FlxG.stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+		#if mobile
+		// soft keyboards do not send key codes for letters, they send text input events
+		FlxG.stage.addEventListener(TextEvent.TEXT_INPUT, onTextInput);
+		#end
 
 		if (Text == null)
 		{
@@ -238,6 +245,11 @@ class FlxInputText extends FlxText
 	override public function destroy():Void
 	{
 		FlxG.stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
+		#if mobile
+		FlxG.stage.removeEventListener(TextEvent.TEXT_INPUT, onTextInput);
+		if (hasFocus)
+			FlxG.stage.window.textInputEnabled = false;
+		#end
 
 		backgroundSprite = FlxDestroyUtil.destroy(backgroundSprite);
 		fieldBorderSprite = FlxDestroyUtil.destroy(fieldBorderSprite);
@@ -445,6 +457,9 @@ class FlxInputText extends FlxText
 			// Actually add some text
 			else
 			{
+				#if mobile
+				return; // printable characters arrive through onTextInput on phones (avoids typing twice with a hardware keyboard)
+				#end
 				if (e.charCode == 0) // non-printable characters crash String.fromCharCode
 				{
 					return;
@@ -460,6 +475,21 @@ class FlxInputText extends FlxText
 			}
 		}
 	}
+
+	#if mobile
+	private function onTextInput(e:TextEvent):Void
+	{
+		if (!hasFocus)
+			return;
+		var newText:String = filter(e.text);
+		if (newText.length > 0 && (maxLength == 0 || (text.length + newText.length) < maxLength))
+		{
+			text = insertSubstring(text, newText, caretIndex);
+			caretIndex += newText.length;
+			onChange(INPUT_ACTION);
+		}
+	}
+	#end
 
 	private function onChange(action:String):Void
 	{
@@ -880,6 +910,9 @@ class FlxInputText extends FlxText
 
 		if (newFocus != hasFocus)
 		{
+			#if mobile
+			FlxG.stage.window.textInputEnabled = newFocus; // shows/hides the on-screen keyboard
+			#end
 			calcFrame();
 		}
 		return hasFocus = newFocus;

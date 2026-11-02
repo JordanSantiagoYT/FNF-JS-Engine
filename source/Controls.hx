@@ -7,6 +7,15 @@ import flixel.input.actions.FlxActionManager;
 import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
+#if mobile
+import flixel.input.actions.FlxActionInputDigital.FlxActionInputDigitalIFlxInput;
+import mobile.MobileInput;
+import mobile.MobileInput.MobileButtonID;
+#if android
+import flixel.input.actions.FlxActionInputDigital.FlxActionInputDigitalAndroid;
+import flixel.input.android.FlxAndroidKey;
+#end
+#end
 
 enum abstract Action(String) to String from String
 {
@@ -311,9 +320,48 @@ class Controls extends FlxActionSet
 			byName[action.name] = action;
 
 		setKeyboardScheme(scheme, false);
+		#if mobile
+		addMobileInputs();
+		#end
 
 		instance = this;
 	}
+
+	#if mobile
+	/**
+	 * Binds the on-screen buttons (see `MobileInput`) to the same actions the keyboard and gamepads use,
+	 * so every state and substate works with touch without knowing about it.
+	 * Keyboard bindings are removed/re-added by `setKeyboardScheme`, these are not touched by it.
+	 */
+	function addMobileInputs():Void
+	{
+		inline function bind(control:Control, id:MobileButtonID)
+		{
+			final input = MobileInput.input(id);
+			forEachBound(control, (action, state) -> action.add(new FlxActionInputDigitalIFlxInput(input, state)));
+		}
+
+		bind(Control.UI_UP, MobileButtonID.UP);
+		bind(Control.UI_DOWN, MobileButtonID.DOWN);
+		bind(Control.UI_LEFT, MobileButtonID.LEFT);
+		bind(Control.UI_RIGHT, MobileButtonID.RIGHT);
+		bind(Control.NOTE_LEFT, MobileButtonID.NOTE_LEFT);
+		bind(Control.NOTE_DOWN, MobileButtonID.NOTE_DOWN);
+		bind(Control.NOTE_UP, MobileButtonID.NOTE_UP);
+		bind(Control.NOTE_RIGHT, MobileButtonID.NOTE_RIGHT);
+		bind(Control.ACCEPT, MobileButtonID.A);
+		bind(Control.BACK, MobileButtonID.B);
+		bind(Control.PAUSE, MobileButtonID.PAUSE);
+		bind(Control.BOT_ENERGY, MobileButtonID.BOT_ENERGY);
+		bind(Control.RESET, MobileButtonID.Y);
+
+		#if android
+		// the system Back button/gesture: goes back in menus and pauses in songs
+		_back.add(new FlxActionInputDigitalAndroid(FlxAndroidKey.BACK, JUST_PRESSED));
+		_pause.add(new FlxActionInputDigitalAndroid(FlxAndroidKey.BACK, JUST_PRESSED));
+		#end
+	}
+	#end
 
 	override function update()
 	{
@@ -337,6 +385,9 @@ class Controls extends FlxActionSet
 		{
 			case KEYBOARD: return '[${(input.inputID : FlxKey)}]';
 			case GAMEPAD: return '(${(input.inputID : FlxGamepadInputID)})';
+			#if mobile
+			case IFLXINPUT_OBJECT | ANDROID: return '[TAP]';
+			#end
 			case device: throw 'unhandled device: $device';
 		}
 	}

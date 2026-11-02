@@ -35,6 +35,9 @@ class EditorPlayState extends MusicBeatState
 	var pixelShitPart2:String = '';
 
 	public function new(startPos:Float) {
+		#if mobile
+		mobileHitbox = true;
+		#end
 		this.startPos = startPos;
 		Conductor.songPosition = startPos - startOffset;
 

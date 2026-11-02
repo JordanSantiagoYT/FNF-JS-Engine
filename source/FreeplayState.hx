@@ -50,6 +50,9 @@ class FreeplayState extends MusicBeatState
 
   override function create()
   {
+    #if mobile
+    mobilePadMode = FULL_EXTRA;
+    #end
     Paths.clearStoredMemory();
     Paths.clearUnusedMemory();
     Paths.gc();
@@ -434,8 +437,8 @@ class FreeplayState extends MusicBeatState
     var upP = controls.UI_UP_P;
     var downP = controls.UI_DOWN_P;
     var accepted = controls.ACCEPT;
-    var space = FlxG.keys.justPressed.SPACE;
-    var ctrl = FlxG.keys.justPressed.CONTROL;
+    var space = FlxG.keys.justPressed.SPACE || mobileJustPressed(C); // C: preview the song
+    var ctrl = FlxG.keys.justPressed.CONTROL || mobileJustPressed(X); // X: gameplay changers
 
     var shiftMult:Int = 1;
     if (FlxG.keys.pressed.SHIFT) shiftMult = 3;

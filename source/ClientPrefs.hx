@@ -4,6 +4,15 @@ import Controls;
 import flixel.input.keyboard.FlxKey;
 
 class ClientPrefs { //default settings if it can't find a save file containing your current settings
+	//Mobile Settings (only used by touch builds, but kept everywhere so saves stay compatible)
+	public static var mobilePadAlpha:Float = 0.6; // opacity of the menu D-pad / A / B buttons
+	public static var hitboxAlpha:Float = 0.35; // opacity of the gameplay hitbox lanes
+	public static var hitboxStyle:String = 'Gradient'; // Gradient / Flat / Outline
+	public static var hitboxPosition:String = 'Full'; // Full / Bottom
+	public static var mobileVibration:Bool = false; // short vibration on every button press
+	public static var mobileExtraButtons:Bool = false; // shows the Bot Energy button in songs
+	public static var mobileScaleMode:String = 'Ratio'; // Ratio (keeps 16:9) / Fill (stretches to the whole screen)
+
 	//Gameplay Settings
 	public static var controllerMode:Bool = false;
 	public static var downScroll:Bool = false;
@@ -323,6 +332,11 @@ class ClientPrefs { //default settings if it can't find a save file containing y
 			if (flxProp != null)
 				Reflect.setField(FlxG.sound, flixelS, flxProp);
 		}
+
+		#if mobile
+		// the touch hitbox is read through Controls like a gamepad, never through keyboard events
+		controllerMode = true;
+		#end
 
 		#if DISCORD_ALLOWED DiscordClient.check(); #end
 

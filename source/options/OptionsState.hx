@@ -21,6 +21,9 @@ class OptionsState extends MusicBeatState
     'Visuals and UI',
     'Gameplay',
     'Misc'
+    #if mobile
+    , 'Mobile Options'
+    #end
   ];
   private var grpOptions:FlxTypedGroup<Alphabet>;
 
@@ -60,6 +63,10 @@ class OptionsState extends MusicBeatState
         LoadingState.loadAndSwitchState(() -> new options.NoteOffsetState());
       case 'Misc':
         openSubState(new options.MiscSettingsSubState());
+      #if mobile
+      case 'Mobile Options':
+        openSubState(new mobile.options.MobileOptionsSubState());
+      #end
     }
   }
 
@@ -79,6 +86,9 @@ class OptionsState extends MusicBeatState
     otherCamera.bgColor.alpha = 0;
     // proper fix
     if (onPlayState && PlayState.SONG.disableNoteRGB) options.remove('Note Colors');
+    #if mobile
+    options.remove('Controls'); // keyboard rebinding is useless on a phone
+    #end
 
     FlxG.cameras.add(subCamera, false);
     FlxG.cameras.add(otherCamera, false);

@@ -31,6 +31,9 @@ class InitState extends FlxState {
 
         // ClientPrefs.loadDefaultKeys();
 		ClientPrefs.loadPrefs();
+		#if mobile
+		mobile.MobileControls.applyScaleMode();
+		#end
 
         /*
         #if ACHIEVEMNTS_ALLOWED

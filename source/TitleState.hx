@@ -52,6 +52,9 @@ class TitleState extends MusicBeatState
 
   override public function create():Void
   {
+    #if mobile
+    mobilePadMode = A_ONLY;
+    #end
     Paths.clearStoredMemory();
     Paths.clearUnusedMemory();
 
@@ -290,6 +293,9 @@ class TitleState extends MusicBeatState
     if (FlxG.sound.music != null) Conductor.songPosition = FlxG.sound.music.time;
 
     var pressedEnter:Bool = FlxG.keys.justPressed.ENTER || controls.ACCEPT;
+    #if mobile
+    if (FlxG.touches.justStarted().length > 0) pressedEnter = true; // tap anywhere
+    #end
 
     var gamepad:FlxGamepad = FlxG.gamepads.lastActive;
 

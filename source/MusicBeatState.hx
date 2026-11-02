@@ -3,6 +3,9 @@ package;
 import backend.PsychCamera;
 import flixel.addons.ui.FlxUIState;
 import lime.app.Application;
+import mobile.MobileInput;
+import mobile.MobileInput.MobileButtonID;
+import mobile.objects.VirtualPad.PadMode;
 
 class MusicBeatState extends FlxUIState
 {
@@ -40,6 +43,36 @@ class MusicBeatState extends FlxUIState
 		Application.current.window.title = windowNamePrefix + windowNameSuffix + windowNameSuffix2;
 		return value;
 	}
+	#if mobile
+	/**
+	 * On-screen buttons this state shows (menus: D-pad + A + B by default).
+	 * Set it in the constructor, before the state is created, to change the layout or hide the pad.
+	 */
+	public var mobilePadMode:PadMode = PadMode.FULL;
+
+	/** True for states that play a song: shows the hitbox lanes instead of the pad. */
+	public var mobileHitbox:Bool = false;
+	#end
+
+	/** Extra touch buttons (X / Y) for state-specific shortcuts that are keyboard keys on desktop. */
+	public inline function mobileJustPressed(button:MobileButtonID):Bool
+	{
+		#if mobile
+		return MobileInput.justPressed(button);
+		#else
+		return false;
+		#end
+	}
+
+	public inline function mobilePressed(button:MobileButtonID):Bool
+	{
+		#if mobile
+		return MobileInput.pressed(button);
+		#else
+		return false;
+		#end
+	}
+
 	public var variables:Map<String, Dynamic> = new Map<String, Dynamic>();
 	public static function getVariables()
 		return getState().variables;

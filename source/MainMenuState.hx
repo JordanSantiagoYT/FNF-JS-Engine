@@ -54,6 +54,9 @@ class MainMenuState extends MusicBeatState
 
   override function create()
   {
+    #if mobile
+    mobilePadMode = FULL_EXTRA;
+    #end
     MusicBeatState.windowNameSuffix = " - Main Menu";
     Paths.clearStoredMemory();
     Paths.clearUnusedMemory();
@@ -363,8 +366,8 @@ class MainMenuState extends MusicBeatState
           });
         }
       }
-      #if (desktop) 
-	  else if (FlxG.keys.anyJustPressed(debugKeys))
+      #if (desktop || mobile) 
+	  else if (FlxG.keys.anyJustPressed(debugKeys) || mobileJustPressed(X))
       {
         FlxG.switchState(MasterEditorMenu.new);
       }

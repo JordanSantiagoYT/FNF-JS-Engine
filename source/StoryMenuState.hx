@@ -36,6 +36,9 @@ class StoryMenuState extends MusicBeatState
 
   override function create()
   {
+    #if mobile
+    mobilePadMode = FULL_EXTRA;
+    #end
     Paths.clearStoredMemory();
 
     PlayState.isStoryMode = true;
@@ -243,7 +246,7 @@ class StoryMenuState extends MusicBeatState
       else if (controls.UI_LEFT_P) changeDifficulty(-1);
       else if (upP || downP) changeDifficulty();
 
-      if (FlxG.keys.justPressed.CONTROL)
+      if (FlxG.keys.justPressed.CONTROL || mobileJustPressed(X))
       {
         persistentUpdate = false;
         openSubState(new GameplayChangersSubstate());

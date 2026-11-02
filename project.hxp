@@ -243,11 +243,35 @@ class Project extends HXProject
 		if (isMobile())
 		{
 			this.window.orientation = Orientation.LANDSCAPE;
-			this.window.fullscreen = false;
+			this.window.fullscreen = true;
 			this.window.resizable = false;
 			this.window.width = 0;
 			this.window.height = 0;
+			this.window.vsync = false;
+			this.window.hardware = true;
+			// Keeps the whole screen usable on phones with notches/cutouts.
+			this.window.allowHighDPI = false;
 		}
+
+		if (isAndroid())
+			configureAndroid();
+	}
+
+	/**
+	 * Android specific settings (manifest, SDK levels, permissions).
+	 */
+	function configureAndroid()
+	{
+		// minSdk 21 = Android 5.0, the lowest that lime/SDL support.
+		this.config.set("android.minimum-sdk-version", 21);
+		this.config.set("android.target-sdk-version", 34);
+		this.config.set("android.install-location", "auto");
+
+		// The game stores everything inside the app's own external folder
+		// (Android/data/<package>/files), so no storage permission is needed.
+		// Only the permissions that are really used stay in the manifest.
+		for (permission in ["android.permission.WAKE_LOCK", "android.permission.VIBRATE", "android.permission.INTERNET", "android.permission.ACCESS_NETWORK_STATE"])
+			this.config.push("android.permission", permission);
 	}
 
 	/**
@@ -264,6 +288,8 @@ class Project extends HXProject
 				info('Target Platform: MacOS');
 			case Platform.LINUX:
 				info('Target Platform: Linux');
+			case Platform.ANDROID:
+				info('Target Platform: Android');
 			default:
 				error('Unsupported platform! (got ${target})');
 		}
@@ -277,6 +303,10 @@ class Project extends HXProject
 					info('Architecture: x64');
 				case Architecture.ARM64:
 					info('Architecture: ARMx64');
+				case Architecture.ARMV7:
+					info('Architecture: ARMv7 (32-bit)');
+				case Architecture.X86:
+					info('Architecture: x86 (32-bit)');
 				case null:
 					error('Unsupported architecture (got null on non-web platform)');
 				default:
@@ -301,7 +331,7 @@ class Project extends HXProject
 		ACHIEVEMENTS_ALLOWED.apply(this, true);
 		CHECK_FOR_UPDATES.apply(this, true);
 		HSCRIPT_ALLOWED.apply(this, (isDesktop() || isMobile()));
-		DISCORD_ALLOWED.apply(this, (isDesktop() || isMobile()));
+		DISCORD_ALLOWED.apply(this, isDesktop());
 		SHADERS_ALLOWED.apply(this, true);
 		FUNNY_ALLOWED.apply(this, true);
 		// TITLE_SCREEN_EASTER_EGG.apply(this, true);
@@ -313,7 +343,7 @@ class Project extends HXProject
 
 		// Should be true except on MacOS.
 		// File drop doesn't work there.
-		FEATURE_FILE_DROP.apply(this, !isMac());
+		FEATURE_FILE_DROP.apply(this, isDesktop() && !isMac());
 	}
 
 	/**
@@ -325,9 +355,14 @@ class Project extends HXProject
 		setHaxedef("openfl-enable-handle-error");
 
 		// Enable stack trace tracking. Good for debugging but has a (minor) performance impact. (and also the crash handler)
-		setHaxedef("HXCPP_CHECK_POINTER");
-		setHaxedef("HXCPP_STACK_LINE");
-		setHaxedef("HXCPP_STACK_TRACE");
+		// On mobile these are left out of release builds: phones are far more CPU-bound than a desktop,
+		// and the null-pointer/stack-line checks cost a noticeable amount of frame time.
+		if (!isMobile() || isDebug())
+		{
+			setHaxedef("HXCPP_CHECK_POINTER");
+			setHaxedef("HXCPP_STACK_LINE");
+			setHaxedef("HXCPP_STACK_TRACE");
+		}
 		setHaxedef("HXCPP_CATCH_SEGV");
 		if (HSCRIPT_ALLOWED.isEnabled(this))
 			setHaxedef("hscriptPos");
@@ -345,7 +380,7 @@ class Project extends HXProject
         setHaxedef("HXCPP_GC_DYNAMIC_SIZE");
         setHaxedef("HXCPP_CPP17");
         // setHaxedef("HXCPP_ALIGN_ALLOC");
-        setHaxedef("HXCPP_FAST_LINK");
+        if (!isMobile()) setHaxedef("HXCPP_FAST_LINK");
 		// this is part of ShadowEngines HXCPP
 		// should be fine to keep if you don't use it, but makes it so it doesn't use AVX2 (for compatibility reasons)
         setHaxedef("HXCPP_NO_ARCH_LEVEL");
@@ -393,7 +428,7 @@ class Project extends HXProject
 		}
 
 		// setHaxedef("HXCPP_PROFILER");
-		setHaxedef("HXCPP_GC_CHECK_LEAKS"); // Idk if this does anything
+		if (!isMobile()) setHaxedef("HXCPP_GC_CHECK_LEAKS"); // Idk if this does anything
 
 		//Set the max unroll cost of for loops to 1000 unrolls.
 		haxedefs.set("loop-unroll-max-cost", "1000");
@@ -482,13 +517,14 @@ class Project extends HXProject
 		addHaxelib('grig.audio');
 		addHaxelib('funkin.vis');
 		addHaxelib('flxanimate'); // Texture atlas rendering // We need to use flixel-animate, not flxanimate
-		addHaxelib('hxnativefiledialog');
+		if (isDesktop())
+			addHaxelib('hxnativefiledialog'); // native open/save dialogs (desktop only)
 		addHaxelib('tjson');
 
 		if (isDesktop() && DISCORD_ALLOWED.isEnabled(this))
 			addHaxelib('hxdiscord_rpc'); // Discord API
 
-		if (isDesktop() && LUA_ALLOWED.isEnabled(this))
+		if ((isDesktop() || isMobile()) && LUA_ALLOWED.isEnabled(this))
 			addHaxelib('hxluajit'); // Lua API
 
 		if (isDebug() && isCPP())
@@ -497,7 +533,7 @@ class Project extends HXProject
 		if (isLinux() && !isDebug())
 			addHaxelib("hxgamemode");
 
-		if (isDesktop() && VIDEOS_ALLOWED.isEnabled(this))
+		if ((isDesktop() || isMobile()) && VIDEOS_ALLOWED.isEnabled(this))
 			addHaxelib('hxvlc');
 	}
 
