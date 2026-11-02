@@ -8,6 +8,10 @@ name: Android Build
 # create the GitHub Release (the APK is the only file attached to it).
 
 on:
+  # pushing a tag like v1.0.0-mobile builds the APK and publishes the release automatically
+  push:
+    tags:
+      - "v*-mobile"
   workflow_dispatch:
     inputs:
       tag_name:
@@ -149,12 +153,12 @@ jobs:
           path: out/${{ env.APK_NAME }}
 
       - name: Publish release (APK only)
-        if: ${{ inputs.publish }}
+        if: ${{ github.event_name == 'push' || inputs.publish }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.tag_name }}
+          tag_name: ${{ github.event_name == 'push' && github.ref_name || inputs.tag_name }}
           name: ${{ env.RELEASE_NAME }}
-          prerelease: ${{ inputs.prerelease }}
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
           files: out/${{ env.APK_NAME }}
           body: |
             **FNF JS Engine Mobile Port** (Android)
