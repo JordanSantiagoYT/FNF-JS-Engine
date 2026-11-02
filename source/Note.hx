@@ -110,7 +110,7 @@ class Note extends FlxSprite
 
 	public var animSuffix:String = '';
 	public var gfNote:Bool = false;
-	public var earlyHitMult:Float = 0.5;
+	public var earlyHitMult:Float = 1; //used to be 0.5, but is now also set to 1 to discourage spamming to easily cheese songs with good accuracy
 	public var lateHitMult:Float = 1;
 	public var lowPriority:Bool = false;
 
