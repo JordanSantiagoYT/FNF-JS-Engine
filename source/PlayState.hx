@@ -6123,7 +6123,6 @@ class PlayState extends MusicBeatState
 		process?.stdin?.close();
 
 		process?.close();
-		process?.kill();
 
 		FlxG.autoPause = ClientPrefs.autoPause;
 	}
