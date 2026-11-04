@@ -121,6 +121,8 @@ class CoolUtil
 	public static final getUserPath:String = CoolSystemStuff.getUserPath();
 	public static final getTempPath:String = CoolSystemStuff.getTempPath();
 
+	// this is for modders to use
+	@:keep
 	public static function checkForOBS():Bool
 	{
 		final fs:Bool = FlxG.fullscreen;
