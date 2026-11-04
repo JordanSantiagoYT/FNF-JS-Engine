@@ -51,8 +51,6 @@ class Main extends Sprite
   public static var fpsVar:FPSCounter;
   public static var instance:Main;
 
-  public static final superDangerMode:Bool = Sys.args().contains("-troll");
-
   // You can pretty much ignore everything from here on - your code should go in your states.
 
   @:noCompletion

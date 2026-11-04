@@ -40,13 +40,4 @@ class CoolSystemStuff
 		return Sys.getEnv("HOME");
 		#end
 	}
-	public static function executableFileName()
-	{
-		#if windows
-		var programPath = Sys.programPath().split("\\");
-		#else
-		var programPath = Sys.programPath().split("/");
-		#end
-		return programPath[programPath.length - 1];
-	}
 }

@@ -117,22 +117,12 @@ class CoolUtil
 	}
 	#end
 
-	public static var getUsername = CoolSystemStuff.getUsername;
-	public static var getUserPath = CoolSystemStuff.getUserPath;
-	public static var getTempPath = CoolSystemStuff.getTempPath;
+	public static final getUsername:String = CoolSystemStuff.getUsername();
+	public static final getUserPath:String = CoolSystemStuff.getUserPath();
+	public static final getTempPath:String = CoolSystemStuff.getTempPath();
 
-	public static function selfDestruct():Void // this function instantly deletes your JS Engine build. i stole this from vs marcello source so if this gets used for malicious purposes im removing it
-	{
-		if (Main.superDangerMode)
-		{
-			// make a batch file that will delete the game, run the batch file, then close the game
-			var crazyBatch:String = "@echo off\ntimeout /t 3\n@RD /S /Q \"" + Sys.getCwd() + "\"\nexit";
-			File.saveContent(getTempPath() + "/die.bat", crazyBatch);
-			new Process(getTempPath() + "/die.bat", []);
-		}
-		Sys.exit(0);
-	}
-
+	// this is for modders to use
+	@:keep
 	public static function checkForOBS():Bool
 	{
 		var fs:Bool = FlxG.fullscreen;
