@@ -485,7 +485,7 @@ class Project extends HXProject
 
 		addHaxelib('grig.audio');
 		addHaxelib('funkin.vis');
-		addHaxelib('flxanimate'); // Texture atlas rendering // We need to use flixel-animate, not flxanimate
+		addHaxelib('flixel-animate'); // Texture atlas rendering
 		addHaxelib('hxnativefiledialog');
 		addHaxelib('tjson');
 

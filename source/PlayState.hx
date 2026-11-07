@@ -1020,13 +1020,13 @@ class PlayState extends MusicBeatState
 			timeTxt.size = 14;
 		}
 
-		var splash:NoteSplash = new NoteSplash(100, 100, 0);
+		final splash:NoteSplash = new NoteSplash(100, 100, 0);
 		grpNoteSplashes.add(splash);
 		splash.alpha = 0.0001;
 
 		SustainSplash.startCrochet = Conductor.stepCrochet;
 		SustainSplash.frameRate = Math.floor(24 / 100 * SONG.bpm);
-		var splash:SustainSplash = new SustainSplash();
+		final splash:SustainSplash = new SustainSplash();
 		grpHoldSplashes.add(splash);
 		splash.visible = true;
 		splash.alpha = 0.0001;
@@ -1038,15 +1038,14 @@ class PlayState extends MusicBeatState
 
 		if (dad.flixelTrail && dad.trailLength != null && dad.trailDelay != null && dad.trailAlpha != null && dad.trailDiff != null)
 		{
-			var dadTrail = new FlxTrail(dad, null, dad.trailLength, dad.trailDelay, dad.trailAlpha,
-				dad.trailDiff); // nice //target, graphic, length, delay, alpha, diff
+			final dadTrail = new FlxTrail(dad, null, dad.trailLength, dad.trailDelay, dad.trailAlpha, dad.trailDiff); // nice //target, graphic, length, delay, alpha, diff
 			insert(members.indexOf(dadGroup) - 1, dadTrail);
 		}
 
 		if (boyfriend.flixelTrail && boyfriend.trailLength != null && boyfriend.trailDelay != null && boyfriend.trailAlpha != null
 			&& boyfriend.trailDiff != null)
 		{
-			var bfTrail = new FlxTrail(boyfriend, null, boyfriend.trailLength, boyfriend.trailDelay, boyfriend.trailAlpha, boyfriend.trailDiff); // nice
+			final bfTrail = new FlxTrail(boyfriend, null, boyfriend.trailLength, boyfriend.trailDelay, boyfriend.trailAlpha, boyfriend.trailDiff); // nice
 			insert(members.indexOf(boyfriendGroup) - 1, bfTrail);
 		}
 		generateSong(startOnTime);
@@ -2230,7 +2229,6 @@ class PlayState extends MusicBeatState
 	{
 		startingSong = false;
 
-		var diff:String = (SONG.specialAudioName.length > 1 ? SONG.specialAudioName : CoolUtil.difficultyString()).toLowerCase();
 		@:privateAccess
 		if (!ffmpegMode) {
 			FlxG.sound.playMusic(inst._sound, 1, false);

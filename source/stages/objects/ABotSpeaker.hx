@@ -71,14 +71,16 @@ class ABotSpeaker extends FlxSpriteGroup
 		eyes.anim.addBySymbolIndices('lookleft', 'a bot eyes lookin', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17], 24, false);
 		eyes.anim.addBySymbolIndices('lookright', 'a bot eyes lookin', [18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35], 24, false);
 		eyes.anim.play('lookright', true);
-		eyes.anim.curFrame = eyes.anim.length - 1;
+		eyes.anim.curAnim.curFrame = eyes.anim.curAnim.numFrames - 1;
 		add(eyes);
 
 		speaker = new FlxAnimate(-65, -10);
 		Paths.loadAnimateAtlas(speaker, 'abot/abotSystem');
 		speaker.anim.addBySymbol('anim', 'Abot System', 24, false);
 		speaker.anim.play('anim', true);
-		speaker.anim.curFrame = speaker.anim.length - 1;
+		if (speaker.anim.curAnim != null) {
+			speaker.anim.curAnim.curFrame = speaker.anim.curAnim.numFrames - 1;
+		}
 		speaker.antialiasing = antialias;
 		add(speaker);
 	}
@@ -106,7 +108,7 @@ class ABotSpeaker extends FlxSpriteGroup
 		if(levelMax >= 4)
 		{
 			//trace(levelMax);
-			if(oldLevelMax <= levelMax && (levelMax >= 5 || speaker.anim.curFrame >= 3))
+			if(oldLevelMax <= levelMax && (levelMax >= 5 || speaker.anim.curAnim.curFrame >= 3))
 				beatHit();
 		}
 	}

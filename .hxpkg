@@ -46,9 +46,9 @@
         "name": "hxcpp-debug-server"
       },
       {
-        "name": "flxanimate",
-        "link": "https://github.com/Dot-Stuff/flxanimate",
-        "branch": "768740a56b26aa0c072720e0d1236b94afe68e3e"
+        "name": "flixel-animate",
+        "link": "https://github.com/MaybeMaru/flixel-animate",
+        "branch": "main"
       },
       {
         "name": "hxdiscord_rpc",
