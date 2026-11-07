@@ -19,7 +19,7 @@ class CustomSoundTray extends FlxSoundTray
 		super();
 		removeChildren();
 
-		var bg:Bitmap = new Bitmap(Assets.getBitmapData('assets/soundtray/images/volumebox.png'));
+		final bg:Bitmap = new Bitmap(Assets.getBitmapData('assets/soundtray/images/volumebox.png'));
 		bg.scaleX = graphicScale;
 		bg.scaleY = graphicScale;
 		bg.smoothing = true;
@@ -28,7 +28,7 @@ class CustomSoundTray extends FlxSoundTray
 		y = -height;
 		visible = false;
 
-		var backingBar:Bitmap = new Bitmap(Assets.getBitmapData('assets/soundtray/images/bars_10.png'));
+		final backingBar:Bitmap = new Bitmap(Assets.getBitmapData('assets/soundtray/images/bars_10.png'));
 		backingBar.x = 9;
 		backingBar.y = 5;
 		backingBar.scaleX = graphicScale;
@@ -41,7 +41,7 @@ class CustomSoundTray extends FlxSoundTray
 
 		for (i in 1...11)
 		{
-			var bar:Bitmap = new Bitmap(Assets.getBitmapData('assets/soundtray/images/bars_$i.png'));
+			final bar:Bitmap = new Bitmap(Assets.getBitmapData('assets/soundtray/images/bars_$i.png'));
 			bar.x = 9;
 			bar.y = 5;
 			bar.scaleX = graphicScale;
@@ -57,8 +57,6 @@ class CustomSoundTray extends FlxSoundTray
 		volumeUpSound = Paths.getPath("sounds/soundtray/Volup.ogg", 'shared');
 		volumeDownSound = Paths.getPath("sounds/soundtray/Voldown.ogg", 'shared');
 		volumeMaxSound = Paths.getPath("sounds/soundtray/VolMAX.ogg", 'shared');
-
-		// trace('Custom Sound Tray Added!');
 	}
 
 	function coolLerp(base:Float, target:Float, ratio:Float):Float
@@ -134,9 +132,13 @@ class CustomSoundFrontEnd extends SoundFrontEnd
 	override function changeVolume(Amount:Float):Void
 	{
 		muted = false;
-		volume = MathTools.logToLinear(volume);
-		volume += Amount;
-		volume = MathTools.linearToLog(volume);
+		volume = MathTools.linearToLog(MathTools.logToLinear(volume) + Amount);
+		// Makes sure that the volume is fully muted when it hits the lower limit and is fully set back to max when increased
+		if (volume < 0.0011)
+			volume = 0;
+		else if (volume > 0.99)
+			volume = 1;
+
 		showSoundTray(Amount > 0);
 	}
 }
@@ -144,12 +146,12 @@ class CustomSoundFrontEnd extends SoundFrontEnd
 // don't need the whole lib lol
 private class MathTools {
 	public static function linearToLog(x:Float, minValue:Float = 0.001):Float {
-			x = Math.max(0, Math.min(1, x));
-			return Math.exp(Math.log(minValue) * (1 - x));
+		x = Math.max(0, Math.min(1, x));
+		return Math.exp(Math.log(minValue) * (1 - x));
 	}
 
 	public static function logToLinear(x:Float, minValue:Float = 0.001):Float {
-			x = Math.max(minValue, Math.min(1, x));
-			return 1 - (Math.log(x) / Math.log(minValue));
+		x = Math.max(minValue, Math.min(1, x));
+		return 1 - (Math.log(x) / Math.log(minValue));
 	}
 }
