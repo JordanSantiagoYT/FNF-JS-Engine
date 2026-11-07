@@ -6,7 +6,7 @@ import openfl.utils.Assets;
 import psychlua.FunkinLua.State;
 #end
 
-#if (LUA_ALLOWED && flxanimate)
+#if (LUA_ALLOWED && flixel-animate)
 class FlxAnimateFunctions
 {
 	public static function implement(funk:FunkinLua)

@@ -461,7 +461,6 @@ class AlphaCharacter extends FlxSprite
 	{
 		if (animation.curAnim == null)
 		{
-			trace(character);
 			return;
 		}
 

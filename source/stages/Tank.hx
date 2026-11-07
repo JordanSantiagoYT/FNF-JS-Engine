@@ -160,6 +160,17 @@ class Tank extends BaseStage
 			gf.animation.finishCallback = null;
 			gf.dance();
 			game.moveCameraSection();
+
+			if (pico != null) {
+				remove(pico);
+				pico.destroy();
+				pico = null;
+			}
+			if (boyfriendCutscene != null) {
+				remove(boyfriendCutscene);
+				boyfriendCutscene.destroy();
+				boyfriendCutscene = null;
+			}
 		};
 
 		cutsceneHandler.skipCallback = function()
@@ -324,6 +335,16 @@ class Tank extends BaseStage
 				pico.visible = false;
 				if (pico.anim.onFinish.has(picoStressCycle)) { // for safety
 					pico.anim.onFinish.remove(picoStressCycle);
+				}
+				if (pico != null) {
+					remove(pico);
+					pico.destroy();
+					pico = null;
+				}
+				if (boyfriendCutscene != null) {
+					remove(boyfriendCutscene);
+					boyfriendCutscene.destroy();
+					boyfriendCutscene = null;
 				}
 			}
 		};

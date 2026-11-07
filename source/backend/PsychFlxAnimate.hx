@@ -30,13 +30,40 @@ class PsychFlxAnimate extends FlxAnimate
 			var s:String = cast myJson;
 			animStr = s.trim().toLowerCase().endsWith('.json') ? File.getContent(s) : s;
 		}
-		else if (myJson != null) animStr = haxe.Json.stringify(myJson);
+		else if (myJson != null)
+			animStr = haxe.Json.stringify(myJson);
 
 		var mapStr:String = pathOrStr;
 		if (mapStr != null && mapStr.trim().toLowerCase().endsWith('.json'))
 			mapStr = File.getContent(mapStr);
 
-		frames = FlxAnimateFrames.fromAnimate(null, [{source: img, json: mapStr}], animStr);
+		var key:String = null;
+		if (pathOrStr != null && pathOrStr.length > 0 && !pathOrStr.trim().toLowerCase().endsWith('.json'))
+			key = pathOrStr;
+		else if (img is String)
+			key = cast(img, String);
+		else
+			key = 'psych_atlas_' + Std.string(img) + '_' + Std.string(pathOrStr); // fallback ID
+
+		frames = FlxAnimateFrames.fromAnimate(
+			animStr,
+			[{source: img, json: mapStr}],
+			null,
+			key
+		);
+	}
+	
+	// make sure frames are *properly* destroyed
+	override public function destroy():Void {
+		if (anim != null) {
+			anim.onFinish.removeAll();
+			anim.onFrameLabel.removeAll();
+		}
+		if (frames != null) {
+			frames.destroy();
+			frames = null;
+		}
+		super.destroy();
 	}
 
 	public function pauseAnimation() anim.pause();
