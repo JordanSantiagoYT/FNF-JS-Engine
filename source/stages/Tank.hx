@@ -14,38 +14,35 @@ class Tank extends BaseStage
 
 	override function create()
 	{
-		var sky:BGSprite = new BGSprite('tankSky', -400, -400, 0, 0);
-		add(sky);
+		add(new BGSprite('tankSky', -400, -400, 0, 0));
 
 		if(!ClientPrefs.lowQuality)
 		{
-			var clouds:BGSprite = new BGSprite('tankClouds', FlxG.random.int(-700, -100), FlxG.random.int(-20, 20), 0.1, 0.1);
+			final clouds:BGSprite = new BGSprite('tankClouds', FlxG.random.int(-700, -100), FlxG.random.int(-20, 20), 0.1, 0.1);
 			clouds.active = true;
 			clouds.velocity.x = FlxG.random.float(5, 15);
 			add(clouds);
 
-			var mountains:BGSprite = new BGSprite('tankMountains', -300, -20, 0.2, 0.2);
+			final mountains:BGSprite = new BGSprite('tankMountains', -300, -20, 0.2, 0.2);
 			mountains.setGraphicSize(Std.int(1.2 * mountains.width));
 			mountains.updateHitbox();
 			add(mountains);
 
-			var buildings:BGSprite = new BGSprite('tankBuildings', -200, 0, 0.3, 0.3);
+			final buildings:BGSprite = new BGSprite('tankBuildings', -200, 0, 0.3, 0.3);
 			buildings.setGraphicSize(Std.int(1.1 * buildings.width));
 			buildings.updateHitbox();
 			add(buildings);
 		}
 
-		var ruins:BGSprite = new BGSprite('tankRuins',-200,0,.35,.35);
+		final ruins:BGSprite = new BGSprite('tankRuins',-200,0,.35,.35);
 		ruins.setGraphicSize(Std.int(1.1 * ruins.width));
 		ruins.updateHitbox();
 		add(ruins);
 
 		if(!ClientPrefs.lowQuality)
 		{
-			var smokeLeft:BGSprite = new BGSprite('smokeLeft', -200, -100, 0.4, 0.4, ['SmokeBlurLeft'], true);
-			add(smokeLeft);
-			var smokeRight:BGSprite = new BGSprite('smokeRight', 1100, -100, 0.4, 0.4, ['SmokeRight'], true);
-			add(smokeRight);
+			add(new BGSprite('smokeLeft', -200, -100, 0.4, 0.4, ['SmokeBlurLeft'], true));
+			add(new BGSprite('smokeRight', 1100, -100, 0.4, 0.4, ['SmokeRight'], true));
 
 			tankWatchtower = new BGSprite('tankWatchtower', 100, 50, 0.5, 0.5, ['watchtower gradient color']);
 			add(tankWatchtower);
@@ -57,7 +54,7 @@ class Tank extends BaseStage
 		tankmanRun = new FlxTypedGroup<TankmenBG>();
 		add(tankmanRun);
 
-		var ground:BGSprite = new BGSprite('tankGround', -420, -150);
+		final ground:BGSprite = new BGSprite('tankGround', -420, -150);
 		ground.setGraphicSize(Std.int(1.15 * ground.width));
 		ground.updateHitbox();
 		add(ground);
@@ -95,10 +92,10 @@ class Tank extends BaseStage
 		{
 			for (daGf in gfGroup)
 			{
-				var gf:Character = cast daGf;
+				final gf:Character = cast daGf;
 				if(gf.curCharacter == 'pico-speaker')
 				{
-					var firstTank:TankmenBG = new TankmenBG(20, 500, true);
+					final firstTank:TankmenBG = new TankmenBG(20, 500, true);
 					firstTank.resetShit(20, 1500, true);
 					firstTank.strumTime = 10;
 					firstTank.visible = false;
@@ -107,7 +104,7 @@ class Tank extends BaseStage
 					for (i in 0...TankmenBG.animationNotes.length)
 					{
 						if(FlxG.random.bool(16)) {
-							var tankBih = tankmanRun.recycle(TankmenBG);
+							final tankBih = tankmanRun.recycle(TankmenBG);
 							tankBih.strumTime = TankmenBG.animationNotes[i][0];
 							tankBih.resetShit(500, 200 + FlxG.random.int(50, 100), TankmenBG.animationNotes[i][1] < 2);
 							tankmanRun.add(tankBih);
@@ -308,7 +305,7 @@ class Tank extends BaseStage
 		picoStressCycle = function(_:String):Void {
 			// flixel-animate exposes the currently playing animation name via `anim.name` (the value
 			// last passed to `play()`).
-			var playing:String = pico.anim.name;
+			final playing:String = pico.anim.name;
 			if (playing == 'dieBitch') {
 				pico.anim.play('picoAppears', true);
 				boyfriendGroup.alpha = 1;
@@ -341,7 +338,7 @@ class Tank extends BaseStage
 		addBehindBF(boyfriendCutscene);
 		cutsceneHandler.push(boyfriendCutscene);
 
-		var cutsceneSnd:FlxSound = new FlxSound().loadEmbedded(Paths.sound('stressCutscene'));
+		final cutsceneSnd:FlxSound = new FlxSound().loadEmbedded(Paths.sound('stressCutscene'));
 		FlxG.sound.list.add(cutsceneSnd);
 
 		tankman.anim.addBySymbol('godEffingDamnIt', 'TANK TALK 3 P1 UNCUT', 24, false);

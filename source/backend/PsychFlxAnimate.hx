@@ -1,4 +1,4 @@
-package backend; // keep the package so your existing imports still resolve
+package backend;
 
 import animate.FlxAnimate;
 import animate.FlxAnimateFrames;
