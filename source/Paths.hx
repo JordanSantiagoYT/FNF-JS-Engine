@@ -15,15 +15,13 @@ import openfl.system.System;
 import openfl.utils.AssetType;
 #if cpp
 import cpp.vm.Gc;
-#elseif hl
-import hl.Gc;
 #end
 
 @:access(openfl.display.BitmapData)
 // @:nullSafety // not yet
 class Paths
 {
-  inline public static var SOUND_EXT = #if web "mp3" #else "ogg" #end;
+  inline public static var SOUND_EXT = "ogg";
   inline public static var VIDEO_EXT = "mp4";
   inline public static var IMAGE_EXT = "png";
 
@@ -172,8 +170,6 @@ class Paths
   {
     #if cpp
     Gc.run(major);
-    #elseif hl
-    Gc.major();
     #end
   }
 
@@ -181,8 +177,6 @@ class Paths
   {
     #if cpp
     Gc.compact();
-    #elseif hl
-    Gc.major();
     #end
   }
 
@@ -233,7 +227,7 @@ class Paths
     }
     // flags everything to be cleared out next unused memory clear
     localTrackedAssets = [];
-    #if !html5 openfl.Assets.cache.clear("songs"); #end
+    openfl.Assets.cache.clear("songs");
     gc(true);
     compress();
   }
@@ -424,9 +418,6 @@ class Paths
   {
     var formattedDifficulty:String = formatToSongPath(difficulty);
     if (difficulty.contains(' ')) difficulty = formattedDifficulty;
-    #if html5
-    return 'songs:assets/songs/${formatToSongPath(song)}/Voices.$SOUND_EXT';
-    #else
     if (difficulty != null)
     {
       var songKey:String = '${formatToSongPath(song)}/Voices';
@@ -443,7 +434,6 @@ class Paths
     if (postfix != null) songKey += '-' + postfix;
     var voices = returnSound('songs', songKey);
     return voices;
-    #end
   }
 
   // Loads the instrumental. Crucial for generateSong
@@ -451,9 +441,6 @@ class Paths
   {
     var formattedDifficulty:String = formatToSongPath(difficulty);
     if (difficulty.contains(' ')) difficulty = formattedDifficulty;
-    #if html5
-    return 'songs:assets/songs/${formatToSongPath(song)}/Inst.$SOUND_EXT';
-    #else
     if (difficulty != null)
     {
       var songKey:String = '${formatToSongPath(song)}/Inst-$difficulty';
@@ -467,7 +454,6 @@ class Paths
     var songKey:String = '${formatToSongPath(song)}/Inst';
     var inst = returnSound('songs', songKey);
     return inst;
-    #end
   }
 
   static public function playMenuMusic(force:Bool = false, volume:Float = 1):Void
@@ -948,72 +934,133 @@ class Paths
   }
   #end
 
-  #if flxanimate
-  public static function loadAnimateAtlas(spr:FlxAnimate, folderOrImg:Dynamic, spriteJson:Dynamic = null, animationJson:Dynamic = null)
-  {
-    var changedAnimJson = false;
-    var changedAtlasJson = false;
-    var changedImage = false;
+	#if flixel_animate
+	/**
+	 * Loads a Texture Atlas (Animate) export onto the given sprite.
+	 *
+	 * Resolves all files (`Animation.json`, `metadata.json`, `spritemapN.json`,
+	 * `spritemapN.png`) through Psych's mod-aware path system, then hands the
+	 * parsed inputs to `animate.FlxAnimateFrames.fromAnimate(...)`.
+	 *
+	 * @param spr             Target `animate.FlxAnimate` sprite.
+	 * @param folderOrImg     Either a folder path under `images/` (e.g. `'characters/bf'`)
+	 *                        or a pre-resolved `FlxGraphic` of the spritemap when
+	 *                        `spriteJson` is also supplied.
+	 * @param spriteJson      Optional override path or raw JSON string for `spritemap0.json`.
+	 * @param animationJson   Optional override path or raw JSON string for `Animation.json`.
+	 */
+	/**
+	 * Loads an Adobe Animate texture atlas into `spr`.
+	 *
+	 * @param swfMode  When true, nested movieclip symbols advance their own
+	 *                 timelines and bake every frame, rendering like a real SWF
+	 *                 player. When false (default) movieclips render statically
+	 *                 (first frame only). This is a *load-time* setting baked into
+	 *                 the atlas, so changing it requires a fresh parse.
+	 * @param unique   Force a fresh parse instead of returning the cached atlas.
+	 *                 Needed when toggling `swfMode` on an already-cached atlas
+	 *                 (e.g. the character editor). Leave false for gameplay so the
+	 *                 atlas is loaded once and reused.
+	 */
+	public static function loadAnimateAtlas(spr:FlxAnimate, folderOrImg:Dynamic, spriteJson:Dynamic = null, animationJson:Dynamic = null,
+			?swfMode:Bool = false, ?unique:Bool = false) {
+		var settings:animate.FlxAnimateFrames.FlxAnimateSettings = {swfMode: swfMode};
+		var animationContent:String = null;
+		var spritemaps:Array<animate.FlxAnimateFrames.SpritemapInput> = [];
+		var cacheKey:String = null;
 
-    if (spriteJson != null)
-    {
-      changedAtlasJson = true;
-      spriteJson = File.getContent(spriteJson);
-    }
+		// Some Animate exports save JSON with a UTF-8 BOM (0xEF 0xBB 0xBF), which
+		// haxe.format.JsonParser rejects with "Invalid char 65279 at position 0".
+		inline function stripBom(str:String):String {
+			if (str != null && str.length > 0 && str.charCodeAt(0) == 0xFEFF)
+				return str.substr(1);
+			return str;
+		}
+		
+		// Returns null instead of throwing when the file isn't there
+		inline function optionalText(path:String):String {
+			return fileExists(path, TEXT, false) ? stripBom(getTextFromFile(path)) : null;
+		}
 
-    if (animationJson != null)
-    {
-      changedAnimJson = true;
-      animationJson = File.getContent(animationJson);
-    }
+		// Allow callers to pass already-loaded JSON text (or a path to a file).
+		inline function resolveJson(value:Dynamic):String {
+			if (value == null) return null;
+			if (Std.isOfType(value, String)) {
+				var str:String = cast value;
+				// Treat as a filesystem path if it looks like one; otherwise assume raw JSON.
+				if (str.length < 4096 && (str.indexOf('{') < 0 || #if sys FileSystem.exists(str) #else false #end))
+					return stripBom(File.getContent(str));
+				return stripBom(str);
+			}
+			return stripBom(Std.string(value));
+		}
 
-    // is folder or image path
-    if (Std.isOfType(folderOrImg, String))
-    {
-      var originalPath:String = folderOrImg;
-      for (i in 0...10)
-      {
-        var st:String = '$i';
-        if (i == 0) st = '';
+		if (animationJson != null)
+			animationContent = resolveJson(animationJson);
 
-        if (!changedAtlasJson)
-        {
-          if (fileExists('images/$originalPath/spritemap$st.json', TEXT, false))
-          {
-            spriteJson = getTextFromFile('images/$originalPath/spritemap$st.json');
-            if (spriteJson != null)
-            {
-              // trace('found Sprite Json');
-              changedImage = true;
-              changedAtlasJson = true;
-              folderOrImg = image('$originalPath/spritemap$st');
-              break;
-            }
-          }
-        } else if (fileExists('images/$originalPath/spritemap$st.png', IMAGE))
-        {
-          // trace('found Sprite PNG');
-          changedImage = true;
-          folderOrImg = image('$originalPath/spritemap$st');
-          break;
-        }
-      }
+		if (Std.isOfType(folderOrImg, String)) {
+			var folder:String = cast folderOrImg;
+			cacheKey = (Mods.currentModDirectory.length > 1) ? '${Mods.currentModDirectory}/images/$folder' : 'images/$folder';
 
-      if (!changedImage)
-      {
-        // trace('Changing folderOrImg to FlxGraphic');
-        changedImage = true;
-        folderOrImg = image(originalPath);
-      }
+			if (animationContent == null)
+				animationContent = optionalText('$cacheKey/Animation.json');
 
-      if (!changedAnimJson)
-      {
-        // trace('found Animation Json');
-        changedAnimJson = true;
-        animationJson = getTextFromFile('images/$originalPath/Animation.json');
-      }
-    }
-    spr.loadAtlasEx(folderOrImg, spriteJson, animationJson);
-  }
-  #end
+			if (animationContent == null) {
+				trace('Paths.loadAnimateAtlas: no Animation.json under "$cacheKey".');
+				return;
+			}
+
+			// Optional, newer exports only
+			var metadataContent:String = optionalText('$cacheKey/metadata.json');
+
+			if (spriteJson != null) {
+				spritemaps.push({source: image(folder), json: resolveJson(spriteJson)});
+			} else {
+				for (i in 0...10) {
+					var st:String = (i == 0) ? '' : '$i';
+					var json:String = optionalText('$cacheKey/spritemap$st.json');
+					if (json == null) continue;
+					var graphic = image('$folder/spritemap$st');
+					if (graphic == null) {
+						trace('Paths.loadAnimateAtlas: spritemap$st.json found but image is missing for "$cacheKey".');
+						continue;
+					}
+					spritemaps.push({source: graphic, json: json});
+				}
+				if (spritemaps.length == 0) {
+					trace('Paths.loadAnimateAtlas: no spritemap*.json found under "$cacheKey".');
+					return;
+				}
+				
+				spr.frames = animate.FlxAnimateFrames.fromAnimate(animationContent, spritemaps, metadataContent, cacheKey, unique, settings);
+			}
+		} 
+		else 
+		{
+			// folderOrImg is a FlxGraphic/BitmapData – caller is supplying inputs directly.
+			spritemaps.push({source: folderOrImg, json: resolveJson(spriteJson)});
+			spr.frames = animate.FlxAnimateFrames.fromAnimate(animationContent, spritemaps, null, null, unique, settings);
+		}
+	}
+
+	/**
+	 * Evicts a cached Animate atlas so the next `loadAnimateAtlas` re-parses it
+	 * from scratch (e.g. after changing a load-time setting like `swfMode`).
+	 *
+	 * IMPORTANT: this destroys the cached `FlxAnimateFrames` and its graphics, so
+	 * every live `FlxAnimate` still pointing at this atlas must be reloaded right
+	 * after — otherwise drawing a dangling reference throws "sprite was destroyed".
+	 */
+	public static function clearAnimateAtlasCache(folderOrImg:String):Void {
+		if (folderOrImg == null) return;
+		var key:String = 'images/$folderOrImg';
+		@:privateAccess {
+			var cached = animate.FlxAnimateFrames._cachedAtlases.get(key);
+			if (cached != null) {
+				animate.FlxAnimateFrames._cachedAtlases.remove(key);
+				cached.destroy();
+			}
+		}
+	}
+	#end
 }

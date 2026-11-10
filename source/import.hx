@@ -17,9 +17,10 @@ import psychlua.HScript;
 // import psychlua.ScriptHandler;
 #end
 
-#if flxanimate
-import flxanimate.*;
-import flxanimate.PsychFlxAnimate as FlxAnimate;
+#if flixel_animate
+import animate.FlxAnimate;
+import animate.FlxAnimateFrames;
+import backend.PsychFlxAnimate;
 #end
 
 #if MODS_ALLOWED

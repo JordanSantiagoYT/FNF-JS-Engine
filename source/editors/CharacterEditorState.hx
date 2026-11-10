@@ -22,9 +22,6 @@ import openfl.events.Event;
 import openfl.events.IOErrorEvent;
 import openfl.net.FileReference;
 
-/**
-	*DEBUG MODE
- */
 class CharacterEditorState extends MusicBeatState
 {
 	var music:EditingMusic;
@@ -457,7 +454,6 @@ class CharacterEditorState extends MusicBeatState
 					if(animateGhost == null) //If I created the animateGhost on create() and you didn't load an atlas, it would crash the game on destroy, so we create it here
 					{
 						animateGhost = new FlxAnimate(ghostChar.x, ghostChar.y);
-						animateGhost.showPivot = false;
 						insert(members.indexOf(ghostChar), animateGhost);
 						animateGhost.active = false;
 					}
@@ -470,7 +466,7 @@ class CharacterEditorState extends MusicBeatState
 					else
 						animateGhost.anim.addBySymbol('anim', myAnim.name, 0, false);
 
-					animateGhost.anim.play('anim', true, false, char.atlas.anim.curFrame);
+					animateGhost.anim.play('anim', true, false, char.atlas.anim.curAnim.curFrame);
 					animateGhost.anim.pause();
 
 					animateGhostImage = char.imageFile;
@@ -924,7 +920,7 @@ class CharacterEditorState extends MusicBeatState
 					if(char.animOffsets.exists(animationInputText.text))
 					{
 						if(!char.isAnimateAtlas) char.animation.remove(animationInputText.text);
-						else @:privateAccess char.atlas.anim.animsMap.remove(animationInputText.text);
+						else char.atlas.anim.remove(animationInputText.text);
 					}
 					char.animationsArray.remove(anim);
 				}
@@ -953,7 +949,7 @@ class CharacterEditorState extends MusicBeatState
 					if(char.hasAnimation(anim.anim))
 					{
 						if(!char.isAnimateAtlas) char.animation.remove(anim.anim);
-						else @:privateAccess char.atlas.anim.animsMap.remove(anim.anim);
+						else char.atlas.anim.remove(anim.anim);
 						char.animOffsets.remove(anim.anim);
 						char.animationsArray.remove(anim);
 					}
@@ -1110,7 +1106,6 @@ class CharacterEditorState extends MusicBeatState
 		if(Paths.fileExists('images/' + char.imageFile + '/Animation.json', TEXT))
 		{
 			char.atlas = new FlxAnimate();
-			char.atlas.showPivot = false;
 			try
 			{
 				Paths.loadAnimateAtlas(char.atlas, char.imageFile);
@@ -1473,15 +1468,15 @@ class CharacterEditorState extends MusicBeatState
 				}
 				var frames:Int = -1;
 				var length:Int = -1;
-				if(!char.isAnimateAtlas && char.animation.curAnim != null)
-				{
+				if (!char.isAnimateAtlas && char.animation.curAnim != null) {
 					frames = char.animation.curAnim.curFrame;
 					length = char.animation.curAnim.numFrames;
-				}
-				else if(char.isAnimateAtlas && char.atlas.anim != null)
-				{
-					frames = char.atlas.anim.curFrame;
-					length = char.atlas.anim.length;
+				} else if (char.isAnimateAtlas && char.atlas.anim != null) {
+					final curAnim = char.atlas.anim.curAnim;
+					if (curAnim != null) {
+						frames = curAnim.curFrame;
+						length = curAnim.numFrames;
+					}
 				}
 
 				if(length >= 0)
@@ -1496,13 +1491,12 @@ class CharacterEditorState extends MusicBeatState
 						{
 							frames = FlxMath.wrap(frames + Std.int(isLeft ? -shiftMult : shiftMult), 0, length-1);
 							if(!char.isAnimateAtlas) char.animation.curAnim.curFrame = frames;
-							else char.atlas.anim.curFrame = frames;
+							else char.atlas.anim.curAnim.curFrame = frames;
 							holdingFrameElapsed -= 0.1;
 						}
 					}
 
 					txt = 'Frames: ( $frames / ${length-1} )';
-					//if(character.animation.curAnim.paused) txt += ' - PAUSED';
 					clr = FlxColor.WHITE;
 				}
 			}
@@ -1516,29 +1510,12 @@ class CharacterEditorState extends MusicBeatState
 				helpTexts.visible = helpBg.visible;
 			}
 		}
-		//camMenu.zoom = FlxG.camera.zoom;
 		ghostChar.setPosition(char.x, char.y);
 		super.update(elapsed);
 		music.update(elapsed);
 	}
 
 	var _file:FileReference;
-	/*private function saveOffsets()
-	{
-		var data:String = '';
-		for (anim => offsets in char.animOffsets) {
-			data += anim + ' ' + offsets[0] + ' ' + offsets[1] + '\n';
-		}
-
-		if (data.length > 0)
-		{
-			_file = new FileReference();
-			_file.addEventListener(Event.COMPLETE, onSaveComplete);
-			_file.addEventListener(Event.CANCEL, onSaveCancel);
-			_file.addEventListener(IOErrorEvent.IO_ERROR, onSaveError);
-			_file.save(data, _char + "Offsets.txt");
-		}
-	}*/
 
 	function onSaveComplete(_):Void
 	{

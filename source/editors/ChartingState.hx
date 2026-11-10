@@ -917,10 +917,9 @@ class ChartingState extends MusicBeatState
     initPsychCamera().follow(camPos, null, 999);
   }
 
-  function songJsonPopup()
-  { // you tried reloading the json, but it doesn't exist
-    CoolUtil.coolError("The engine failed to load the JSON! \nEither it doesn't exist, or the name doesn't match with the one you're putting?",
-      "JS Engine Anti-Crash Tool");
+  function songJsonPopup() // you tried reloading the json, but it doesn't exist
+  {
+    CoolUtil.coolError("The engine failed to load the JSON! \nEither it doesn't exist, or the name doesn't match with the one you're putting?", "JS Engine Anti-Crash Tool");
   }
 
   function promptBackup()
@@ -984,7 +983,6 @@ class ChartingState extends MusicBeatState
     blockPressWhileTypingOn.push(winNameInputText);
     winNameInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 
-    //
     gameOverCharacterInputText = new FlxUIInputText(10, winNameInputText.y + 30, 150, _song.gameOverChar != null ? _song.gameOverChar : '', 8);
     blockPressWhileTypingOn.push(gameOverCharacterInputText);
 

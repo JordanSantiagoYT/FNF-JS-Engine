@@ -175,7 +175,7 @@ class Character extends FlxSprite
 	{
 		isAnimateAtlas = false;
 
-		#if flxanimate
+		#if flixel_animate
 		if (Paths.fileExists('images/' + json.image + '/Animation.json', TEXT))
 			isAnimateAtlas = true;
 		#end
@@ -187,11 +187,10 @@ class Character extends FlxSprite
 		{
 			frames = Paths.getMultiAtlas(json.image.split(','));
 		}
-		#if flxanimate
+		#if flixel_animate
 		else
 		{
 			atlas = new FlxAnimate();
-			atlas.showPivot = false;
 			try
 			{
 				Paths.loadAnimateAtlas(atlas, json.image);
@@ -265,7 +264,7 @@ class Character extends FlxSprite
 					else
 						animation.addByPrefix(animAnim, animName, animFps, animLoop);
 				}
-				#if flxanimate
+				#if flixel_animate
 				else
 				{
 					if(animIndices != null && animIndices.length > 0)
@@ -279,7 +278,7 @@ class Character extends FlxSprite
 					addOffset(anim.anim, anim.offsets[0], anim.offsets[1]);
 				}
 			}
-			#if flxanimate
+			#if flixel_animate
 			if(isAnimateAtlas) copyAtlasValues();
 			#end
 		}
@@ -292,8 +291,7 @@ class Character extends FlxSprite
 
 		if(isAnimateAtlas) atlas.update(elapsed);
 
-		if(debugMode || (!isAnimateAtlas && animation.curAnim == null) || (isAnimateAtlas && atlas.anim.curSymbol == null))
-		{
+		if (debugMode || (!isAnimateAtlas && animation.curAnim == null) || (isAnimateAtlas && !atlas.isAnimate)) {
 			super.update(elapsed);
 			return;
 		}
@@ -368,7 +366,7 @@ class Character extends FlxSprite
 	}
 
 	inline public function isAnimationNull():Bool
-		return !isAnimateAtlas ? (animation.curAnim == null) : (atlas.anim.curSymbol == null);
+		return !isAnimateAtlas ? (animation.curAnim == null) : !atlas.isAnimate;
 
 	var _lastPlayedAnimation:String;
 	inline public function getAnimationName():String
@@ -387,7 +385,7 @@ class Character extends FlxSprite
 		if(isAnimationNull()) return;
 
 		if(!isAnimateAtlas) animation.curAnim.finish();
-		else atlas.anim.curFrame = atlas.anim.length - 1;
+		else atlas.anim.curAnim.curFrame = atlas.anim.curAnim.numFrames - 1;
 	}
 
 	public function hasAnimation(anim:String):Bool
@@ -399,7 +397,7 @@ class Character extends FlxSprite
 	private function get_animPaused():Bool
 	{
 		if(isAnimationNull()) return false;
-		return !isAnimateAtlas ? animation.curAnim.paused : atlas.anim.isPlaying;
+		return !isAnimateAtlas ? animation.curAnim.paused : atlas.anim.paused;
 	}
 	private function set_animPaused(value:Bool):Bool
 	{
@@ -416,9 +414,6 @@ class Character extends FlxSprite
 
 	public var danced:Bool = false;
 
-	/**
-	 * FOR GF DANCING SHIT
-	 */
 	public function dance()
 	{
 		if (!debugMode && !skipDance && !specialAnim)
@@ -524,9 +519,8 @@ class Character extends FlxSprite
 	}
 
 	// Atlas support
-	// special thanks ne_eo for the references, you're the goat!!
 	public var isAnimateAtlas:Bool = false;
-	#if flxanimate
+	#if flixel_animate
 	public var atlas:FlxAnimate;
 	public override function draw()
 	{

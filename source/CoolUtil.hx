@@ -125,7 +125,7 @@ class CoolUtil
 	@:keep
 	public static function checkForOBS():Bool
 	{
-		var fs:Bool = FlxG.fullscreen;
+		final fs:Bool = FlxG.fullscreen;
 		if (fs)
 		{
 			FlxG.fullscreen = false;
