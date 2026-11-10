@@ -16,10 +16,7 @@
       },
       {
         "name": "flixel-addons",
-        "version": "3.2.3"
-      },
-      {
-        "name": "flixel-tools"
+        "link": "https://github.com/JS-Engine-things/flixel-addons"
       },
       {
         "name": "flixel-ui",
