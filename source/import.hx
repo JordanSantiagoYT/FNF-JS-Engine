@@ -49,7 +49,8 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.util.FlxDestroyUtil;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.FlxSubState;
-import flixel.addons.display.FlxGridOverlay;
+import flixel.addons.display.FlxGridOverlay; //still used for the note color substate
+import flixel.addons.display.FlxTiledSprite;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.FlxObject;
 import flixel.util.FlxSave;
