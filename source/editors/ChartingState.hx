@@ -330,7 +330,7 @@ class ChartingState extends MusicBeatState
     hitsound.volume = 1;
 
     if (Note.globalRgbShaders.length > 0) Note.globalRgbShaders = [];
-    Paths.initDefaultSkin(_song.arrowSkin, true);
+    Paths.initDefaultSkin(_song.arrowSkin);
 
     #if DISCORD_ALLOWED
     // Updating Discord Rich Presence
@@ -869,7 +869,7 @@ class ChartingState extends MusicBeatState
     var reloadNotesButton:FlxButton = new FlxButton(noteSplashesInputText.x + 5, noteSplashesInputText.y + 20, 'Change Notes', function() {
       _song.arrowSkin = noteSkinInputText.text;
       selectionNote.texture = noteSkinInputText.text;
-      Paths.initDefaultSkin(noteSkinInputText.text, true);
+      Paths.initDefaultSkin(noteSkinInputText.text);
       updateGrid();
     });
 

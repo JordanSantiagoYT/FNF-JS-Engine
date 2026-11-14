@@ -39,38 +39,39 @@ class Paths
   public static var splashConfigs:Map<String, NoteSplash.NoteSplashConfig> = new Map();
   public static var splashAnimCountMap:Map<String, Int> = new Map();
 
-  static inline function defaultSkin():String
-    return 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
+  public static var defaultSkin:String = 'noteskins/NOTE_assets';
+
+  static inline function fallbackSkin():String
+    return PlayState.isPixelStage ? 'noteskins/NOTE_assets' : 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
 
   static inline function defaultSplash():String
     return 'noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix();
-  
-  // Function that initializes the first note. This way, we can recycle the notes
-  public static function initDefaultSkin(?noteSkin:String, ?inEditor:Bool = false)
+
+  public static function initDefaultSkin(?noteSkin:String)
   {
-    if (noteSkin.length > 0) defaultSkin = noteSkin;
-    else if (!PlayState.isPixelStage) defaultSkin = 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
-    else
-      defaultSkin = 'noteskins/NOTE_assets';
-    trace(defaultSkin);
+    defaultSkin = (noteSkin != null && noteSkin.length > 0) ? noteSkin : fallbackSkin();
   }
 
   public static function initNote(?noteSkin:String)
   {
-    // Do this to be able to just copy over the note animations and not reallocate it
-    if (noteSkin.length < 1) noteSkin = defaultSkin();
-    var spr:FlxSprite = new FlxSprite();
-    spr.frames = getSparrowAtlas(noteSkin.length > 1 ? noteSkin : defaultSkin());
+    if (noteSkin == null || noteSkin.length < 1) noteSkin = defaultSkin;
 
-    // Use a for loop for adding all of the animations in the note spritesheet, otherwise it won't find the animations for the next recycle
+    var frames = getSparrowAtlas(noteSkin) ?? getSparrowAtlas(defaultSkin);
+    if (frames == null) return;
+
+    var spr:FlxSprite = new FlxSprite();
+    spr.frames = frames;
+
+    // old versions misspelled purple as 'pruple'
+    spr.animation.addByPrefix('purpleholdend', 'pruple end hold');
+    
     for (d in 0...Note.colArray.length)
     {
-      if (d == 0) spr.animation.addByPrefix('purpleholdend', 'pruple end hold'); // ?????
       spr.animation.addByPrefix(Note.colArray[d] + 'holdend', Note.colArray[d] + ' hold end');
       spr.animation.addByPrefix(Note.colArray[d] + 'hold', Note.colArray[d] + ' hold piece');
       spr.animation.addByPrefix(Note.colArray[d] + 'Scroll', Note.colArray[d] + '0');
     }
-    noteSkinFramesMap.set(noteSkin, spr.frames);
+    noteSkinFramesMap.set(noteSkin, frames);
     noteSkinAnimsMap.set(noteSkin, spr.animation);
   }
 
