@@ -39,8 +39,12 @@ class Paths
   public static var splashConfigs:Map<String, NoteSplash.NoteSplashConfig> = new Map();
   public static var splashAnimCountMap:Map<String, Int> = new Map();
 
-  public static var defaultSkin = 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
+  static inline function defaultSkin():String
+    return 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
 
+  static inline function defaultSplash():String
+    return 'noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix();
+  
   // Function that initializes the first note. This way, we can recycle the notes
   public static function initDefaultSkin(?noteSkin:String, ?inEditor:Bool = false)
   {
@@ -54,9 +58,9 @@ class Paths
   public static function initNote(?noteSkin:String)
   {
     // Do this to be able to just copy over the note animations and not reallocate it
-    if (noteSkin.length < 1) noteSkin = defaultSkin;
+    if (noteSkin.length < 1) noteSkin = defaultSkin();
     var spr:FlxSprite = new FlxSprite();
-    spr.frames = getSparrowAtlas(noteSkin.length > 1 ? noteSkin : defaultSkin);
+    spr.frames = getSparrowAtlas(noteSkin.length > 1 ? noteSkin : defaultSkin());
 
     // Use a for loop for adding all of the animations in the note spritesheet, otherwise it won't find the animations for the next recycle
     for (d in 0...Note.colArray.length)
@@ -73,82 +77,74 @@ class Paths
   // Note Splash initialization
   public static function initSplash(?splashSkin:String)
   {
-    var skin:String = (splashSkin != null && splashSkin.length > 0) ? splashSkin : 'noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix();
-    splashFrames = getSparrowAtlas(skin);
-    if (splashFrames == null) splashFrames = getSparrowAtlas('noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix());
+    var skin:String = (splashSkin != null && splashSkin.length > 0) ? splashSkin : defaultSplash();
+    
+    var frames = getSparrowAtlas(skin) ?? getSparrowAtlas(defaultSplash());
+    if (frames == null) return;
 
-    // Do this to be able to just copy over the splash animations and not reallocate it
-
-    var spr:FlxSprite = new FlxSprite();
-    spr.frames = splashFrames;
-    splashAnimation = new FlxAnimationController(spr);
-
-    // Use a for loop for adding all of the animations in the splash spritesheet, otherwise it won't find the animations for the next recycle
+    var host = new FlxSprite();
+    host.frames = frames;
+    var animation = new FlxAnimationController(host);
 
     var config = splashConfigs.get(skin);
     if (config == null) config = initSplashConfig(skin);
-    var maxAnims:Int = 0;
-    var animName:String = (config != null && config.anim != null && config.anim.length > 0) ? config.anim : "note splash";
+    var animName = (config != null && config.anim != null && config.anim.length > 0) ? config.anim : "note splash";
 
-    var shouldBreakLoop = false;
-    while (!shouldBreakLoop)
-    {
-      var animID:Int = maxAnims + 1;
-      for (i in 0...Note.colArray.length)
-      {
-        if (!addAnimAndCheck('note$i-$animID', '$animName ${Note.colArray[i]} $animID', 24, false))
-        {
-          // Reached the maximum amount of anims, break the loop
-          shouldBreakLoop = true;
-          break;
-        }
-      }
-      if (!shouldBreakLoop) maxAnims++;
-      else
-        break;
-      // trace('currently: $maxAnims');
-    }
-    splashSkinFramesMap.set(splashSkin, splashFrames);
-    splashSkinAnimsMap.set(splashSkin, splashAnimation);
-    splashAnimCountMap.set(splashSkin, maxAnims);
+    var maxAnims = 0;
+    
+    // searching for a 10th set will match set 1's frames, producing a phantom set at 9+
+    while (maxAnims < 8 && addAnimSet(animation, animName, maxAnims + 1)) maxAnims++;
+    if (maxAnims == 0) return;
+
+    splashFrames = frames;
+    splashAnimation = animation;
+    splashSkinFramesMap.set(skin, frames);
+    splashSkinAnimsMap.set(skin, animation);
+    splashAnimCountMap.set(skin, maxAnims);
   }
 
-  public static function addAnimAndCheck(name:String, anim:String, ?framerate:Int = 24, ?loop:Bool = false)
+  static function addAnimSet(animation:FlxAnimationController, animName:String, animID:Int):Bool
   {
-    var animFrames = [];
-    @:privateAccess
-    splashAnimation.findByPrefix(animFrames, anim); // adds valid frames to animFrames
+    var names = [for (i in 0...Note.colArray.length) 'note$i-$animID'];
+    var prefixes = [for (col in Note.colArray) '$animName $col $animID'];
 
-    if (animFrames.length < 1) return false;
+    for (prefix in prefixes)
+    {
+      var found = [];
+      @:privateAccess animation.findByPrefix(found, prefix);
+      if (found.length < 1) return false;
+    }
 
-    splashAnimation.addByPrefix(name, anim, framerate, loop);
+    for (i in 0...names.length) animation.addByPrefix(names[i], prefixes[i], 24, false);
     return true;
   }
 
-  public static function initSplashConfig(skin:String)
+  public static function initSplashConfig(skin:String):Null<NoteSplash.NoteSplashConfig>
   {
-    var path:String = Paths.getSharedPath('images/' + skin + '.txt');
-    if (!FileSystem.exists(path)) path = Paths.modsTxt(skin);
-    if (!FileSystem.exists(path)) path = Paths.getSharedPath('images/noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix() + '.txt');
-
-    var configFile:Array<String> = CoolUtil.coolTextFile(path);
-
-    if (configFile.length < 1) return null;
-
-    var framerates:Array<String> = configFile[1].split(' ');
-    var offs:Array<Array<Float>> = [];
-    for (i in 2...configFile.length)
+    var lines:Array<String> = [];
+    for (path in [Paths.modsTxt(skin), Paths.getSharedPath('images/$skin.txt'), Paths.getSharedPath('images/' + defaultSplash() + '.txt')
+    ])
     {
-      var animOffs:Array<String> = configFile[i].split(' ');
-      offs.push([Std.parseFloat(animOffs[0]), Std.parseFloat(animOffs[1])]);
+      lines = CoolUtil.coolTextFile(path).filter(line -> line.length > 0);
+      if (lines.length >= 2) break;
     }
-    var config:NoteSplash.NoteSplashConfig =
-      {
-        anim: configFile[0],
-        minFps: Std.parseInt(framerates[0]),
-        maxFps: Std.parseInt(framerates[1]),
-        offsets: offs
-      };
+    if (lines.length < 2) return null;
+
+    var whitespace = ~/\s+/;
+    var framerates = whitespace.split(lines[1]);
+    var offsets:Array<Array<Float>> = [];
+    for (i in 2...lines.length)
+    {
+      var parts = whitespace.split(lines[i]);
+      offsets.push([Std.parseFloat(parts[0]), Std.parseFloat(parts[1])]);
+    }
+
+    var config:NoteSplash.NoteSplashConfig = {
+      anim: lines[0],
+      minFps: Std.parseInt(framerates[0]),
+      maxFps: Std.parseInt(framerates[1]),
+      offsets: offsets
+    };
     splashConfigs.set(skin, config);
     return config;
   }
