@@ -4107,6 +4107,8 @@ class ChartingState extends MusicBeatState
             nextRenderedSustains.add(sustain);
             susMap.set(note, sustain);
           }
+          note.mustPress = _song.notes[curSec+1].mustHitSection;
+          if (i[1] > 3) note.mustPress = !note.mustPress;
         }
       }
 
@@ -4528,9 +4530,9 @@ class ChartingState extends MusicBeatState
     var note = checkGroupForNote(curRenderedNotes, time, data, section.mustHitSection, isNote);
     if (note != null)
       return {note: note, group: curRenderedNotes};
-    else
+    else if (_song.notes[curSec + 1] != null)
     {
-      note = checkGroupForNote(nextRenderedNotes, time, data, section.mustHitSection, isNote);
+      note = checkGroupForNote(nextRenderedNotes, time, data, _song.notes[curSec + 1].mustHitSection, isNote);
       if (note != null) return {note: note, group: nextRenderedNotes};
     }
 
