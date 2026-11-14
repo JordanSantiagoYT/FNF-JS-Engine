@@ -56,10 +56,9 @@ class Paths
   {
     if (noteSkin == null || noteSkin.length < 1) noteSkin = defaultSkin;
 
-    var frames = getSparrowAtlas(noteSkin) ?? getSparrowAtlas(defaultSkin);
+    final spr = new FlxSprite(), frames = getSparrowAtlas(noteSkin) ?? getSparrowAtlas(defaultSkin);
     if (frames == null) return;
 
-    var spr:FlxSprite = new FlxSprite();
     spr.frames = frames;
 
     // old versions misspelled purple as 'pruple'
@@ -78,20 +77,18 @@ class Paths
   // Note Splash initialization
   public static function initSplash(?splashSkin:String)
   {
-    var skin:String = (splashSkin != null && splashSkin.length > 0) ? splashSkin : defaultSplash();
+    final skin:String = (splashSkin != null && splashSkin.length > 0) ? splashSkin : defaultSplash();
     
-    var frames = getSparrowAtlas(skin) ?? getSparrowAtlas(defaultSplash());
+    final frames = getSparrowAtlas(skin) ?? getSparrowAtlas(defaultSplash());
     if (frames == null) return;
 
-    var host = new FlxSprite();
+    var animation, host = new FlxSprite();
     host.frames = frames;
-    var animation = new FlxAnimationController(host);
+    animation = new FlxAnimationController(host);
 
-    var config = splashConfigs.get(skin);
+    var maxAnims = 0, animName, config = splashConfigs.get(skin);
     if (config == null) config = initSplashConfig(skin);
-    var animName = (config != null && config.anim != null && config.anim.length > 0) ? config.anim : "note splash";
-
-    var maxAnims = 0;
+    animName = (config != null && config.anim != null && config.anim.length > 0) ? config.anim : "note splash";
     
     // searching for a 10th set will match set 1's frames, producing a phantom set at 9+
     while (maxAnims < 8 && addAnimSet(animation, animName, maxAnims + 1)) maxAnims++;
@@ -106,12 +103,10 @@ class Paths
 
   static function addAnimSet(animation:FlxAnimationController, animName:String, animID:Int):Bool
   {
-    var names = [for (i in 0...Note.colArray.length) 'note$i-$animID'];
-    var prefixes = [for (col in Note.colArray) '$animName $col $animID'];
+    final found = [], prefixes = [for (col in Note.colArray) '$animName $col $animID'], names = [for (i in 0...Note.colArray.length) 'note$i-$animID'];
 
     for (prefix in prefixes)
     {
-      var found = [];
       @:privateAccess animation.findByPrefix(found, prefix);
       if (found.length < 1) return false;
     }
@@ -131,16 +126,16 @@ class Paths
     }
     if (lines.length < 2) return null;
 
-    var whitespace = ~/\s+/;
-    var framerates = whitespace.split(lines[1]);
-    var offsets:Array<Array<Float>> = [];
+    final whitespace = ~/\s+/;
+    final framerates = whitespace.split(lines[1]);
+    var parts, config:NoteSplash.NoteSplashConfig, offsets:Array<Array<Float>> = [];
     for (i in 2...lines.length)
     {
-      var parts = whitespace.split(lines[i]);
+      parts = whitespace.split(lines[i]);
       offsets.push([Std.parseFloat(parts[0]), Std.parseFloat(parts[1])]);
     }
 
-    var config:NoteSplash.NoteSplashConfig = {
+    config = {
       anim: lines[0],
       minFps: Std.parseInt(framerates[0]),
       maxFps: Std.parseInt(framerates[1]),

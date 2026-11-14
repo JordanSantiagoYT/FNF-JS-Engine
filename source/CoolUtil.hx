@@ -73,14 +73,13 @@ class CoolUtil
 	inline public static function quantize(f:Float, snap:Float)
 	{
 		// changed so this actually works lol
-		var m:Float = Math.fround(f * snap);
+		final m:Float = Math.fround(f * snap);
 		// trace(snap); yo why does it trace the snap
 		return (m / snap);
 	}
 
 	public static function isVersionNewer(versionA:String, versionB:String):Bool {
-		var partsA = versionA.split(".").map(Std.parseInt);
-		var partsB = versionB.split(".").map(Std.parseInt);
+		final partsA = versionA.split(".").map(Std.parseInt), partsB = versionB.split(".").map(Std.parseInt);
 
 		// Pad shorter version with zeros (e.g. "1.2" becomes "1.2.0")
 		while (partsA.length < partsB.length) partsA.push(0);
@@ -125,13 +124,12 @@ class CoolUtil
 	@:keep
 	public static function checkForOBS():Bool
 	{
-		final fs:Bool = FlxG.fullscreen;
+		var tasklist, fs:Bool = FlxG.fullscreen;
 		if (fs)
 		{
 			FlxG.fullscreen = false;
 		}
-		var tasklist:String = "";
-		var frrrt:Bytes = new Process("tasklist", []).stdout.readAll();
+		final frrrt:Bytes = new Process("tasklist", []).stdout.readAll();
 		tasklist = frrrt.getString(0, frrrt.length);
 		if (fs)
 		{
@@ -275,15 +273,13 @@ class CoolUtil
 		}
 		else
 			format = Std.string(value);
+
 		return format;
 	}
 
 	public static function getHealthColors(char:Character):Array<Int>
 	{
-		if (char != null)
-			return char.healthColorArray;
-		else
-			return [255, 0, 0];
+		return char?.healthColorArray ?? [255, 0, 0];
 	}
 
 	public static final beats:Array<Int> = [
@@ -365,10 +361,9 @@ class CoolUtil
 
 	public static function getMinAndMax(value1:Float, value2:Float):Array<Float>
 	{
-		var minAndMaxs = new Array<Float>();
+		final minAndMaxs = new Array<Float>();
 
-		var min = Math.min(value1, value2);
-		var max = Math.max(value1, value2);
+		final min:Float = Math.min(value1, value2), max:Float = Math.max(value1, value2);
 
 		minAndMaxs.push(min);
 		minAndMaxs.push(max);
@@ -427,8 +422,7 @@ class CoolUtil
 		for (i in 0...decimals)
 			tempMult *= 10;
 
-		var newValue:Float = Math.floor(value * tempMult);
-		return newValue / tempMult;
+		return Math.floor(value * tempMult) / tempMult;
 	}
 
 	public static function dominantColor(sprite:flixel.FlxSprite):Int
@@ -483,7 +477,7 @@ class CoolUtil
 		#else
 		trace(title + " - " + message, ERROR);
 
-		var text:FlxText = new FlxText(8, 0, 1280, title + " - " + message, 24);
+		final text:FlxText = new FlxText(8, 0, 1280, title + " - " + message, 24);
 		text.color = FlxColor.RED;
 		text.borderSize = 1.5;
 		text.borderColor = FlxColor.BLACK;

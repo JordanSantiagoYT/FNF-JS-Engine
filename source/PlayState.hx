@@ -410,16 +410,16 @@ class PlayState extends MusicBeatState
 		//Stops playing on a height that isn't divisible by 2
 		if (ClientPrefs.ffmpegMode && ClientPrefs.resolution != null) {
 			#if desktop
-			var resolutionValue = cast(ClientPrefs.resolution, String);
+			final resolutionValue = cast(ClientPrefs.resolution, String);
 
 			if (resolutionValue != null) {
-				var parts = resolutionValue.split('x');
+				final parts = resolutionValue.split('x');
 
 				if (parts.length == 2) {
-					var width = Std.parseInt(parts[0]);
-					var height = Std.parseInt(parts[1]);
+					final width:Null<Int> = Std.parseInt(parts[0]), height:Null<Int> = Std.parseInt(parts[1]);
 
-					if (width != null && height != null) {
+					if (width != null && height != null) 
+					{
 						CoolUtil.resetResScale(width, height);
 						FlxG.resizeGame(width, height);
 						lime.app.Application.current.window.width = width;
@@ -433,8 +433,7 @@ class PlayState extends MusicBeatState
 		{
 			if (unlockFPS)
 			{
-				FlxG.updateFramerate = 1000;
-				FlxG.drawFramerate = 1000;
+				FlxG.updateFramerate = FlxG.drawFramerate = 1000;
 			}
 			FlxG.fixedTimestep = true;
 			FlxG.animationTimeScale = ClientPrefs.framerate / targetFPS;
