@@ -3786,7 +3786,7 @@ class ChartingState extends MusicBeatState
         high = mid - 1;
     }
 
-    curStep = lastChange.stepTime + Math.floor((time - lastChange.songTime + add) / 15000 / secBPM(curSec));
+    curStep = lastChange.stepTime + Math.floor((time - lastChange.songTime + add) / (15000 / secBPM(curSec)));
     updateBeat();
 
     return curStep;
