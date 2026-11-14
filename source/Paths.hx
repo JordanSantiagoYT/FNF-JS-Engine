@@ -78,6 +78,7 @@ class Paths
   public static function initSplash(?splashSkin:String)
   {
     final skin:String = (splashSkin != null && splashSkin.length > 0) ? splashSkin : defaultSplash();
+    if (splashSkinFramesMap.exists(skin)) return;
     
     final frames = getSparrowAtlas(skin) ?? getSparrowAtlas(defaultSplash());
     if (frames == null) return;

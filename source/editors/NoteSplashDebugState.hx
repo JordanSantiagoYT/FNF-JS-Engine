@@ -320,7 +320,7 @@ class NoteSplashDebugState extends MusicBeatState
 
 		// Initialize config
 		Paths.splashConfigs.clear();
-		if (!Paths.splashConfigs.exists(textureName)) Paths.initSplashConfig(textureName);
+		Paths.initSplashConfig(textureName);
 		config = Paths.splashConfigs.get(textureName);
 		trace (config);
 		if(config == null) config = Paths.initSplashConfig('noteSplashes');
