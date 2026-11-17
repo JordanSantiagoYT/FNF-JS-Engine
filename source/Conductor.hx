@@ -126,6 +126,7 @@ class Conductor
 	public static function mapBPMChanges(song:SwagSong)
 	{
 		bpmChangeMap = [];
+		bpmChangeMap.push({stepTime: 0, songTime: 0, bpm: song.bpm, stepCrochet: calculateCrochet(song.bpm) / 4});
 
 		var curBPM:Float = song.bpm;
 		var totalSteps:Int = 0;

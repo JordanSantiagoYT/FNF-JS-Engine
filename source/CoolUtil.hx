@@ -70,14 +70,6 @@ class CoolUtil
 		'tankman-player'
 	];
 
-	inline public static function quantize(f:Float, snap:Float)
-	{
-		// changed so this actually works lol
-		final m:Float = Math.fround(f * snap);
-		// trace(snap); yo why does it trace the snap
-		return (m / snap);
-	}
-
 	public static function isVersionNewer(versionA:String, versionB:String):Bool {
 		final partsA = versionA.split(".").map(Std.parseInt), partsB = versionB.split(".").map(Std.parseInt);
 

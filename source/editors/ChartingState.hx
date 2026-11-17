@@ -458,7 +458,7 @@ class ChartingState extends MusicBeatState
 
     quant = new AttachedSprite('chart_quant', 'chart_quant');
     quant.animation.addByPrefix('q', 'chart_quant', 0, false);
-    quant.animation.play('q', true, false, 0);
+    quant.animation.play('q', true, false, curQuant);
     quant.sprTracker = strumLine;
     quant.xAdd = -32;
     quant.yAdd = 8;
@@ -2616,8 +2616,6 @@ class ChartingState extends MusicBeatState
 
   override function update(elapsed:Float)
   {
-    curStep = recalculateSteps();
-
     if (FlxG.sound.music.time < 0)
     {
       if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
@@ -2757,20 +2755,18 @@ class ChartingState extends MusicBeatState
           saveUndo(_song);
           FlxG.log.add('added note');
           addNote();
-          var addCount:Float = 0;
           if (check_stackActive.checked)
           {
-            addCount = stepperStackNum.value * stepperStackOffset.value - 1;
-          }
-          for (i in 0...Std.int(addCount))
-          {
-            addNote(curSelectedNote[0] + (15000 / Conductor.bpm) / stepperStackOffset.value, curSelectedNote[1] + Math.floor(stepperStackSideOffset.value),
-              currentType);
+            var addCount:Float = stepperStackNum.value * stepperStackOffset.value - 1;
+            for (i in 0...Std.int(addCount))
+            {
+              addNote(curSelectedNote[0] + (15000 / Conductor.bpm) / stepperStackOffset.value, curSelectedNote[1] + Math.floor(stepperStackSideOffset.value),
+                currentType);
+            }
           }
           selectionNote.playAnim('confirm' + selectionNote.noteData, true);
           if (soundEffectsCheck.checked) FlxG.sound.play(Paths.sound('addedNote'), 0.7);
 
-          // updateGrid(false);
           updateNoteUI();
         } else if (soundEffectsCheck.checked) FlxG.sound.play(Paths.sound('click'));
       }
@@ -2882,10 +2878,8 @@ class ChartingState extends MusicBeatState
             function() FlxG.switchState(editors.MasterEditorMenu.new), null, ignoreWarnings));
       }
 
-      if (FlxG.keys.pressed.CONTROL)
-      {
-        if (FlxG.keys.justPressed.Z) undo();
-      }
+      if (FlxG.keys.pressed.CONTROL && FlxG.keys.justPressed.Z)
+        undo();
 
       if (FlxG.keys.justPressed.Z && curZoom > 0 && !FlxG.keys.pressed.CONTROL)
       {
@@ -2906,15 +2900,14 @@ class ChartingState extends MusicBeatState
           && FlxG.mouse.y < gridBG.y + gridBG.height) if (!FlxG.keys.pressed.CONTROL) // stop crashing
           {
             addNote(); // allows you to draw notes by holding C
-            var addCount:Float = 0;
             if (check_stackActive.checked)
             {
-              addCount = stepperStackNum.value * stepperStackOffset.value - 1;
-            }
-            for (i in 0...Std.int(addCount))
-            {
-              addNote(curSelectedNote[0] + (15000 / Conductor.bpm) / stepperStackOffset.value, curSelectedNote[1] + Math.floor(stepperStackSideOffset.value),
-                currentType);
+              var addCount:Float = stepperStackNum.value * stepperStackOffset.value - 1;
+              for (i in 0...Std.int(addCount))
+              {
+                addNote(curSelectedNote[0] + (15000 / Conductor.bpm) / stepperStackOffset.value, curSelectedNote[1] + Math.floor(stepperStackSideOffset.value),
+                  currentType);
+              }
             }
             updateNoteUI();
           }
@@ -2927,15 +2920,9 @@ class ChartingState extends MusicBeatState
 
       if (FlxG.keys.justPressed.TAB)
       {
-        if (FlxG.keys.pressed.SHIFT)
-        {
-          UI_box.selected_tab -= 1;
-          if (UI_box.selected_tab < 0) UI_box.selected_tab = 2;
-        } else
-        {
-          UI_box.selected_tab += 1;
-          if (UI_box.selected_tab >= 3) UI_box.selected_tab = 0;
-        }
+        var dir = FlxG.keys.pressed.SHIFT ? -1 : 1;
+
+        UI_box.selected_tab = FlxMath.wrap(UI_box.selected_tab + dir, 0, UI_box.numTabs - 1);
       }
 
       if (FlxG.keys.justPressed.SPACE)
@@ -3001,23 +2988,7 @@ class ChartingState extends MusicBeatState
         resetBuddies();
         lilBf.color = lilOpp.color = FlxColor.WHITE;
         if (!mouseQuant) FlxG.sound.music.time -= (FlxG.mouse.wheel * Conductor.stepCrochet * 0.8);
-        else
-        {
-          var time:Float = FlxG.sound.music.time;
-          var beat:Float = curDecBeat;
-          var snap:Float = quantization / 4;
-          var increase:Float = 1 / snap;
-          if (FlxG.mouse.wheel > 0)
-          {
-            var fuck:Float = CoolUtil.quantize(beat, snap) - increase;
-            FlxG.sound.music.time = Conductor.beatToSeconds(fuck);
-          } else
-          {
-            var fuck:Float = CoolUtil.quantize(beat, snap) + increase;
-            FlxG.sound.music.time = Conductor.beatToSeconds(fuck);
-          }
-        }
-        pauseAndSetVocalsTime();
+        else scrollQuantized(FlxG.mouse.wheel > 0);
       }
 
       if (FlxG.keys.pressed.W || FlxG.keys.pressed.S)
@@ -3032,133 +3003,41 @@ class ChartingState extends MusicBeatState
         else if (FlxG.keys.pressed.SHIFT) holdingShift = 4;
 
         var daTime:Float = 700 * FlxG.elapsed * holdingShift;
+        if (FlxG.keys.pressed.W) daTime *= -1;
 
-        if (FlxG.keys.pressed.W)
-        {
-          FlxG.sound.music.time -= daTime;
-        } else
-          FlxG.sound.music.time += daTime;
-
+        FlxG.sound.music.time += daTime;
         pauseAndSetVocalsTime();
       }
 
-      if (!vortex)
-      {
-        if (FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN)
-        {
-          if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
-          FlxG.sound.music.pause();
-          updateCurStep();
-          var time:Float = FlxG.sound.music.time;
-          var beat:Float = curDecBeat;
-          var snap:Float = quantization / 4;
-          var increase:Float = 1 / snap;
-          if (FlxG.keys.pressed.UP)
-          {
-            var fuck:Float = CoolUtil.quantize(beat, snap) - increase; // (Math.floor((beat+snap) / snap) * snap);
-            FlxG.sound.music.time = Conductor.beatToSeconds(fuck);
-          } else
-          {
-            var fuck:Float = CoolUtil.quantize(beat, snap) + increase; // (Math.floor((beat+snap) / snap) * snap);
-            FlxG.sound.music.time = Conductor.beatToSeconds(fuck);
-          }
-        }
-      }
+      if (FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN) scrollQuantized(FlxG.keys.justPressed.UP, vortex);
 
-      var style = currentType;
-
-      if (FlxG.keys.pressed.SHIFT)
-      {
-        style = 3;
-      }
-
+      var style = FlxG.keys.pressed.SHIFT ? currentType : 3;
       var conductorTime = Conductor.songPosition; // + sectionStartTime();Conductor.songPosition / Conductor.stepCrochet;
 
       // AWW YOU MADE IT SEXY <3333 THX SHADMAR
 
       if (!blockInput && !FlxG.keys.pressed.CONTROL)
       {
-        if (FlxG.keys.justPressed.RIGHT)
+        if (FlxG.keys.justPressed.RIGHT || FlxG.keys.justPressed.LEFT)
         {
-          curQuant++;
-          if (curQuant > quantizations.length - 1) curQuant = 0;
+          (FlxG.keys.justPressed.RIGHT) ? curQuant++ : curQuant--;
 
+          curQuant = FlxMath.wrap(curQuant, 0, quantizations.length - 1);
           quantization = quantizations[curQuant];
+          quant.animation.play('q', true, false, curQuant);
         }
-
-        if (FlxG.keys.justPressed.LEFT)
+        if (vortex)
         {
-          curQuant--;
-          if (curQuant < 0) curQuant = quantizations.length - 1;
+          var controlArray:Array<Bool> = [
+            FlxG.keys.justPressed.ONE, FlxG.keys.justPressed.TWO, FlxG.keys.justPressed.THREE, FlxG.keys.justPressed.FOUR,
+            FlxG.keys.justPressed.FIVE, FlxG.keys.justPressed.SIX, FlxG.keys.justPressed.SEVEN, FlxG.keys.justPressed.EIGHT
+          ];
 
-          quantization = quantizations[curQuant];
-        }
-        quant.animation.play('q', true, false, curQuant);
-      }
-      if (vortex && !blockInput && !FlxG.keys.pressed.CONTROL)
-      {
-        var controlArray:Array<Bool> = [
-           FlxG.keys.justPressed.ONE, FlxG.keys.justPressed.TWO, FlxG.keys.justPressed.THREE, FlxG.keys.justPressed.FOUR,
-          FlxG.keys.justPressed.FIVE, FlxG.keys.justPressed.SIX, FlxG.keys.justPressed.SEVEN, FlxG.keys.justPressed.EIGHT
-        ];
-
-        if (controlArray.contains(true))
-        {
-          for (i in 0...controlArray.length)
+          if (controlArray.contains(true))
           {
-            if (controlArray[i]) doANoteThing(conductorTime, i, style);
-          }
-        }
-
-        var feces:Float;
-        if (FlxG.keys.justPressed.UP || FlxG.keys.justPressed.DOWN)
-        {
-          FlxG.sound.music.pause();
-
-          if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
-
-          updateCurStep();
-
-          var time:Float = FlxG.sound.music.time;
-          var beat:Float = curDecBeat;
-          var snap:Float = quantization / 4;
-          var increase:Float = 1 / snap;
-          if (FlxG.keys.pressed.UP)
-          {
-            var fuck:Float = CoolUtil.quantize(beat, snap) - increase;
-            feces = Conductor.beatToSeconds(fuck);
-          } else
-          {
-            var fuck:Float = CoolUtil.quantize(beat, snap) + increase; // (Math.floor((beat+snap) / snap) * snap);
-            feces = Conductor.beatToSeconds(fuck);
-          }
-          FlxTween.tween(FlxG.sound.music, {time: feces}, 0.1, {ease: FlxEase.circOut});
-          pauseAndSetVocalsTime();
-
-          var dastrum = 0;
-
-          if (curSelectedNote != null)
-          {
-            dastrum = curSelectedNote[0];
-          }
-
-          var secStart:Float = sectionStartTime();
-          var datime = (feces - secStart) - (dastrum - secStart); // idk math find out why it doesn't work on any other section other than 0
-          if (curSelectedNote != null)
-          {
-            var controlArray:Array<Bool> = [
-               FlxG.keys.pressed.ONE, FlxG.keys.pressed.TWO, FlxG.keys.pressed.THREE, FlxG.keys.pressed.FOUR,
-              FlxG.keys.pressed.FIVE, FlxG.keys.pressed.SIX, FlxG.keys.pressed.SEVEN, FlxG.keys.pressed.EIGHT
-            ];
-
-            if (controlArray.contains(true))
+            for (i in 0...controlArray.length)
             {
-              for (i in 0...controlArray.length)
-              {
-                if (controlArray[i]) if (curSelectedNote[1] == i) curSelectedNote[2] += datime - curSelectedNote[2] - Conductor.stepCrochet;
-              }
-              updateGrid(false);
-              updateNoteUI();
+              if (controlArray[i]) doANoteThing(conductorTime, i, style);
             }
           }
         }
@@ -3200,14 +3079,17 @@ class ChartingState extends MusicBeatState
 
     if (FlxG.sound.music.time < 0)
     {
+      if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
       FlxG.sound.music.pause();
       FlxG.sound.music.time = 0;
     } else if (FlxG.sound.music.time > FlxG.sound.music.length)
     {
+      if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
       FlxG.sound.music.pause();
       FlxG.sound.music.time = 0;
       changeSection();
     }
+
     Conductor.songPosition = FlxG.sound.music.time;
     strumLineUpdateY();
     camPos.y = strumLine.y;
@@ -3228,10 +3110,8 @@ class ChartingState extends MusicBeatState
     if (!holdingShift && pressedLB || holdingShift && holdingLB) playbackSpeed -= 0.01;
     if (!holdingShift && pressedRB || holdingShift && holdingRB) playbackSpeed += 0.01;
     if (FlxG.keys.pressed.ALT && (pressedLB || pressedRB || holdingLB || holdingRB)) playbackSpeed = 1;
-    //
-
-    if (playbackSpeed <= 0.25) playbackSpeed = 0.25;
-    if (playbackSpeed >= 4) playbackSpeed = 4;
+    
+    playbackSpeed = FlxMath.bound(playbackSpeed, 0.25, 4);
 
     FlxG.sound.music.pitch = playbackSpeed;
     vocals.pitch = playbackSpeed;
@@ -3246,7 +3126,7 @@ class ChartingState extends MusicBeatState
         + "\nSection: "
         + curSec
         + "\n\nBeat: "
-        + Std.string(curDecBeat).substring(0, 4)
+        + FlxMath.roundDecimal(curDecBeat, 2)
         + "\nStep: "
         + curStep
         + "\nBeat Snap: "
@@ -3335,6 +3215,32 @@ class ChartingState extends MusicBeatState
     refreshPresence();
     super.update(elapsed);
     idleMusic.update(elapsed);
+  }
+
+  function scrollQuantized(up:Bool, tween:Bool = false)
+  {
+    // leniency point, to help snap it exactly
+    final leniency:Float = 1.25;
+    
+    if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
+    FlxG.sound.music.pause();
+    updateCurStep();
+    resetBuddies();
+    lilBf.color = lilOpp.color = FlxColor.WHITE;
+
+    var beat:Float = curDecStep / 4;
+    var snap:Float = quantization / 4;
+
+    var targetBeat:Float = (up ? Math.ceil : Math.floor)(beat * snap + (up ? -1 : 1) * leniency) / snap;
+    var time = Conductor.beatToSeconds(targetBeat);
+    if (!tween)
+      FlxG.sound.music.time = time;
+    else
+    {
+      FlxTween.cancelTweensOf(FlxG.sound.music, ['time']);
+      FlxTween.tween(FlxG.sound.music, {time: time}, 0.1, {ease: FlxEase.circOut});
+    }
+    pauseAndSetVocalsTime();
   }
 
   function resetBuddies()
@@ -3762,36 +3668,6 @@ class ChartingState extends MusicBeatState
     updateNoteUI();
   }
 
-  function recalculateSteps(add:Float = 0):Int
-  {
-    var lastChange:BPMChangeEvent =
-      {
-        stepTime: 0,
-        songTime: 0,
-        bpm: 0
-      }
-
-    var time:Float = FlxG.sound.music.time;
-    var changes:Array<BPMChangeEvent> = Conductor.bpmChangeMap;
-    var low:Int = 0;
-    var high:Int = changes.length - 1;
-    while (low <= high)
-    {
-      var mid:Int = (low + high) >> 1;
-      if (time > changes[mid].songTime)
-      {
-        lastChange = changes[mid];
-        low = mid + 1;
-      } else
-        high = mid - 1;
-    }
-
-    curStep = lastChange.stepTime + Math.floor((time - lastChange.songTime + add) / (15000 / secBPM(curSec)));
-    updateBeat();
-
-    return curStep;
-  }
-
   function resetSection(songBeginning:Bool = false):Void
   {
     resetBuddies();
@@ -4147,7 +4023,7 @@ class ChartingState extends MusicBeatState
       note.sustainLength = daSus;
       note.noteType = i[3];
       note.animation.play(Note.colArray[daNoteInfo % 4] + 'Scroll');
-      if (ClientPrefs.enableColorShader) note.updateRGBColors();
+      if (ClientPrefs.enableColorShader && note.noteType == 'Hurt Note') note.updateRGBColors();
     } else
     { // Event note
       note.loadGraphic(Paths.image('eventArrow'));
