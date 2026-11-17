@@ -45,18 +45,34 @@ class ModSettingsSubState extends BaseOptionsMenu
 					opts
 				);
 
-				@:privateAccess
+				// just currently an stub
+				/*
+				if (optType == 'keybind' || optType == 'key')
 				{
-					newOption.getValue = function() {
-						final data = save.get(newOption.variable);
-						if (data == null) return newOption.defaultValue;
-						return data;
-					};
-
-					newOption.setValue = function(value:Dynamic) {
-						save.set(newOption.variable, value);
-					};
+					final kb = option.keyboard != null ? option.keyboard : 'NONE';
+					newOption.defaultValue = kb;
+					newOption.setValue(kb);
+					save.set(option.save, {
+						keyboard: kb,
+						gamepad: option.gamepad != null ? option.gamepad : 'NONE'
+					});
 				}
+				else
+				{
+				*/
+					@:privateAccess
+					{
+						newOption.getValue = function() {
+							final data = save.get(newOption.variable);
+							if (data == null) return newOption.defaultValue;
+							return data;
+						};
+
+						newOption.setValue = function(value:Dynamic) {
+							save.set(newOption.variable, value);
+						};
+					}
+				//}
 
 				// Optional extras
 				if (option.format != null) newOption.displayFormat = option.format;

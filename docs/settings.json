@@ -52,7 +52,7 @@
 		"save": "testKeybind",
 		"name": "Test Keybind",
 		"type": "keybind",
-		"description": "Custom key (keyboard only for now).",
+		"description": "Custom key (Currently non-functional).",
 		"keyboard": "T",
 		"gamepad": "RIGHT_TRIGGER"
 	}
