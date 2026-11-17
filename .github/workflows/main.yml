@@ -184,112 +184,113 @@ jobs:
         with:
           name: windowsBuild
           path: build/release/windows/bin
-    buildMacUniversal:
-        runs-on: macos-15
 
-        steps:
-          - uses: actions/checkout@main
-
-          - uses: krdlab/setup-haxe@master
-            with:
-              haxe-version: 4.3.7
-
-          - name: Restore Previous Cache
-            id: cache-build-macos-universal-restore
-            uses: actions/cache/restore@main
-            with:
-              path: |
-                .haxelib/
-                build/release/macos/haxe/
-              key: cache-macos-universal-build
-
-          - name: Install Haxelib
-            run: |
-              haxelib setup ~/haxelib
-              haxelib install hxcpp > /dev/null --quiet
-              haxelib install hxpkg --quiet
-              haxelib run hxpkg install --force
-
-          - name: Compile hxcpp
-            run: |
-              cd .haxelib/hxcpp/git/tools/run
-              haxe compile.hxml
-              cd ..
-              cd ./hxcpp
-              haxe compile.hxml
-              cd ../../../../..
-
-          - name: Build Intel (x86_64)
-            run: |
-              rm -f assets/preload/gameRenders/renderlol.bat
-              rm -rf build/release/macos/obj
-              haxelib run lime build mac -64 -D ${{ inputs.buildFlags || 'GITHUB_BUILD' }} -D HXCPP_M64
-              mkdir -p build/intel
-              cp -R build/release/macos/bin/*.app build/intel/
-
-          - name: Build ARM (arm64)
-            run: |
-              rm -rf build/release/macos/obj
-              haxelib run lime build mac -arm64 -D ${{ inputs.buildFlags || 'GITHUB_BUILD' }} -D HXCPP_ARM64
-              mkdir -p build/arm
-              cp -R build/release/macos/bin/*.app build/arm/
-
-          - name: Create Universal Binary with lipo
-            run: |
-              mkdir -p build/release/macos/bin
-              # Copy the ARM build bundle as our base structure
-              cp -R build/arm/*.app build/release/macos/bin/
+  buildMacUniversal:
+      runs-on: macos-15
+  
+      steps:
+        - uses: actions/checkout@main
+  
+        - uses: krdlab/setup-haxe@master
+          with:
+            haxe-version: 4.3.7
+  
+        - name: Restore Previous Cache
+          id: cache-build-macos-universal-restore
+          uses: actions/cache/restore@main
+          with:
+            path: |
+              .haxelib/
+              build/release/macos/haxe/
+            key: cache-macos-universal-build
+  
+        - name: Install Haxelib
+          run: |
+            haxelib setup ~/haxelib
+            haxelib install hxcpp > /dev/null --quiet
+            haxelib install hxpkg --quiet
+            haxelib run hxpkg install --force
+  
+        - name: Compile hxcpp
+          run: |
+            cd .haxelib/hxcpp/git/tools/run
+            haxe compile.hxml
+            cd ..
+            cd ./hxcpp
+            haxe compile.hxml
+            cd ../../../../..
+  
+        - name: Build Intel (x86_64)
+          run: |
+            rm -f assets/preload/gameRenders/renderlol.bat
+            rm -rf build/release/macos/obj
+            haxelib run lime build mac -64 -D ${{ inputs.buildFlags || 'GITHUB_BUILD' }} -D HXCPP_M64
+            mkdir -p build/intel
+            cp -R build/release/macos/bin/*.app build/intel/
+  
+        - name: Build ARM (arm64)
+          run: |
+            rm -rf build/release/macos/obj
+            haxelib run lime build mac -arm64 -D ${{ inputs.buildFlags || 'GITHUB_BUILD' }} -D HXCPP_ARM64
+            mkdir -p build/arm
+            cp -R build/release/macos/bin/*.app build/arm/
+  
+        - name: Create Universal Binary with lipo
+          run: |
+            mkdir -p build/release/macos/bin
+            # Copy the ARM build bundle as our base structure
+            cp -R build/arm/*.app build/release/macos/bin/
+            
+            # Dynamically detect the app bundle name
+            APP_NAME=$(basename build/release/macos/bin/*.app .app)
+            echo "Merging binaries into universal build for: $APP_NAME"
+            
+            # Use lipo to combine Intel and ARM executables into a single fat binary
+            lipo -create \
+              build/intel/${APP_NAME}.app/Contents/MacOS/${APP_NAME} \
+              build/arm/${APP_NAME}.app/Contents/MacOS/${APP_NAME} \
+              -output build/release/macos/bin/${APP_NAME}.app/Contents/MacOS/${APP_NAME}
               
-              # Dynamically detect the app bundle name
-              APP_NAME=$(basename build/release/macos/bin/*.app .app)
-              echo "Merging binaries into universal build for: $APP_NAME"
-              
-              # Use lipo to combine Intel and ARM executables into a single fat binary
-              lipo -create \
-                build/intel/${APP_NAME}.app/Contents/MacOS/${APP_NAME} \
-                build/arm/${APP_NAME}.app/Contents/MacOS/${APP_NAME} \
-                -output build/release/macos/bin/${APP_NAME}.app/Contents/MacOS/${APP_NAME}
-                
-              # Verify the result directly in the CI logs
-              lipo -info build/release/macos/bin/${APP_NAME}.app/Contents/MacOS/${APP_NAME}
-
-          - name: Clear Previous Cache
-            uses: actions/github-script@main
-            with:
-              script: |
-                try {
-                    const caches = await github.rest.actions.getActionsCacheList({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                    })
-                    if (typeof caches.data.actions_caches != null && caches.data.actions_caches.length > 0) {
-                        for (const cache of caches.data.actions_caches) {
-                            if (cache.key == "cache-macos-universal-build") {
-                                console.log('Clearing ' + cache.key + '...')
-                                await github.rest.actions.deleteActionsCacheById({
-                                    owner: context.repo.owner,
-                                    repo: context.repo.repo,
-                                    cache_id: cache.id,
-                                })
-                                console.log("Previous Cache Cleared!")
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.log(error.message);
-                }
-
-          - name: Save Current Cache
-            id: cache-build-macos-universal-save
-            uses: actions/cache/save@main
-            with:
-              path: |
-                .haxelib/
-                build/release/macos/haxe/
-              key: cache-macos-universal-build
-
-          - name: Publish Artifact
-            uses: actions/upload-artifact@main
-            with:
-              name: macBuild-universal
-              path: build/release/macos/bin
+            # Verify the result directly in the CI logs
+            lipo -info build/release/macos/bin/${APP_NAME}.app/Contents/MacOS/${APP_NAME}
+  
+        - name: Clear Previous Cache
+          uses: actions/github-script@main
+          with:
+            script: |
+              try {
+                  const caches = await github.rest.actions.getActionsCacheList({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                  })
+                  if (typeof caches.data.actions_caches != null && caches.data.actions_caches.length > 0) {
+                      for (const cache of caches.data.actions_caches) {
+                          if (cache.key == "cache-macos-universal-build") {
+                              console.log('Clearing ' + cache.key + '...')
+                              await github.rest.actions.deleteActionsCacheById({
+                                  owner: context.repo.owner,
+                                  repo: context.repo.repo,
+                                  cache_id: cache.id,
+                              })
+                              console.log("Previous Cache Cleared!")
+                          }
+                      }
+                  }
+              } catch (error) {
+                  console.log(error.message);
+              }
+  
+        - name: Save Current Cache
+          id: cache-build-macos-universal-save
+          uses: actions/cache/save@main
+          with:
+            path: |
+              .haxelib/
+              build/release/macos/haxe/
+            key: cache-macos-universal-build
+  
+        - name: Publish Artifact
+          uses: actions/upload-artifact@main
+          with:
+            name: macBuild-universal
+            path: build/release/macos/bin
