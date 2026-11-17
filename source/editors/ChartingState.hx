@@ -2029,7 +2029,6 @@ class ChartingState extends MusicBeatState
 
   var metronome:FlxUICheckBox;
   var mouseScrollingQuant:FlxUICheckBox;
-  var metronomeStepper:FlxUINumericStepper;
   var metronomeOffsetStepper:FlxUINumericStepper;
   var disableAutoScrolling:FlxUICheckBox;
   var lilBuddiesBox:FlxUICheckBox;
@@ -2187,9 +2186,7 @@ class ChartingState extends MusicBeatState
     if (FlxG.save.data.chart_metronome == null) FlxG.save.data.chart_metronome = false;
     metronome.checked = FlxG.save.data.chart_metronome;
 
-    metronomeStepper = new FlxUINumericStepper(15, 55, 5, _song.bpm, 1, 1500, 1);
-    metronomeOffsetStepper = new FlxUINumericStepper(metronomeStepper.x + 100, metronomeStepper.y, 25, 0, 0, 1000, 1);
-    blockPressWhileTypingOnStepper.push(metronomeStepper);
+    metronomeOffsetStepper = new FlxUINumericStepper(15, 55, 25, 0, 0, 1000, 1);
     blockPressWhileTypingOnStepper.push(metronomeOffsetStepper);
 
     disableAutoScrolling = new FlxUICheckBox(metronome.x + 120, metronome.y, null, null, "Disable Autoscroll (Not Recommended)", 120, function() {
@@ -2198,7 +2195,7 @@ class ChartingState extends MusicBeatState
     if (FlxG.save.data.chart_noAutoScroll == null) FlxG.save.data.chart_noAutoScroll = false;
     disableAutoScrolling.checked = FlxG.save.data.chart_noAutoScroll;
 
-    instVolume = new FlxUINumericStepper(metronomeStepper.x, 250, 0.1, 1, 0, 1, 1);
+    instVolume = new FlxUINumericStepper(metronomeOffsetStepper.x, 250, 0.1, 1, 0, 1, 1);
     instVolume.value = FlxG.sound.music.volume;
     instVolume.name = 'inst_volume';
     blockPressWhileTypingOnStepper.push(instVolume);
@@ -2227,14 +2224,14 @@ class ChartingState extends MusicBeatState
     tab_group_chart.add(sliderRate);
     #end
 
-    soundEffectsCheck = new FlxUICheckBox(metronomeOffsetStepper.x + 70, metronomeOffsetStepper.y, null, null, "Sound Effects", 100);
+    soundEffectsCheck = new FlxUICheckBox(metronomeOffsetStepper.x + 90, metronomeOffsetStepper.y, null, null, "Sound Effects", 100);
     if (FlxG.save.data.soundEffects == null) FlxG.save.data.soundEffects = true;
     soundEffectsCheck.checked = FlxG.save.data.soundEffects;
     soundEffectsCheck.callback = function() {
       FlxG.save.data.soundEffects = soundEffectsCheck.checked;
     };
 
-    idleMusicCheck = new FlxUICheckBox(metronomeOffsetStepper.x + 70, metronomeOffsetStepper.y - 20, null, null, "Idle Music", 100);
+    idleMusicCheck = new FlxUICheckBox(metronomeOffsetStepper.x + 90, metronomeOffsetStepper.y - 20, null, null, "Idle Music", 100);
     if (FlxG.save.data.idleMusicAllowed == null) FlxG.save.data.idleMusicAllowed = true;
     idleMusicCheck.checked = FlxG.save.data.idleMusicAllowed;
     idleMusicCheck.callback = function() {
@@ -2251,8 +2248,6 @@ class ChartingState extends MusicBeatState
           idleMusic.pauseMusic();
       }
     };
-
-    tab_group_chart.add(new FlxText(metronomeStepper.x, metronomeStepper.y - 15, 0, 'BPM:'));
     tab_group_chart.add(new FlxText(metronomeOffsetStepper.x, metronomeOffsetStepper.y - 15, 0, 'Offset (ms):'));
     tab_group_chart.add(new FlxText(instVolume.x, instVolume.y - 15, 0, 'Inst Volume'));
     tab_group_chart.add(new FlxText(voicesVolume.x, voicesVolume.y - 15, 0, 'Main Vocals'));
@@ -2260,7 +2255,6 @@ class ChartingState extends MusicBeatState
     tab_group_chart.add(new FlxText(hitsoundVolume.x, hitsoundVolume.y - 15, 0, 'Hitsound Volume'));
     tab_group_chart.add(metronome);
     tab_group_chart.add(disableAutoScrolling);
-    tab_group_chart.add(metronomeStepper);
     tab_group_chart.add(metronomeOffsetStepper);
     #if desktop
     tab_group_chart.add(waveformUseInstrumental);
@@ -2981,13 +2975,18 @@ class ChartingState extends MusicBeatState
         }
       }
 
-      if (FlxG.mouse.wheel != 0 == !FlxG.keys.pressed.CONTROL)
+      if (FlxG.mouse.wheel != 0 && !FlxG.keys.pressed.CONTROL)
       {
         if (idleMusic != null && idleMusic.music != null && idleMusicAllow) idleMusic.unpauseMusic(2);
         FlxG.sound.music.pause();
         resetBuddies();
         lilBf.color = lilOpp.color = FlxColor.WHITE;
-        if (!mouseQuant) FlxG.sound.music.time -= (FlxG.mouse.wheel * Conductor.stepCrochet * 0.8);
+        
+        if (!mouseQuant)
+        {
+          FlxG.sound.music.time -= (FlxG.mouse.wheel * Conductor.stepCrochet * 0.8);
+          pauseAndSetVocalsTime();
+        }
         else scrollQuantized(FlxG.mouse.wheel > 0);
       }
 
@@ -3200,17 +3199,9 @@ class ChartingState extends MusicBeatState
       }
     });
 
-    if (metronome.checked && lastConductorPos != Conductor.songPosition)
-    {
-      var metroInterval:Float = 60 / metronomeStepper.value;
-      var metroStep:Int = Math.floor(((Conductor.songPosition + metronomeOffsetStepper.value) / metroInterval) / 1000);
-      var lastMetroStep:Int = Math.floor(((lastConductorPos + metronomeOffsetStepper.value) / metroInterval) / 1000);
-      if (metroStep != lastMetroStep)
-      {
+    if (metronome.checked && Math.floor(Conductor.getBeat(lastConductorPos + metronomeOffsetStepper.value)) != Math.floor(Conductor.getBeat(Conductor.songPosition + metronomeOffsetStepper.value)))
         FlxG.sound.play(Paths.sound('Metronome_Tick'));
-        // trace('Ticked');
-      }
-    }
+
     lastConductorPos = Conductor.songPosition;
     refreshPresence();
     super.update(elapsed);
