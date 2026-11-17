@@ -26,6 +26,26 @@ import play.objects.*;
 import shaders.ErrorHandledShader;
 #end
 
+// imma gay fuck
+typedef TimeBarStyle = {
+	var sprite:String;           // BG graphic
+	var yDiv:Int;                // BG y
+	var divisions:Int;           // FlxBar.numDivisions
+	var fill:FlxBar->Void;       // colors the bar
+	var ?swapGraphic:String;     // graphic loaded onto the BG after the bar is sized
+	var ?center:Bool;
+	var ?bgColor:FlxColor;
+	var ?behindBG:Bool;          // draw the bar under the BG (Dave Engine)
+	var ?antialias:Bool;
+}
+
+typedef TimeTxtStyle = {
+	var font:String;
+	var size:Int;
+	var border:Float;
+	var ?align:FlxTextAlign; // defaults to CENTER
+}
+
 class PlayState extends MusicBeatState
 {
 	private var singAnimations:Array<String> = ['singLEFT', 'singDOWN', 'singUP', 'singRIGHT'];
@@ -740,8 +760,12 @@ class PlayState extends MusicBeatState
 		}
 
 		shouldDrainHealth = (opponentDrain || (opponentChart ? boyfriend.healthDrain : dad.healthDrain));
-		if (!opponentDrain && !Math.isNaN((opponentChart ? boyfriend : dad).drainAmount) && (opponentChart ? boyfriend : dad).drainFloor != 0) healthDrainAmount = opponentChart ? boyfriend.drainAmount : dad.drainAmount;
-		if (!opponentDrain && !Math.isNaN((opponentChart ? boyfriend : dad).drainFloor) && (opponentChart ? boyfriend : dad).drainFloor != 0) healthDrainFloor = opponentChart ? boyfriend.drainFloor : dad.drainFloor;
+		if (!opponentDrain)
+		{
+			final drainer = opponentChart ? boyfriend : dad;
+			if (!Math.isNaN(drainer.drainAmount) && drainer.drainAmount != 0) healthDrainAmount = drainer.drainAmount;
+			if (!Math.isNaN(drainer.drainFloor) && drainer.drainFloor != 0) healthDrainFloor = drainer.drainFloor;
+		}
 
 		var camPos:FlxPoint = FlxPoint.get(girlfriendCameraOffset[0], girlfriendCameraOffset[1]);
 		if(gf != null)
@@ -756,12 +780,12 @@ class PlayState extends MusicBeatState
 				gf.visible = false;
 		}
 
-		var file:String = Paths.json(songName + '/dialogue'); //Checks for json/Psych Engine dialogue
+		final file:String = Paths.json(songName + '/dialogue'); //Checks for json/Psych Engine dialogue
 		if (OpenFlAssets.exists(file)) {
 			dialogueJson = DialogueBoxPsych.parseDialogue(file);
 		}
 
-		var file:String = Paths.txt(songName + '/' + songName + 'Dialogue'); //Checks for vanilla/Senpai dialogue
+		final file:String = Paths.txt(songName + '/' + songName + 'Dialogue'); //Checks for vanilla/Senpai dialogue
 		if (OpenFlAssets.exists(file)) {
 			dialogue = CoolUtil.coolTextFile(file);
 		}
@@ -771,203 +795,17 @@ class PlayState extends MusicBeatState
 		popUpGroup = new FlxTypedSpriteGroup<Popup>();
 		add(popUpGroup);
 
-		var showTime:Bool = (ClientPrefs.timeBarType != 'Disabled');
+		final showTime:Bool = (ClientPrefs.timeBarType != 'Disabled');
 
 		timeTxt = new FlxText(STRUM_X + (FlxG.width / 2) - 248, 19, 400, "", 32);
 		timeTxt.scrollFactor.set();
 		timeTxt.alpha = 0;
-		timeTxt.borderSize = 2;
 		timeTxt.visible = showTime;
-		if(ClientPrefs.downScroll) timeTxt.y = FlxG.height - 44;
-		switch (ClientPrefs.timeBarStyle)
-		{
-			case 'Vanilla':
-				timeTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 2;
-
-			case 'Leather Engine':
-				timeTxt.setFormat(Paths.font("vcr.ttf"), 18, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 2;
-
-			case 'JS Engine':
-				timeTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 3;
-
-			case 'TGT V4':
-				timeTxt.setFormat(Paths.font("calibri.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 2;
-
-			case 'Kade Engine':
-				timeTxt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 1;
-
-			case 'Dave Engine':
-				timeTxt.setFormat(Paths.font("comic.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 2;
-
-			case 'Doki Doki+':
-				timeTxt.setFormat(Paths.font("Aller_rg.ttf"), 32, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 2;
-
-			case 'VS Impostor':
-				timeTxt.x = STRUM_X + (FlxG.width / 2) - 585;
-				timeTxt.setFormat(Paths.font("vcr.ttf"), 14, FlxColor.WHITE, LEFT, OUTLINE, FlxColor.BLACK);
-				timeTxt.borderSize = 1;
-		}
-
-
-		if(ClientPrefs.timeBarType == 'Song Name')
-		{
-			timeTxt.text = SONG.song;
-		}
+		if (ClientPrefs.timeBarType == 'Song Name') timeTxt.text = SONG.song;
 		updateTime = showTime;
 
-		timeBarBG = new AttachedSprite('timeBar');
-		timeBarBG.x = timeTxt.x;
-		timeBarBG.y = timeTxt.y + (timeTxt.height / 4);  // Adjust y position if needed for specific timeBarTypes
-		timeBarBG.scrollFactor.set();
-		timeBarBG.alpha = 0;
-		timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-		timeBarBG.xAdd = -4;
-		timeBarBG.yAdd = -4;
-		add(timeBarBG);
-
-		timeBar = new FlxBar(timeBarBG.x + 4, timeBarBG.y + 4, LEFT_TO_RIGHT, Std.int(timeBarBG.width - 8), Std.int(timeBarBG.height - 8), this,
-			'songPercent', 0, 1);
-		timeBar.scrollFactor.set();
-		timeBar.numDivisions = 800; // Adjust numDivisions if needed for performance
-		timeBar.alpha = 0;
-		timeBar.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-		if (ClientPrefs.timeBarStyle != 'Dave Engine') add(timeBar);
-		timeBarBG.sprTracker = timeBar;
-
-		switch (ClientPrefs.timeBarStyle) {
-			case 'VS Impostor':
-				timeBarBG.loadGraphic(Paths.image('impostorTimeBar'));
-				timeBar.createFilledBar(0xFF2e412e, 0xFF44d844);
-				timeTxt.x += 10;
-				timeTxt.y += 4;
-
-			case 'Vanilla', 'TGT V4':
-				timeBarBG.loadGraphic(Paths.image('timeBar'));
-				timeBar.createFilledBar(FlxColor.BLACK, FlxColor.WHITE);
-				timeBarBG.color = FlxColor.BLACK;
-
-			case 'Leather Engine':
-				if (timeBarBG != null && timeBar != null){
-					timeBarBG.destroy();
-					timeBar.destroy();
-				}
-				timeBarBG = new AttachedSprite('editorHealthBar');
-				timeBarBG.x = timeTxt.x;
-				timeBarBG.y = timeTxt.y + (timeTxt.height / 8);
-				timeBarBG.scrollFactor.set();
-				timeBarBG.alpha = 0;
-				timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				timeBarBG.color = FlxColor.BLACK;
-				timeBarBG.xAdd = -4;
-				timeBarBG.yAdd = -4;
-				timeBarBG.screenCenter(X);
-				add(timeBarBG);
-
-				timeBar = new FlxBar(timeBarBG.x + 4, timeBarBG.y + 4, LEFT_TO_RIGHT, Std.int(timeBarBG.width - 8), Std.int(timeBarBG.height - 8), this,
-				'songPercent', 0, 1);
-				timeBar.scrollFactor.set();
-				timeBar.createFilledBar(FlxColor.BLACK, FlxColor.WHITE);
-				timeBar.numDivisions = 400; //How much lag this causes?? Should i tone it down to idk, 400 or 200?
-				timeBar.alpha = 0;
-				timeBar.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				add(timeBar);
-				timeBarBG.sprTracker = timeBar;
-
-			case 'Kade Engine':
-				if (timeBarBG != null && timeBar != null){
-					timeBarBG.destroy();
-					timeBar.destroy();
-				}
-				timeBarBG = new AttachedSprite('editorHealthBar');
-				timeBarBG.x = timeTxt.x;
-				timeBarBG.y = timeTxt.y + (timeTxt.height / 8);
-				timeBarBG.scrollFactor.set();
-				timeBarBG.alpha = 0;
-				timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				timeBarBG.color = FlxColor.BLACK;
-				timeBarBG.xAdd = -4;
-				timeBarBG.yAdd = -4;
-				timeBarBG.screenCenter(X);
-				add(timeBarBG);
-
-				timeBar = new FlxBar(timeBarBG.x + 4, timeBarBG.y + 4, LEFT_TO_RIGHT, Std.int(timeBarBG.width - 8), Std.int(timeBarBG.height - 8), this,
-				'songPercent', 0, 1);
-				timeBar.scrollFactor.set();
-				timeBar.createFilledBar(FlxColor.GRAY, FlxColor.LIME);
-				timeBar.numDivisions = 800; //How much lag this causes?? Should i tone it down to idk, 400 or 200?
-				timeBar.alpha = 0;
-				timeBar.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				add(timeBar);
-				timeBarBG.sprTracker = timeBar;
-
-			case 'Dave Engine':
-				if (timeBarBG != null && timeBar != null){
-					timeBarBG.destroy();
-					timeBar.destroy();
-				}
-				timeBarBG = new AttachedSprite('DnBTimeBar');
-				timeBarBG.screenCenter(X);
-				timeBarBG.y = timeTxt.y + (timeTxt.height / 4);
-				timeBarBG.antialiasing = true;
-				timeBarBG.scrollFactor.set();
-				timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				timeBarBG.xAdd = -4;
-				timeBarBG.yAdd = -4;
-				add(timeBarBG);
-
-				timeBar = new FlxBar(timeBarBG.x + 4, timeBarBG.y + 4, LEFT_TO_RIGHT, Std.int(timeBarBG.width - 8), Std.int(timeBarBG.height - 8), this,
-				'songPercent', 0, 1);
-				timeBar.scrollFactor.set();
-				timeBar.numDivisions = 800; //How much lag this causes?? Should i tone it down to idk, 400 or 200?
-				timeBar.alpha = 0;
-				timeBar.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				timeBarBG.sprTracker = timeBar;
-				timeBar.createFilledBar(FlxColor.GRAY, FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]));
-				insert(members.indexOf(timeBarBG), timeBar);
-
-			case 'Doki Doki+':
-				timeBarBG.loadGraphic(Paths.image("dokiTimeBar"));
-				timeBarBG.screenCenter(X);
-				timeBar.createGradientBar([FlxColor.TRANSPARENT], [FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2]), FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2])]);
-
-			case 'JS Engine':
-				if (timeBarBG != null && timeBar != null){
-					timeBarBG.destroy();
-					timeBar.destroy();
-				}
-				timeBarBG = new AttachedSprite('healthBar');
-				timeBarBG.screenCenter(X);
-				timeBarBG.x = timeTxt.x;
-				timeBarBG.y = timeTxt.y + (timeTxt.height / 8);
-				timeBarBG.scrollFactor.set();
-				timeBarBG.alpha = 0;
-				timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				timeBarBG.color = FlxColor.BLACK;
-				timeBarBG.xAdd = -4;
-				timeBarBG.yAdd = -4;
-				timeBarBG.screenCenter(X);
-				add(timeBarBG);
-
-				timeBar = new FlxBar(timeBarBG.x + 4, timeBarBG.y + 4, LEFT_TO_RIGHT, Std.int(timeBarBG.width - 8), Std.int(timeBarBG.height - 8), this,
-				'songPercent', 0, 1);
-				timeBar.scrollFactor.set();
-				timeBar.numDivisions = 1000; //How much lag this causes?? Should i tone it down to idk, 400 or 200?
-				timeBar.alpha = 0;
-				timeBar.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
-				timeBarBG.sprTracker = timeBar;
-				timeBar.createGradientBar([FlxColor.TRANSPARENT], [FlxColor.fromRGB(boyfriend.healthColorArray[0], boyfriend.healthColorArray[1], boyfriend.healthColorArray[2]), FlxColor.fromRGB(dad.healthColorArray[0], dad.healthColorArray[1], dad.healthColorArray[2])]);
-			add(timeBar);
-		}
-		add(timeTxt);
-
-		timeBarBG.visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
+		styleTimeTxt();
+		createTimeBar(showTime);
 
 		energyBarBG = new AttachedSprite('timeBar');
 		energyBarBG.x = FlxG.width * 0.81;
@@ -1033,16 +871,13 @@ class PlayState extends MusicBeatState
 		playerStrums = new FlxTypedGroup<StrumNote>();
 		opponentStrums = new FlxTypedGroup<StrumNote>();
 
-		// trace ('Loading chart...');
-
 		if (dad.flixelTrail && dad.trailLength != null && dad.trailDelay != null && dad.trailAlpha != null && dad.trailDiff != null)
 		{
 			final dadTrail = new FlxTrail(dad, null, dad.trailLength, dad.trailDelay, dad.trailAlpha, dad.trailDiff); // nice //target, graphic, length, delay, alpha, diff
 			insert(members.indexOf(dadGroup) - 1, dadTrail);
 		}
 
-		if (boyfriend.flixelTrail && boyfriend.trailLength != null && boyfriend.trailDelay != null && boyfriend.trailAlpha != null
-			&& boyfriend.trailDiff != null)
+		if (boyfriend.flixelTrail && boyfriend.trailLength != null && boyfriend.trailDelay != null && boyfriend.trailAlpha != null && boyfriend.trailDiff != null)
 		{
 			final bfTrail = new FlxTrail(boyfriend, null, boyfriend.trailLength, boyfriend.trailDelay, boyfriend.trailAlpha, boyfriend.trailDiff); // nice
 			insert(members.indexOf(boyfriendGroup) - 1, bfTrail);
@@ -2187,6 +2022,86 @@ class PlayState extends MusicBeatState
 
 		callOnLuas('onUpdateScore', [miss]);
 	}
+	
+	function styleTimeTxt():Void
+	{
+		if (ClientPrefs.downScroll) timeTxt.y = FlxG.height - 44;
+
+		final s:TimeTxtStyle = switch (ClientPrefs.timeBarStyle) {
+			case 'Vanilla':      {font: 'vcr.ttf',      size: 32, border: 2};
+			case 'Leather Engine': {font: 'vcr.ttf',    size: 18, border: 2};
+			case 'JS Engine':    {font: 'vcr.ttf',      size: 20, border: 3};
+			case 'TGT V4':       {font: 'calibri.ttf',  size: 32, border: 2};
+			case 'Kade Engine':  {font: 'vcr.ttf',      size: 16, border: 1};
+			case 'Dave Engine':  {font: 'comic.ttf',    size: 32, border: 2};
+			case 'Doki Doki+':   {font: 'Aller_rg.ttf', size: 32, border: 2};
+			case 'VS Impostor':  {font: 'vcr.ttf',      size: 14, border: 1, align: LEFT};
+			default: null;
+		}
+		if (s == null) return;
+
+		timeTxt.setFormat(Paths.font(s.font), s.size, FlxColor.WHITE, s?.align ?? CENTER, OUTLINE, FlxColor.BLACK);
+		timeTxt.borderSize = s.border;
+		if (ClientPrefs.timeBarStyle == 'VS Impostor') timeTxt.x = STRUM_X + (FlxG.width / 2) - 585;
+	}
+	
+	function createTimeBar(showTime:Bool):Void
+	{
+		final rgb = (c:Character) -> FlxColor.fromRGB(c.healthColorArray[0], c.healthColorArray[1], c.healthColorArray[2]);
+		final blackWhite = (bar:FlxBar) -> bar.createFilledBar(FlxColor.BLACK, FlxColor.WHITE);
+
+		final s:TimeBarStyle = switch (ClientPrefs.timeBarStyle) {
+			case 'VS Impostor':
+				{sprite: 'timeBar', swapGraphic: 'impostorTimeBar', yDiv: 4, divisions: 800,
+				fill: bar -> bar.createFilledBar(0xFF2e412e, 0xFF44d844)};
+			case 'Leather Engine':
+				{sprite: 'editorHealthBar', yDiv: 8, divisions: 400, center: true,
+				bgColor: FlxColor.BLACK, fill: blackWhite};
+			case 'Kade Engine':
+				{sprite: 'editorHealthBar', yDiv: 8, divisions: 800, center: true,
+				bgColor: FlxColor.BLACK, fill: bar -> bar.createFilledBar(FlxColor.GRAY, FlxColor.LIME)};
+			case 'Dave Engine':
+				{sprite: 'DnBTimeBar', yDiv: 4, divisions: 800, center: true, antialias: true, behindBG: true,
+				fill: bar -> bar.createFilledBar(FlxColor.GRAY, rgb(dad))};
+			case 'Doki Doki+':
+				{sprite: 'timeBar', swapGraphic: 'dokiTimeBar', yDiv: 4, divisions: 800,
+				fill: bar -> bar.createGradientBar([FlxColor.TRANSPARENT], [rgb(dad), rgb(boyfriend)])};
+			case 'JS Engine':
+				{sprite: 'healthBar', yDiv: 8, divisions: 1000, center: true, bgColor: FlxColor.BLACK,
+				fill: bar -> bar.createGradientBar([FlxColor.TRANSPARENT], [rgb(boyfriend), rgb(dad)])};
+			default: // Vanilla, TGT V4, and anything unrecognised
+				{sprite: 'timeBar', swapGraphic: 'timeBar', yDiv: 4, divisions: 800,
+				bgColor: FlxColor.BLACK, fill: blackWhite};
+		}
+
+		final visible = showTime && !ClientPrefs.timeBarType.contains('(No Bar)');
+
+		timeBarBG = new AttachedSprite(s.sprite);
+		timeBarBG.x = timeTxt.x;
+		timeBarBG.y = timeTxt.y + timeTxt.height / s.yDiv;
+		timeBarBG.scrollFactor.set();
+		timeBarBG.alpha = 0;
+		timeBarBG.visible = visible;
+		timeBarBG.xAdd = timeBarBG.yAdd = -4;
+		if (s.center == true) timeBarBG.screenCenter(X);
+		timeBarBG.antialiasing = s.antialias ? true : ClientPrefs.globalAntialiasing;
+
+		timeBar = new FlxBar(timeBarBG.x + 4, timeBarBG.y + 4, LEFT_TO_RIGHT, Std.int(timeBarBG.width - 8), Std.int(timeBarBG.height - 8), this, 'songPercent', 0, 1);
+		timeBar.scrollFactor.set();
+		timeBar.numDivisions = s.divisions;
+		timeBar.alpha = 0;
+		timeBar.visible = visible;
+		s.fill(timeBar);
+		timeBarBG.sprTracker = timeBar;
+
+		if (s.swapGraphic != null) timeBarBG.loadGraphic(Paths.image(s.swapGraphic));
+		if (s.bgColor != null) timeBarBG.color = s.bgColor;
+		if (ClientPrefs.timeBarStyle == 'VS Impostor') { timeTxt.x += 10; timeTxt.y += 4; }
+
+		add(timeBarBG);
+		if (s.behindBG == true) insert(members.indexOf(timeBarBG), timeBar); else add(timeBar);
+		add(timeTxt);
+	}
 
 	public function setSongTime(time:Float)
 	{
@@ -2351,7 +2266,7 @@ class PlayState extends MusicBeatState
 
 		curSong = SONG.song;
 
-		var diff:String = (SONG.specialAudioName.length > 1 ? SONG.specialAudioName : CoolUtil.difficultyString()).toLowerCase();
+		final diff:String = (SONG.specialAudioName.length > 1 ? SONG.specialAudioName : CoolUtil.difficultyString()).toLowerCase();
 
 		if (SONG.windowName != null && SONG.windowName != '')
 			MusicBeatState.windowNamePrefix = SONG.windowName;
@@ -2362,10 +2277,10 @@ class PlayState extends MusicBeatState
 		{
 			if (SONG.needsVoices)
 			{
-				var playerVocals = Paths.voices(curSong, diff, (boyfriend.vocalsFile == null || boyfriend.vocalsFile.length < 1) ? "Player" : boyfriend.vocalsFile);
+				final playerVocals = Paths.voices(curSong, diff, (boyfriend.vocalsFile == null || boyfriend.vocalsFile.length < 1) ? "Player" : boyfriend.vocalsFile);
 				vocals.loadEmbedded(playerVocals != null ? playerVocals : Paths.voices(curSong, diff));
 
-				var oppVocals = Paths.voices(curSong, diff, (dad.vocalsFile == null || dad.vocalsFile.length < 1) ? "Opponent" : dad.vocalsFile);
+				final oppVocals = Paths.voices(curSong, diff, (dad.vocalsFile == null || dad.vocalsFile.length < 1) ? "Opponent" : dad.vocalsFile);
 				if(oppVocals != null) opponentVocals.loadEmbedded(oppVocals);
 			}
 		}
