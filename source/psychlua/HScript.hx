@@ -58,7 +58,7 @@ class HScript
 		interp.variables.set('Character', Character);
 		interp.variables.set('Alphabet', Alphabet);
 		interp.variables.set('CustomSubstate', psychlua.CustomSubstate);
-		#if (sys)
+		#if SHADERS_ALLOWED
 		interp.variables.set('FlxRuntimeShader', flixel.addons.display.FlxRuntimeShader);
 		#end
 		interp.variables.set('ShaderFilter', openfl.filters.ShaderFilter);
@@ -85,7 +85,7 @@ class HScript
 		});
 		interp.variables.set('debugPrint', function(text:String, ?color:FlxColor = null) {
 			if(color == null) color = FlxColor.WHITE;
-			LuaUtils.luaTrace(parentLua.lua, text, true, false, color);
+			LuaUtils.luaTrace(text, true, false, color);
 		});
 
 		// For adding your own callbacks
@@ -118,7 +118,7 @@ class HScript
 			}
 			catch (e:Dynamic) {
 				FunkinLua.lastCalledScript = parent;
-				LuaUtils.luaTrace(parentLua.lua, parentLua.scriptName + ":" + parentLua.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
+				LuaUtils.luaTrace(parentLua.scriptName + ":" + parentLua.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
 			}
 		});
 		interp.variables.set('parentLua', parentLua);
@@ -146,7 +146,7 @@ class HScript
 		}
 		catch(e:Exception)
 		{
-			LuaUtils.luaTrace(parentLua.lua, parentLua.scriptName + ":" + parentLua.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
+			LuaUtils.luaTrace(parentLua.scriptName + ":" + parentLua.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
 			return null;
 		}
 	}
@@ -163,7 +163,7 @@ class HScript
 				try {
 					return Reflect.callMethod(null, interp.variables.get(funcToRun), funcArgs);
 				}
-				catch(e) LuaUtils.luaTrace(parentLua.lua, parentLua.scriptName + ":" + parentLua.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
+				catch(e) LuaUtils.luaTrace(parentLua.scriptName + ":" + parentLua.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
 			}
 		}
 		return null;
@@ -190,10 +190,10 @@ class HScript
 				retVal = funk.hscript.execute(codeToRun, funcToRun, funcArgs);
 			}
 			catch (e:Dynamic) {
-				LuaUtils.luaTrace(funk.lua, funk.scriptName + ":" + funk.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
+				LuaUtils.luaTrace(funk.scriptName + ":" + funk.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
 			}
 			#else
-			LuaUtils.luaTrace(funk.lua, "runHaxeCode: HScript isn't supported on this platform!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("runHaxeCode: HScript isn't supported on this platform!", false, false, FlxColor.RED);
 			#end
 
 			trace('runHaxeCode added');
@@ -209,11 +209,11 @@ class HScript
 			}
 			catch(e:Exception)
 			{
-				LuaUtils.luaTrace(funk.lua, Std.string(e));
+				LuaUtils.luaTrace(Std.string(e));
 				return null;
 			}
 			#else
-			LuaUtils.luaTrace(funk.lua, "runHaxeFunction: HScript isn't supported on this platform!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("runHaxeFunction: HScript isn't supported on this platform!", false, false, FlxColor.RED);
 			#end
 		});
 
@@ -228,10 +228,10 @@ class HScript
 				funk.hscript.variables.set(libName, Type.resolveClass(str + libName));
 			}
 			catch (e:Dynamic) {
-				LuaUtils.luaTrace(funk.lua, funk.scriptName + ":" + funk.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
+				LuaUtils.luaTrace(funk.scriptName + ":" + funk.lastCalledFunction + " - " + e, false, false, FlxColor.RED);
 			}
 			#else
-			LuaUtils.luaTrace(funk.lua, "addHaxeLibrary: HScript isn't supported on this platform!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("addHaxeLibrary: HScript isn't supported on this platform!", false, false, FlxColor.RED);
 			#end
 		});
 		#end

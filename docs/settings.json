@@ -1,0 +1,59 @@
+[
+	{
+		"save": "testBool",
+		"name": "Test Bool",
+		"type": "bool",
+		"description": "A simple on/off checkbox.",
+		"value": true
+	},
+	{
+		"save": "testInt",
+		"name": "Test Integer",
+		"type": "int",
+		"description": "Whole numbers only.",
+		"value": 5,
+		"min": 0,
+		"max": 20,
+		"step": 1
+	},
+	{
+		"save": "testFloat",
+		"name": "Test Float",
+		"type": "float",
+		"description": "Numbers with decimals.",
+		"value": 1.5,
+		"min": 0,
+		"max": 10,
+		"step": 0.5,
+		"decimals": 1,
+		"scroll": 2
+	},
+	{
+		"save": "testPercent",
+		"name": "Test Percent",
+		"type": "percent",
+		"description": "Displayed as a percentage.",
+		"value": 0.75,
+		"min": 0,
+		"max": 1,
+		"step": 0.05,
+		"decimals": 2
+	},
+	{
+		"save": "testString",
+		"name": "Test String",
+		"type": "string",
+		"description": "Cycle through these options.",
+		"value": "Medium",
+		"options": ["Low", "Medium", "High", "Ultra"],
+		"format": "%v quality"
+	},
+	{
+		"save": "testKeybind",
+		"name": "Test Keybind",
+		"type": "keybind",
+		"description": "Custom key (keyboard only for now).",
+		"keyboard": "T",
+		"gamepad": "RIGHT_TRIGGER"
+	}
+]

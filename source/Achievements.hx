@@ -268,7 +268,7 @@ class Achievements {
 		{
 			if(!achievements.exists(name))
 			{
-				LuaUtils.luaTrace(lua, 'getAchievementScore: Couldnt find achievement: $name', false, false, FlxColor.RED);
+				LuaUtils.luaTrace('getAchievementScore: Couldnt find achievement: $name', false, false, FlxColor.RED);
 				return -1;
 			}
 			return getScore(name);
@@ -277,7 +277,7 @@ class Achievements {
 		{
 			if(!achievements.exists(name))
 			{
-				LuaUtils.luaTrace(lua, 'setAchievementScore: Couldnt find achievement: $name', false, false, FlxColor.RED);
+				LuaUtils.luaTrace('setAchievementScore: Couldnt find achievement: $name', false, false, FlxColor.RED);
 				return -1;
 			}
 			return setScore(name, value, saveIfNotUnlocked);
@@ -286,7 +286,7 @@ class Achievements {
 		{
 			if(!achievements.exists(name))
 			{
-				LuaUtils.luaTrace(lua, 'addAchievementScore: Couldnt find achievement: $name', false, false, FlxColor.RED);
+				LuaUtils.luaTrace('addAchievementScore: Couldnt find achievement: $name', false, false, FlxColor.RED);
 				return -1;
 			}
 			return addScore(name, value, saveIfNotUnlocked);
@@ -295,7 +295,7 @@ class Achievements {
 		{
 			if(!achievements.exists(name))
 			{
-				LuaUtils.luaTrace(lua, 'unlockAchievement: Couldnt find achievement: $name', false, false, FlxColor.RED);
+				LuaUtils.luaTrace('unlockAchievement: Couldnt find achievement: $name', false, false, FlxColor.RED);
 				return null;
 			}
 			return unlock(name);
@@ -304,7 +304,7 @@ class Achievements {
 		{
 			if(!achievements.exists(name))
 			{
-				LuaUtils.luaTrace(lua, 'isAchievementUnlocked: Couldnt find achievement: $name', false, false, FlxColor.RED);
+				LuaUtils.luaTrace('isAchievementUnlocked: Couldnt find achievement: $name', false, false, FlxColor.RED);
 				return null;
 			}
 			return isUnlocked(name);

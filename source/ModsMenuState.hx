@@ -8,7 +8,7 @@ import lime.utils.Assets;
 import haxe.Json;
 
 import flixel.util.FlxSpriteUtil;
-// import options.ModSettingsSubState;
+import options.ModSettingsSubState;
 import flixel.addons.transition.FlxTransitionableState;
 
 class ModsMenuState extends MusicBeatState
@@ -22,7 +22,6 @@ class ModsMenuState extends MusicBeatState
 
 	var bgList:FlxSprite;
 	var buttonReload:MenuButton;
-	//var buttonModFolder:MenuButton;
 	var buttonEnableAll:MenuButton;
 	var buttonDisableAll:MenuButton;
 	var buttons:Array<MenuButton> = [];
@@ -36,7 +35,7 @@ class ModsMenuState extends MusicBeatState
 	var curSelectedMod:Int = 0;
 	
 	var hoveringOnMods:Bool = true;
-	var curSelectedButton:Int = 0; ///-1 = Enable/Disable All, -2 = Reload
+	var curSelectedButton:Int = 0; //-1 = Enable/Disable All, -2 = Reload
 	var modNameInitialY:Float = 0;
 
 	var noModsSine:Float = 0;
@@ -89,7 +88,6 @@ class ModsMenuState extends MusicBeatState
 		var mod:ModItem = modsGroup.members[curSelectedMod];
 		if(mod != null) bg.color = mod.bgColor;
 
-		//
 		var buttonX = bgList.x;
 		var buttonWidth = Std.int(bgList.width);
 		var buttonHeight = 80;
@@ -145,7 +143,7 @@ class ModsMenuState extends MusicBeatState
 			buttonDisableAll.visible = buttonDisableAll.enabled = false;
 			buttonEnableAll.visible = true;
 
-			var myX = bgList.x + bgList.width + 20;
+			final myX = bgList.x + bgList.width + 20;
 			noModsTxt = new FlxText(myX, 0, FlxG.width - myX - 20, "NO MODS INSTALLED\nPRESS BACK TO EXIT OR INSTALL A MOD", 48);
 			if(FlxG.random.bool(0.1)) noModsTxt.text += '\nBITCH.'; //meanie
 			noModsTxt.setFormat(Paths.font("vcr.ttf"), 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -153,7 +151,7 @@ class ModsMenuState extends MusicBeatState
 			add(noModsTxt);
 			noModsTxt.screenCenter(Y);
 
-			var txt = new FlxText(bgList.x + 15, bgList.y + 15, bgList.width - 30, "No Mods found.", 16);
+			final txt = new FlxText(bgList.x + 15, bgList.y + 15, bgList.width - 30, "No Mods found.", 16);
 			txt.setFormat(Paths.font("vcr.ttf"), 16, FlxColor.WHITE);
 			add(txt);
 
@@ -218,8 +216,6 @@ class ModsMenuState extends MusicBeatState
 			for (button in buttons)
 				button.enabled = false;
 		}
-		// not yet
-		/*
 		settingsButton = new MenuButton(buttonsX + 300, buttonsY, 80, 80, Paths.image('modsMenuButtons', 'shared'), function() //Settings
 		{
 			var curMod:ModItem = modsGroup.members[curSelectedMod];
@@ -236,7 +232,6 @@ class ModsMenuState extends MusicBeatState
 
 		if(modsGroup.members[curSelectedMod].settings == null || modsGroup.members[curSelectedMod].settings.length < 1)
 			settingsButton.enabled = false;
-		*/
 
 		var button = new MenuButton(buttonsX + 400, buttonsY, 80, 80, Paths.image('modsMenuButtons', 'shared'), function() //On/Off
 		{
@@ -302,7 +297,6 @@ class ModsMenuState extends MusicBeatState
 			FlxG.sound.play(Paths.sound('cancelMenu'));
 			if(waitingToRestart)
 			{
-				//MusicBeatState.switchState(new TitleState());
 				TitleState.initialized = false;
 				TitleState.closedState = false;
 				FlxG.sound.music.fadeOut(0.3);
@@ -675,7 +669,7 @@ class ModsMenuState extends MusicBeatState
 		modDesc.text = curMod.desc;
 
 		for (button in buttons) if(button.focusChangeCallback != null) button.focusChangeCallback(button.onFocus);
-		// settingsButton.enabled = (curMod.settings != null && curMod.settings.length > 0);
+		settingsButton.enabled = (curMod.settings != null && curMod.settings.length > 0);
 	}
 
 	var centerMod:Int = 2;
@@ -719,7 +713,6 @@ class ModsMenuState extends MusicBeatState
 
 		modsGroup.remove(curMod, true);
 		modsList.all.remove(mod);
-		//if(position > id) position--;
 		modsGroup.insert(position, curMod);
 		modsList.all.insert(position, mod);
 
@@ -793,14 +786,13 @@ class ModItem extends FlxSpriteGroup
 
 		this.folder = folder;
 		pack = Mods.getPack(folder);
-		/*
 		var path:String = Paths.mods('$folder/data/settings.json');
 		if(FileSystem.exists(path))
 		{
 			var data:String = File.getContent(path);
 			try
 			{
-				//trace('trying to load settings: $folder');
+				trace('trying to load settings: $folder');
 				settings = tjson.TJSON.parse(data);
 			}
 			catch(e:Dynamic)
@@ -813,7 +805,6 @@ class ModItem extends FlxSpriteGroup
 				trace('$errorTitle - $errorMsg');
 			}
 		}
-		*/
 		selectBg = new FlxSprite().makeGraphic(1, 1, FlxColor.WHITE);
 		selectBg.alpha = 0.8;
 		selectBg.visible = false;

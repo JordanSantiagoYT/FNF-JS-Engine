@@ -89,7 +89,7 @@ class FunkinLua {
 				#if windows
 				lime.app.Application.current.window.alert(resultStr, 'Error on lua script!');
 				#else
-				LuaUtils.luaTrace(lua, 'Error loading lua script: "$scriptName"\n' + resultStr, true, false, FlxColor.RED);
+				LuaUtils.luaTrace('Error loading lua script: "$scriptName"\n' + resultStr, true, false, FlxColor.RED);
 				#end
 				lua = null;
 				return;
@@ -251,7 +251,7 @@ class FunkinLua {
 			#if (MODS_ALLOWED && SHADERS_ALLOWED)
 			return initLuaShader(name, glslVersion);
 			#else
-			LuaUtils.luaTrace(lua, "initLuaShader | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("initLuaShader | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 			return false;
 		});
@@ -262,7 +262,7 @@ class FunkinLua {
 			#if (MODS_ALLOWED && SHADERS_ALLOWED)
 			if(!game.runtimeShaders.exists(shader) && !initLuaShader(shader))
 			{
-				LuaUtils.luaTrace(lua, 'setSpriteShader | Shader $shader is missing! Make sure you\'ve initalized your shader first!', false, false, FlxColor.RED);
+				LuaUtils.luaTrace('setSpriteShader | Shader $shader is missing! Make sure you\'ve initalized your shader first!', false, false, FlxColor.RED);
 				return false;
 			}
 
@@ -278,7 +278,7 @@ class FunkinLua {
 				return true;
 			}
 			#else
-			LuaUtils.luaTrace(lua, "setSpriteShader | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setSpriteShader | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 			return false;
 		});
@@ -306,7 +306,7 @@ class FunkinLua {
 
 			#if (MODS_ALLOWED && SHADERS_ALLOWED)
 			if (!funk.runtimeShaders.exists(shader) && !funk.initLuaShader(shader)) {
-			    LuaUtils.luaTrace(lua, 'addShaderToCam | Shader $shader is missing! Make sure you\'ve initalized your shader first!', false, false, FlxColor.RED);
+			    LuaUtils.luaTrace('addShaderToCam | Shader $shader is missing! Make sure you\'ve initalized your shader first!', false, false, FlxColor.RED);
 			    return false;
 			}
 
@@ -321,7 +321,7 @@ class FunkinLua {
             }
             return true;
 			#else
-            LuaUtils.luaTrace(lua, "addShaderToCam | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+            LuaUtils.luaTrace("addShaderToCam | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 			return false;
 		});
@@ -332,12 +332,12 @@ class FunkinLua {
 			final camera = LuaUtils.getCam(cam);
 			@:privateAccess {
 			if(!storedFilters.exists(shader)) {
-				LuaUtils.luaTrace(lua, 'removeCamShader | $shader does not exist!', false, false, FlxColor.YELLOW);
+				LuaUtils.luaTrace('removeCamShader | $shader does not exist!', false, false, FlxColor.YELLOW);
 				return false;
 			}
 
 			if (camera.filters == null) {
-				LuaUtils.luaTrace(lua, 'removeCamShader | camera $cam does not have any shaders!', false, false, FlxColor.YELLOW);
+				LuaUtils.luaTrace('removeCamShader | camera $cam does not have any shaders!', false, false, FlxColor.YELLOW);
 				return false;
 			}
 
@@ -346,7 +346,7 @@ class FunkinLua {
 			return true;
 			}
 			#else
-			LuaUtils.luaTrace(lua, 'removeCamShader | Platform unsupported for Runtime Shaders!', false, false, FlxColor.RED);
+			LuaUtils.luaTrace('removeCamShader | Platform unsupported for Runtime Shaders!', false, false, FlxColor.RED);
 			#end
 			return false;
 		});
@@ -360,7 +360,7 @@ class FunkinLua {
 			}
 			return shader.getBool(prop);
 			#else
-			LuaUtils.luaTrace(lua, "getShaderBool | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getShaderBool | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			return null;
 			#end
 		});
@@ -373,7 +373,7 @@ class FunkinLua {
 			}
 			return shader.getBoolArray(prop);
 			#else
-			LuaUtils.luaTrace(lua, "getShaderBoolArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getShaderBoolArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			return null;
 			#end
 		});
@@ -386,7 +386,7 @@ class FunkinLua {
 			}
 			return shader.getInt(prop);
 			#else
-			LuaUtils.luaTrace(lua, "getShaderInt | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getShaderInt | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			return null;
 			#end
 		});
@@ -399,7 +399,7 @@ class FunkinLua {
 			}
 			return shader.getIntArray(prop);
 			#else
-			LuaUtils.luaTrace(lua, "getShaderIntArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getShaderIntArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			return null;
 			#end
 		});
@@ -412,7 +412,7 @@ class FunkinLua {
 			}
 			return shader.getFloat(prop);
 			#else
-			LuaUtils.luaTrace(lua, "getShaderFloat | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getShaderFloat | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			return null;
 			#end
 		});
@@ -425,7 +425,7 @@ class FunkinLua {
 			}
 			return shader.getFloatArray(prop);
 			#else
-			LuaUtils.luaTrace(lua, "getShaderFloatArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getShaderFloatArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			return null;
 			#end
 		});
@@ -437,7 +437,7 @@ class FunkinLua {
 
 			shader.setBool(prop, value);
 			#else
-			LuaUtils.luaTrace(lua, "setShaderBool | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setShaderBool | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 		});
 		registerFunction("setShaderBoolArray", function(obj:String, prop:String, values:Dynamic) {
@@ -447,7 +447,7 @@ class FunkinLua {
 
 			shader.setBoolArray(prop, values);
 			#else
-			LuaUtils.luaTrace(lua, "setShaderBoolArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setShaderBoolArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 		});
 		registerFunction("setShaderInt", function(obj:String, prop:String, value:Int) {
@@ -457,7 +457,7 @@ class FunkinLua {
 
 			shader.setInt(prop, value);
 			#else
-			LuaUtils.luaTrace(lua, "setShaderInt | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setShaderInt | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 		});
 		registerFunction("setShaderIntArray", function(obj:String, prop:String, values:Dynamic) {
@@ -467,7 +467,7 @@ class FunkinLua {
 
 			shader.setIntArray(prop, values);
 			#else
-			LuaUtils.luaTrace(lua, "setShaderIntArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setShaderIntArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 		});
 		registerFunction("setShaderFloat", function(obj:String, prop:String, value:Float) {
@@ -477,7 +477,7 @@ class FunkinLua {
 
 			shader.setFloat(prop, value);
 			#else
-			LuaUtils.luaTrace(lua, "setShaderFloat | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setShaderFloat | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 		});
 		registerFunction("setShaderFloatArray", function(obj:String, prop:String, values:Dynamic) {
@@ -487,7 +487,7 @@ class FunkinLua {
 
 			shader.setFloatArray(prop, values);
 			#else
-			LuaUtils.luaTrace(lua, "setShaderFloatArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setShaderFloatArray | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 		});
 
@@ -504,7 +504,7 @@ class FunkinLua {
 				shader.setSampler2D(prop, value.bitmap);
 			}
 			#else
-			LuaUtils.luaTrace(lua, "setShaderSampler2D | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setShaderSampler2D | Platform unsupported for Runtime Shaders!", false, false, FlxColor.RED);
 			#end
 		});
 
@@ -773,7 +773,7 @@ class FunkinLua {
 					{
 						if(luaInstance.scriptName == cervix)
 						{
-							LuaUtils.luaTrace(lua, 'addLuaScript | The script "' + cervix + '" is already running!');
+							LuaUtils.luaTrace('addLuaScript | The script "' + cervix + '" is already running!');
 							return;
 						}
 					}
@@ -781,7 +781,7 @@ class FunkinLua {
 				PlayState.instance.luaArray.push(new FunkinLua(cervix));
 				return;
 			}
-			LuaUtils.luaTrace(lua, "addLuaScript | Script doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("addLuaScript | Script doesn't exist!", false, false, FlxColor.RED);
 		});
 		registerFunction("removeLuaScript", function(luaFile:String, ?ignoreAlreadyRunning:Bool = false) { //would be dope asf.
 			var cervix = luaFile + ".lua";
@@ -818,7 +818,7 @@ class FunkinLua {
 					{
 						if(luaInstance.scriptName == cervix)
 						{
-							//LuaUtils.luaTrace(lua, 'The script "' + cervix + '" is already running!');
+							//LuaUtils.luaTrace('The script "' + cervix + '" is already running!');
 
 								PlayState.instance.luaArray.remove(luaInstance);
 							return;
@@ -827,7 +827,7 @@ class FunkinLua {
 				}
 				return;
 			}
-			LuaUtils.luaTrace(lua, "removeLuaScript | Script doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("removeLuaScript | Script doesn't exist!", false, false, FlxColor.RED);
 		});
 
 		registerFunction("loadSong", function(?name:String = null, ?difficultyNum:Int = -1) {
@@ -918,7 +918,7 @@ class FunkinLua {
 					result = getGroupStuff(leArray, variable);
 				return result;
 			}
-			LuaUtils.luaTrace(lua, "getPropertyFromGroup | Object #" + index + " from group: " + obj + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getPropertyFromGroup | Object #" + index + " from group: " + obj + " doesn't exist!", false, false, FlxColor.RED);
 			return null;
 		});
 		registerFunction("setPropertyFromGroup", function(obj:String, index:Int, variable:Dynamic, value:Dynamic) {
@@ -993,7 +993,7 @@ class FunkinLua {
 			{
 				return getInstance().members.indexOf(leObj);
 			}
-			LuaUtils.luaTrace(lua, "getObjectOrder | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getObjectOrder | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
 			return -1;
 		});
 		registerFunction("setObjectOrder", function(obj:String, position:Int) {
@@ -1008,7 +1008,7 @@ class FunkinLua {
 				getInstance().insert(position, leObj);
 				return;
 			}
-			LuaUtils.luaTrace(lua, "setObjectOrder | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setObjectOrder | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
 		});
 
 		// gay ass tweens
@@ -1059,9 +1059,9 @@ class FunkinLua {
 						}
 					} : null);
 				}
-				else LuaUtils.luaTrace(lua, 'startTween: No values on 2nd argument!', false, false, FlxColor.RED);
+				else LuaUtils.luaTrace('startTween: No values on 2nd argument!', false, false, FlxColor.RED);
 			}
-			else LuaUtils.luaTrace(lua, 'startTween: Couldnt find object: ' + vars, false, false, FlxColor.RED);
+			else LuaUtils.luaTrace('startTween: Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			return null;
 		});
 
@@ -1075,7 +1075,7 @@ class FunkinLua {
 					}
 				}));
 			} else {
-				LuaUtils.luaTrace(lua, 'doTweenX | Couldnt find object: ' + vars, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('doTweenX | Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			}
 		});
 		registerFunction("doTweenScale", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -1088,7 +1088,7 @@ class FunkinLua {
 					}
 				}));
 			} else {
-				LuaUtils.luaTrace(lua, 'doTweenScale | Couldnt find object: ' + vars, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('doTweenScale | Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			}
 		});
 		registerFunction("doTweenY", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -1101,7 +1101,7 @@ class FunkinLua {
 					}
 				}));
 			} else {
-				LuaUtils.luaTrace(lua, 'doTweenY | Couldnt find object: ' + vars, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('doTweenY | Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			}
 		});
 		registerFunction("doTweenAngle", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -1114,7 +1114,7 @@ class FunkinLua {
 					}
 				}));
 			} else {
-				LuaUtils.luaTrace(lua, 'doTweenAngle | Couldnt find object: ' + vars, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('doTweenAngle | Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			}
 		});
 		registerFunction("doTweenAlpha", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -1127,7 +1127,7 @@ class FunkinLua {
 					}
 				}));
 			} else {
-				LuaUtils.luaTrace(lua, 'doTweenAlpha | Couldnt find object: ' + vars, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('doTweenAlpha | Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			}
 		});
 		registerFunction("doTweenZoom", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -1155,10 +1155,10 @@ class FunkinLua {
 				}
 				else
 				{
-					LuaUtils.luaTrace(lua, "doTweenZoom | Can't tween object " + vars + ". Value needs to be a camera.", false, false, FlxColor.RED);
+					LuaUtils.luaTrace("doTweenZoom | Can't tween object " + vars + ". Value needs to be a camera.", false, false, FlxColor.RED);
 				}
 			} else {
-				LuaUtils.luaTrace(lua, 'doTweenZoom | Couldnt find object: ' + vars, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('doTweenZoom | Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			}
 		});
 		registerFunction("doTweenColor", function(tag:String, vars:String, targetColor:String, duration:Float, ease:String) {
@@ -1176,7 +1176,7 @@ class FunkinLua {
 					}
 				}));
 			} else {
-				LuaUtils.luaTrace(lua, 'doTweenColor | Couldnt find object: ' + vars, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('doTweenColor | Couldnt find object: ' + vars, false, false, FlxColor.RED);
 			}
 		});
 
@@ -1343,38 +1343,6 @@ class FunkinLua {
 		registerFunction("cancelTimer", function(tag:String) {
 			cancelTimer(tag);
 		});
-
-		/*registerFunction("getPropertyAdvanced", function(varsStr:String) {
-			var variables:Array<String> = varsStr.replace(' ', '').split(',');
-			var leClass:Class<Dynamic> = Type.resolveClass(variables[0]);
-			if(variables.length > 2) {
-				var curProp:Dynamic = Reflect.getProperty(leClass, variables[1]);
-				if(variables.length > 3) {
-					for (i in 2...variables.length-1) {
-						curProp = Reflect.getProperty(curProp, variables[i]);
-					}
-				}
-				return Reflect.getProperty(curProp, variables[variables.length-1]);
-			} else if(variables.length == 2) {
-				return Reflect.getProperty(leClass, variables[variables.length-1]);
-			}
-			return null;
-		});
-		registerFunction("setPropertyAdvanced", function(varsStr:String, value:Dynamic) {
-			var variables:Array<String> = varsStr.replace(' ', '').split(',');
-			var leClass:Class<Dynamic> = Type.resolveClass(variables[0]);
-			if(variables.length > 2) {
-				var curProp:Dynamic = Reflect.getProperty(leClass, variables[1]);
-				if(variables.length > 3) {
-					for (i in 2...variables.length-1) {
-						curProp = Reflect.getProperty(curProp, variables[i]);
-					}
-				}
-				return Reflect.setProperty(curProp, variables[variables.length-1], value);
-			} else if(variables.length == 2) {
-				return Reflect.setProperty(leClass, variables[variables.length-1], value);
-			}
-		});*/
 
 		//stupid bietch ass functions
 		registerFunction("addScore", function(value:Float = 0) {
@@ -1973,7 +1941,7 @@ class FunkinLua {
 				if(updateHitbox) poop.updateHitbox();
 				return;
 			}
-			LuaUtils.luaTrace(lua, 'setGraphicSize | Couldnt find object: ' + obj, false, false, FlxColor.RED);
+			LuaUtils.luaTrace('setGraphicSize | Couldnt find object: ' + obj, false, false, FlxColor.RED);
 		});
 		registerFunction("scaleObject", function(obj:String, x:Float, y:Float, updateHitbox:Bool = true) {
 			if(PlayState.instance.getLuaObject(obj)!=null) {
@@ -1994,7 +1962,7 @@ class FunkinLua {
 				if(updateHitbox) poop.updateHitbox();
 				return;
 			}
-			LuaUtils.luaTrace(lua, 'scaleObject | Couldnt find object: ' + obj, false, false, FlxColor.RED);
+			LuaUtils.luaTrace('scaleObject | Couldnt find object: ' + obj, false, false, FlxColor.RED);
 		});
 		registerFunction("updateHitbox", function(obj:String) {
 			if(PlayState.instance.getLuaObject(obj)!=null) {
@@ -2008,7 +1976,7 @@ class FunkinLua {
 				poop.updateHitbox();
 				return;
 			}
-			LuaUtils.luaTrace(lua, 'updateHitbox | Couldnt find object: ' + obj, false, false, FlxColor.RED);
+			LuaUtils.luaTrace('updateHitbox | Couldnt find object: ' + obj, false, false, FlxColor.RED);
 		});
 		registerFunction("updateHitboxFromGroup", function(group:String, index:Int) {
 			if(Std.isOfType(Reflect.getProperty(getInstance(), group), FlxTypedGroup)) {
@@ -2085,7 +2053,7 @@ class FunkinLua {
 				object.cameras = [LuaUtils.cameraFromString(camera)];
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setObjectCamera | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setObjectCamera | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setBlendMode", function(obj:String, blend:String = '') {
@@ -2105,7 +2073,7 @@ class FunkinLua {
 				spr.blend = LuaUtils.blendModeFromString(blend);
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setBlendMode | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setBlendMode | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("screenCenter", function(obj:String, pos:String = 'xy') {
@@ -2134,7 +2102,7 @@ class FunkinLua {
 						return;
 				}
 			}
-			LuaUtils.luaTrace(lua, "screenCenter | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("screenCenter | Object " + obj + " doesn't exist!", false, false, FlxColor.RED);
 		});
 		registerFunction("objectsOverlap", function(obj1:String, obj2:String) {
 			var namesArray:Array<String> = [obj1, obj2];
@@ -2198,7 +2166,7 @@ class FunkinLua {
 			#end
 				path = Paths.json(Paths.formatToSongPath(PlayState.SONG.song) + '/' + dialogueFile);
 
-			LuaUtils.luaTrace(lua, 'startDialogue | Trying to load dialogue: ' + path);
+			LuaUtils.luaTrace('startDialogue | Trying to load dialogue: ' + path);
 
 			#if MODS_ALLOWED
 			if(FileSystem.exists(path))
@@ -2209,13 +2177,13 @@ class FunkinLua {
 				var shit:DialogueFile = DialogueBoxPsych.parseDialogue(path);
 				if(shit.dialogue.length > 0) {
 					PlayState.instance.startDialogue(shit, music);
-					LuaUtils.luaTrace(lua, 'startDialogue | Successfully loaded dialogue', false, false, FlxColor.GREEN);
+					LuaUtils.luaTrace('startDialogue | Successfully loaded dialogue', false, false, FlxColor.GREEN);
 					return true;
 				} else {
-					LuaUtils.luaTrace(lua, 'startDialogue | Your dialogue file is badly formatted!', false, false, FlxColor.RED);
+					LuaUtils.luaTrace('startDialogue | Your dialogue file is badly formatted!', false, false, FlxColor.RED);
 				}
 			} else {
-				LuaUtils.luaTrace(lua, 'startDialogue | Dialogue file not found', false, false, FlxColor.RED);
+				LuaUtils.luaTrace('startDialogue | Dialogue file not found', false, false, FlxColor.RED);
 				if(PlayState.instance.endingSong) {
 					PlayState.instance.endSong();
 				} else {
@@ -2230,7 +2198,7 @@ class FunkinLua {
 				PlayState.instance.startVideo(videoFile);
 				return true;
 			} else {
-				LuaUtils.luaTrace(lua, 'startVideo | Video file not found: ' + videoFile, false, false, FlxColor.RED);
+				LuaUtils.luaTrace('startVideo | Video file not found: ' + videoFile, false, false, FlxColor.RED);
 			}
 			return false;
 
@@ -2341,6 +2309,24 @@ class FunkinLua {
 				}
 			}
 		});
+		
+		// mod settings
+		addLocalCallback("getModSetting", function(saveTag:String, ?modName:String = null) {
+			#if MODS_ALLOWED
+			if(modName == null)
+			{
+				if(this.modFolder == null)
+				{
+					LuaUtils.luaTrace('getModSetting: Argument #2 is null and script is not inside a packed Mod folder!', false, false, FlxColor.RED);
+					return null;
+				}
+				modName = this.modFolder;
+			}
+			return LuaUtils.getModSetting(saveTag, modName);
+			#else
+			LuaUtils.luaTrace("getModSetting: Mods are disabled in this build!", false, false, FlxColor.RED);
+			#end
+		});
 
 		registerFunction("debugPrint", function(text1:Dynamic = '', text2:Dynamic = '', text3:Dynamic = '', text4:Dynamic = '', text5:Dynamic = '') {
 			if (text1 == null) text1 = '';
@@ -2348,7 +2334,7 @@ class FunkinLua {
 			if (text3 == null) text3 = '';
 			if (text4 == null) text4 = '';
 			if (text5 == null) text5 = '';
-			LuaUtils.luaTrace(lua, '' + text1 + text2 + text3 + text4 + text5, true, false);
+			LuaUtils.luaTrace('' + text1 + text2 + text3 + text4 + text5, true, false);
 		});
 
 		addLocalCallback("close", function() {
@@ -2384,7 +2370,7 @@ class FunkinLua {
 				obj.text = text;
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextString | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextString | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setTextSize", function(tag:String, size:Int) {
@@ -2394,7 +2380,7 @@ class FunkinLua {
 				obj.size = size;
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextSize | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextSize | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setTextWidth", function(tag:String, width:Float) {
@@ -2404,7 +2390,7 @@ class FunkinLua {
 				obj.fieldWidth = width;
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextWidth | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextWidth | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setTextBorder", function(tag:String, size:Int, color:String) {
@@ -2418,7 +2404,7 @@ class FunkinLua {
 				obj.borderColor = colorNum;
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextBorder | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextBorder | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setTextColor", function(tag:String, color:String) {
@@ -2431,7 +2417,7 @@ class FunkinLua {
 				obj.color = colorNum;
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextColor | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextColor | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setTextFont", function(tag:String, newFont:String) {
@@ -2441,7 +2427,7 @@ class FunkinLua {
 				obj.font = Paths.font(newFont);
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextFont | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextFont | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setTextItalic", function(tag:String, italic:Bool) {
@@ -2451,7 +2437,7 @@ class FunkinLua {
 				obj.italic = italic;
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextItalic | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextItalic | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 		registerFunction("setTextAlignment", function(tag:String, alignment:String = 'left') {
@@ -2468,7 +2454,7 @@ class FunkinLua {
 				}
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setTextAlignment | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("setTextAlignment | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return false;
 		});
 
@@ -2478,7 +2464,7 @@ class FunkinLua {
 			{
 				return obj.text;
 			}
-			LuaUtils.luaTrace(lua, "getTextString | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getTextString | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return null;
 		});
 		registerFunction("getTextSize", function(tag:String) {
@@ -2487,7 +2473,7 @@ class FunkinLua {
 			{
 				return obj.size;
 			}
-			LuaUtils.luaTrace(lua, "getTextSize | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getTextSize | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return -1;
 		});
 		registerFunction("getTextFont", function(tag:String) {
@@ -2496,7 +2482,7 @@ class FunkinLua {
 			{
 				return obj.font;
 			}
-			LuaUtils.luaTrace(lua, "getTextFont | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getTextFont | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return null;
 		});
 		registerFunction("getTextWidth", function(tag:String) {
@@ -2505,7 +2491,7 @@ class FunkinLua {
 			{
 				return obj.fieldWidth;
 			}
-			LuaUtils.luaTrace(lua, "getTextWidth | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
+			LuaUtils.luaTrace("getTextWidth | Object " + tag + " doesn't exist!", false, false, FlxColor.RED);
 			return 0;
 		});
 
@@ -2540,7 +2526,7 @@ class FunkinLua {
 				PlayState.instance.modchartSaves.set(name, save);
 				return;
 			}
-			LuaUtils.luaTrace(lua, 'initSaveData | Save file already initialized: ' + name);
+			LuaUtils.luaTrace('initSaveData | Save file already initialized: ' + name);
 		});
 		registerFunction("flushSaveData", function(name:String) {
 			if(PlayState.instance.modchartSaves.exists(name))
@@ -2548,7 +2534,7 @@ class FunkinLua {
 				PlayState.instance.modchartSaves.get(name).flush();
 				return;
 			}
-			LuaUtils.luaTrace(lua, 'flushSaveData | Save file not initialized: ' + name, false, false, FlxColor.RED);
+			LuaUtils.luaTrace('flushSaveData | Save file not initialized: ' + name, false, false, FlxColor.RED);
 		});
 		registerFunction("getDataFromSave", function(name:String, field:String, ?defaultValue:Dynamic = null) {
 			if(PlayState.instance.modchartSaves.exists(name))
@@ -2556,7 +2542,7 @@ class FunkinLua {
 				var retVal:Dynamic = Reflect.field(PlayState.instance.modchartSaves.get(name).data, field);
 				return retVal;
 			}
-			LuaUtils.luaTrace(lua, 'getDataFromSave | Save file not initialized: ' + name, false, false, FlxColor.RED);
+			LuaUtils.luaTrace('getDataFromSave | Save file not initialized: ' + name, false, false, FlxColor.RED);
 			return defaultValue;
 		});
 		registerFunction("setDataFromSave", function(name:String, field:String, value:Dynamic) {
@@ -2565,7 +2551,7 @@ class FunkinLua {
 				Reflect.setField(PlayState.instance.modchartSaves.get(name).data, field, value);
 				return;
 			}
-			LuaUtils.luaTrace(lua, 'setDataFromSave | Save file not initialized: ' + name, false, false, FlxColor.RED);
+			LuaUtils.luaTrace('setDataFromSave | Save file not initialized: ' + name, false, false, FlxColor.RED);
 		});
 
 		registerFunction("checkFileExists", function(filename:String, ?absolute:Bool = false) {
@@ -2599,7 +2585,7 @@ class FunkinLua {
 
 				return true;
 			} catch (e:Dynamic) {
-				LuaUtils.luaTrace(lua, "saveFile | Error trying to save " + path + ": " + e, false, false, FlxColor.RED);
+				LuaUtils.luaTrace("saveFile | Error trying to save " + path + ": " + e, false, false, FlxColor.RED);
 			}
 			return false;
 		});
@@ -2625,7 +2611,7 @@ class FunkinLua {
 					return true;
 				}
 			} catch (e:Dynamic) {
-				LuaUtils.luaTrace(lua, "deleteFile | Error trying to delete " + path + ": " + e, false, false, FlxColor.RED);
+				LuaUtils.luaTrace("deleteFile | Error trying to delete " + path + ": " + e, false, false, FlxColor.RED);
 			}
 			return false;
 		});
@@ -2635,7 +2621,7 @@ class FunkinLua {
 
 		// DEPRECATED, DONT MESS WITH THESE SHITS, ITS JUST THERE FOR BACKWARD COMPATIBILITY
 		registerFunction("objectPlayAnimation", function(obj:String, name:String, forced:Bool = false, ?startFrame:Int = 0) {
-			LuaUtils.luaTrace(lua, "objectPlayAnimation is deprecated! Use playAnim instead", false, true);
+			LuaUtils.luaTrace("objectPlayAnimation is deprecated! Use playAnim instead", false, true);
 			if(PlayState.instance.getLuaObject(obj,false) != null) {
 				PlayState.instance.getLuaObject(obj,false).animation.play(name, forced, false, startFrame);
 				return true;
@@ -2649,7 +2635,7 @@ class FunkinLua {
 			return false;
 		});
 		registerFunction("characterPlayAnim", function(character:String, anim:String, ?forced:Bool = false) {
-			LuaUtils.luaTrace(lua, "characterPlayAnim is deprecated! Use playAnim instead", false, true);
+			LuaUtils.luaTrace("characterPlayAnim is deprecated! Use playAnim instead", false, true);
 			switch(character.toLowerCase()) {
 				case 'dad':
 					if(PlayState.instance.dad.animOffsets.exists(anim))
@@ -2663,7 +2649,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("luaSpriteMakeGraphic", function(tag:String, width:Int, height:Int, color:String) {
-			LuaUtils.luaTrace(lua, "luaSpriteMakeGraphic is deprecated! Use makeGraphic instead", false, true);
+			LuaUtils.luaTrace("luaSpriteMakeGraphic is deprecated! Use makeGraphic instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				var colorNum:Int = Std.parseInt(color);
 				if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff' + color);
@@ -2672,7 +2658,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("luaSpriteAddAnimationByPrefix", function(tag:String, name:String, prefix:String, framerate:Int = 24, loop:Bool = true) {
-			LuaUtils.luaTrace(lua, "luaSpriteAddAnimationByPrefix is deprecated! Use addAnimationByPrefix instead", false, true);
+			LuaUtils.luaTrace("luaSpriteAddAnimationByPrefix is deprecated! Use addAnimationByPrefix instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				var cock:ModchartSprite = PlayState.instance.modchartSprites.get(tag);
 				cock.animation.addByPrefix(name, prefix, framerate, loop);
@@ -2682,7 +2668,7 @@ class FunkinLua {
 			}
 		});
 		registerFunction("luaSpriteAddAnimationByIndices", function(tag:String, name:String, prefix:String, indices:String, framerate:Int = 24) {
-			LuaUtils.luaTrace(lua, "luaSpriteAddAnimationByIndices is deprecated! Use addAnimationByIndices instead", false, true);
+			LuaUtils.luaTrace("luaSpriteAddAnimationByIndices is deprecated! Use addAnimationByIndices instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				var strIndices:Array<String> = indices.trim().split(',');
 				var die:Array<Int> = [];
@@ -2697,22 +2683,22 @@ class FunkinLua {
 			}
 		});
 		registerFunction("luaSpritePlayAnimation", function(tag:String, name:String, forced:Bool = false) {
-			LuaUtils.luaTrace(lua, "luaSpritePlayAnimation is deprecated! Use playAnim instead", false, true);
+			LuaUtils.luaTrace("luaSpritePlayAnimation is deprecated! Use playAnim instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				PlayState.instance.modchartSprites.get(tag).animation.play(name, forced);
 			}
 		});
 		registerFunction("setLuaSpriteCamera", function(tag:String, camera:String = '') {
-			LuaUtils.luaTrace(lua, "setLuaSpriteCamera is deprecated! Use setObjectCamera instead", false, true);
+			LuaUtils.luaTrace("setLuaSpriteCamera is deprecated! Use setObjectCamera instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				PlayState.instance.modchartSprites.get(tag).cameras = [LuaUtils.cameraFromString(camera)];
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "Lua sprite with tag | " + tag + " doesn't exist!");
+			LuaUtils.luaTrace("Lua sprite with tag | " + tag + " doesn't exist!");
 			return false;
 		});
 		registerFunction("setLuaSpriteScrollFactor", function(tag:String, scrollX:Float, scrollY:Float) {
-			LuaUtils.luaTrace(lua, "setLuaSpriteScrollFactor is deprecated! Use setScrollFactor instead", false, true);
+			LuaUtils.luaTrace("setLuaSpriteScrollFactor is deprecated! Use setScrollFactor instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				PlayState.instance.modchartSprites.get(tag).scrollFactor.set(scrollX, scrollY);
 				return true;
@@ -2720,7 +2706,7 @@ class FunkinLua {
 			return false;
 		});
 		registerFunction("scaleLuaSprite", function(tag:String, x:Float, y:Float) {
-			LuaUtils.luaTrace(lua, "scaleLuaSprite is deprecated! Use scaleObject instead", false, true);
+			LuaUtils.luaTrace("scaleLuaSprite is deprecated! Use scaleObject instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				var shit:ModchartSprite = PlayState.instance.modchartSprites.get(tag);
 				shit.scale.set(x, y);
@@ -2730,7 +2716,7 @@ class FunkinLua {
 			return false;
 		});
 		registerFunction("getPropertyLuaSprite", function(tag:String, variable:String) {
-			LuaUtils.luaTrace(lua, "getPropertyLuaSprite is deprecated! Use getProperty instead", false, true);
+			LuaUtils.luaTrace("getPropertyLuaSprite is deprecated! Use getProperty instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				var killMe:Array<String> = variable.split('.');
 				if(killMe.length > 1) {
@@ -2745,7 +2731,7 @@ class FunkinLua {
 			return null;
 		});
 		registerFunction("setPropertyLuaSprite", function(tag:String, variable:String, value:Dynamic) {
-			LuaUtils.luaTrace(lua, "setPropertyLuaSprite is deprecated! Use setProperty instead", false, true);
+			LuaUtils.luaTrace("setPropertyLuaSprite is deprecated! Use setProperty instead", false, true);
 			if(PlayState.instance.modchartSprites.exists(tag)) {
 				var killMe:Array<String> = variable.split('.');
 				if(killMe.length > 1) {
@@ -2759,17 +2745,17 @@ class FunkinLua {
 				Reflect.setProperty(PlayState.instance.modchartSprites.get(tag), variable, value);
 				return true;
 			}
-			LuaUtils.luaTrace(lua, "setPropertyLuaSprite | Lua sprite with tag: " + tag + " doesn't exist!");
+			LuaUtils.luaTrace("setPropertyLuaSprite | Lua sprite with tag: " + tag + " doesn't exist!");
 			return false;
 		});
 		registerFunction("musicFadeIn", function(duration:Float, fromValue:Float = 0, toValue:Float = 1) {
 			FlxG.sound.music.fadeIn(duration / PlayState.instance.playbackRate, fromValue, toValue);
-			LuaUtils.luaTrace(lua, 'musicFadeIn is deprecated! Use soundFadeIn instead.', false, true);
+			LuaUtils.luaTrace('musicFadeIn is deprecated! Use soundFadeIn instead.', false, true);
 
 		});
 		registerFunction("musicFadeOut", function(duration:Float, toValue:Float = 0) {
 			FlxG.sound.music.fadeOut(duration / PlayState.instance.playbackRate, toValue);
-			LuaUtils.luaTrace(lua, 'musicFadeOut is deprecated! Use soundFadeOut instead.', false, true);
+			LuaUtils.luaTrace('musicFadeOut is deprecated! Use soundFadeOut instead.', false, true);
 		});
 
 		//SHADER SHIT
@@ -2889,17 +2875,17 @@ class FunkinLua {
 				FlxG.mouse.visible = visible;
 				FlxG.mouse.unload();
 				FlxG.mouse.load(Paths.image(path).bitmap, scale, xOffset, yOffset);
-				LuaUtils.luaTrace(lua, 'Changed Cursor in $path');
+				LuaUtils.luaTrace('Changed Cursor in $path');
 			}
 			else if (loadDefault || path == null || path.length <= 0)
 			{
 				FlxG.mouse.unload();
 				FlxG.mouse.visible = visible;
-				LuaUtils.luaTrace(lua, 'Loading default cursor');
+				LuaUtils.luaTrace('Loading default cursor');
 			}
 			else
 			{
-				LuaUtils.luaTrace(lua, 'Cursor in $path does not exist!', true, false, FlxColor.RED);
+				LuaUtils.luaTrace('Cursor in $path does not exist!', true, false, FlxColor.RED);
 				FlxG.mouse.unload();
 				FlxG.mouse.visible = visible;
 				// return;
@@ -2953,7 +2939,6 @@ class FunkinLua {
 					fucker.set(cameraName, camera);
 				else if (safeName != cameraName) {
 					LuaUtils.luaTrace(
-						lua,
 						'An object of $cameraName exists, renaming to $safeName to avoid conflict.',
 						false, false, FlxColor.RED
 					);
@@ -3135,7 +3120,7 @@ class FunkinLua {
 		#if (SHADERS_ALLOWED)
 		if(PlayState.instance.runtimeShaders.exists(name))
 		{
-			LuaUtils.luaTrace(lua, 'Shader $name was already initialized!');
+			LuaUtils.luaTrace('Shader $name was already initialized!');
 			return true;
 		}
 
@@ -3175,9 +3160,9 @@ class FunkinLua {
 				}
 			}
 		}
-		LuaUtils.luaTrace(lua, 'Missing shader $name .frag AND .vert files!', false, false, FlxColor.RED);
+		LuaUtils.luaTrace('Missing shader $name .frag AND .vert files!', false, false, FlxColor.RED);
 		#else
-		LuaUtils.luaTrace(lua, 'This platform doesn\'t support Runtime Shaders!', false, false, FlxColor.RED);
+		LuaUtils.luaTrace('This platform doesn\'t support Runtime Shaders!', false, false, FlxColor.RED);
 		#end
 		return false;
 	}
@@ -3318,7 +3303,7 @@ class FunkinLua {
 
 			if (type != Lua.TFUNCTION) {
 				if (type > Lua.TNIL)
-					LuaUtils.luaTrace(lua, "ERROR (" + func + "): attempt to call a " + typeToString(type) + " value", false, false, FlxColor.RED);
+					LuaUtils.luaTrace("ERROR (" + func + "): attempt to call a " + typeToString(type) + " value", false, false, FlxColor.RED);
 
 				_missingCalls.set(func, true);
 				Lua.pop(lua, 1);
@@ -3331,7 +3316,7 @@ class FunkinLua {
 			// Checks if it's not successful, then show a error.
 			if (status != Lua.OK) {
 				var error:String = LuaUtils.getErrorMessage(lua, status);
-				LuaUtils.luaTrace(lua, "ERROR (" + func + "): " + error, false, false, FlxColor.RED);
+				LuaUtils.luaTrace("ERROR (" + func + "): " + error, false, false, FlxColor.RED);
 				return Function_Continue;
 			}
 

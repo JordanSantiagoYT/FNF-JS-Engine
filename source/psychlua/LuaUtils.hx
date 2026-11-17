@@ -117,13 +117,18 @@ class LuaUtils {
 	    return cameraFromString(obj);
     }
 
-	public static function luaTrace(lua: #if LUA_ALLOWED State #else Dynamic #end, text:String, ignoreCheck:Bool = false, deprecated:Bool = false, color:FlxColor = FlxColor.WHITE) {
+	public static function luaTrace(text:String, ignoreCheck:Bool = false, deprecated:Bool = false, color:FlxColor = FlxColor.WHITE) {
 		#if LUA_ALLOWED
-		if(ignoreCheck || getBool(lua, 'luaDebugMode')) {
-			if(deprecated && !getBool(lua, 'luaDeprecatedWarnings')) {
+		if(ignoreCheck || getBool('luaDebugMode')) {
+			if(deprecated && !getBool('luaDeprecatedWarnings')) {
 				return;
 			}
-			PlayState.instance.addTextToDebug(text, color);
+			if (PlayState.instance != null)
+				PlayState.instance.addTextToDebug(text, color);
+			else
+			{
+				FlxG.log.warn(text);
+			}
 			trace(text);
 		}
 		#end
@@ -155,6 +160,80 @@ class LuaUtils {
 		#end
 	}
 	
+	public static function getModSetting(saveTag:String, ?modName:String = null)
+	{
+		#if MODS_ALLOWED
+		if(FlxG.save.data.modSettings == null) FlxG.save.data.modSettings = new Map<String, Dynamic>();
+
+		var settings:Map<String, Dynamic> = FlxG.save.data.modSettings.get(modName);
+		final path:String = Paths.mods('$modName/data/settings.json');
+		if(FileSystem.exists(path))
+		{
+			if(settings == null || !settings.exists(saveTag))
+			{
+				if(settings == null) settings = new Map<String, Dynamic>();
+				final data:String = File.getContent(path);
+				try
+				{
+					//luaTrace('getModSetting: Trying to find default value for "$saveTag" in Mod: "$modName"');
+					final parsedJson:Dynamic = tjson.TJSON.parse(data);
+					for (i in 0...parsedJson.length)
+					{
+						final sub:Dynamic = parsedJson[i];
+						if (sub != null && sub.save != null && !settings.exists(sub.save))
+						{
+							final type:String = sub.type != null ? Std.string(sub.type).toLowerCase().trim() : '';
+
+							if (type != 'keybind' && type != 'key')
+							{
+								if (sub.value != null)
+								{
+									//luaTrace('getModSetting: Found unsaved value "${sub.save}" in Mod: "$modName"');
+									settings.set(sub.save, sub.value);
+								}
+							}
+							else
+							{
+								final keyboard:String = sub.keyboard != null ? Std.string(sub.keyboard) : 'NONE';
+								final gamepad:String  = sub.gamepad != null ? Std.string(sub.gamepad) : 'NONE';
+
+								settings.set(sub.save, {keyboard: keyboard, gamepad: gamepad});
+								//luaTrace('getModSetting: Found unsaved keybind "${sub.save}" in Mod: "$modName"');
+							}
+						}
+					}
+					FlxG.save.data.modSettings.set(modName, settings);
+				}
+				catch(e:Dynamic)
+				{
+					final errorTitle = 'Mod name: ' + Mods.currentModDirectory;
+					final errorMsg = 'An error occurred: $e';
+					CoolUtil.showPopUp(errorMsg, errorTitle);
+					trace('$errorTitle - $errorMsg');
+				}
+			}
+		}
+		else
+		{
+			FlxG.save.data.modSettings.remove(modName);
+			#if LUA_ALLOWED
+			PlayState.instance.addTextToDebug('getModSetting: $path could not be found!', FlxColor.RED);
+			#else
+			FlxG.log.warn('getModSetting: $path could not be found!');
+			#end
+			return null;
+		}
+
+		if(settings.exists(saveTag)) return settings.get(saveTag);
+		#if LUA_ALLOWED
+		PlayState.instance.addTextToDebug('getModSetting: "$saveTag" could not be found inside $modName\'s settings!', FlxColor.RED);
+		#else
+		FlxG.log.warn('getModSetting: "$saveTag" could not be found inside $modName\'s settings!');
+		#end
+		#end
+		return null;
+	}
+	
 	public static function isOfTypes(value:Any, types:Array<Dynamic>)
 	{
 		for (type in types)
@@ -164,8 +243,14 @@ class LuaUtils {
 		return false;
 	}
 
-	public static function getBool(lua: #if LUA_ALLOWED State #else Dynamic #end, variable:String) {
+	public static function getBool(variable:String) 
+	{
 		#if LUA_ALLOWED
+		if(FunkinLua.lastCalledScript == null) return false;
+
+		final lua:State = FunkinLua.lastCalledScript.lua;
+		if(lua == null) return false;
+
 		var result:String = null;
 		Lua.getglobal(lua, variable);
 		result = Convert.fromLua(lua, -1);

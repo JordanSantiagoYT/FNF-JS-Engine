@@ -100,12 +100,12 @@ class Option
     }
   }
 
-  public function getValue():Dynamic
+  dynamic public function getValue():Dynamic
   {
     return Reflect.getProperty(ClientPrefs, variable);
   }
 
-  public function setValue(value:Dynamic)
+  dynamic public function setValue(value:Dynamic)
   {
     Reflect.setProperty(ClientPrefs, variable, value);
   }
