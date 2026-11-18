@@ -1,7 +1,7 @@
 package shaders;
 
-import Note;
 import backend.FlxFixedShader;
+import openfl.display.ShaderParameter;
 
 class RGBPalette {
 	public var shader(default, null):RGBPaletteShader = new RGBPaletteShader();
@@ -11,31 +11,42 @@ class RGBPalette {
 	public var mult(default, set):Float;
 
 	private function set_r(color:FlxColor) {
+		if (r == color) return color;
 		r = color;
-		if (shader != null)
-			shader.r.value = [color.redFloat, color.greenFloat, color.blueFloat];
+		writeColor(shader.r, color);
 		return color;
 	}
 
 	private function set_g(color:FlxColor) {
+		if (g == color) return color;
 		g = color;
-		if (shader != null)
-			shader.g.value = [color.redFloat, color.greenFloat, color.blueFloat];
+		writeColor(shader.g, color);
 		return color;
 	}
 
 	private function set_b(color:FlxColor) {
+		if (b == color) return color;
 		b = color;
-		if (shader != null)
-			shader.b.value = [color.redFloat, color.greenFloat, color.blueFloat];
+		writeColor(shader.b, color);
 		return color;
 	}
 
 	private function set_mult(value:Float) {
-		mult = FlxMath.bound(value, 0, 1);
+		value = FlxMath.bound(value, 0, 1);
+		if (mult == value) return value;
+		mult = value;
 		if (shader != null)
 			shader.mult.value = [mult];
 		return mult;
+	}
+
+	inline function writeColor(param:ShaderParameter<Float>, color:FlxColor)
+	{
+		var v = param.value;
+		if (v == null) param.value = v = [0.0, 0.0, 0.0];
+		v[0] = color.redFloat;
+		v[1] = color.greenFloat;
+		v[2] = color.blueFloat;
 	}
 
 	public function new()
@@ -72,6 +83,21 @@ class RGBShaderReference
 			g = parent.g;
 			b = parent.b;
 			mult = parent.mult;
+		}
+	}
+
+	public function assign(palette:RGBPalette)
+	{
+		parent = palette;
+		_original = palette;
+		allowNew = true;
+		_owner.shader = enabled ? palette.shader : null;
+		@:bypassAccessor
+		{
+			r = palette.r;
+			g = palette.g;
+			b = palette.b;
+			mult = palette.mult;
 		}
 	}
 
@@ -134,17 +160,8 @@ class RGBPaletteShader extends FlxFixedShader {
 			if (!hasTransform || color.a == 0.0 || mult == 0.0) {
 				return color;
 			}
-
-			vec4 newColor = color;
-			newColor.rgb = min(color.r * r + color.g * g + color.b * b, vec3(1.0));
-			newColor.a = color.a;
-
-			color = mix(color, newColor, mult);
-
-			if(color.a > 0.0) {
-				return vec4(color.rgb, color.a);
-			}
-			return vec4(0.0, 0.0, 0.0, 0.0);
+			vec3 mapped = min(color.r * r + color.g * g + color.b * b, vec3(1.0));
+			return vec4(mix(color.rgb, mapped, mult), color.a);
 		}')
 
 	@:glFragmentSource('
@@ -157,5 +174,99 @@ class RGBPaletteShader extends FlxFixedShader {
 	public function new()
 	{
 		super();
+	}
+}
+
+class RGBPalettePool
+{
+	static final cache:Map<String, RGBPalette> = new Map();
+	static final normal:Array<RGBPalette> = [];
+	static final normalPixel:Array<RGBPalette> = [];
+	static final quant:Array<RGBPalette> = [];
+	static final rainbow:Array<RGBPalette> = [];
+	static final char:Map<Int, RGBPalette> = new Map();
+	static inline final rainbowSteps:Int = 32;
+
+	static var gray:RGBPalette;
+
+	public static function get(r:FlxColor, g:FlxColor, b:FlxColor):RGBPalette
+	{
+		final key = '$r,$g,$b';
+		var palette = cache.get(key);
+		if (palette == null)
+			cache.set(key, palette = build(r, g, b));
+		return palette;
+	}
+
+	public static function getDefault(noteData:Int, pixel:Bool):RGBPalette
+	{
+		if (noteData < 0) return null;
+		final table = pixel ? normalPixel : normal;
+		var palette = table[noteData];
+		if (palette == null)
+		{
+			final colors = pixel ? ClientPrefs.arrowRGBPixel[noteData] : ClientPrefs.arrowRGB[noteData];
+			if (colors == null) return null;
+			table[noteData] = palette = build(colors[0], colors[1], colors[2]);
+		}
+		return palette;
+	}
+
+	public static function getQuant(index:Int):RGBPalette
+	{
+		var palette = quant[index];
+		if (palette == null)
+		{
+			final c = ClientPrefs.quantRGB[index];
+			quant[index] = palette = build(c[0], c[1], c[2]);
+		}
+		return palette;
+	}
+
+	public static function getRainbow(hue:Float):RGBPalette
+	{
+		final index = (Math.floor(hue / 360 * rainbowSteps) % rainbowSteps + rainbowSteps) % rainbowSteps;
+		var palette = rainbow[index];
+		if (palette == null)
+		{
+			final main = FlxColor.fromHSB(index * 360 / rainbowSteps, 1, 1);
+			rainbow[index] = palette = build(main, FlxColor.WHITE, main.getDarkened(0.7));
+		}
+		return palette;
+	}
+
+	public static function getGray():RGBPalette
+	{
+		if (gray == null) gray = build(0xFFA0A0A0, FlxColor.WHITE, 0xFF424242);
+		return gray;
+	}
+
+	public static function getChar(health:Array<Int>):RGBPalette
+	{
+		final main = FlxColor.fromRGB(health[0], health[1], health[2]);
+		var palette = char.get(main);
+		if (palette == null)
+			char.set(main, palette = build(main, FlxColor.WHITE, main.getDarkened(0.7)));
+		return palette;
+	}
+
+	public static function clear()
+	{
+		cache.clear();
+		char.clear();
+		quant.resize(0);
+		rainbow.resize(0);
+		normal.resize(0);
+		normalPixel.resize(0);
+		gray = null;
+	}
+
+	static function build(r:FlxColor, g:FlxColor, b:FlxColor):RGBPalette
+	{
+		final palette = new RGBPalette();
+		palette.r = r;
+		palette.g = g;
+		palette.b = b;
+		return palette;
 	}
 }

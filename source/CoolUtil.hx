@@ -4,7 +4,7 @@ import Song.SwagSong;
 import haxe.io.Bytes;
 import haxe.io.Path;
 import lime.app.Application;
-import shaders.RGBPalette.RGBShaderReference;
+import shaders.RGBPalette;
 
 class CoolUtil
 {
@@ -278,55 +278,39 @@ class CoolUtil
 		4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 6144
 	];
 
-	static var foundQuant:Int = 0;
-	static var theCurBPM:Float = 0;
-	static var stepCrochet:Float = 0;
-	static var latestBpmChangeIndex = 0;
-	static var latestBpmChange = null;
+	static final quantSteps:Array<Int> = [for (b in beats) Std.int(6144 / b)];
 
 	public static function checkNoteQuant(note:Note, timeToCheck:Float, ?rgbShader:RGBShaderReference)
 	{
-		if (ClientPrefs.noteColorStyle == 'Quant-Based' && (ClientPrefs.showNotes && ClientPrefs.enableColorShader))
+		if (ClientPrefs.noteColorStyle != 'Quant-Based' || !ClientPrefs.showNotes || !ClientPrefs.enableColorShader) return;
+
+		var bpm:Float = Conductor.bpm;
+		final map = Conductor.bpmChangeMap;
+		var i = map.length - 1;
+		while (i >= 0)
 		{
-			theCurBPM = Conductor.bpm;
-			stepCrochet = (60 / theCurBPM) * 1000;
-			latestBpmChangeIndex = -1;
-			latestBpmChange = null;
-
-			for (i in 0...Conductor.bpmChangeMap.length)
+			final change = map[i];
+			if (timeToCheck >= change.songTime)
 			{
-				var bpmchange = Conductor.bpmChangeMap[i];
-				if (timeToCheck >= bpmchange.songTime)
-				{
-					latestBpmChangeIndex = i; // Update index of latest change
-					latestBpmChange = bpmchange;
-				}
+				bpm = change.bpm;
+				timeToCheck -= change.songTime;
+				break;
 			}
-			if (latestBpmChangeIndex >= 0)
-			{
-				theCurBPM = latestBpmChange.bpm;
-				timeToCheck -= latestBpmChange.songTime;
-				stepCrochet = (60 / theCurBPM) * 1000;
-			}
+			i--;
+		}
 
-			var beat = Math.round((timeToCheck / stepCrochet) * 1536); // really stupid but allows the game to register every single quant
-			for (i in 0...beats.length)
+		final beat = Math.round(timeToCheck / ((60 / bpm) * 1000) * 1536);
+		var found = quantSteps.length - 1;
+		for (q in 0...quantSteps.length)
+		{
+			if (beat % quantSteps[q] == 0)
 			{
-				if (beat % (6144 / beats[i]) == 0)
-				{
-					beat = beats[i];
-					foundQuant = i;
-					break;
-				}
-			}
-
-			if (rgbShader != null)
-			{
-				rgbShader.r = ClientPrefs.quantRGB[foundQuant][0];
-				rgbShader.g = ClientPrefs.quantRGB[foundQuant][1];
-				rgbShader.b = ClientPrefs.quantRGB[foundQuant][2];
+				found = q;
+				break;
 			}
 		}
+
+		if (rgbShader != null) rgbShader.assign(RGBPalettePool.getQuant(found));
 	}
 
 	public static function getDifficultyFilePath(num:Null<Int> = null)
@@ -502,24 +486,11 @@ class CoolUtil
 		#end
 	}
 
-	public static function getNoteAmount(song:SwagSong, ?bothSides:Bool = true, ?oppNotes:Bool = false):Int
+	public static function getNoteAmount(song:SwagSong):Int
 	{
 		var total:Int = 0;
-		for (section in song.notes)
-		{
-			if (bothSides)
-				total += section.sectionNotes.length;
-			else
-			{
-				for (songNotes in section.sectionNotes)
-				{
-					if (!oppNotes && (songNotes[1] < 4 ? section.mustHitSection : !section.mustHitSection))
-						total += 1;
-					if (oppNotes && (songNotes[1] < 4 ? !section.mustHitSection : section.mustHitSection))
-						total += 1;
-				}
-			}
-		}
+		for (section in song.notes) total += section.sectionNotes.length;
+
 		return total;
 	}
 

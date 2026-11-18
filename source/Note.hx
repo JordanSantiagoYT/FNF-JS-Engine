@@ -184,20 +184,28 @@ class Note extends FlxSprite
 		if (value.length == 0) value = Paths.defaultSkin;
 		if (!pixelNote && texture != value)
 		{
-			changeSize = false;
-			if (!Paths.noteSkinFramesMap.exists(value)) Paths.initNote(value);
-			if (frames != @:privateAccess Paths.noteSkinFramesMap.get(value)) frames = @:privateAccess Paths.noteSkinFramesMap.get(value);
-			if (animation != @:privateAccess Paths.noteSkinAnimsMap.get(value)) animation.copyFrom(@:privateAccess Paths.noteSkinAnimsMap.get(value));
+			if (!Paths.noteSkinFramesMap.exists(value))
+				Paths.initNote(value);
 
-			antialiasing = ClientPrefs.globalAntialiasing;
+			var skinFrames = Paths.noteSkinFramesMap.get(value);
+			var skinAnims = Paths.noteSkinAnimsMap.get(value);
 
-			if (!changeSize)
+			if (skinFrames == null || skinAnims == null)
 			{
-				changeSize = true;
-				setGraphicSize(Std.int(width * 0.7));
-				updateHitbox();
+				value = Paths.defaultSkin;
+
+				if (!Paths.noteSkinFramesMap.exists(value))
+					Paths.initNote(value);
+
+				skinFrames = Paths.noteSkinFramesMap.get(value);
+				skinAnims = Paths.noteSkinAnimsMap.get(value);
 			}
-			offsetX = 0;
+
+			if (skinFrames == null || skinAnims == null)
+				return value;
+
+			frames = skinFrames;
+			animation.copyFrom(@:privateAccess skinAnims);
 		}
 		else if (!pixelNote) return value;
 		else if (pixelNote && inEditor) reloadNote(value);
@@ -205,18 +213,21 @@ class Note extends FlxSprite
 		return value;
 	}
 
-	var noteColor:Array<FlxColor>;
-	public function defaultRGB()
+	function charColors():Null<Array<Int>>
 	{
-		noteColor = !PlayState.isPixelStage ? ClientPrefs.arrowRGB[noteData] : ClientPrefs.arrowRGBPixel[noteData];
-
-		if (noteColor != null && noteData > -1 && noteData <= noteColor.length)
-		{
-			rgbShader.r = noteColor[0];
-			rgbShader.g = noteColor[1];
-			rgbShader.b = noteColor[2];
-		}
+		if (PlayState.instance == null || noteData < 0) return null;
+		final char = gfNote ? PlayState.instance.gf : (doOppStuff ? PlayState.instance.dad : PlayState.instance.boyfriend);
+		return char?.healthColorArray;
 	}
+
+	function useNormalColors()
+	{
+		final palette = RGBPalettePool.getDefault(noteData, PlayState.isPixelStage);
+		if (palette != null) rgbShader.assign(palette);
+	}
+
+	public function defaultRGB()
+		useNormalColors();
 
 	private function set_noteType(value:String):String {
 		noteSplashData.texture = PlayState.SONG != null ? PlayState.SONG.splashSkin : 'noteSplashes';
@@ -273,72 +284,43 @@ class Note extends FlxSprite
 		}
 	}
 
-	public static function initializeGlobalRGBShader(noteData:Int = 0, ?note:Note = null)
+	public static function initializeGlobalRGBShader(noteData:Int = 0, ?note:Note = null):RGBPalette
 	{
-		if (note == null)
+		final style = ClientPrefs.noteColorStyle;
+		final pixel = note != null ? note.pixelNote : PlayState.isPixelStage;
+
+		if (noteData < 0) return RGBPalettePool.getGray();
+
+		if (note != null)
 		{
-			if(globalRgbShaders[noteData] == null)
+			switch (style)
 			{
-				var newRGB:RGBPalette = new RGBPalette();
-				globalRgbShaders[noteData] = newRGB;
-
-				var arr:Array<FlxColor> = ClientPrefs.noteColorStyle != 'Quant-Based' ? (!PlayState.isPixelStage) ? ClientPrefs.arrowRGB[noteData] : ClientPrefs.arrowRGBPixel[noteData] : ClientPrefs.quantRGB[noteData];
-				if (arr != null && noteData > -1 && noteData <= arr.length)
-				{
-					newRGB.r = arr[0];
-					newRGB.g = arr[1];
-					newRGB.b = arr[2];
-				}
+				case 'Grayscale', 'Rainbow', 'Char-Based':
+					return RGBPalettePool.getGray();
+				case 'Quant-Based':
+					return RGBPalettePool.getDefault(3, pixel) ?? getLanePalette(noteData, pixel, false);
+				default:
 			}
-			return globalRgbShaders[noteData];
 		}
-		else switch(ClientPrefs.noteColorStyle)
+
+		return getLanePalette(noteData, pixel, note == null && style == 'Quant-Based');
+	}
+
+	static function getLanePalette(noteData:Int, pixel:Bool, quant:Bool):RGBPalette
+	{
+		var palette = globalRgbShaders[noteData];
+		if (palette == null)
 		{
-			case 'Quant-Based':
-			if(globalRgbShaders[0] == null)
+			palette = globalRgbShaders[noteData] = new RGBPalette();
+			final colors = quant ? ClientPrefs.quantRGB[noteData] : (pixel ? ClientPrefs.arrowRGBPixel[noteData] : ClientPrefs.arrowRGB[noteData]);
+			if (colors != null && colors.length >= 3)
 			{
-				var newRGB:RGBPalette = new RGBPalette();
-				globalRgbShaders[0] = newRGB;
-
-				var arr:Array<FlxColor> = (!note.pixelNote) ? ClientPrefs.arrowRGB[3] : ClientPrefs.arrowRGBPixel[3];
-				if (noteData > -1)
-				{
-					newRGB.r = arr[0];
-					newRGB.g = arr[1];
-					newRGB.b = arr[2];
-				}
+				palette.r = colors[0];
+				palette.g = colors[1];
+				palette.b = colors[2];
 			}
-			return globalRgbShaders[0];
-			case 'Grayscale', 'Rainbow', 'Char-Based':
-			if(globalRgbShaders[0] == null)
-			{
-				var newRGB:RGBPalette = new RGBPalette();
-				globalRgbShaders[0] = newRGB;
-
-				if (noteData > -1)
-				{
-					newRGB.r = 0xFFA0A0A0;
-					newRGB.g = FlxColor.WHITE;
-					newRGB.b = 0xFF424242;
-				}
-			}
-			return globalRgbShaders[0];
-			default:
-			if(globalRgbShaders[noteData] == null)
-			{
-				var newRGB:RGBPalette = new RGBPalette();
-				globalRgbShaders[noteData] = newRGB;
-
-				var arr:Array<FlxColor> = (!note.pixelNote) ? ClientPrefs.arrowRGB[noteData] : ClientPrefs.arrowRGBPixel[noteData];
-				if (noteData > -1 && noteData <= arr.length)
-				{
-					newRGB.r = arr[0];
-					newRGB.g = arr[1];
-					newRGB.b = arr[2];
-				}
-			}
-			return globalRgbShaders[noteData];
 		}
+		return palette;
 	}
 
 	var _lastNoteOffX:Float = 0;
@@ -570,66 +552,46 @@ class Note extends FlxSprite
 		_lastValidChecked = '';
 	}
 
-	var superCoolColor = null;
-	var arr:Array<Int> = [255, 255, 255];
 	var rainbowTime = 0.0;
 	public function updateRGBColors(?r:FlxColor, ?g:FlxColor, ?b:FlxColor)
 	{
 		if (!useRGBShader) return;
-
 		if (rgbShader == null) rgbShader = new RGBShaderReference(this, initializeGlobalRGBShader(noteData, this));
-		else switch(ClientPrefs.noteColorStyle)
-		{
-			case 'Rainbow':
-			rainbowTime = (ClientPrefs.rainbowTime != 0 ? ClientPrefs.rainbowTime * 1000 : Conductor.crochet);
-			superCoolColor = new FlxColor(0xFFFF0000);
-			superCoolColor.hue = (strumTime / rainbowTime * 360) % 360;
-			rgbShader.r = superCoolColor;
-			rgbShader.g = FlxColor.WHITE;
-			rgbShader.b = superCoolColor.getDarkened(0.7);
 
-			case 'Quant-Based':
-			CoolUtil.checkNoteQuant(this, (!isSustainNote ? strumTime : parentST), rgbShader);
-
-			case 'Char-Based':
-			if (PlayState.instance != null)
-			{
-				arr = CoolUtil.getHealthColors(doOppStuff ? PlayState.instance.dad : PlayState.instance.boyfriend);
-				if (gfNote) arr = CoolUtil.getHealthColors(PlayState.instance.gf);
-				if (noteData > -1)
-				{
-					rgbShader.r = FlxColor.fromRGB(arr[0], arr[1], arr[2]);
-					rgbShader.g = FlxColor.WHITE;
-					rgbShader.b = rgbShader.r;
-					rgbShader.b = rgbShader.b.getDarkened(0.7);
-				}
-			}
-			else defaultRGB();
-
-			default:
-
-		}
-		if (noteType == 'Hurt Note' && rgbShader != null)
+		if (noteType == 'Hurt Note')
 		{
 			// note colors
-			rgbShader.r = 0xFF101010;
-			rgbShader.g = 0xFFFF0000;
-			rgbShader.b = 0xFF990022;
+			rgbShader.assign(RGBPalettePool.get(0xFF101010, 0xFFFF0000, 0xFF990022));
 
 			// splash data and colors
 			noteSplashData.r = 0xFFFF0000;
 			noteSplashData.g = 0xFF101010;
 			noteSplashData.texture = 'noteSplashes/noteSplashes-electric';
 		}
-		else if (rgbShader != null)
-		{
+		else {
+			switch(ClientPrefs.noteColorStyle)
+			{
+				case 'Rainbow':
+				rainbowTime = (ClientPrefs.rainbowTime != 0 ? ClientPrefs.rainbowTime * 1000 : Conductor.crochet);
+				rgbShader.assign(RGBPalettePool.getRainbow((strumTime / rainbowTime * 360) % 360));
+
+				case 'Quant-Based':
+				CoolUtil.checkNoteQuant(this, (!isSustainNote ? strumTime : parentST), rgbShader);
+
+				case 'Char-Based':
+				final colors = charColors();
+				if (colors != null) rgbShader.assign(RGBPalettePool.getChar(colors));
+				else useNormalColors();
+
+				default:
+			}	
 			noteSplashData.r = -1;
 			noteSplashData.g = -1;
 			noteSplashData.b = -1;
 		}
-		rgbShader.r = r ?? rgbShader.r;
-		rgbShader.g = g ?? rgbShader.g;
-		rgbShader.b = b ?? rgbShader.b;
+		if (r != null) rgbShader.r = r;
+		if (g != null) rgbShader.g = g;
+		if (b != null) rgbShader.b = b;
 	}
 
 	// this is used for note recycling

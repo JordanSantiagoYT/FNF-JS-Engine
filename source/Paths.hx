@@ -42,14 +42,14 @@ class Paths
   public static var defaultSkin:String = 'noteskins/NOTE_assets';
 
   static inline function fallbackSkin():String
-    return PlayState.isPixelStage ? 'noteskins/NOTE_assets' : 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
+    return 'noteskins/NOTE_assets';
 
   static inline function defaultSplash():String
     return 'noteSplashes/noteSplashes' + NoteSplash.getSplashSkinPostfix();
 
   public static function initDefaultSkin(?noteSkin:String)
   {
-    defaultSkin = (noteSkin != null && noteSkin.length > 0) ? noteSkin : fallbackSkin();
+    defaultSkin = (noteSkin != null && noteSkin.length > 0 && fileExists('images/$noteSkin.png', IMAGE)) ? noteSkin : fallbackSkin();
   }
 
   public static function initNote(?noteSkin:String)

@@ -332,6 +332,7 @@ class ChartingState extends MusicBeatState
     hitsound.volume = 1;
 
     if (Note.globalRgbShaders.length > 0) Note.globalRgbShaders = [];
+    RGBPalettePool.clear();
     Paths.initDefaultSkin(_song.arrowSkin);
 
     #if DISCORD_ALLOWED
@@ -4014,7 +4015,7 @@ class ChartingState extends MusicBeatState
       note.sustainLength = daSus;
       note.noteType = i[3];
       note.animation.play(Note.colArray[daNoteInfo % 4] + 'Scroll');
-      if (ClientPrefs.enableColorShader && note.noteType == 'Hurt Note') note.updateRGBColors();
+      if (ClientPrefs.enableColorShader) note.updateRGBColors();
     } else
     { // Event note
       note.loadGraphic(Paths.image('eventArrow'));
@@ -4076,7 +4077,7 @@ class ChartingState extends MusicBeatState
 
     var color:FlxColor = (!PlayState.isPixelStage) ? ClientPrefs.arrowRGB[note.noteData][0] : ClientPrefs.arrowRGBPixel[note.noteData][0];
 
-    if (note.noteType == "Hurt Note") color = CoolUtil.dominantColor(note); // Make black if hurt note
+    if (ClientPrefs.enableColorShader) color = note.rgbShader.r; // Change it to the note's highlight color
 
     var spr:FlxSprite = makeSolid(note.x + (GRID_SIZE * 0.5) - 4, note.y + GRID_SIZE / 2, 8, height, color);
     spr.active = false;
@@ -4649,6 +4650,7 @@ class ChartingState extends MusicBeatState
     Paths.splashConfigs.clear();
     Paths.splashAnimCountMap.clear();
     Note.globalRgbShaders = [];
+    RGBPalettePool.clear();
     FlxG.autoPause = ClientPrefs.autoPause;
 
     super.destroy();

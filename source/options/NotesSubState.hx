@@ -8,7 +8,6 @@ import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
 import flixel.util.FlxGradient;
 import lime.system.Clipboard;
-import shaders.RGBPalette.RGBShaderReference;
 import shaders.RGBPalette;
 
 class NotesSubState extends MusicBeatSubstate
@@ -635,6 +634,8 @@ class NotesSubState extends MusicBeatSubstate
     }
 
     Note.globalRgbShaders = [];
+    RGBPalettePool.clear();
+
     for (i in 0...dataArray.length)
     {
       Note.initializeGlobalRGBShader(i);
@@ -735,7 +736,10 @@ class NotesSubState extends MusicBeatSubstate
 
   override function destroy()
   {
+    Paths.noteSkinFramesMap.clear();
+    Paths.noteSkinAnimsMap.clear();
     Note.globalRgbShaders = [];
+    RGBPalettePool.clear();
     super.destroy();
   }
 
