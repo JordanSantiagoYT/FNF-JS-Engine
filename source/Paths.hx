@@ -49,7 +49,8 @@ class Paths
 
   public static function initDefaultSkin(?noteSkin:String)
   {
-    defaultSkin = (noteSkin != null && noteSkin.length > 0 && fileExists('images/$noteSkin.png', IMAGE)) ? noteSkin : fallbackSkin();
+    defaultSkin = (noteSkin != null && noteSkin.length > 0) ? noteSkin : 'noteskins/NOTE_assets' + Note.getNoteSkinPostfix();
+    if (!fileExists('images/$defaultSkin.png', IMAGE)) defaultSkin = fallbackSkin();
   }
 
   public static function initNote(?noteSkin:String)
