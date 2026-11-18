@@ -455,6 +455,7 @@ class PlayState extends MusicBeatState
 			if (unlockFPS)
 			{
 				//for some reason you have to do these separately, otherwise while rendering it doesnt do all the frames ?? im confused as hell
+				// well that seems bullshit
 				FlxG.updateFramerate = 1000;
 				FlxG.drawFramerate = 1000;
 			}
@@ -1035,10 +1036,10 @@ class PlayState extends MusicBeatState
 		add(scoreTxt);
 
 		var style:String = ClientPrefs.scoreStyle;
-		var dadColors:Array<Int> = CoolUtil.getHealthColors(dad);
 
+		final dadColors:Array<Int> = CoolUtil.getHealthColors(dad);
 		// Configuration for each style
-		var styleSettings = { // profiency using typedefs
+		final styleSettings = { // profiency using typedefs
 			'JS Engine': {
 				font: "vcr.ttf", size: 18, color: FlxColor.fromRGB(dadColors[0], dadColors[1], dadColors[2]),
 				yOffset: null, borderSize: 2, xOverride: null
@@ -1271,7 +1272,7 @@ class PlayState extends MusicBeatState
 			return new ErrorHandledRuntimeShader(shaderName);
 		}
 
-		var arr:Array<String> = runtimeShaders.get(shaderName);
+		final arr:Array<String> = runtimeShaders.get(shaderName);
 		return new ErrorHandledRuntimeShader(shaderName, arr[0], arr[1]);
 		#else
 		FlxG.log.warn("Platform unsupported for Runtime Shaders!");
@@ -1865,7 +1866,7 @@ class PlayState extends MusicBeatState
 					tick = START;
 					if (SONG.songCredit != null && SONG.songCredit.length > 0)
 					{
-						var creditsPopup:CreditsPopUp = new CreditsPopUp(FlxG.width, 200, SONG.song, SONG.songCredit);
+						final creditsPopup:CreditsPopUp = new CreditsPopUp(FlxG.width, 200, SONG.song, SONG.songCredit);
 						creditsPopup.cameras = [camHUD];
 						creditsPopup.scrollFactor.set();
 						creditsPopup.x = creditsPopup.width * -1;
@@ -1905,7 +1906,7 @@ class PlayState extends MusicBeatState
 
 	inline private function createCountdownSprite(image:String, antialias:Bool):FlxSprite
 	{
-		var spr:FlxSprite = new FlxSprite().loadGraphic(Paths.image(image));
+		final spr:FlxSprite = new FlxSprite().loadGraphic(Paths.image(image));
 		spr.cameras = [camHUD];
 		spr.scrollFactor.set();
 		spr.updateHitbox();

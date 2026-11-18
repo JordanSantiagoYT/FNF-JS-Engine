@@ -80,13 +80,13 @@ class CoolUtil
 		for (i in 0...partsA.length) {
 			if (partsA[i] > partsB[i]){
 				#if debug
-				trace("versionA is greater!");
+				FlxG.log.add("versionA is greater!");
 				#end
 				return true;
 			}
 			if (partsA[i] < partsB[i]){
 				#if debug
-				trace("versionA is less!");
+				FlxG.log.add("versionA is less!");
 				#end
 				return false;
 			}

@@ -164,6 +164,28 @@ class LuaUtils {
 	{
 		#if MODS_ALLOWED
 		if(FlxG.save.data.modSettings == null) FlxG.save.data.modSettings = new Map<String, Dynamic>();
+		if(modName != null) modName = modName.trim();
+		if(modName == null || modName.length == 0)
+		{
+			#if LUA_ALLOWED
+			if(FunkinLua.lastCalledScript != null && FunkinLua.lastCalledScript.modFolder != null)
+				modName = FunkinLua.lastCalledScript.modFolder;
+			#end
+			if(modName == null || modName.length == 0)
+				modName = Mods.currentModDirectory;
+		}
+
+		// Preserve the real installed folder spelling. This matters on Linux and
+		// also tolerates mods passing their display name with different casing.
+		if(modName != null && modName.length > 0)
+		{
+			for(folder in Mods.getModDirectories())
+				if(folder.toLowerCase() == modName.toLowerCase())
+				{
+					modName = folder;
+					break;
+				}
+		}
 
 		var settings:Map<String, Dynamic> = FlxG.save.data.modSettings.get(modName);
 		final path:String = Paths.mods('$modName/data/settings.json');
