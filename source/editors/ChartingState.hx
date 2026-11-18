@@ -2416,6 +2416,8 @@ class ChartingState extends MusicBeatState
         case 'Change BPM':
           _song.notes[curSec].changeBPM = check.checked;
           invalidateSectionTimes();
+          Conductor.mapBPMChanges(_song);
+          updateGrid();
           FlxG.log.add('changed bpm shit');
         case "Alt Animation":
           _song.notes[curSec].altAnim = check.checked;
@@ -2452,6 +2454,7 @@ class ChartingState extends MusicBeatState
 
         case 'section_bpm':
           _song.notes[curSec].bpm = nums.value;
+          if (_song.notes[curSec].changeBPM) Conductor.mapBPMChanges(_song);
           invalidateSectionTimes();
           updateGrid();
 

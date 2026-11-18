@@ -454,7 +454,9 @@ class PlayState extends MusicBeatState
 		{
 			if (unlockFPS)
 			{
-				FlxG.updateFramerate = FlxG.drawFramerate = 1000;
+				//for some reason you have to do these separately, otherwise while rendering it doesnt do all the frames ?? im confused as hell
+				FlxG.updateFramerate = 1000;
+				FlxG.drawFramerate = 1000;
 			}
 			FlxG.fixedTimestep = true;
 			FlxG.animationTimeScale = ClientPrefs.framerate / targetFPS;
