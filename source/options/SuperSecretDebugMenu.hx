@@ -1,6 +1,5 @@
 package options;
 
-import Controls;
 import flixel.graphics.FlxGraphic;
 import flixel.input.keyboard.FlxKey;
 import haxe.Exception;
@@ -84,7 +83,7 @@ class SuperSecretDebugMenu extends BaseOptionsMenu
         throw new Exception('bruh'); // this is easier + better to do
       } else
       {
-        openSubState(new Prompt(messages[i], 0, function() {
+        openSubState(new backend.ui.Prompt(messages[i], function() {
           nextMessage();
         }, null, false, "Yes", "No"));
       }
