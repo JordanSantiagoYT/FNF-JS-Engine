@@ -18,7 +18,7 @@
 
   "sameLine": {
     "ifBody": "same",
-    "ifElse": "same",
+    "ifElse": "next",
     "doWhile": "next",
     "tryBody": "next",
     "tryCatch": "next"
