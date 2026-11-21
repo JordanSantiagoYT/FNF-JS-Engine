@@ -1052,9 +1052,9 @@ class ChartingState extends MusicBeatState implements PsychUIEvent
   {
     final tab_group_section = UI_box.getTab('Section').menu;
 
-    var check_mustHitSection = new PsychUICheckBox(10, 15, "Must hit section", 100, function() {
-      _song.notes[curSec] != null ? _song.notes[curSec].mustHitSection : true;
-    });
+	check_mustHitSection = new PsychUICheckBox(10, 15, "Must hit section");
+	check_mustHitSection.name = 'check_mustHit';
+	check_mustHitSection.checked = _song.notes[curSec] != null ? _song.notes[curSec].mustHitSection : true;
 
     check_gfSection = new PsychUICheckBox(10, check_mustHitSection.y + 22, "GF section", 100);
     check_gfSection.name = 'check_gf';
