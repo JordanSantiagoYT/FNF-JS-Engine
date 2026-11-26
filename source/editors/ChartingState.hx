@@ -1263,7 +1263,6 @@ class ChartingState extends MusicBeatState
       updateGrid(false);
     });
     var mirrorButton:FlxButton = new FlxButton(duetButton.x + 100, duetButton.y, "Mirror Notes", function() {
-      var duetNotes:Array<Array<Dynamic>> = [];
       for (note in _song.notes[curSec].sectionNotes)
       {
         var boob = note[1] % 4;
@@ -1271,8 +1270,6 @@ class ChartingState extends MusicBeatState
         if (note[1] > 3) boob += 4;
 
         note[1] = boob;
-        var copiedNote:Array<Dynamic> = [note[0], boob, note[2], note[3]];
-        // duetNotes.push(copiedNote);
       }
 
       updateGrid(false);
@@ -1737,7 +1734,6 @@ class ChartingState extends MusicBeatState
 
     var shrinkNotesButton:FlxButton = new FlxButton(10, doubleShrinker.y + 30, "Stretch Notes", function() {
       var minimumTime:Float = sectionStartTime();
-      var sectionEndTime:Float = sectionStartTime(1);
       for (i in 0..._song.notes[curSec].sectionNotes.length)
       {
         var note:Array<Dynamic> = _song.notes[curSec].sectionNotes[i];
@@ -4249,7 +4245,6 @@ class ChartingState extends MusicBeatState
     var noteStrum = getStrumTime(selectionNote.y * (getSectionBeats() / 4), false) + sectionStartTime();
     var noteData:Int = Math.floor((FlxG.mouse.x - GRID_SIZE) / GRID_SIZE);
     var noteSus = 0;
-    var daAlt = false;
     var daType = currentType;
     var section = _song.notes[curSec];
     var mustPress:Bool = section.mustHitSection;
@@ -4304,7 +4299,6 @@ class ChartingState extends MusicBeatState
           daText.sprTracker = note;
         // trace('test: ' + i[0], 'startThing: ' + startThing, 'endThing: ' + endThing);
         default:
-          var beats:Float = getSectionBeats();
           var note:Note = setupNoteData(curSelectedNote, false, sectionStartTime());
           curRenderedNotes.add(note);
           if (note.sustainLength > 0)

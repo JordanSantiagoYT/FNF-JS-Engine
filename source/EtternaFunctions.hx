@@ -33,7 +33,6 @@ class EtternaFunctions
         var max_boo_weight = 180 * ts;
         var ts_pow = 0.75;
         var zero = 65 * (Math.pow(ts,ts_pow));
-        var power = 2.5;
         var dev = 22.7 * (Math.pow(ts,ts_pow));
     
         if (maxms <= ridic) // anything below this (judge scaled) threshold is counted as full pts

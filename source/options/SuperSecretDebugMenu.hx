@@ -108,7 +108,6 @@ class SuperSecretDebugMenu extends BaseOptionsMenu
         // Extract the changelog after the version number
         returnedData[1] = data.substring(versionEndIndex + 1, data.length);
         TitleState.updateVersion = returnedData[0];
-        var curVersion:String = MainMenuState.psychEngineJSVersion.trim();
         OutdatedState.currChanges = returnedData[1];
       }
 

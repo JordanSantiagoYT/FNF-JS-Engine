@@ -35,7 +35,6 @@ class HaxeCommit
 		var process = new sys.io.Process('git', ['rev-parse', 'HEAD']);
 		if (process.exitCode() != 0)
 		{
-			var message = process.stderr.readAll().toString();
 			haxe.macro.Context.info('[WARN] Could not determine current git commit; is this a proper Git repository?', pos);
 		}
 

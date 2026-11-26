@@ -243,8 +243,6 @@ class EditorPlayState extends MusicBeatState
 
 					inline unspawnNotes.push(swagNote);
 
-					var ratio:Float = Conductor.bpm / currentBPMLol;
-
 					final floorSus:Int = Math.floor(swagNote.sustainLength / Conductor.stepCrochet);
 					if (floorSus > 0) {
 						for (susNote in 0...floorSus + 1) {

@@ -9,9 +9,7 @@ class ErrorHandledShader extends FlxShader implements IErrorHandler
 {
 	public var shaderName:String = '';
 
-	public dynamic function onError(error:Dynamic):Void
-	{
-	}
+	public dynamic function onError(error:Dynamic):Void {}
 
 	public function new(?shaderName:String)
 	{
@@ -43,7 +41,6 @@ class ErrorHandledShader extends FlxShader implements IErrorHandler
 
 		#if !debug
 		// Save a crash log on Release builds
-		var errMsg:String = "";
 		var dateNow:String = Date.now().toString().replace(" ", "_").replace(":", "'");
 
 		if (!FileSystem.exists('./logs/'))
@@ -64,9 +61,7 @@ class ErrorHandledRuntimeShader extends FlxRuntimeShader implements IErrorHandle
 {
 	public var shaderName:String = '';
 
-	public dynamic function onError(error:Dynamic):Void
-	{
-	}
+	public dynamic function onError(error:Dynamic):Void {}
 
 	public function new(?shaderName:String, ?fragmentSource:String, ?vertexSource:String)
 	{

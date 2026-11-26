@@ -1379,7 +1379,6 @@ class CharacterEditorState extends MusicBeatState
 			}
 
 			var shiftMult:Float = 1;
-			var ctrlMult:Float = 1;
 			var shiftMultBig:Float = 1;
 			if(FlxG.keys.pressed.SHIFT)
 			{

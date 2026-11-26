@@ -562,12 +562,6 @@ class DialogueCharacterEditorState extends MusicBeatState
 					FlxG.keys.justPressed.D,
 					FlxG.keys.justPressed.S
 				];
-				var controlArrayIdle:Array<Bool> = [
-					FlxG.keys.justPressed.LEFT,
-					FlxG.keys.justPressed.UP,
-					FlxG.keys.justPressed.RIGHT,
-					FlxG.keys.justPressed.DOWN
-				];
 
 				for (i in 0...controlArrayLoop.length) {
 					if (controlArrayLoop[i]) {

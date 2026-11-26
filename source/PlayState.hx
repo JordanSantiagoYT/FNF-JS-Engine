@@ -219,8 +219,10 @@ class PlayState extends MusicBeatState
 	public var maxNPS:Float = 0;
 	public var oppNPS:Float = 0;
 	public var maxOppNPS:Float = 0;
+	// keep these for mods that use them I guess
 	public var enemyHits:Float = 0;
 	public var opponentNoteTotal:Float = 0;
+	// ====================================
 	public var polyphonyOppo:Float = 1;
 	public var polyphonyBF:Float = 1;
 
@@ -257,7 +259,8 @@ class PlayState extends MusicBeatState
 	public var instakillOnMiss:Bool = false;
 	public var sickOnly:Bool = false;
 	public var cpuControlled(default, set):Bool = false;
-	inline function set_cpuControlled(value:Bool){
+	inline function set_cpuControlled(value:Bool)
+	{
 		cpuControlled = value;
 		if (botplayTxt != null) // this assures it'll always show up
 			botplayTxt.visible = (!ClientPrefs.hideHud && ClientPrefs.botTxtStyle != 'Hide') ? cpuControlled : false;
@@ -311,8 +314,6 @@ class PlayState extends MusicBeatState
 
 	var disableTheTripper:Bool = false;
 	var disableTheTripperAt:Int;
-
-	var heyTimer:Float;
 
 	public var singDurMult:Int = 1;
 
@@ -2810,9 +2811,6 @@ class PlayState extends MusicBeatState
 	var startedCountdown:Bool = false;
 	var canPause:Bool = true;
 
-	public var takenTime:Float = haxe.Timer.stamp();
-	public var totalRenderTime:Float = 0;
-
 	var noteLimit = ClientPrefs.maxNotes;
 	var limitNC = 0;
 	public var amountOfRenderedNotes:Float = 0;
@@ -2860,10 +2858,7 @@ class PlayState extends MusicBeatState
 		if (ffmpegMode) elapsed = 1 / ClientPrefs.targetFPS;
 		if (screenshader.enabled)
 		{
-			if(disableTheTripperAt <= curStep || isDead)
-				disableTheTripper = true;
-
-			if(disableTheTripper)
+			if(disableTheTripperAt <= curStep || (isDead || disableTheTripper))
 			{
 				screenshader.shader.waveAmplitude -= (elapsed / 2);
 			}
