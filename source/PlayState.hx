@@ -298,9 +298,7 @@ class PlayState extends MusicBeatState
 	public var missRecalcsPerFrame:Int = 0;
 	public var hitImagesFrame:Int = 0;
 
-	var npsTime = 0;
-	var bfFrameHits:Float = 0;
-	var opFrameHits:Float = 0;
+	var npsTime:Float = 0;
 	var npsMap:IntMap<Float> = new IntMap();
 	var opNpsMap:IntMap<Float> = new IntMap();
 
@@ -1357,24 +1355,6 @@ class PlayState extends MusicBeatState
 		playbackRate = 1.0;
 		#end
 		return playbackRate;
-	}
-
-	inline function set_polyphony(value:Float, which:Int):Float
-	{
-		switch (which) {
-		    case 0:
-		        polyphonyOppo = value;
-		        polyphonyBF = value;
-		    case 1:
-		        polyphonyOppo = value;
-		    case 2:
-		        polyphonyBF = value;
-		    // just in case, as an anti-crash prevention maybe?
-		    default:
-				polyphonyOppo = value;
-		        polyphonyBF = value;
-		}
-		return value;
 	}
 
 	inline function get_defaultCamZoom():Float
@@ -2953,8 +2933,6 @@ class PlayState extends MusicBeatState
 		energyTxt.text = (botEnergy < 2 ? FlxMath.roundDecimal(botEnergy * 50, 0) + '%' : 'Full');
 		energyTxt.y = (FlxG.height / 1.3) - (botEnergy * 50 * 4);
 
-		bfFrameHits = opFrameHits = 0;
-
 		callOnLuas('onUpdate', [elapsed]);
 		super.update(elapsed);
 
@@ -3172,7 +3150,7 @@ class PlayState extends MusicBeatState
 			if(!inCutscene)
 			{
 				if(!cpuControlled) {
-					keyShit();
+					keyCheck();
 				}
 				else if (ClientPrefs.charsAndBG) playerDance();
 
@@ -3200,25 +3178,6 @@ class PlayState extends MusicBeatState
 				eventIndex++;
 			}
 		}
-
-		nps = oppNPS = 0;
-		
-		npsTime = Math.round(Conductor.songPosition);
-		if (opFrameHits > 0) opNpsMap.set(npsTime, opFrameHits);
-		if (bfFrameHits > 0) npsMap.set(npsTime, bfFrameHits);
-
-		for (time => val in opNpsMap) {
-			if (time + 1000 < npsTime) opNpsMap.remove(time);
-			oppNPS += val;
-		}
-
-		for (time => val in npsMap) {
-			if (time + 1000 < npsTime) npsMap.remove(time);
-			nps += val;
-		}
-
-		maxOppNPS = Math.max(maxOppNPS, oppNPS);
-		maxNPS = Math.max(maxNPS, nps);
 
 		#if debug
 		if(!endingSong && !startingSong) {
@@ -3272,6 +3231,30 @@ class PlayState extends MusicBeatState
 			for (i in shaderUpdates){
 				i(elapsed);
 			}
+			
+		nps = oppNPS = 0;
+		npsTime = Math.round(Conductor.songPosition);
+
+		final toRemoveOp:Array<Int> = [];
+		for (time => val in opNpsMap) {
+			if (time + 1000 < npsTime)
+				toRemoveOp.push(time);
+			else
+				oppNPS += val;
+		}
+		for (t in toRemoveOp) opNpsMap.remove(t);
+
+		final toRemove:Array<Int> = [];
+		for (time => val in npsMap) {
+			if (time + 1000 < npsTime)
+				toRemove.push(time);
+			else
+				nps += val;
+		}
+		for (t in toRemove) npsMap.remove(t);
+
+		maxOppNPS = Math.max(maxOppNPS, oppNPS);
+		maxNPS = Math.max(maxNPS, nps);
 
 		if (ffmpegMode)
 		{
@@ -4616,8 +4599,8 @@ class PlayState extends MusicBeatState
 
 	private function onKeyRelease(event:KeyboardEvent):Void
 	{
-		var eventKey:FlxKey = event.keyCode;
-		var key:Int = getKeyFromEvent(eventKey);
+		final eventKey:FlxKey = event.keyCode;
+		final key:Int = getKeyFromEvent(eventKey);
 		// trace('Pressed: ' + eventKey);
 
 		if (!ClientPrefs.controllerMode && key > -1)
@@ -4629,7 +4612,7 @@ class PlayState extends MusicBeatState
 		if (cpuControlled || !startedCountdown || paused)
 			return;
 
-		var spr:StrumNote = playerStrums.members[key];
+		final spr:StrumNote = playerStrums.members[key];
 		if (spr != null)
 		{
 			spr.playAnim('static');
@@ -4654,7 +4637,7 @@ class PlayState extends MusicBeatState
 	}
 
 	// Hold notes
-	private function keyShit():Void
+	private function keyCheck():Void
 	{
 		// HOLDING
 		parseKeys(holdArray);
@@ -5009,7 +4992,11 @@ class PlayState extends MusicBeatState
 				{
 					if (combo < 0) combo = 0;
 					if (polyphony > 1 && !note.isSustainNote) totalNotes += polyphony - 1;
-					combo += polyphony; totalNotesPlayed += polyphony; bfFrameHits += polyphony;
+					combo += polyphony; 
+					totalNotesPlayed += polyphony; 
+					final t = Math.round(Conductor.songPosition);
+					final existing = npsMap.get(t);
+					npsMap.set(t, (existing != null ? existing : 0) + polyphony);
 
 					if (!ClientPrefs.lessBotLag) popUpScore(note);
 					else judgeNote(note);
@@ -5166,7 +5153,10 @@ class PlayState extends MusicBeatState
 				if (polyphony > 1) totalNotes += polyphony - 1;
 				songScore += (ClientPrefs.noMarvJudge ? 350 : 500) * polyphony;
 				totalNotesPlayed += polyphony;
-				combo += polyphony; bfFrameHits += polyphony;
+				combo += polyphony; 
+				final t = Math.round(Conductor.songPosition);
+				final existing = npsMap.get(t);
+				npsMap.set(t, (existing != null ? existing : 0) + polyphony);
 			}
 			if (!ClientPrefs.noSkipFuncs) callOnLuas((oppTrigger ? 'opponentNoteSkip' : 'goodNoteSkip'), [null, Math.abs(noteAlt.noteData), noteAlt.noteType, noteAlt.isSustainNote]);
 			health += noteAlt.hitHealth * healthGain * polyphony;
@@ -5237,7 +5227,9 @@ class PlayState extends MusicBeatState
 			if (!daNote.isSustainNote)
 			{
 				if (polyphony > 1) opponentNoteTotal += polyphony - 1;
-				opFrameHits += polyphony;
+				final t = Math.round(Conductor.songPosition);
+				final existing = opNpsMap.get(t);
+				opNpsMap.set(t, (existing != null ? existing : 0) + polyphony);
 				enemyHits += polyphony;
 				invalidateNote(daNote);
 			}
@@ -5303,7 +5295,9 @@ class PlayState extends MusicBeatState
 			}
 			if (!noteAlt.isSustainNote)
 			{
-				opFrameHits += polyphony;
+				final t = Math.round(Conductor.songPosition);
+				final existing = opNpsMap.get(t);
+				opNpsMap.set(t, (existing != null ? existing : 0) + polyphony);
 				enemyHits += polyphony;
 
 				if (scoreTxtUpdateFrame <= 4) updateScore();
