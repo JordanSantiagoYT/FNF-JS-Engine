@@ -2960,7 +2960,7 @@ class PlayState extends MusicBeatState
 		if (lerpingScore) updateScore();
 		if (shownScore != songScore && ClientPrefs.scoreStyle == 'JS Engine' && Math.abs(shownScore - songScore) >= 10) {
 			shownScore = FlxMath.lerp(shownScore, songScore, 0.2 / ((!ffmpegMode ? ClientPrefs.framerate : targetFPS) / 60));
-				lerpingScore = true; // Indicate that lerping is in progress
+			lerpingScore = true; // Indicate that lerping is in progress
 		} else {
 			shownScore = songScore;
 			lerpingScore = false;
@@ -3257,7 +3257,7 @@ class PlayState extends MusicBeatState
 			if (!ClientPrefs.oldFFmpegMode) pipeFrame();
 			else
 			{
-				var filename = CoolUtil.zeroFill(frameCaptured, 7);
+				final filename = CoolUtil.zeroFill(frameCaptured, 7);
 				try {
 					capture.save(renderPath + Paths.formatToSongPath(SONG.song) + #if !windows '/' #else '\\' #end, filename);
 				}
@@ -3457,7 +3457,7 @@ class PlayState extends MusicBeatState
 	}
 
 	public function getControl(key:String) {
-		var pressed:Bool = Reflect.getProperty(controls, key);
+		final pressed:Bool = Reflect.getProperty(controls, key);
 		//trace('Control result: ' + pressed);
 		return pressed;
 	}
@@ -4131,7 +4131,9 @@ class PlayState extends MusicBeatState
 						endCallback();
 					});
 				}
-			} else endCallback();
+			} 
+			else 
+				endCallback();
 		}
 	}
 
@@ -4263,7 +4265,7 @@ class PlayState extends MusicBeatState
 				}
 				else
 				{
-					var difficulty:String = CoolUtil.getDifficultyFilePath();
+					final difficulty:String = CoolUtil.getDifficultyFilePath();
 
 					trace('LOADING NEXT SONG');
 					trace(Paths.formatToSongPath(PlayState.storyPlaylist[0]) + difficulty);
@@ -4574,7 +4576,7 @@ class PlayState extends MusicBeatState
 		//more accurate hit time for the ratings? part 2 (Now that the calculations are done, go back to the time it was before for not causing a note stutter)
 		Conductor.songPosition = lastTime;
 
-		var spr:StrumNote = playerStrums.members[key];
+		final spr:StrumNote = playerStrums.members[key];
 		if(strumsBlocked[key] != true && spr != null && spr.animation != null && spr.animation.curAnim.name != 'confirm')
 		{
 			spr.playAnim('pressed');
@@ -4730,7 +4732,7 @@ class PlayState extends MusicBeatState
 	}
 
 	function noteMiss(daNote:Note = null, daNoteAlt:PreloadedChartNote = null):Void { //You didn't hit the key and let it go offscreen, also used by Hurt Notes
-		var polyphony = opponentChart ? polyphonyOppo : polyphonyBF;
+		final polyphony = opponentChart ? polyphonyOppo : polyphonyBF;
 		if (daNote != null)
 		{
 			// trace(daNote.toString());
@@ -4948,7 +4950,7 @@ class PlayState extends MusicBeatState
 	function goodNoteHit(note:Note, noteAlt:PreloadedChartNote = null):Void
 	{
 		//this stays consistent across the entire function, so why not?
-		var polyphony = opponentChart ? polyphonyOppo : polyphonyBF;
+		final polyphony = opponentChart ? polyphonyOppo : polyphonyBF;
 
 		if (note != null)
 		{
@@ -5166,7 +5168,7 @@ class PlayState extends MusicBeatState
 	function opponentNoteHit(daNote:Note, noteAlt:PreloadedChartNote = null):Void
 	{
 		//this stays consistent across the entire function, so why not?
-		var polyphony = !opponentChart ? polyphonyOppo : polyphonyBF;
+		final polyphony = !opponentChart ? polyphonyOppo : polyphonyBF;
 
 		if (daNote != null)
 		{
