@@ -1,24 +1,23 @@
-name: Lock Closed Issues
+name: Lock Closed Threads
 
 on:
-   workflow_dispatch
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+  discussions: write
 
 jobs:
-  lock-closed-issues:
+  lock:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Lock closed issues
-        run: |
-          issues=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/issues?state=closed" | jq -r '.[] | .number')
-
-          for issue in $issues; do
-            curl -s -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d '{"locked":true}' "https://api.github.com/repos/${{ github.repository }}/issues/$issue/lock"
-          done
+      - uses: dessant/lock-threads@v6
+        with:
+          github-token: ${{ github.token }}
+          issue-inactive-days: '0'
+          pr-inactive-days: '0'
+          discussion-inactive-days: '0'
+          issue-lock-reason: 'resolved'
+          pr-lock-reason: 'resolved'
+          discussion-lock-reason: 'resolved'
