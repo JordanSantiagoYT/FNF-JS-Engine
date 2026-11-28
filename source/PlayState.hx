@@ -2989,32 +2989,33 @@ class PlayState extends MusicBeatState
 		if (FlxG.keys.anyJustPressed(debugKeysChart) && !endingSong && !inCutscene)
 		{
 			if (SONG.event7 != null && SONG.event7 != "---" && SONG.event7 != '' && SONG.event7 != 'None')
-			switch(SONG.event7)
+			{
+				switch(SONG.event7)
 				{
-				case "---" | null | '' | 'None':
-					openChartEditor();
-				case "Game Over":
-					health = 0;
-				case "Go to Song":
+					case "---" | null | '' | 'None':
+						openChartEditor();
+					case "Game Over":
+						health = 0;
+					case "Go to Song":
 						PlayState.SONG = Song.loadFromJson(SONG.event7Value + (CoolUtil.difficultyString() == 'NORMAL' ? '' : '-' + CoolUtil.difficulties[storyDifficulty]), SONG.event7Value);
-				LoadingState.loadAndSwitchState(PlayState.new);
-				case "Close Game":
-					System.exit(0);
-				case "Play Video":
-					updateTime = false;
-					FlxG.sound.music.volume = 0;
-					vocals.volume = opponentVocals.volume = 0;
-					vocals.stop();
-					opponentVocals.stop();
-					FlxG.sound.music.stop();
-					KillNotes();
-					heyStopTrying = true;
+						LoadingState.loadAndSwitchState(PlayState.new);
+					case "Close Game":
+						System.exit(0);
+					case "Play Video":
+						updateTime = false;
+						FlxG.sound.music.volume = 0;
+						vocals.volume = opponentVocals.volume = 0;
+						vocals.stop();
+						opponentVocals.stop();
+						FlxG.sound.music.stop();
+						KillNotes();
+						heyStopTrying = true;
 
-					var bg = new FlxSprite(-FlxG.width, -FlxG.height).makeGraphic(FlxG.width * 3, FlxG.height * 3, FlxColor.BLACK);
-					add(bg);
-					bg.cameras = [camHUD];
-					startVideo(SONG.event7Value, function() Sys.exit(0));
+						add(new FlxSprite(-FlxG.width, -FlxG.height).makeGraphic(FlxG.width * 3, FlxG.height * 3, FlxColor.BLACK));
+						bg.cameras = [camHUD];
+						startVideo(SONG.event7Value, function() Sys.exit(0));
 				}
+			}
 			else
 				openChartEditor();
 		}
