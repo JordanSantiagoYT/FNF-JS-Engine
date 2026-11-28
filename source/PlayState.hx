@@ -3011,7 +3011,8 @@ class PlayState extends MusicBeatState
 						KillNotes();
 						heyStopTrying = true;
 
-						add(new FlxSprite(-FlxG.width, -FlxG.height).makeGraphic(FlxG.width * 3, FlxG.height * 3, FlxColor.BLACK));
+						final bg = new FlxSprite(-FlxG.width, -FlxG.height).makeGraphic(FlxG.width * 3, FlxG.height * 3, FlxColor.BLACK);
+						add(bg);
 						bg.cameras = [camHUD];
 						startVideo(SONG.event7Value, function() Sys.exit(0));
 				}
